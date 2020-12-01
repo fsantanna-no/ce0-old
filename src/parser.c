@@ -29,6 +29,10 @@ static int parser_expr_one (Expr* ret) {
                 return err_expected("`)´");
             }
         }
+    // EXPR_VAR
+    } else if (accept(TK_VAR)) {
+        *ret = (Expr) { EXPR_VAR, .tk=ALL.tk0 };
+
     } else {
         return err_expected("expression");
     }

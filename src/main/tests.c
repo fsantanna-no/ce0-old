@@ -104,6 +104,14 @@ void t_parser_expr (void) {
         assert(!strcmp(ALL.err, "(ln 3, col 1): expected expression : have end of file"));
         fclose(ALL.inp);
     }
+    // EXPR_VAR
+    {
+        all_init(stropen("r", 0, "x"));
+        Expr e;
+        assert(parser_expr(&e));
+        assert(e.sub == EXPR_VAR); assert(!strcmp(e.tk.val.s,"x"));
+        fclose(ALL.inp);
+    }
 }
 
 void t_parser (void) {
