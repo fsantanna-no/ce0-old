@@ -13,8 +13,9 @@ FILE* stropen (const char* mode, size_t size, char* str) {
 void all_init (FILE* inp) {
     ALL = (All) {
         inp,
-        1, 1,
-        {}, { TK_ERR, {}, 1, 1 }
+        {},                         // err
+        1, 1,                       // lin, col
+        {}, { TK_ERR, {}, 1, 1 }    // tk0, tk1
     };
     lexer();
 }

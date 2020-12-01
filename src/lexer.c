@@ -19,6 +19,24 @@ static int is_reserved (TK_val* val) {
     return 0;
 }
 
+const char* lexer_tk2str (Tk* tk) {
+    static char str[512];
+    switch (tk->enu) {
+        case TK_EOF:
+            sprintf(str, "end of file");
+            break;
+        default:
+            if (tk->enu < TK_SINGLE) {
+                sprintf(str, "`%c´", tk->enu);
+            } else {
+//printf("%d\n", tk->enu);
+                assert(0 && "TODO");
+            }
+            break;
+    }
+    return str;
+}
+
 static TK lx_token (TK_val* val) {
     int c = fgetc(ALL.inp);
 //printf("0> [%c] [%d]\n", c, c);
@@ -29,8 +47,10 @@ static TK lx_token (TK_val* val) {
         case '{':
         case '}':
         case ':':
-        case EOF:
             return c;
+
+        case EOF:
+            return TK_EOF;
 
         default:
             if (!isalpha(c)) {

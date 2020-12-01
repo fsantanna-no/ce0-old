@@ -1,9 +1,9 @@
 typedef enum {
     TK_ERR = 0,
 
-    TK_TOK = 256,   // all single-char tokens
+    TK_SINGLE = 256,   // all single-char tokens
 
-    TK_COMMENT,
+    TK_EOF,
 
     TK_VAR,
     TK_TYPE,
@@ -24,4 +24,5 @@ typedef struct {
     long  col;   // column at token
 } Tk;
 
+const char* lexer_tk2str (Tk* tk);
 void lexer (void);

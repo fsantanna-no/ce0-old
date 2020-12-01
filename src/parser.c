@@ -9,16 +9,26 @@ int accept (TK enu) {
     }
 }
 
+int err_expected (const char* v) {
+    sprintf(ALL.err, "(ln %ld, col %ld): expected %s : have %s",
+        ALL.tk1.lin, ALL.tk1.col, v, lexer_tk2str(&ALL.tk1));
+    return 0;
+}
+
 static int parser_expr_one (Expr* ret) {
     // EXPR_UNIT
     if (accept('(')) {
         if (accept(')')) {
             *ret = (Expr) { EXPR_UNIT };
         } else {
-            return 0;
+            if (!parser_expr(ret)) {
+                return 0;
+            }
+    // EXPR_PARENS
+            if (!accept(')')) {
+                return err_expected("`)´");
+            }
         }
-    } else {
-        return 0;
     }
     return 1;
 }

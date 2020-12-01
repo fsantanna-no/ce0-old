@@ -7,18 +7,18 @@
 void t_lexer (void) {
     {
         all_init(stropen("r", 0, "-- foobar"));
-        assert(ALL.tk1.enu == EOF);
+        assert(ALL.tk1.enu == TK_EOF);
         fclose(ALL.inp);
     }
     {
         all_init(stropen("r", 0, "-- foobar"));
-        assert(ALL.tk1.enu == EOF); assert(ALL.tk1.lin == 1); printf(">>> %ld\n", ALL.tk1.col); assert(ALL.tk1.col == 10);
-        lexer(); assert(ALL.tk1.enu == EOF);
+        assert(ALL.tk1.enu == TK_EOF); assert(ALL.tk1.lin == 1); assert(ALL.tk1.col == 10);
+        lexer(); assert(ALL.tk1.enu == TK_EOF);
         fclose(ALL.inp);
     }
     {
         all_init(stropen("r", 0, "-- c1\n--c2\n\n"));
-        assert(ALL.tk1.enu == EOF);
+        assert(ALL.tk1.enu == TK_EOF);
         fclose(ALL.inp);
     }
     {
@@ -27,7 +27,7 @@ void t_lexer (void) {
         lexer(); assert(ALL.tk1.enu == TK_VAR); assert(!strcmp(ALL.tk1.val.s, "c2")); assert(ALL.tk1.lin == 2);
         lexer(); assert(ALL.tk1.enu == TK_VAR); assert(!strcmp(ALL.tk1.val.s, "c3")); assert(ALL.tk1.col == 4);
         lexer(); assert(ALL.tk1.enu == TK_VAR); assert(!strcmp(ALL.tk1.val.s, "c4"));
-        lexer(); assert(ALL.tk1.enu == EOF);
+        lexer(); assert(ALL.tk1.enu == TK_EOF);
         fclose(ALL.inp);
     }
     {
@@ -37,7 +37,7 @@ void t_lexer (void) {
         lexer(); assert(ALL.tk1.enu == TK_TYPE); assert(!strcmp(ALL.tk1.val.s, "Ca")); assert(ALL.tk1.lin == 1);
         lexer(); assert(ALL.tk1.enu == TK_VAR);  assert(!strcmp(ALL.tk1.val.s, "a")); assert(ALL.tk1.col == 10);
         lexer(); assert(ALL.tk1.enu == TK_TYPE); assert(!strcmp(ALL.tk1.val.s, "C"));
-        lexer(); assert(ALL.tk1.enu == EOF);
+        lexer(); assert(ALL.tk1.enu == TK_EOF);
         fclose(ALL.inp);
     }
     {
@@ -45,7 +45,7 @@ void t_lexer (void) {
         assert(ALL.tk1.enu == TK_VAL);
         lexer(); assert(ALL.tk1.enu == TK_VAR); assert(!strcmp(ALL.tk1.val.s, "xval")); assert(ALL.tk1.col == 5);
         lexer(); assert(ALL.tk1.enu == TK_VAR); assert(!strcmp(ALL.tk1.val.s, "valx"));
-        lexer(); assert(ALL.tk1.enu == EOF);
+        lexer(); assert(ALL.tk1.enu == TK_EOF);
         fclose(ALL.inp);
     }
     {
@@ -59,7 +59,7 @@ void t_lexer (void) {
 }
 
 void t_parser_expr (void) {
-    // PARENS
+    // UNIT
     {
         all_init(stropen("r", 0, "()"));
         Expr e;
@@ -67,11 +67,20 @@ void t_parser_expr (void) {
         assert(e.sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
+    // PARENS
     {
         all_init(stropen("r", 0, "(())"));
         Expr e;
         assert(parser_expr(&e));
         assert(e.sub == EXPR_UNIT);
+        fclose(ALL.inp);
+    }
+    {
+        all_init(stropen("r", 0, "("));
+        Expr e;
+        assert(!parser_expr(&e));
+//puts(ALL.err);
+        assert(!strcmp(ALL.err, "(ln 1, col 2): expected `)´ : have end of file"));
         fclose(ALL.inp);
     }
 }
