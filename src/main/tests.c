@@ -111,12 +111,23 @@ void t_lexer (void) {
     }
     // SYMBOLS
     {
-        all_init(NULL, stropen("r", 0, ": }.{ :"));
+        all_init(NULL, stropen("r", 0, ": }{ :"));
         assert(ALL.tk1.enu == ':');
         lexer(); assert(ALL.tk1.enu == '}');
-        lexer(); assert(ALL.tk1.enu == '.');
         lexer(); assert(ALL.tk1.enu == '{');
-        lexer(); assert(ALL.tk1.enu == ':'); assert(ALL.tk1.col == 7);
+        lexer(); assert(ALL.tk1.enu == ':'); assert(ALL.tk1.col == 6);
+        fclose(ALL.inp);
+    }
+    // TUPLE INDEX
+    {
+        all_init(NULL, stropen("r", 0, ".1a"));
+        assert(ALL.tk1.enu == TK_ERR);
+        fclose(ALL.inp);
+    }
+    {
+        all_init(NULL, stropen("r", 0, ".10"));
+        assert(ALL.tk1.enu == TK_INDEX);
+        assert(ALL.tk1.val.n == 10);
         fclose(ALL.inp);
     }
 }
@@ -239,6 +250,25 @@ void t_parser_expr (void) {
         assert(e.Call.func->Call.func->sub == EXPR_CALL);
         assert(e.Call.func->Call.func->Call.func->sub == EXPR_VAR);
         assert(!strcmp(e.Call.func->Call.func->Call.func->tk.val.s, "f"));
+        fclose(ALL.inp);
+    }
+    // EXPR_INDEX
+    {
+        all_init(NULL, stropen("r", 0, "x.1"));
+        Expr e;
+        assert(parser_expr(&e));
+        assert(e.sub == EXPR_INDEX);
+        assert(e.Index.tuple->sub == EXPR_VAR);
+        assert(e.Index.index == 1);
+        fclose(ALL.inp);
+    }
+    {
+        all_init(NULL, stropen("r", 0, "x().1()"));
+        Expr e;
+        assert(parser_expr(&e));
+        assert(e.sub == EXPR_CALL);
+        assert(e.Call.func->sub == EXPR_INDEX);
+        assert(e.Call.func->Index.tuple->sub == EXPR_CALL);
         fclose(ALL.inp);
     }
 }

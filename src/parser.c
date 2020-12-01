@@ -76,20 +76,29 @@ int parser_expr (Expr* ret) {
     }
     *ret = e;
 
+    while (1) {
     // EXPR_CALL
-    while (check('(')) {                // only checks, arg will accept
-        Expr arg;
-        if (!parser_expr_one(&arg)) {   // f().() and not f.()()
-            return 0;
-        }
-        Expr* parg = malloc(sizeof(Expr));
-        *parg = arg;
-        assert(parg != NULL);
+        if (check('(')) {                // only checks, arg will accept
+            Expr arg;
+            if (!parser_expr_one(&arg)) {   // f().() and not f.()()
+                return 0;
+            }
+            Expr* parg = malloc(sizeof(Expr));
+            *parg = arg;
+            assert(parg != NULL);
 
-        Expr* func = malloc(sizeof(Expr));
-        assert(func != NULL);
-        *func = *ret;
-        *ret  = (Expr) { EXPR_CALL, .Call={func,parg} };
+            Expr* func = malloc(sizeof(Expr));
+            assert(func != NULL);
+            *func = *ret;
+            *ret  = (Expr) { EXPR_CALL, .Call={func,parg} };
+        } else if (accept(TK_INDEX)) {
+            Expr* tup = malloc(sizeof(Expr));
+            assert(tup != NULL);
+            *tup = *ret;
+            *ret = (Expr) { EXPR_INDEX, .Index={tup,ALL.tk0.val.n} };
+        } else {
+            break;
+        }
     }
 
     return 1;

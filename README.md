@@ -18,7 +18,6 @@ The following symbols are used:
     {   }       -- block delimeters
     (   )       -- unit type, unit value, group expressions
     :           -- type declarations
-    .           -- tuple indexing, data discriminator
     ,           -- tuple separator
 ```
 
@@ -54,6 +53,14 @@ digits, and underscores:
 _char    _printf    _i99        -- native identifiers
 ```
 
+## Tuple index
+
+A tuple index is a number prefixed but a dot:
+
+```
+.2      -- second tuple item
+```
+
 # Expressions
 
 ## Unit
@@ -87,6 +94,12 @@ A tuple holds a fixed number of values of different types:
 ```
 ((),())     -- a pair of units
 (x,(),y)    -- a triple
+```
+
+A tuple index holds the value at the given position:
+
+```
+(x,()).2    -- returns ()
 ```
 
 ## Calls

@@ -3,6 +3,7 @@ typedef enum {
     EXPR_NATIVE,
     EXPR_VAR,
     EXPR_TUPLE,
+    EXPR_INDEX,
     EXPR_CALL
 } EXPR;
 
@@ -20,6 +21,10 @@ typedef struct Expr {
             int size;
             struct Expr* vec;
         } Tuple;
+        struct {        // EXPR_INDEX
+            struct Expr* tuple;
+            int index;
+        } Index;
         struct {        // EXPR_CALL
             struct Expr* func;
             struct Expr* arg;

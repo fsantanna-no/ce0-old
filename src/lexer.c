@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -49,11 +50,26 @@ static TK lx_token (TK_val* val) {
         case ')':
         case ':':
         case ',':
-        case '.':
             return c;
 
         case EOF:
             return TK_EOF;
+
+        case '.': {
+            c = fgetc(ALL.inp);
+            int i = 0;
+            while (isalnum(c)) {
+                if (isdigit(c)) {
+                    val->s[i++] = c;
+                } else {
+                    return TK_ERR;
+                }
+                c = fgetc(ALL.inp);
+            }
+            val->n = atoi(val->s);
+            ungetc(c, ALL.inp);
+            return TK_INDEX;
+        }
 
         default:
             if (isalpha(c) || c=='_') {

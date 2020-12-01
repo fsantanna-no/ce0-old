@@ -9,6 +9,8 @@ typedef enum {
     TK_VAR,
     TK_TYPE,
 
+    TK_INDEX,
+
     TK_RESERVED,    // all reserved keywords
     TK_CALL,
     TK_VAL
