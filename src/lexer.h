@@ -3,6 +3,8 @@ typedef enum {
 
     // all single-char tokens
     TK_TOK = 256,
+    TK_VAR,
+    TK_TYPE,
 
     TK_COMMENT,
 } TK_enu;

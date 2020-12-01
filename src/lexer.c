@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #include "all.h"
 
@@ -27,6 +28,22 @@ TK_enu lx_token (TK_val* val) {
                 }
             }
             return TK_COMMENT;
+
+        default:
+            if (!isalpha(c)) {
+                val->n = c;
+                return TK_ERR;
+            }
+
+            int i = 0;
+            while (isalnum(c) || c=='_') {
+                val->s[i++] = c;
+                c = fgetc(ALL.inp);
+            }
+            val->s[i] = '\0';
+            ungetc(c, ALL.inp);
+
+            return (islower(val->s[0]) ? TK_VAR : TK_TYPE);
     }
     assert(0 && "bug found");
 }
