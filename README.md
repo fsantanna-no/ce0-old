@@ -18,6 +18,7 @@ The following symbols are used:
     {   }       -- block delimeters
     (   )       -- unit type, unit value, group expressions
     :           -- declarations
+    ,           -- tuple separator
 ```
 
 ## Keywords
@@ -44,8 +45,36 @@ Int     A           Tree        -- types
 
 ## Unit
 
-The unit value is the unique value of the [unit type]:
+The unit value is the unique value of the [unit type](TODO):
 
 ```
 ()
+```
+
+## Variables
+
+A variable holds a value of its type:
+
+```
+i       myCounter   x10
+```
+
+## Tuples
+
+A tuple holds a fixed number of values of different types:
+
+```
+((),())     -- a pair of units
+(x,(),y)    -- a triple
+```
+
+## Calls
+
+A call invokes an expression as a function with the argument starting with
+parenthesis:
+
+```
+f()         -- f   receives unit     ()
+(id)(x)     -- id  receives variable x
+add(x,y)    -- add receives tuple    (x,y)
 ```

@@ -26,7 +26,7 @@ const char* lexer_tk2str (Tk* tk) {
             sprintf(str, "end of file");
             break;
         default:
-            if (tk->enu < TK_SINGLE) {
+            if (tk->enu>0 && tk->enu<TK_SINGLE) {
                 sprintf(str, "`%c´", tk->enu);
             } else {
 //printf("%d\n", tk->enu);
@@ -46,6 +46,7 @@ static TK lx_token (TK_val* val) {
         case ')':
         case '{':
         case '}':
+        case ',':
         case ':':
             return c;
 

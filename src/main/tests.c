@@ -79,8 +79,15 @@ void t_parser_expr (void) {
         all_init(stropen("r", 0, "("));
         Expr e;
         assert(!parser_expr(&e));
-//puts(ALL.err);
         assert(!strcmp(ALL.err, "(ln 1, col 2): expected expression : have end of file"));
+        fclose(ALL.inp);
+    }
+    {
+        all_init(stropen("r", 0, "(x"));
+        Expr e;
+        assert(!parser_expr(&e));
+//puts(ALL.err);
+        assert(!strcmp(ALL.err, "(ln 1, col 3): expected `)´ : have end of file"));
         fclose(ALL.inp);
     }
     {
@@ -110,6 +117,57 @@ void t_parser_expr (void) {
         Expr e;
         assert(parser_expr(&e));
         assert(e.sub == EXPR_VAR); assert(!strcmp(e.tk.val.s,"x"));
+        fclose(ALL.inp);
+    }
+    // EXPR_TUPLE
+    {
+        all_init(stropen("r", 0, "((),x,"));
+        Expr e;
+        assert(!parser_expr(&e));
+        assert(!strcmp(ALL.err, "(ln 1, col 7): expected expression : have end of file"));
+    }
+    {
+        all_init(stropen("r", 0, "((),)"));
+        Expr e;
+        assert(!parser_expr(&e));
+        assert(!strcmp(ALL.err, "(ln 1, col 5): expected expression : have `)´"));
+    }
+    {
+        all_init(stropen("r", 0, "((),x:"));
+        Expr e;
+        assert(!parser_expr(&e));
+        assert(!strcmp(ALL.err, "(ln 1, col 6): expected `)´ : have `:´"));
+    }
+    {
+        all_init(stropen("r", 0, "((),x,())"));
+        Expr e;
+        assert(parser_expr(&e));
+        assert(e.sub == EXPR_TUPLE);
+        assert(e.Tuple.size == 3);
+        assert(e.Tuple.vec[1].sub == EXPR_VAR && !strcmp(e.Tuple.vec[1].tk.val.s,"x"));
+        assert(e.Tuple.vec[2].sub == EXPR_UNIT);
+        fclose(ALL.inp);
+    }
+    // EXPR_CALL
+    {
+        all_init(stropen("r", 0, "xxx (  )"));
+        Expr e;
+        assert(parser_expr(&e));
+        assert(e.sub == EXPR_CALL);
+        assert(e.Call.func->sub == EXPR_VAR);
+        assert(!strcmp(e.Call.func->tk.val.s, "xxx"));
+        assert(e.Call.arg->sub == EXPR_UNIT);
+        fclose(ALL.inp);
+    }
+    {
+        all_init(stropen("r", 0, "f()\n(  )\n()"));
+        Expr e;
+        assert(parser_expr(&e));
+        assert(e.sub == EXPR_CALL);
+        assert(e.Call.func->sub == EXPR_CALL);
+        assert(e.Call.func->Call.func->sub == EXPR_CALL);
+        assert(e.Call.func->Call.func->Call.func->sub == EXPR_VAR);
+        assert(!strcmp(e.Call.func->Call.func->Call.func->tk.val.s, "f"));
         fclose(ALL.inp);
     }
 }

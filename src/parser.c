@@ -1,3 +1,6 @@
+#include <assert.h>
+#include <stdlib.h>
+
 #include "all.h"
 
 int accept (TK enu) {
@@ -7,6 +10,10 @@ int accept (TK enu) {
     } else {
         return 0;
     }
+}
+
+int check (TK enu) {
+    return (ALL.tk1.enu == enu);
 }
 
 int err_expected (const char* v) {
@@ -24,8 +31,26 @@ static int parser_expr_one (Expr* ret) {
             if (!parser_expr(ret)) {
                 return 0;
             }
+    // EXPR_TUPLE
+            if (check(',')) {
+                int n = 1;
+                Expr* vec = malloc(n*sizeof(Expr));
+                vec[n-1] = *ret;
+                while (accept(',')) {
+                    Expr e;
+                    if (!parser_expr(&e)) {
+                        return 0;
+                    }
+                    n++;
+                    vec = realloc(vec, n*sizeof(Expr));
+                    vec[n-1] = e;
+                }
+                if (!accept(')')) {
+                    return err_expected("`)´");
+                }
+                *ret = (Expr) { EXPR_TUPLE, .Tuple={n,vec} };
     // EXPR_PARENS
-            if (!accept(')')) {
+            } else if (!accept(')')) {
                 return err_expected("`)´");
             }
         }
@@ -40,5 +65,27 @@ static int parser_expr_one (Expr* ret) {
 }
 
 int parser_expr (Expr* ret) {
-    return parser_expr_one(ret);
+    Expr e;
+    if (!parser_expr_one(&e)) {
+        return 0;
+    }
+    *ret = e;
+
+    // EXPR_CALL
+    while (check('(')) {                // only checks, arg will accept
+        Expr arg;
+        if (!parser_expr_one(&arg)) {   // f().() and not f.()()
+            return 0;
+        }
+        Expr* parg = malloc(sizeof(Expr));
+        *parg = arg;
+        assert(parg != NULL);
+
+        Expr* func = malloc(sizeof(Expr));
+        assert(func != NULL);
+        *func = *ret;
+        *ret  = (Expr) { EXPR_CALL, .Call={func,parg} };
+    }
+
+    return 1;
 }
