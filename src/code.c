@@ -23,6 +23,21 @@ void code_expr (Expr e) {
             code_expr(*e.Call.arg);
             out(")");
             break;
+        case EXPR_TUPLE:
+            out("{ ");
+            for (int i=0; i<e.Tuple.size; i++) {
+                //fprintf (ALL.out[OGLOB], "%c _%d=", ((i==0) ? ' ' : ','), i);
+                if (i != 0) {
+                    out(",");
+                }
+                code_expr(e.Tuple.vec[i]);
+            }
+            out(" }");
+            break;
+        case EXPR_INDEX:
+            code_expr(*e.Index.tuple);
+            fprintf(ALL.out, "._%d", e.Index.index);
+            break;
     }
 }
 

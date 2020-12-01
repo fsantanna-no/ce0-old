@@ -17,7 +17,7 @@ int all (const char* xp, char* src) {
     }
     code(s);
     fclose(ALL.out);
-#if 0
+#if 1
 puts(">>>");
 puts(out);
 puts("<<<");
@@ -297,6 +297,7 @@ void t_parser_stmt (void) {
 }
 
 void t_code (void) {
+    // EXPR_UNIT
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
@@ -305,6 +306,7 @@ void t_code (void) {
         fclose(ALL.out);
         assert(!strcmp(out,"1"));
     }
+    // EXPR_VAR
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
@@ -315,6 +317,7 @@ void t_code (void) {
         fclose(ALL.out);
         assert(!strcmp(out,"xxx"));
     }
+    // EXPR_NATIVE
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
@@ -325,12 +328,37 @@ void t_code (void) {
         fclose(ALL.out);
         assert(!strcmp(out,"printf"));
     }
+    // EXPR_TUPLE
+    {
+        char out[256];
+        all_init(stropen("w",sizeof(out),out), NULL);
+        Expr es[2] = {{EXPR_UNIT},{EXPR_UNIT}};
+        Expr e = { EXPR_TUPLE, {.Tuple={2,es}} };
+        code_expr(e);
+        fclose(ALL.out);
+        assert(!strcmp(out,"{ 1,1 }"));
+    }
+    // EXPR_INDEX
+    {
+        char out[256];
+        all_init(stropen("w",sizeof(out),out), NULL);
+        Expr es[2] = {{EXPR_UNIT},{EXPR_UNIT}};
+        Expr tuple = { EXPR_TUPLE, {.Tuple={2,es}} };
+        Expr e = { EXPR_INDEX, { .Index={.tuple=&tuple,.index=2} } };
+        code_expr(e);
+        fclose(ALL.out);
+        assert(!strcmp(out,"{ 1,1 }._2"));
+    }
 }
 
 void t_all (void) {
     assert(all(
         "()\n",
         "call _show_Unit(())\n"
+    ));
+    assert(all(
+        "()\n",
+        "call _show_Unit(((),()).1)\n"
     ));
 }
 

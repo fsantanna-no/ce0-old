@@ -27,6 +27,9 @@ const char* lexer_tk2str (Tk* tk) {
         case TK_EOF:
             sprintf(str, "end of file");
             break;
+        case TK_NATIVE:
+            strcpy(str, tk->val.s);
+            break;
         default:
             if (tk->enu>0 && tk->enu<TK_SINGLE) {
                 sprintf(str, "`%c´", tk->enu);

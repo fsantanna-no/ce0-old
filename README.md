@@ -15,10 +15,11 @@ A comment starts with `--` and runs until the end of the line:
 The following symbols are used:
 
 ```
-    {   }       -- block delimeters
-    (   )       -- unit type, unit value, group expressions
-    :           -- type declarations
+    {   }       -- block delimeter
+    (   )       -- unit type, unit value, group expression
+    :           -- type declaration
     ,           -- tuple separator
+    .           -- tuple index
 ```
 
 ## Keywords
@@ -51,14 +52,6 @@ digits, and underscores:
 
 ```
 _char    _printf    _i99        -- native identifiers
-```
-
-## Tuple index
-
-A tuple index is a number prefixed but a dot:
-
-```
-.2      -- second tuple item
 ```
 
 # Expressions
