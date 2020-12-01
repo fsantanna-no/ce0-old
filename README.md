@@ -56,7 +56,7 @@ The unit value is the unique value of the [unit type](TODO):
 A variable holds a value of its type:
 
 ```
-i       myCounter   x10
+i    myCounter    x10
 ```
 
 ## Tuples
@@ -77,4 +77,14 @@ parenthesis:
 f()         -- f   receives unit     ()
 (id)(x)     -- id  receives variable x
 add(x,y)    -- add receives tuple    (x,y)
+```
+
+# Statements
+
+## Calls
+
+A call invokes a call expression:
+
+```
+call f()    -- calls f passing ()
 ```

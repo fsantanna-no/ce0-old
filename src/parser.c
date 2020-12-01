@@ -22,6 +22,8 @@ int err_expected (const char* v) {
     return 0;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
 static int parser_expr_one (Expr* ret) {
     // EXPR_UNIT
     if (accept('(')) {
@@ -88,4 +90,19 @@ int parser_expr (Expr* ret) {
     }
 
     return 1;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+
+int parser_stmt (Stmt* ret) {
+    if (accept(TK_CALL)) {
+        Expr e;
+        if (!parser_expr(&e)) {
+            return 0;
+        }
+        *ret = (Stmt) { STMT_CALL, .call=e };
+        return 1;
+    }
+    return 0;
 }

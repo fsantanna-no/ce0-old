@@ -172,8 +172,22 @@ void t_parser_expr (void) {
     }
 }
 
+void t_parser_stmt (void) {
+    {
+        all_init(stropen("r", 0, "call f()"));
+        Stmt s;
+        assert(parser_stmt(&s));
+        assert(s.sub == STMT_CALL);
+        assert(s.call.sub == EXPR_CALL);
+        assert(s.call.Call.func->sub == EXPR_VAR);
+        assert(!strcmp(s.call.Call.func->tk.val.s,"f"));
+        fclose(ALL.inp);
+    }
+}
+
 void t_parser (void) {
     t_parser_expr();
+    t_parser_stmt();
 }
 
 int main (void) {

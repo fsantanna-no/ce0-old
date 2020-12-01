@@ -6,6 +6,7 @@
 #include "all.h"
 
 static char* reserved[] = {
+    "call",
     "val"
 };
 
