@@ -24,6 +24,53 @@ int err_expected (const char* v) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+int parser_type (Type* ret) {
+    // TYPE_UNIT
+    if (accept('(')) {
+        if (accept(')')) {
+            *ret = (Type) { TYPE_UNIT };
+        } else {
+            if (!parser_type(ret)) {
+                return 0;
+            }
+
+    // TYPE_TUPLE
+            if (check(',')) {
+                int n = 1;
+                Type* vec = malloc(n*sizeof(Type));
+                vec[n-1] = *ret;
+                while (accept(',')) {
+                    Type tp;
+                    if (!parser_type(&tp)) {
+                        return 0;
+                    }
+                    n++;
+                    vec = realloc(vec, n*sizeof(Type));
+                    vec[n-1] = tp;
+                }
+                if (!accept(')')) {
+                    return err_expected("`)´");
+                }
+                *ret = (Type) { TYPE_TUPLE, .Tuple={n,vec} };
+
+    // TYPE_PARENS
+            } else if (!accept(')')) {
+                return err_expected("`)`");
+            }
+        }
+
+    // TYPE_NATIVE
+    } else if (accept(TK_NATIVE)) {
+        *ret = (Type) { TYPE_NATIVE, .tk=ALL.tk0 };
+
+    } else {
+        return err_expected("type");
+    }
+    return 1;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 static int parser_expr_one (Expr* ret) {
     // EXPR_UNIT
     if (accept('(')) {
@@ -33,6 +80,7 @@ static int parser_expr_one (Expr* ret) {
             if (!parser_expr(ret)) {
                 return 0;
             }
+
     // EXPR_TUPLE
             if (check(',')) {
                 int n = 1;
@@ -51,14 +99,17 @@ static int parser_expr_one (Expr* ret) {
                     return err_expected("`)´");
                 }
                 *ret = (Expr) { EXPR_TUPLE, .Tuple={n,vec} };
+
     // EXPR_PARENS
             } else if (!accept(')')) {
                 return err_expected("`)´");
             }
         }
+
     // EXPR_NATIVE
     } else if (accept(TK_NATIVE)) {
         *ret = (Expr) { EXPR_NATIVE, .tk=ALL.tk0 };
+
     // EXPR_VAR
     } else if (accept(TK_VAR)) {
         *ret = (Expr) { EXPR_VAR, .tk=ALL.tk0 };

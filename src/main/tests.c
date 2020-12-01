@@ -132,6 +132,41 @@ void t_lexer (void) {
     }
 }
 
+void t_parser_type (void) {
+    {
+        all_init(NULL, stropen("r", 0, "_char"));
+        Type tp;
+        parser_type(&tp);
+        assert(tp.sub == TYPE_NATIVE);
+        assert(!strcmp(tp.tk.val.s,"_char"));
+        fclose(ALL.inp);
+    }
+    {
+        all_init(NULL, stropen("r", 0, "()"));
+        Type tp;
+        parser_type(&tp);
+        assert(tp.sub == TYPE_UNIT);
+        fclose(ALL.inp);
+    }
+    {
+        all_init(NULL, stropen("r", 0, "((),())"));
+        Type tp;
+        parser_type(&tp);
+        assert(tp.sub == TYPE_TUPLE);
+        assert(tp.Tuple.size == 2);
+        assert(tp.Tuple.vec[1].sub == TYPE_UNIT);
+        fclose(ALL.inp);
+    }
+    {
+        all_init(NULL, stropen("r", 0, "xxx"));
+        Type tp;
+        parser_type(&tp);
+//puts(ALL.err);
+        assert(!strcmp(ALL.err, "(ln 1, col 1): expected type : have \"xxx\""));
+        fclose(ALL.inp);
+    }
+}
+
 void t_parser_expr (void) {
     // UNIT
     {
@@ -363,6 +398,7 @@ void t_all (void) {
 }
 
 void t_parser (void) {
+    t_parser_type();
     t_parser_expr();
     t_parser_stmt();
 }

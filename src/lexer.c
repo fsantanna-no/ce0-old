@@ -28,7 +28,8 @@ const char* lexer_tk2str (Tk* tk) {
             sprintf(str, "end of file");
             break;
         case TK_NATIVE:
-            strcpy(str, tk->val.s);
+        case TK_VAR:
+            sprintf(str, "\"%s\"", tk->val.s);
             break;
         default:
             if (tk->enu>0 && tk->enu<TK_SINGLE) {

@@ -1,4 +1,12 @@
 typedef enum {
+    TYPE_NONE,
+    TYPE_UNIT,
+    TYPE_NATIVE,
+    TYPE_TUPLE,
+    TYPE_FUNC
+} TYPE;
+
+typedef enum {
     EXPR_UNIT = 1,
     EXPR_NATIVE,
     EXPR_VAR,
@@ -12,6 +20,22 @@ typedef enum {
 } STMT;
 
 ///////////////////////////////////////////////////////////////////////////////
+
+typedef struct Type {
+    TYPE sub;
+    union {
+        Tk tk;          // TYPE_NATIVE
+        struct {        // TYPE_TUPLE
+            int size;
+            struct Type* vec;
+        } Tuple;
+        struct {        // TYPE_FUNC
+            struct Type* inp;
+            struct Type* out;
+        } Func;
+    };
+} Type;
+
 
 typedef struct Expr {
     EXPR sub;
@@ -35,11 +59,16 @@ typedef struct Expr {
 typedef struct Stmt {
     STMT sub;
     union {
+        struct {
+            Type type;
+            Tk   var;
+        } Decl;
         Expr call;      // STMT_CALL
     };
 } Stmt;
 
 ///////////////////////////////////////////////////////////////////////////////
 
+int parser_type (Type* ret);
 int parser_expr (Expr* ret);
 int parser_stmt (Stmt* ret);
