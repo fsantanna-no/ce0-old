@@ -128,6 +128,14 @@ void t_parser_expr (void) {
         assert(e.sub == EXPR_VAR); assert(!strcmp(e.tk.val.s,"x"));
         fclose(ALL.inp);
     }
+    // EXPR_NATIVE
+    {
+        all_init(stropen("r", 0, "_x"));
+        Expr e;
+        assert(parser_expr(&e));
+        assert(e.sub == EXPR_NATIVE); assert(!strcmp(e.tk.val.s,"_x"));
+        fclose(ALL.inp);
+    }
     // EXPR_TUPLE
     {
         all_init(stropen("r", 0, "((),x,"));
@@ -190,6 +198,16 @@ void t_parser_stmt (void) {
         assert(s.call.sub == EXPR_CALL);
         assert(s.call.Call.func->sub == EXPR_VAR);
         assert(!strcmp(s.call.Call.func->tk.val.s,"f"));
+        fclose(ALL.inp);
+    }
+    {
+        all_init(stropen("r", 0, "call _printf()"));
+        Stmt s;
+        assert(parser_stmt(&s));
+        assert(s.sub == STMT_CALL);
+        assert(s.call.sub == EXPR_CALL);
+        assert(s.call.Call.func->sub == EXPR_NATIVE);
+        assert(!strcmp(s.call.Call.func->tk.val.s,"_printf"));
         fclose(ALL.inp);
     }
 }

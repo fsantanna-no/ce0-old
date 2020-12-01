@@ -1,5 +1,6 @@
 typedef enum {
     EXPR_UNIT = 1,
+    EXPR_NATIVE,
     EXPR_VAR,
     EXPR_TUPLE,
     EXPR_CALL
@@ -14,7 +15,7 @@ typedef enum {
 typedef struct Expr {
     EXPR sub;
     union {
-        Tk tk;          // EXPR_VAR
+        Tk tk;          // EXPR_NATIVE, EXPR_VAR
         struct {        // EXPR_TUPLE
             int size;
             struct Expr* vec;

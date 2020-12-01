@@ -56,6 +56,9 @@ static int parser_expr_one (Expr* ret) {
                 return err_expected("`)´");
             }
         }
+    // EXPR_NATIVE
+    } else if (accept(TK_NATIVE)) {
+        *ret = (Expr) { EXPR_NATIVE, .tk=ALL.tk0 };
     // EXPR_VAR
     } else if (accept(TK_VAR)) {
         *ret = (Expr) { EXPR_VAR, .tk=ALL.tk0 };
