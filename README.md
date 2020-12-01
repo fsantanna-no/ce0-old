@@ -31,14 +31,25 @@ The following keywords are reserved and cannot be used as identifiers:
 
 ## Identifiers
 
-Identifiers for variables and types must start with a letter and might contain
-letters, numbers and underscores.
-A variable starts with a lowercase letter and a type starts with an uppercase
-letter:
+A variable identifier starts with a  lowercase letter and might contain
+letters, digits, and underscores:
 
 ```
-i       myCounter   x10         -- variables
-Int     A           Tree        -- types
+i       myCounter   x10         -- variable identifiers
+```
+
+A type identifier starts with an uppercase letter and might contain letters,
+digits, and underscores:
+
+```
+Int     A10         Tree        -- type identifiers
+```
+
+A native identifier starts with an underscore and might contain letters,
+digits, and underscores:
+
+```
+_char    _printf    _i99        -- native identifiers
 ```
 
 # Expressions
@@ -57,6 +68,14 @@ A variable holds a value of its type:
 
 ```
 i    myCounter    x10
+```
+
+## Native symbols
+
+A native symbol holds a value from the host language:
+
+```
+_printf    _i99
 ```
 
 ## Tuples

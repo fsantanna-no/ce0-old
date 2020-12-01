@@ -5,6 +5,7 @@ typedef enum {
 
     TK_EOF,
 
+    TK_NATIVE,
     TK_VAR,
     TK_TYPE,
 

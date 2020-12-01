@@ -5,6 +5,7 @@
 #include "../all.h"
 
 void t_lexer (void) {
+    // COMMENTS
     {
         all_init(stropen("r", 0, "-- foobar"));
         assert(ALL.tk1.enu == TK_EOF);
@@ -21,6 +22,7 @@ void t_lexer (void) {
         assert(ALL.tk1.enu == TK_EOF);
         fclose(ALL.inp);
     }
+    // IDENTIFIERS
     {
         all_init(stropen("r", 0, "c1\nc2 c3  \n    \nc4"));
         assert(ALL.tk1.enu == TK_VAR); assert(!strcmp(ALL.tk1.val.s, "c1"));
@@ -41,6 +43,12 @@ void t_lexer (void) {
         fclose(ALL.inp);
     }
     {
+        all_init(stropen("r", 0, "_char _Tp"));
+        assert(ALL.tk1.enu == TK_NATIVE);  assert(!strcmp(ALL.tk1.val.s, "_char"));
+        lexer(); assert(ALL.tk1.enu == TK_NATIVE); assert(!strcmp(ALL.tk1.val.s, "_Tp"));
+        fclose(ALL.inp);
+    }
+    {
         all_init(stropen("r", 0, "val xval valx"));
         assert(ALL.tk1.enu == TK_VAL);
         lexer(); assert(ALL.tk1.enu == TK_VAR); assert(!strcmp(ALL.tk1.val.s, "xval")); assert(ALL.tk1.col == 5);
@@ -48,6 +56,7 @@ void t_lexer (void) {
         lexer(); assert(ALL.tk1.enu == TK_EOF);
         fclose(ALL.inp);
     }
+    // SYMBOLS
     {
         all_init(stropen("r", 0, ": }{ :"));
         assert(ALL.tk1.enu == ':');

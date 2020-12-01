@@ -55,7 +55,9 @@ static TK lx_token (TK_val* val) {
             return TK_EOF;
 
         default:
-            if (!isalpha(c)) {
+            if (isalpha(c) || c=='_') {
+                // var,type,native
+            } else {
                 val->n = c;
                 return TK_ERR;
             }
@@ -73,7 +75,15 @@ static TK lx_token (TK_val* val) {
                 return key;
             }
 
-            return (islower(val->s[0]) ? TK_VAR : TK_TYPE);
+            if (val->s[0] == '_') {
+                return TK_NATIVE;
+            } else if (islower(val->s[0])) {
+                return TK_VAR;
+            } else if (isupper(val->s[0])) {
+                return TK_TYPE;
+            } else {
+                // impossible case
+            }
     }
     assert(0 && "bug found");
 }
