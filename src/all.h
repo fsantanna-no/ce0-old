@@ -6,7 +6,7 @@
 FILE* stropen  (const char* mode, size_t size, char* str);
 
 typedef struct {
-    FILE* inp;
+    FILE  *out, *inp;
     char  err[256];
     long  lin,col;
     Tk    tk0,tk1;
@@ -14,4 +14,4 @@ typedef struct {
 
 extern All ALL;
 
-void all_init (FILE* inp);
+void all_init (FILE* out, FILE* inp);
