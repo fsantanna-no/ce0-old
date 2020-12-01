@@ -10,6 +10,15 @@ A comment starts with `--` and runs until the end of the line:
 -- this is a single line comment
 ```
 
+## Symbols
+
+The following symbols are used:
+
+```
+    {   }       -- open/close blocks
+    :           -- declarations
+```
+
 ## Keywords
 
 The following keywords are reserved and cannot be used as identifiers:

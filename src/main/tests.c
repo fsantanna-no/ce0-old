@@ -52,6 +52,14 @@ void t_lexer (void) {
         assert(lexer().enu == EOF);
         fclose(ALL.inp);
     }
+    {
+        ALL.inp = stropen("r", 0, ": }{ :");
+        assert(lexer().enu == ':');
+        assert(lexer().enu == '}');
+        assert(lexer().enu == '{');
+        assert(lexer().enu == ':');
+        fclose(ALL.inp);
+    }
 }
 
 int main (void) {

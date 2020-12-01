@@ -24,6 +24,9 @@ static TK_enu lx_token (TK_val* val) {
 //printf("0> [%c] [%d]\n", c, c);
     switch (c)
     {
+        case '{':
+        case '}':
+        case ':':
         case EOF:
             return c;
 
