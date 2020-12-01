@@ -80,7 +80,28 @@ void t_parser_expr (void) {
         Expr e;
         assert(!parser_expr(&e));
 //puts(ALL.err);
-        assert(!strcmp(ALL.err, "(ln 1, col 2): expected `)´ : have end of file"));
+        assert(!strcmp(ALL.err, "(ln 1, col 2): expected expression : have end of file"));
+        fclose(ALL.inp);
+    }
+    {
+        all_init(stropen("r", 0, "( ( ) )"));
+        Expr e;
+        assert(parser_expr(&e));
+        assert(e.sub == EXPR_UNIT);
+        fclose(ALL.inp);
+    }
+    {
+        all_init(stropen("r", 0, "(("));
+        Expr e;
+        assert(!parser_expr(&e));
+        assert(!strcmp(ALL.err, "(ln 1, col 3): expected expression : have end of file"));
+        fclose(ALL.inp);
+    }
+    {
+        all_init(stropen("r", 0, "(\n( \n"));
+        Expr e;
+        assert(!parser_expr(&e));
+        assert(!strcmp(ALL.err, "(ln 3, col 1): expected expression : have end of file"));
         fclose(ALL.inp);
     }
 }

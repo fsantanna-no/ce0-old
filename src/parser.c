@@ -29,6 +29,8 @@ static int parser_expr_one (Expr* ret) {
                 return err_expected("`)´");
             }
         }
+    } else {
+        return err_expected("expression");
     }
     return 1;
 }
