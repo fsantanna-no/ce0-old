@@ -10,7 +10,7 @@ typedef enum {
 
     TK_RESERVED,    // all reserved keywords
     TK_VAL
-} TK_enu;
+} TK;
 
 typedef union {
     int  n;
@@ -18,8 +18,8 @@ typedef union {
 } TK_val;
 
 typedef struct {
-    TK_enu enu;
+    TK enu;
     TK_val val;
-} TK_all;
+} Tk;
 
-TK_all lexer (void);
+Tk lexer (void);

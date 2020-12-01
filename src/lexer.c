@@ -19,7 +19,7 @@ static int is_reserved (TK_val* val) {
     return 0;
 }
 
-static TK_enu lx_token (TK_val* val) {
+static TK lx_token (TK_val* val) {
     int c = fgetc(ALL.inp);
 //printf("0> [%c] [%d]\n", c, c);
     switch (c)
@@ -84,8 +84,8 @@ static void lx_blanks (void) {
     }
 }
 
-TK_all lexer (void) {
-    TK_all ret;
+Tk lexer (void) {
+    Tk ret;
     lx_blanks();
     ret.enu = lx_token(&ret.val);
     lx_blanks();
