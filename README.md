@@ -15,7 +15,8 @@ A comment starts with `--` and runs until the end of the line:
 The following symbols are used:
 
 ```
-    {   }       -- open/close blocks
+    {   }       -- block delimeters
+    (   )       -- unit type, unit value, group expressions
     :           -- declarations
 ```
 
@@ -37,4 +38,14 @@ letter:
 ```
 i       myCounter   x10         -- variables
 Int     A           Tree        -- types
+```
+
+# Expressions
+
+## Unit
+
+The unit value is the unique value of the [unit type]:
+
+```
+()
 ```

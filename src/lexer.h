@@ -20,6 +20,8 @@ typedef union {
 typedef struct {
     TK enu;
     TK_val val;
+    long  lin;   // line at token
+    long  col;   // column at token
 } Tk;
 
-Tk lexer (void);
+void lexer (void);

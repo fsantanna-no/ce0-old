@@ -24,28 +24,13 @@ static TK lx_token (TK_val* val) {
 //printf("0> [%c] [%d]\n", c, c);
     switch (c)
     {
+        case '(':
+        case ')':
         case '{':
         case '}':
         case ':':
         case EOF:
             return c;
-
-        case '-':
-            c = fgetc(ALL.inp);
-            if (c != '-') {
-                return TK_ERR;
-            }
-            while (1) {
-                c = fgetc(ALL.inp);
-                if (c == EOF) {
-                    break;      // EOF stops comment
-                }
-                if (c == '\n') {
-                    ungetc(c, ALL.inp);
-                    break;      // NEWLINE stops comment
-                }
-            }
-            return TK_COMMENT;
 
         default:
             if (!isalpha(c)) {
@@ -72,24 +57,54 @@ static TK lx_token (TK_val* val) {
 }
 
 static void lx_blanks (void) {
-    // ignore blanks (spaces and lines)
     while (1) {
         int c = fgetc(ALL.inp);
-        if (c == ' ' || c == '\n') {
-            // continue ignoring
-        } else {
-            ungetc(c, ALL.inp);
-            break;
+//printf("0> [%c] [%d]\n", c, c);
+        switch (c) {
+            case '\n':              // ignore new line
+                ALL.lin++;
+                ALL.col = 1;
+                break;
+            case ' ':               // ignore space
+                ALL.col++;
+                break;
+            case '-':
+                c = fgetc(ALL.inp);
+                if (c == '-') {     // ignore comment
+                    ALL.col++;
+                    ALL.col++;
+                    while (1) {
+                        c = fgetc(ALL.inp);
+                        if (c == EOF) {
+                            break;      // EOF stops comment
+                        }
+                        if (c == '\n') {
+                            ungetc(c, ALL.inp);
+                            break;      // NEWLINE stops comment
+                        }
+                        ALL.col++;
+                    }
+                } else {
+                    ungetc(c, ALL.inp);
+                    ungetc(c, ALL.inp);
+                }
+                break;
+            default:
+                ungetc(c, ALL.inp);
+                return;
         }
     }
 }
 
-Tk lexer (void) {
-    Tk ret;
+void lexer (void) {
+    ALL.tk0 = ALL.tk1;
     lx_blanks();
-    ret.enu = lx_token(&ret.val);
+    ALL.tk1.lin = ALL.lin;
+    ALL.tk1.col = ALL.col;
+    long bef = ftell(ALL.inp);
+    ALL.tk1.enu = lx_token(&ALL.tk1.val);
+    ALL.col += ftell(ALL.inp) - bef;
     lx_blanks();
     //printf("? %d %c\n", ret.enu, ret.enu);
     //printf(": n=%d %d %c\n", ret.val.n, ret.sym, ret.sym);
-    return ret;
 }
