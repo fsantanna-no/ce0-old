@@ -111,11 +111,12 @@ void t_lexer (void) {
     }
     // SYMBOLS
     {
-        all_init(NULL, stropen("r", 0, ": }{ :"));
+        all_init(NULL, stropen("r", 0, ": }.{ :"));
         assert(ALL.tk1.enu == ':');
         lexer(); assert(ALL.tk1.enu == '}');
+        lexer(); assert(ALL.tk1.enu == '.');
         lexer(); assert(ALL.tk1.enu == '{');
-        lexer(); assert(ALL.tk1.enu == ':'); assert(ALL.tk1.col == 6);
+        lexer(); assert(ALL.tk1.enu == ':'); assert(ALL.tk1.col == 7);
         fclose(ALL.inp);
     }
 }

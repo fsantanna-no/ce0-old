@@ -17,7 +17,8 @@ The following symbols are used:
 ```
     {   }       -- block delimeters
     (   )       -- unit type, unit value, group expressions
-    :           -- declarations
+    :           -- type declarations
+    .           -- tuple indexing, data discriminator
     ,           -- tuple separator
 ```
 
@@ -26,7 +27,8 @@ The following symbols are used:
 The following keywords are reserved and cannot be used as identifiers:
 
 ```
-    val
+    call        -- call functions
+    val         -- declare immutable variables
 ```
 
 ## Identifiers
