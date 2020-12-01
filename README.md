@@ -10,6 +10,14 @@ A comment starts with `--` and runs until the end of the line:
 -- this is a single line comment
 ```
 
+## Keywords
+
+The following keywords are reserved and cannot be used as identifiers:
+
+```
+    val
+```
+
 ## Identifiers
 
 Identifiers for variables and types must start with a letter and might contain

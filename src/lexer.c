@@ -1,10 +1,25 @@
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 
 #include "all.h"
 
-TK_enu lx_token (TK_val* val) {
+static char* reserved[] = {
+    "val"
+};
+
+static int is_reserved (TK_val* val) {
+    int N = sizeof(reserved) / sizeof(reserved[0]);
+    for (int i=0; i<N; i++) {
+        if (!strcmp(val->s, reserved[i])) {
+            return TK_RESERVED+1 + i;
+        }
+    }
+    return 0;
+}
+
+static TK_enu lx_token (TK_val* val) {
     int c = fgetc(ALL.inp);
 //printf("0> [%c] [%d]\n", c, c);
     switch (c)
@@ -43,12 +58,17 @@ TK_enu lx_token (TK_val* val) {
             val->s[i] = '\0';
             ungetc(c, ALL.inp);
 
+            int key = is_reserved(val);
+            if (key) {
+                return key;
+            }
+
             return (islower(val->s[0]) ? TK_VAR : TK_TYPE);
     }
     assert(0 && "bug found");
 }
 
-void lx_blanks (void) {
+static void lx_blanks (void) {
     // ignore blanks (spaces and lines)
     while (1) {
         int c = fgetc(ALL.inp);

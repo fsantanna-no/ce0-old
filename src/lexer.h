@@ -1,12 +1,15 @@
 typedef enum {
     TK_ERR = 0,
 
-    // all single-char tokens
-    TK_TOK = 256,
+    TK_TOK = 256,   // all single-char tokens
+
+    TK_COMMENT,
+
     TK_VAR,
     TK_TYPE,
 
-    TK_COMMENT,
+    TK_RESERVED,    // all reserved keywords
+    TK_VAL
 } TK_enu;
 
 typedef union {

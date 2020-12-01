@@ -44,6 +44,14 @@ void t_lexer (void) {
         assert(lexer().enu == EOF);
         fclose(ALL.inp);
     }
+    {
+        ALL.inp = stropen("r", 0, "val xval valx");
+        assert(lexer().enu == TK_VAL);
+        TK_all tk1 = lexer(); assert(tk1.enu == TK_VAR); assert(!strcmp(tk1.val.s, "xval"));
+        TK_all tk2 = lexer(); assert(tk2.enu == TK_VAR); assert(!strcmp(tk2.val.s, "valx"));
+        assert(lexer().enu == EOF);
+        fclose(ALL.inp);
+    }
 }
 
 int main (void) {
