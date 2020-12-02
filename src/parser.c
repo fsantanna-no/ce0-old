@@ -123,6 +123,33 @@ static int parser_expr_one (Expr* ret) {
     } else if (accept(TX_VAR)) {
         *ret = (Expr) { EXPR_VAR, .tk=ALL.tk0 };
 
+    // EXPR_CONS
+    } else if (accept(TX_TYPE)) {       // Bool
+        Tk type = ALL.tk0;
+
+        if (!accept_err('.')) {         // .
+            return 0;
+        }
+
+        if (!accept_err(TX_TYPE)) {     // True
+            return 0;
+        }
+        Tk subtype = ALL.tk0;
+
+        if (!check('(')) { // only checks, arg will accept
+            return err_expected("`(´");
+        }
+
+        Expr arg;
+        if (!parser_expr_one(&arg)) {   // ()
+            return 0;
+        }
+        Expr* parg = malloc(sizeof(Expr));
+        *parg = arg;
+        assert(parg != NULL);
+
+        *ret = (Expr) { EXPR_CONS, { .Cons={type,subtype,parg} } };
+
     } else {
         return err_expected("expression");
     }

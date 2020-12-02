@@ -313,6 +313,17 @@ void t_parser_expr (void) {
         assert(!strcmp(e.Call.func->Call.func->Call.func->tk.val.s, "f"));
         fclose(ALL.inp);
     }
+    // EXPR_CONS
+    {
+        all_init(NULL, stropen("r", 0, "Bool.True ()"));
+        Expr e;
+        assert(parser_expr(&e));
+        assert(e.sub == EXPR_CONS);
+        assert(!strcmp(e.Cons.type.val.s,"Bool"));
+        assert(!strcmp(e.Cons.subtype.val.s,"True"));
+        assert(e.Cons.arg->sub == EXPR_UNIT);
+        fclose(ALL.inp);
+    }
     // EXPR_INDEX
     {
         all_init(NULL, stropen("r", 0, "x.1"));

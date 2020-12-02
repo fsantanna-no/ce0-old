@@ -105,13 +105,20 @@ A tuple index holds the value at the given position:
 
 ## Calls
 
-A call invokes an expression as a function with the argument starting with
-parenthesis:
+A call invokes an expression as a function with the argument:
 
 ```
 f()         -- f   receives unit     ()
 (id)(x)     -- id  receives variable x
 add(x,y)    -- add receives tuple    (x,y)
+```
+
+## Constructors
+
+A constructor creates a value of a type from a given subtype and argument:
+
+```
+True.Bool ()
 ```
 
 # Statements
@@ -165,5 +172,6 @@ Expr ::= `(´ `)´                        -- unit value               ()
       |  `(´ Expr {`,´ Expr} `)´        -- tuple                    (x,())
       |  Expr INDEX                     -- tuple index              x.1
       |  Expr `(´ Expr `)´              -- call                     f(x)
+      |  TYPE `.´ TYPE `(´ Expr `)´     -- constructor              Bool.True ()
       |  `(´ Expr `)´                   -- group                    (x)
 ```
