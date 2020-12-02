@@ -77,10 +77,11 @@ void t_lexer (void) {
     }
     // KEYWORDS
     {
-        all_init(NULL, stropen("r", 0, "xval val valx"));
+        all_init(NULL, stropen("r", 0, "xval val valx type"));
         assert(ALL.tk1.enu == TX_VAR);
         lexer(); assert(ALL.tk1.enu == TK_VAL);
         lexer(); assert(ALL.tk1.enu == TX_VAR);
+        lexer(); assert(ALL.tk1.enu == TK_TYPE);
         fclose(ALL.inp);
     }
     // IDENTIFIERS

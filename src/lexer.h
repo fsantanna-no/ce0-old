@@ -12,6 +12,7 @@ typedef enum {
 
     TK_RESERVED,    // all reserved keywords
     TK_CALL,
+    TK_TYPE,
     TK_VAL
 } TK;
 

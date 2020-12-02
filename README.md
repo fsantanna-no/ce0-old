@@ -28,6 +28,7 @@ The following symbols are used:
 The following keywords are reserved and cannot be used as identifiers:
 
 ```
+    type        -- declare new types
     call        -- call functions
     val         -- declare immutable variables
 ```
