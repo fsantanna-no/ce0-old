@@ -356,7 +356,6 @@ void t_parser_stmt (void) {
         assert(s.Decl.var.enu == TK_VAR);
         assert(s.Decl.type.sub == TYPE_UNIT);
         assert(s.Decl.init.sub == EXPR_UNIT);
-//puts(ALL.err);
         fclose(ALL.inp);
     }
     {
@@ -366,6 +365,13 @@ void t_parser_stmt (void) {
         assert(s.sub == STMT_DECL);
         assert(s.Decl.var.enu == TK_VAR);
         assert(s.Decl.type.sub == TYPE_TUPLE);
+        fclose(ALL.inp);
+    }
+    {
+        all_init(NULL, stropen("r", 0, "val a : (_char) = ()"));
+        Stmt s;
+        assert(parser_stmt(&s));
+        assert(s.Decl.type.sub == TYPE_NATIVE);
         fclose(ALL.inp);
     }
     // STMT_CALL
@@ -440,7 +446,7 @@ void t_code (void) {
         Expr e = { EXPR_TUPLE, {.Tuple={2,es}} };
         code_expr(e);
         fclose(ALL.out);
-        assert(!strcmp(out,"{ 1,1 }"));
+        assert(!strcmp(out,"((TUPLE2){ (void*)1,(void*)1 })"));
     }
     // EXPR_INDEX
     {
@@ -451,7 +457,31 @@ void t_code (void) {
         Expr e = { EXPR_INDEX, { .Index={.tuple=&tuple,.index=2} } };
         code_expr(e);
         fclose(ALL.out);
-        assert(!strcmp(out,"{ 1,1 }._2"));
+        assert(!strcmp(out,"((TUPLE2){ (void*)1,(void*)1 })._2"));
+    }
+    {
+        char out[256] = "";
+        all_init (
+            stropen("w", sizeof(out), out),
+            stropen("r", 0, "val a : () = () ; call _show_Unit(a)")
+        );
+        Stmt s;
+        assert(parser_stmt(&s));
+        code(s);
+        fclose(ALL.out);
+        char* ret =
+            "#include <assert.h>\n"
+            "#include <stdio.h>\n"
+            "typedef struct { void *_1, *_2;      } TUPLE2;\n"
+            "typedef struct { void *_1, *_2, *_3; } TUPLE3;\n"
+            "#define show_Unit(x) (assert(((long)(x))==1), puts(\"()\"))\n"
+            "int main (void) {\n"
+            "\n"
+            "int a = 1;\n"
+            "show_Unit(a);\n"
+            "\n"
+            "}\n";
+        assert(!strcmp(out,ret));
     }
 }
 
@@ -470,12 +500,10 @@ void t_all (void) {
         "val x: _char = _65\n"
         "call _putchar(x)\n"
     ));
-#if 0
     assert(all(
         "()\n",
         "call _show_Unit(((),()).1)\n"
     ));
-#endif
 }
 
 void t_parser (void) {
