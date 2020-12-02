@@ -465,6 +465,11 @@ void t_all (void) {
         "val x: () = ()\n"
         "call _show_Unit(x)\n"
     ));
+    assert(all(
+        "A",
+        "val x: _char = _65\n"
+        "call _putchar(x)\n"
+    ));
 #if 0
     assert(all(
         "()\n",

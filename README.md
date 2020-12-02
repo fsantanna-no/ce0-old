@@ -124,6 +124,15 @@ A call invokes a call expression:
 call f()    -- calls f passing ()
 ```
 
+## Sequences
+
+Statements execute one after the other and can be separated by semicolons:
+
+```
+call f() ; call g()
+call h()
+```
+
 # Syntax
 
 ```

@@ -11,6 +11,9 @@ void code_type (Type tp) {
         case TYPE_UNIT:
             fputs("int", ALL.out);
             break;
+        case TYPE_NATIVE:
+            fputs(&tp.tk.val.s[1], ALL.out);
+            break;
     }
 }
 
