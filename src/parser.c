@@ -72,6 +72,10 @@ int parser_type (Type* ret) {
     } else if (accept(TX_NATIVE)) {
         *ret = (Type) { TYPE_NATIVE, .tk=ALL.tk0 };
 
+    // TYPE_TYPE
+    } else if (accept(TX_TYPE)) {
+        *ret = (Type) { TYPE_TYPE, .tk=ALL.tk0 };
+
     } else {
         return err_expected("type");
     }
@@ -314,6 +318,16 @@ int parser_stmt (Stmt* ret) {
         *ret = s;
     } else {
         *ret = (Stmt) { STMT_SEQ, { .Seq={n,vec} } };
+    }
+    return 1;
+}
+
+int parser_prog (Stmt* ret) {
+    if (!parser_stmt(ret)) {
+        return 0;
+    }
+    if (!accept(TK_EOF)) {
+        return 0;
     }
     return 1;
 }

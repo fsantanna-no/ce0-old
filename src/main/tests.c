@@ -11,13 +11,13 @@ int all (const char* xp, char* src) {
         stropen("r", 0, src)
     );
     Stmt s;
-    if (!parser_stmt(&s)) {
+    if (!parser_prog(&s)) {
         puts(ALL.err);
         return !strcmp(ALL.err, xp);
     }
     code(s);
     fclose(ALL.out);
-#if 0
+#if 1
 puts(">>>");
 puts(out);
 puts("<<<");
@@ -574,6 +574,18 @@ void t_code (void) {
             "        int _True;\n"
             "    };\n"
             "} Bool;\n"
+            "\n"
+            "void show_Bool (Bool v) {\n"
+            "    switch (v.sub) {\n"
+            "        case Bool_False:\n"
+            "            printf(\"Bool.False\");\n"
+            "            break;\n"
+            "        case Bool_True:\n"
+            "            printf(\"Bool.True\");\n"
+            "            break;\n"
+            "    }\n"
+            "    puts(\"\");\n"
+            "}\n"
             "\n"
             "}\n";
         assert(!strcmp(out,ret));

@@ -2,6 +2,7 @@ typedef enum {
     TYPE_NONE,
     TYPE_UNIT,
     TYPE_NATIVE,
+    TYPE_TYPE,
     TYPE_TUPLE,
     TYPE_FUNC
 } TYPE;
@@ -97,3 +98,4 @@ typedef struct Stmt {
 int parser_type (Type* ret);
 int parser_expr (Expr* ret);
 int parser_stmt (Stmt* ret);
+int parser_prog (Stmt* ret);
