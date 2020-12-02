@@ -334,7 +334,7 @@ void t_parser_expr (void) {
 }
 
 void t_parser_stmt (void) {
-    // STMT_DECL
+    // STMT_VAR
     {
         all_init(NULL, stropen("r", 0, "val :"));
         Stmt s;
@@ -367,26 +367,26 @@ void t_parser_stmt (void) {
         all_init(NULL, stropen("r", 0, "val x: () = ()"));
         Stmt s;
         assert(parser_stmt(&s));
-        assert(s.sub == STMT_DECL);
-        assert(s.Decl.var.enu == TX_VAR);
-        assert(s.Decl.type.sub == TYPE_UNIT);
-        assert(s.Decl.init.sub == EXPR_UNIT);
+        assert(s.sub == STMT_VAR);
+        assert(s.Var.id.enu == TX_VAR);
+        assert(s.Var.type.sub == TYPE_UNIT);
+        assert(s.Var.init.sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "val x: ((),((),())) = ()"));
         Stmt s;
         assert(parser_stmt(&s));
-        assert(s.sub == STMT_DECL);
-        assert(s.Decl.var.enu == TX_VAR);
-        assert(s.Decl.type.sub == TYPE_TUPLE);
+        assert(s.sub == STMT_VAR);
+        assert(s.Var.id.enu == TX_VAR);
+        assert(s.Var.type.sub == TYPE_TUPLE);
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "val a : (_char) = ()"));
         Stmt s;
         assert(parser_stmt(&s));
-        assert(s.Decl.type.sub == TYPE_NATIVE);
+        assert(s.Var.type.sub == TYPE_NATIVE);
         fclose(ALL.inp);
     }
     // STMT_CALL

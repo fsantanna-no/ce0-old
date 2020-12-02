@@ -168,7 +168,7 @@ int parser_expr (Expr* ret) {
 
 
 int parser_stmt_one (Stmt* ret) {
-    // STMT_DECL
+    // STMT_VAR
     if (accept(TK_VAL)) {
         if (!accept_err(TX_VAR)) {
             return 0;
@@ -188,7 +188,7 @@ int parser_stmt_one (Stmt* ret) {
         if (!parser_expr(&e)) {
             return 0;
         }
-        *ret = (Stmt) { STMT_DECL, .Decl={var,tp,e} };
+        *ret = (Stmt) { STMT_VAR, .Var={var,tp,e} };
 
     // STMT_CALL
     } else if (accept(TK_CALL)) {

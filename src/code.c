@@ -59,12 +59,12 @@ void code_expr (Expr e) {
 
 void code_stmt (Stmt s) {
     switch (s.sub) {
-        case STMT_DECL:
-            code_type(s.Decl.type);
+        case STMT_VAR:
+            code_type(s.Var.type);
             fputs(" ", ALL.out);
-            fputs(s.Decl.var.val.s, ALL.out);
+            fputs(s.Var.id.val.s, ALL.out);
             fputs(" = ", ALL.out);
-            code_expr(s.Decl.init);
+            code_expr(s.Var.init);
             out(";\n");
             break;
         case STMT_CALL:
