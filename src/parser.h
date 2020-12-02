@@ -18,6 +18,7 @@ typedef enum {
 
 typedef enum {
     STMT_VAR = 1,
+    STMT_TYPE,
     STMT_CALL,
     STMT_SEQ
 } STMT;
@@ -59,6 +60,11 @@ typedef struct Expr {
     };
 } Expr;
 
+typedef struct {
+    Tk   id;        // True
+    Type type;      // ()
+} Sub;
+
 typedef struct Stmt {
     STMT sub;
     union {
@@ -68,6 +74,11 @@ typedef struct Stmt {
             Type type;
             Expr init;
         } Var;          // STMT_VAR
+        struct {
+            Tk   id;        // Bool
+            int  size;      // 2 subs
+            Sub* vec;       // [True,False]
+        } Type;         // STMT_TYPE
         struct {
             int size;
             struct Stmt* vec;

@@ -28,6 +28,9 @@ const char* lexer_tk2err (TK enu) {
         case TX_VAR:
             sprintf(str, "variable identifier");
             break;
+        case TX_TYPE:
+            sprintf(str, "type identifier");
+            break;
         default:
             if (enu>0 && enu<TK_SINGLE) {
                 sprintf(str, "`%c´", enu);

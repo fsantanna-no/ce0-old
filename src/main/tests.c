@@ -389,6 +389,18 @@ void t_parser_stmt (void) {
         assert(s.Var.type.sub == TYPE_NATIVE);
         fclose(ALL.inp);
     }
+    // STMT_TYPE
+    {
+        all_init(NULL, stropen("r", 0, "type Bool { False () ; True () }"));
+        Stmt s;
+        assert(parser_stmt(&s));
+        assert(s.sub == STMT_TYPE);
+        assert(!strcmp(s.Type.id.val.s, "Bool"));
+        assert(s.Type.size == 2);
+        assert(s.Type.vec[0].type.sub == TYPE_UNIT);
+        assert(!strcmp(s.Type.vec[1].id.val.s, "True"));
+        fclose(ALL.inp);
+    }
     // STMT_CALL
     {
         all_init(NULL, stropen("r", 0, "call f()"));

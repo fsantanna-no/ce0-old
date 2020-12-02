@@ -167,13 +167,28 @@ int parser_expr (Expr* ret) {
 ///////////////////////////////////////////////////////////////////////////////
 
 
+int parser_stmt_sub (Sub* ret) {
+    if (!accept_err(TX_TYPE)) {
+        return 0;
+    }
+    Tk id = ALL.tk0;
+
+    Type tp;
+    if (!parser_type(&tp)) {
+        return 0;
+    }
+
+    *ret = (Sub) { id, tp };
+    return 1;
+}
+
 int parser_stmt_one (Stmt* ret) {
     // STMT_VAR
     if (accept(TK_VAL)) {
         if (!accept_err(TX_VAR)) {
             return 0;
         }
-        Tk var = ALL.tk0;
+        Tk id = ALL.tk0;
         if (!accept_err(':')) {
             return 0;
         }
@@ -188,7 +203,43 @@ int parser_stmt_one (Stmt* ret) {
         if (!parser_expr(&e)) {
             return 0;
         }
-        *ret = (Stmt) { STMT_VAR, .Var={var,tp,e} };
+        *ret = (Stmt) { STMT_VAR, .Var={id,tp,e} };
+
+    // STMT_TYPE
+    } else if (accept(TK_TYPE)) {       // type
+        if (!accept_err(TX_TYPE)) {
+            return 0;
+        }
+        Tk id = ALL.tk0;                // Bool
+
+        if (!accept_err('{')) {
+            return 0;
+        }
+
+        Sub s;
+        if (!parser_stmt_sub(&s)) {     // False ()
+            return 0;
+        }
+        int n = 1;
+        Sub* vec = malloc(n*sizeof(Sub));
+        vec[n-1] = s;
+
+        while (1) {
+            accept(';');    // optional
+            Sub q;
+            if (!parser_stmt_sub(&q)) { // True ()
+                break;
+            }
+            n++;
+            vec = realloc(vec, n*sizeof(Sub));
+            vec[n-1] = q;
+        }
+
+        if (!accept_err('}')) {
+            return 0;
+        }
+
+        *ret = (Stmt) { STMT_TYPE, .Type={id,n,vec} };
 
     // STMT_CALL
     } else if (accept(TK_CALL)) {
