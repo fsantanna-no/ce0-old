@@ -543,6 +543,41 @@ void t_code (void) {
             "}\n";
         assert(!strcmp(out,ret));
     }
+    // STMT_TYPE
+    {
+        char out[1024] = "";
+        all_init (
+            stropen("w", sizeof(out), out),
+            stropen("r", 0, "type Bool { False: () ; True: () }")
+        );
+        Stmt s;
+        assert(parser_stmt(&s));
+        code(s);
+        fclose(ALL.out);
+        char* ret =
+            "#include <assert.h>\n"
+            "#include <stdio.h>\n"
+            "typedef struct { void *_1, *_2;      } TUPLE2;\n"
+            "typedef struct { void *_1, *_2, *_3; } TUPLE3;\n"
+            "#define show_Unit(x) (assert(((long)(x))==1), puts(\"()\"))\n"
+            "int main (void) {\n"
+            "\n"
+            "typedef enum {\n"
+            "    Bool_False,\n"
+            "    Bool_True\n"
+            "} BOOL;\n"
+            "\n"
+            "typedef struct Bool {\n"
+            "    BOOL sub;\n"
+            "    union {\n"
+            "        int _False;\n"
+            "        int _True;\n"
+            "    };\n"
+            "} Bool;\n"
+            "\n"
+            "}\n";
+        assert(!strcmp(out,ret));
+    }
 }
 
 void t_all (void) {

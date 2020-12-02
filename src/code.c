@@ -1,6 +1,19 @@
 #include <stdio.h>
+#include <assert.h>
+#include <ctype.h>
+#include <string.h>
 
 #include "all.h"
+
+char* strupper (const char* src) {
+    static char dst[256];
+    assert(strlen(src) < sizeof(dst));
+    for (int i=0; i<strlen(src); i++) {
+        dst[i] = toupper(src[i]);
+    }
+    dst[strlen(src)] = '\0';
+    return dst;
+}
 
 void out (const char* v) {
     fputs(v, ALL.out);
@@ -9,11 +22,9 @@ void out (const char* v) {
 void code_type (Type tp) {
     switch (tp.sub) {
         case TYPE_UNIT:
-            fputs("int", ALL.out);
-            break;
+            out("int");
         case TYPE_NATIVE:
-            fputs(&tp.tk.val.s[1], ALL.out);
-            break;
+            out(&tp.tk.val.s[1]);
     }
 }
 
@@ -67,10 +78,55 @@ void code_stmt (Stmt s) {
             code_expr(s.Var.init);
             out(";\n");
             break;
+
+        case STMT_TYPE: {
+            const char* sup = s.Type.id.val.s;
+            const char* SUP = strupper(s.Type.id.val.s);
+
+            // enum { Bool_False, Bool_True } BOOL;
+            out("typedef enum {\n");
+                for (int i=0; i<s.Type.size; i++) {
+                    out("    ");
+                    out(sup);                       // Bool
+                    out("_");
+                    out(s.Type.vec[i].id.val.s);    // False
+                    if (i < s.Type.size-1) {
+                        out(",");
+                    }
+                    out("\n");
+                }
+            out("} ");
+            out(SUP);
+            out(";\n\n");
+
+            // struct { BOOL sub; union { ... } } Bool;
+            fprintf(ALL.out,
+                "typedef struct %s {\n"
+                "    %s sub;\n"
+                "    union {\n",
+                sup, SUP
+            );
+            for (int i=0; i<s.Type.size; i++) {
+                Sub sub = s.Type.vec[i];
+                out("        ");
+                code_type(sub.type);
+                out(" _");
+                out(sub.id.val.s);      // int _True
+                out(";\n");
+            }
+            fprintf(ALL.out,
+                "    };\n"
+                "} %s;\n",
+                sup
+            );
+            break;
+        }
+
         case STMT_CALL:
             code_expr(s.call);
             out(";\n");
             break;
+
         case STMT_SEQ:
             for (int i=0; i<s.Seq.size; i++) {
                 code_stmt(s.Seq.vec[i]);
