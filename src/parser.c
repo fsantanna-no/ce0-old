@@ -151,7 +151,10 @@ int parser_expr (Expr* ret) {
             assert(func != NULL);
             *func = *ret;
             *ret  = (Expr) { EXPR_CALL, .Call={func,parg} };
-        } else if (accept(TX_INDEX)) {
+        } else if (accept('.')) {
+            if (!accept_err(TX_INDEX)) {
+                return 0;
+            }
             Expr* tup = malloc(sizeof(Expr));
             assert(tup != NULL);
             *tup = *ret;
@@ -171,10 +174,14 @@ int parser_stmt_sub (Sub* ret) {
     if (!accept_err(TX_TYPE)) {
         return 0;
     }
-    Tk id = ALL.tk0;
+    Tk id = ALL.tk0;                // True
+
+    if (!accept_err(':')) {         // :
+        return 0;
+    }
 
     Type tp;
-    if (!parser_type(&tp)) {
+    if (!parser_type(&tp)) {        // ()
         return 0;
     }
 

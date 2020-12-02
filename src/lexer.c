@@ -51,6 +51,7 @@ const char* lexer_tk2str (Tk* tk) {
             break;
         case TX_NATIVE:
         case TX_VAR:
+        case TX_TYPE:
             sprintf(str, "\"%s\"", tk->val.s);
             break;
         default:
@@ -77,36 +78,35 @@ static TK lx_token (TK_val* val) {
         case ';':
         case ':':
         case ',':
+        case '.':
         case '=':
             return c;
 
         case EOF:
             return TK_EOF;
 
-        case '.': {
-            c = fgetc(ALL.inp);
-            int i = 0;
-            while (isalnum(c)) {
-                if (isdigit(c)) {
-                    val->s[i++] = c;
-                } else {
-                    return TK_ERR;
-                }
-                c = fgetc(ALL.inp);
-            }
-            val->n = atoi(val->s);
-            ungetc(c, ALL.inp);
-            return TX_INDEX;
-        }
-
         default:
-            if (isalpha(c) || c=='_') {
+            // TX_INDEX
+            if (isdigit(c)) {
+                int i = 0;
+                while (isalnum(c)) {
+                    if (isdigit(c)) {
+                        val->s[i++] = c;
+                    } else {
+                        return TK_ERR;
+                    }
+                    c = fgetc(ALL.inp);
+                }
+                val->n = atoi(val->s);
+                ungetc(c, ALL.inp);
+                return TX_INDEX;
+            } else if (isalpha(c) || c=='_') {
                 // var,type,native
             } else {
-                val->n = c;
                 return TK_ERR;
             }
 
+            // TK_VAR, TK_TYPE, TK_NATIVE
             int i = 0;
             while (isalnum(c) || c=='_') {
                 val->s[i++] = c;

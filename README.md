@@ -18,7 +18,7 @@ The following symbols are used:
     {   }       -- block delimeter
     (   )       -- unit type, unit value, group expression
     ;           -- sequence separator
-    :           -- type declaration
+    :           -- variable & type declaration
     ,           -- tuple separator
     .           -- tuple index
 ```
@@ -54,6 +54,12 @@ digits, and underscores:
 
 ```
 _char    _printf    _i99        -- native identifiers
+```
+
+A tuple index is a numeric value:
+
+```
+1       2       3               -- tuple indexes
 ```
 
 # Expressions
@@ -110,11 +116,20 @@ add(x,y)    -- add receives tuple    (x,y)
 
 # Statements
 
-## Declarations
+## Variable declarations
 
 ```
 val x : ()
 val y : ((),()) = ((),())
+```
+
+## Type declarations
+
+```
+type Bool {
+    False: ()
+    True:  ()
+}
 ```
 
 ## Calls
@@ -137,7 +152,10 @@ call h()
 # Syntax
 
 ```
-Stmt ::= `val´ VAR `:´ Type `=´ Expr    -- declaration              val x: () = ()
+Stmt ::= `val´ VAR `:´ Type `=´ Expr    -- variable declaration     val x: () = ()
+      |  `type´ TYPE `{`                -- type declaration
+            { TYPE `:´ Type [`;´] }     -- subtypes
+         `}´
       |  `call´ Expr                    -- call                     call f()
       |  { Stmt [`;´] }                 -- sequence                 call f() ; call g()
 

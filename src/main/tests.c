@@ -130,12 +130,14 @@ void t_lexer (void) {
     // TUPLE INDEX
     {
         all_init(NULL, stropen("r", 0, ".1a"));
-        assert(ALL.tk1.enu == TK_ERR);
+        assert(ALL.tk1.enu == '.');
+        lexer(); assert(ALL.tk1.enu == TK_ERR);
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, ".10"));
-        assert(ALL.tk1.enu == TX_INDEX);
+        assert(ALL.tk1.enu == '.');
+        lexer(); assert(ALL.tk1.enu == TX_INDEX);
         assert(ALL.tk1.val.n == 10);
         fclose(ALL.inp);
     }
@@ -217,7 +219,6 @@ void t_parser_expr (void) {
         all_init(NULL, stropen("r", 0, "(x"));
         Expr e;
         assert(!parser_expr(&e));
-//puts(ALL.err);
         assert(!strcmp(ALL.err, "(ln 1, col 3): expected `)´ : have end of file"));
         fclose(ALL.inp);
     }
@@ -391,7 +392,28 @@ void t_parser_stmt (void) {
     }
     // STMT_TYPE
     {
-        all_init(NULL, stropen("r", 0, "type Bool { False () ; True () }"));
+        all_init(NULL, stropen("r", 0, "type Bool"));
+        Stmt s;
+        assert(!parser_stmt(&s));
+        assert(!strcmp(ALL.err, "(ln 1, col 10): expected `{´ : have end of file"));
+        fclose(ALL.inp);
+    }
+    {
+        all_init(NULL, stropen("r", 0, "type Bool {}"));
+        Stmt s;
+        assert(!parser_stmt(&s));
+        assert(!strcmp(ALL.err, "(ln 1, col 12): expected type identifier : have `}´"));
+        fclose(ALL.inp);
+    }
+    {
+        all_init(NULL, stropen("r", 0, "type Bool { True: ()"));
+        Stmt s;
+        assert(!parser_stmt(&s));
+        assert(!strcmp(ALL.err, "(ln 1, col 21): expected `}´ : have end of file"));
+        fclose(ALL.inp);
+    }
+    {
+        all_init(NULL, stropen("r", 0, "type Bool { False:() ; True:() }"));
         Stmt s;
         assert(parser_stmt(&s));
         assert(s.sub == STMT_TYPE);
@@ -530,6 +552,26 @@ void t_all (void) {
     assert(all(
         "()\n",
         "call _show_Unit(((),()).1)\n"
+    ));
+    assert(all(
+        "Bool.False ()\n",
+        "type Bool { False: () ; True: () }\n"
+        "val b : Bool = Bool.False()\n"
+        "call _show_Bool(b)\n"
+    ));
+    assert(all(
+        "Bool.False ()\n",
+        "type Bool { False: () ; True: () }\n"
+        "val b : Bool = Bool.True()\n"
+        "if ?Bool.True(b) { call _show_Unit(()) }\n"
+    ));
+    assert(all(
+        "Z ()\n",
+        "type Z { Z:() }\n"
+        "type Y { Y:Z }\n"
+        "type X { X:Y }\n"
+        "val x : X = X.X(Y(Z()))\n"
+        "call _show_Y(x.X.Y)\n"
     ));
 }
 
