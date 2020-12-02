@@ -69,7 +69,7 @@ int parser_type (Type* ret) {
         }
 
     // TYPE_NATIVE
-    } else if (accept(TK_NATIVE)) {
+    } else if (accept(TX_NATIVE)) {
         *ret = (Type) { TYPE_NATIVE, .tk=ALL.tk0 };
 
     } else {
@@ -116,11 +116,11 @@ static int parser_expr_one (Expr* ret) {
         }
 
     // EXPR_NATIVE
-    } else if (accept(TK_NATIVE)) {
+    } else if (accept(TX_NATIVE)) {
         *ret = (Expr) { EXPR_NATIVE, .tk=ALL.tk0 };
 
     // EXPR_VAR
-    } else if (accept(TK_VAR)) {
+    } else if (accept(TX_VAR)) {
         *ret = (Expr) { EXPR_VAR, .tk=ALL.tk0 };
 
     } else {
@@ -151,7 +151,7 @@ int parser_expr (Expr* ret) {
             assert(func != NULL);
             *func = *ret;
             *ret  = (Expr) { EXPR_CALL, .Call={func,parg} };
-        } else if (accept(TK_INDEX)) {
+        } else if (accept(TX_INDEX)) {
             Expr* tup = malloc(sizeof(Expr));
             assert(tup != NULL);
             *tup = *ret;
@@ -170,7 +170,7 @@ int parser_expr (Expr* ret) {
 int parser_stmt_one (Stmt* ret) {
     // STMT_DECL
     if (accept(TK_VAL)) {
-        if (!accept_err(TK_VAR)) {
+        if (!accept_err(TX_VAR)) {
             return 0;
         }
         Tk var = ALL.tk0;

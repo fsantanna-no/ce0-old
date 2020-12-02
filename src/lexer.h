@@ -5,11 +5,10 @@ typedef enum {
 
     TK_EOF,
 
-    TK_NATIVE,
-    TK_VAR,
-    TK_TYPE,
-
-    TK_INDEX,
+    TX_NATIVE,
+    TX_VAR,
+    TX_TYPE,
+    TX_INDEX,
 
     TK_RESERVED,    // all reserved keywords
     TK_CALL,

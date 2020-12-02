@@ -24,7 +24,7 @@ static int is_reserved (TK_val* val) {
 const char* lexer_tk2err (TK enu) {
     static char str[512];
     switch (enu) {
-        case TK_VAR:
+        case TX_VAR:
             sprintf(str, "variable identifier");
             break;
         default:
@@ -45,8 +45,8 @@ const char* lexer_tk2str (Tk* tk) {
         case TK_EOF:
             sprintf(str, "end of file");
             break;
-        case TK_NATIVE:
-        case TK_VAR:
+        case TX_NATIVE:
+        case TX_VAR:
             sprintf(str, "\"%s\"", tk->val.s);
             break;
         default:
@@ -92,7 +92,7 @@ static TK lx_token (TK_val* val) {
             }
             val->n = atoi(val->s);
             ungetc(c, ALL.inp);
-            return TK_INDEX;
+            return TX_INDEX;
         }
 
         default:
@@ -117,11 +117,11 @@ static TK lx_token (TK_val* val) {
             }
 
             if (val->s[0] == '_') {
-                return TK_NATIVE;
+                return TX_NATIVE;
             } else if (islower(val->s[0])) {
-                return TK_VAR;
+                return TX_VAR;
             } else if (isupper(val->s[0])) {
-                return TK_TYPE;
+                return TX_TYPE;
             } else {
                 // impossible case
             }

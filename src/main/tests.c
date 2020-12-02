@@ -17,7 +17,7 @@ int all (const char* xp, char* src) {
     }
     code(s);
     fclose(ALL.out);
-#if 1
+#if 0
 puts(">>>");
 puts(out);
 puts("<<<");
@@ -78,42 +78,42 @@ void t_lexer (void) {
     // KEYWORDS
     {
         all_init(NULL, stropen("r", 0, "xval val valx"));
-        assert(ALL.tk1.enu == TK_VAR);
+        assert(ALL.tk1.enu == TX_VAR);
         lexer(); assert(ALL.tk1.enu == TK_VAL);
-        lexer(); assert(ALL.tk1.enu == TK_VAR);
+        lexer(); assert(ALL.tk1.enu == TX_VAR);
         fclose(ALL.inp);
     }
     // IDENTIFIERS
     {
         all_init(NULL, stropen("r", 0, "c1\nc2 c3  \n    \nc4"));
-        assert(ALL.tk1.enu == TK_VAR); assert(!strcmp(ALL.tk1.val.s, "c1"));
-        lexer(); assert(ALL.tk1.enu == TK_VAR); assert(!strcmp(ALL.tk1.val.s, "c2")); assert(ALL.tk1.lin == 2);
-        lexer(); assert(ALL.tk1.enu == TK_VAR); assert(!strcmp(ALL.tk1.val.s, "c3")); assert(ALL.tk1.col == 4);
-        lexer(); assert(ALL.tk1.enu == TK_VAR); assert(!strcmp(ALL.tk1.val.s, "c4"));
+        assert(ALL.tk1.enu == TX_VAR); assert(!strcmp(ALL.tk1.val.s, "c1"));
+        lexer(); assert(ALL.tk1.enu == TX_VAR); assert(!strcmp(ALL.tk1.val.s, "c2")); assert(ALL.tk1.lin == 2);
+        lexer(); assert(ALL.tk1.enu == TX_VAR); assert(!strcmp(ALL.tk1.val.s, "c3")); assert(ALL.tk1.col == 4);
+        lexer(); assert(ALL.tk1.enu == TX_VAR); assert(!strcmp(ALL.tk1.val.s, "c4"));
         lexer(); assert(ALL.tk1.enu == TK_EOF);
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "c1 C1 Ca a C"));
-        assert(ALL.tk1.enu == TK_VAR);  assert(!strcmp(ALL.tk1.val.s, "c1"));
-        lexer(); assert(ALL.tk1.enu == TK_TYPE); assert(!strcmp(ALL.tk1.val.s, "C1"));
-        lexer(); assert(ALL.tk1.enu == TK_TYPE); assert(!strcmp(ALL.tk1.val.s, "Ca")); assert(ALL.tk1.lin == 1);
-        lexer(); assert(ALL.tk1.enu == TK_VAR);  assert(!strcmp(ALL.tk1.val.s, "a")); assert(ALL.tk1.col == 10);
-        lexer(); assert(ALL.tk1.enu == TK_TYPE); assert(!strcmp(ALL.tk1.val.s, "C"));
+        assert(ALL.tk1.enu == TX_VAR);  assert(!strcmp(ALL.tk1.val.s, "c1"));
+        lexer(); assert(ALL.tk1.enu == TX_TYPE); assert(!strcmp(ALL.tk1.val.s, "C1"));
+        lexer(); assert(ALL.tk1.enu == TX_TYPE); assert(!strcmp(ALL.tk1.val.s, "Ca")); assert(ALL.tk1.lin == 1);
+        lexer(); assert(ALL.tk1.enu == TX_VAR);  assert(!strcmp(ALL.tk1.val.s, "a")); assert(ALL.tk1.col == 10);
+        lexer(); assert(ALL.tk1.enu == TX_TYPE); assert(!strcmp(ALL.tk1.val.s, "C"));
         lexer(); assert(ALL.tk1.enu == TK_EOF);
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "_char _Tp"));
-        assert(ALL.tk1.enu == TK_NATIVE);  assert(!strcmp(ALL.tk1.val.s, "_char"));
-        lexer(); assert(ALL.tk1.enu == TK_NATIVE); assert(!strcmp(ALL.tk1.val.s, "_Tp"));
+        assert(ALL.tk1.enu == TX_NATIVE);  assert(!strcmp(ALL.tk1.val.s, "_char"));
+        lexer(); assert(ALL.tk1.enu == TX_NATIVE); assert(!strcmp(ALL.tk1.val.s, "_Tp"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "val xval valx"));
         assert(ALL.tk1.enu == TK_VAL);
-        lexer(); assert(ALL.tk1.enu == TK_VAR); assert(!strcmp(ALL.tk1.val.s, "xval")); assert(ALL.tk1.col == 5);
-        lexer(); assert(ALL.tk1.enu == TK_VAR); assert(!strcmp(ALL.tk1.val.s, "valx"));
+        lexer(); assert(ALL.tk1.enu == TX_VAR); assert(!strcmp(ALL.tk1.val.s, "xval")); assert(ALL.tk1.col == 5);
+        lexer(); assert(ALL.tk1.enu == TX_VAR); assert(!strcmp(ALL.tk1.val.s, "valx"));
         lexer(); assert(ALL.tk1.enu == TK_EOF);
         fclose(ALL.inp);
     }
@@ -134,7 +134,7 @@ void t_lexer (void) {
     }
     {
         all_init(NULL, stropen("r", 0, ".10"));
-        assert(ALL.tk1.enu == TK_INDEX);
+        assert(ALL.tk1.enu == TX_INDEX);
         assert(ALL.tk1.val.n == 10);
         fclose(ALL.inp);
     }
@@ -173,6 +173,20 @@ void t_parser_type (void) {
         fclose(ALL.inp);
     }
 }
+
+#if 0
+void t_parser_data (void) {
+    {
+        all_init(NULL, stropen("r", 0, "data Err"));
+        Data dts;
+        parser_data(&dts);
+        assert(!strcmp(ALL.err, "(ln 1, col 9): expected data declaration : have end of line"));
+        //assert(parser_data(&dts));
+        //assert(ALL.data.datas.size == 1);
+        fclose(ALL.inp);
+    }
+}
+#endif
 
 void t_parser_expr (void) {
     // UNIT
@@ -353,7 +367,7 @@ void t_parser_stmt (void) {
         Stmt s;
         assert(parser_stmt(&s));
         assert(s.sub == STMT_DECL);
-        assert(s.Decl.var.enu == TK_VAR);
+        assert(s.Decl.var.enu == TX_VAR);
         assert(s.Decl.type.sub == TYPE_UNIT);
         assert(s.Decl.init.sub == EXPR_UNIT);
         fclose(ALL.inp);
@@ -363,7 +377,7 @@ void t_parser_stmt (void) {
         Stmt s;
         assert(parser_stmt(&s));
         assert(s.sub == STMT_DECL);
-        assert(s.Decl.var.enu == TK_VAR);
+        assert(s.Decl.var.enu == TX_VAR);
         assert(s.Decl.type.sub == TYPE_TUPLE);
         fclose(ALL.inp);
     }
@@ -421,7 +435,7 @@ void t_code (void) {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
         Expr e = { EXPR_VAR, {} };
-            e.tk.enu = TK_VAR;
+            e.tk.enu = TX_VAR;
             strcpy(e.tk.val.s, "xxx");
         code_expr(e);
         fclose(ALL.out);
@@ -432,7 +446,7 @@ void t_code (void) {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
         Expr e = { EXPR_NATIVE, {} };
-            e.tk.enu = TK_NATIVE;
+            e.tk.enu = TX_NATIVE;
             strcpy(e.tk.val.s, "_printf");
         code_expr(e);
         fclose(ALL.out);
@@ -508,6 +522,7 @@ void t_all (void) {
 
 void t_parser (void) {
     t_parser_type();
+    //t_parser_data();
     t_parser_expr();
     t_parser_stmt();
 }
