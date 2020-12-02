@@ -169,7 +169,6 @@ void t_parser_type (void) {
         all_init(NULL, stropen("r", 0, "xxx"));
         Type tp;
         parser_type(&tp);
-//puts(ALL.err);
         assert(!strcmp(ALL.err, "(ln 1, col 1): expected type : have \"xxx\""));
         fclose(ALL.inp);
     }
@@ -203,6 +202,7 @@ void t_parser_expr (void) {
         all_init(NULL, stropen("r", 0, "(x"));
         Expr e;
         assert(!parser_expr(&e));
+//puts(ALL.err);
         assert(!strcmp(ALL.err, "(ln 1, col 3): expected `)´ : have end of file"));
         fclose(ALL.inp);
     }
@@ -349,6 +349,15 @@ void t_parser_stmt (void) {
         assert(s.Decl.var.enu == TK_VAR);
         assert(s.Decl.type.sub == TYPE_UNIT);
 //puts(ALL.err);
+        fclose(ALL.inp);
+    }
+    {
+        all_init(NULL, stropen("r", 0, "val x: ((),((),()))"));
+        Stmt s;
+        assert(parser_stmt(&s));
+        assert(s.sub == STMT_DECL);
+        assert(s.Decl.var.enu == TK_VAR);
+        assert(s.Decl.type.sub == TYPE_TUPLE);
         fclose(ALL.inp);
     }
     // STMT_CALL

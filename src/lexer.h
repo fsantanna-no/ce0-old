@@ -29,4 +29,5 @@ typedef struct {
 } Tk;
 
 const char* lexer_tk2str (Tk* tk);
+const char* lexer_tk2err (TK enu);
 void lexer (void);

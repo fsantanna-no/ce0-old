@@ -3,6 +3,12 @@
 
 #include "all.h"
 
+int err_expected (const char* v) {
+    sprintf(ALL.err, "(ln %ld, col %ld): expected %s : have %s",
+        ALL.tk1.lin, ALL.tk1.col, v, lexer_tk2str(&ALL.tk1));
+    return 0;
+}
+
 int accept (TK enu) {
     if (ALL.tk1.enu == enu) {
         lexer();
@@ -12,14 +18,17 @@ int accept (TK enu) {
     }
 }
 
-int check (TK enu) {
-    return (ALL.tk1.enu == enu);
+int accept_err (TK enu) {
+    int ret = accept(enu);
+    if (ret == 0) {
+        err_expected(lexer_tk2err(enu));
+        //puts(ALL.err);
+    }
+    return ret;
 }
 
-int err_expected (const char* v) {
-    sprintf(ALL.err, "(ln %ld, col %ld): expected %s : have %s",
-        ALL.tk1.lin, ALL.tk1.col, v, lexer_tk2str(&ALL.tk1));
-    return 0;
+int check (TK enu) {
+    return (ALL.tk1.enu == enu);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -48,14 +57,14 @@ int parser_type (Type* ret) {
                     vec = realloc(vec, n*sizeof(Type));
                     vec[n-1] = tp;
                 }
-                if (!accept(')')) {
-                    return err_expected("`)´");
+                if (!accept_err(')')) {
+                    return 0;
                 }
                 *ret = (Type) { TYPE_TUPLE, .Tuple={n,vec} };
 
     // TYPE_PARENS
-            } else if (!accept(')')) {
-                return err_expected("`)`");
+            } else if (!accept_err(')')) {
+                return 0;
             }
         }
 
@@ -95,14 +104,14 @@ static int parser_expr_one (Expr* ret) {
                     vec = realloc(vec, n*sizeof(Expr));
                     vec[n-1] = e;
                 }
-                if (!accept(')')) {
-                    return err_expected("`)´");
+                if (!accept_err(')')) {
+                    return 0;
                 }
                 *ret = (Expr) { EXPR_TUPLE, .Tuple={n,vec} };
 
     // EXPR_PARENS
-            } else if (!accept(')')) {
-                return err_expected("`)´");
+            } else if (!accept_err(')')) {
+                return 0;
             }
         }
 
@@ -161,12 +170,12 @@ int parser_expr (Expr* ret) {
 int parser_stmt (Stmt* ret) {
     // STMT_DECL
     if (accept(TK_VAL)) {
-        if (!accept(TK_VAR)) {
-            return err_expected("variable identifier");
+        if (!accept_err(TK_VAR)) {
+            return 0;
         }
         Tk var = ALL.tk0;
-        if (!accept(':')) {
-            return err_expected("`:´");
+        if (!accept_err(':')) {
+            return 0;
         }
         Type tp;
         if (!parser_type(&tp)) {

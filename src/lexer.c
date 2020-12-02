@@ -21,6 +21,24 @@ static int is_reserved (TK_val* val) {
     return 0;
 }
 
+const char* lexer_tk2err (TK enu) {
+    static char str[512];
+    switch (enu) {
+        case TK_VAR:
+            sprintf(str, "variable identifier");
+            break;
+        default:
+            if (enu>0 && enu<TK_SINGLE) {
+                sprintf(str, "`%c´", enu);
+            } else {
+//printf("%d\n", enu);
+                assert(0 && "TODO");
+            }
+            break;
+    }
+    return &str;
+}
+
 const char* lexer_tk2str (Tk* tk) {
     static char str[512];
     switch (tk->enu) {
