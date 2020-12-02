@@ -159,13 +159,29 @@ int parser_expr (Expr* ret) {
 
 
 int parser_stmt (Stmt* ret) {
-    if (accept(TK_CALL)) {
+    // STMT_DECL
+    if (accept(TK_VAL)) {
+        if (!accept(TK_VAR)) {
+            return err_expected("variable identifier");
+        }
+        Tk var = ALL.tk0;
+        if (!accept(':')) {
+            return err_expected("`:´");
+        }
+        Type tp;
+        if (!parser_type(&tp)) {
+            return 0;
+        }
+        *ret = (Stmt) { STMT_DECL, .Decl={var,tp} };
+
+    // STMT_CALL
+    } else if (accept(TK_CALL)) {
         Expr e;
         if (!parser_expr(&e)) {
             return 0;
         }
         *ret = (Stmt) { STMT_CALL, .call=e };
-        return 1;
     }
-    return 0;
+
+    return 1;
 }

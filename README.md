@@ -108,6 +108,13 @@ add(x,y)    -- add receives tuple    (x,y)
 
 # Statements
 
+## Declarations
+
+```
+val x : ()
+val y : ((),()) = ((),())
+```
+
 ## Calls
 
 A call invokes a call expression:

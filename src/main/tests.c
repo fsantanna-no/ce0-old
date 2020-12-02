@@ -75,6 +75,14 @@ void t_lexer (void) {
         assert(ALL.tk1.enu == TK_EOF);
         fclose(ALL.inp);
     }
+    // KEYWORDS
+    {
+        all_init(NULL, stropen("r", 0, "xval val valx"));
+        assert(ALL.tk1.enu == TK_VAR);
+        lexer(); assert(ALL.tk1.enu == TK_VAL);
+        lexer(); assert(ALL.tk1.enu == TK_VAR);
+        fclose(ALL.inp);
+    }
     // IDENTIFIERS
     {
         all_init(NULL, stropen("r", 0, "c1\nc2 c3  \n    \nc4"));
@@ -195,7 +203,6 @@ void t_parser_expr (void) {
         all_init(NULL, stropen("r", 0, "(x"));
         Expr e;
         assert(!parser_expr(&e));
-//puts(ALL.err);
         assert(!strcmp(ALL.err, "(ln 1, col 3): expected `)´ : have end of file"));
         fclose(ALL.inp);
     }
@@ -242,18 +249,21 @@ void t_parser_expr (void) {
         Expr e;
         assert(!parser_expr(&e));
         assert(!strcmp(ALL.err, "(ln 1, col 7): expected expression : have end of file"));
+        fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "((),)"));
         Expr e;
         assert(!parser_expr(&e));
         assert(!strcmp(ALL.err, "(ln 1, col 5): expected expression : have `)´"));
+        fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "((),x:"));
         Expr e;
         assert(!parser_expr(&e));
         assert(!strcmp(ALL.err, "(ln 1, col 6): expected `)´ : have `:´"));
+        fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "((),x,())"));
@@ -309,6 +319,39 @@ void t_parser_expr (void) {
 }
 
 void t_parser_stmt (void) {
+    // STMT_DECL
+    {
+        all_init(NULL, stropen("r", 0, "val :"));
+        Stmt s;
+        assert(!parser_stmt(&s));
+        assert(!strcmp(ALL.err, "(ln 1, col 5): expected variable identifier : have `:´"));
+        fclose(ALL.inp);
+    }
+    {
+        all_init(NULL, stropen("r", 0, "val x x"));
+        Stmt s;
+        assert(!parser_stmt(&s));
+        assert(!strcmp(ALL.err, "(ln 1, col 7): expected `:´ : have \"x\""));
+        fclose(ALL.inp);
+    }
+    {
+        all_init(NULL, stropen("r", 0, "val x: x"));
+        Stmt s;
+        assert(!parser_stmt(&s));
+        assert(!strcmp(ALL.err, "(ln 1, col 8): expected type : have \"x\""));
+        fclose(ALL.inp);
+    }
+    {
+        all_init(NULL, stropen("r", 0, "val x: ()"));
+        Stmt s;
+        assert(parser_stmt(&s));
+        assert(s.sub == STMT_DECL);
+        assert(s.Decl.var.enu == TK_VAR);
+        assert(s.Decl.type.sub == TYPE_UNIT);
+//puts(ALL.err);
+        fclose(ALL.inp);
+    }
+    // STMT_CALL
     {
         all_init(NULL, stropen("r", 0, "call f()"));
         Stmt s;
@@ -391,10 +434,12 @@ void t_all (void) {
         "()\n",
         "call _show_Unit(())\n"
     ));
+#if 0
     assert(all(
         "()\n",
         "call _show_Unit(((),()).1)\n"
     ));
+#endif
 }
 
 void t_parser (void) {
