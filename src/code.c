@@ -6,6 +6,14 @@ void out (const char* v) {
     fputs(v, ALL.out);
 }
 
+void code_type (Type tp) {
+    switch (tp.sub) {
+        case TYPE_UNIT:
+            fputs("int", ALL.out);
+            break;
+    }
+}
+
 void code_expr (Expr e) {
     switch (e.sub) {
         case EXPR_UNIT:
@@ -43,9 +51,22 @@ void code_expr (Expr e) {
 
 void code_stmt (Stmt s) {
     switch (s.sub) {
+        case STMT_DECL:
+            code_type(s.Decl.type);
+            fputs(" ", ALL.out);
+            fputs(s.Decl.var.val.s, ALL.out);
+            fputs(" = ", ALL.out);
+            code_expr(s.Decl.init);
+            out(";\n");
+            break;
         case STMT_CALL:
             code_expr(s.call);
             out(";\n");
+            break;
+        case STMT_SEQ:
+            for (int i=0; i<s.Seq.size; i++) {
+                code_stmt(s.Seq.vec[i]);
+            }
             break;
     }
 }

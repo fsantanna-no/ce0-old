@@ -36,7 +36,7 @@ const char* lexer_tk2err (TK enu) {
             }
             break;
     }
-    return &str;
+    return str;
 }
 
 const char* lexer_tk2str (Tk* tk) {
@@ -70,6 +70,7 @@ static TK lx_token (TK_val* val) {
         case '}':
         case '(':
         case ')':
+        case ';':
         case ':':
         case ',':
         case '=':

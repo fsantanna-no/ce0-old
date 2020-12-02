@@ -389,6 +389,15 @@ void t_parser_stmt (void) {
         assert(!strcmp(s.call.Call.func->tk.val.s,"_printf"));
         fclose(ALL.inp);
     }
+    {
+        all_init(NULL, stropen("r", 0, "call f() ; call g()"));
+        Stmt s;
+        assert(parser_stmt(&s));
+        assert(s.sub == STMT_SEQ);
+        assert(s.Seq.size == 2);
+        assert(s.Seq.vec[1].sub == STMT_CALL);
+        fclose(ALL.inp);
+    }
 }
 
 void t_code (void) {
@@ -450,6 +459,11 @@ void t_all (void) {
     assert(all(
         "()\n",
         "call _show_Unit(())\n"
+    ));
+    assert(all(
+        "()\n",
+        "val x: () = ()\n"
+        "call _show_Unit(x)\n"
     ));
 #if 0
     assert(all(

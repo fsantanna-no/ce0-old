@@ -17,6 +17,7 @@ The following symbols are used:
 ```
     {   }       -- block delimeter
     (   )       -- unit type, unit value, group expression
+    ;           -- sequence separator
     :           -- type declaration
     ,           -- tuple separator
     .           -- tuple index
@@ -128,6 +129,7 @@ call f()    -- calls f passing ()
 ```
 Stmt ::= `val´ VAR `:´ Type `=´ Expr    -- declaration              val x: () = ()
       |  `call´ Expr                    -- call                     call f()
+      |  { Stmt [`;´] }                 -- sequence                 call f() ; call g()
 
 Expr ::= `(´ `)´                        -- unit value               ()
       |  NATIVE                         -- native identifier        _printf

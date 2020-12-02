@@ -167,7 +167,7 @@ int parser_expr (Expr* ret) {
 ///////////////////////////////////////////////////////////////////////////////
 
 
-int parser_stmt (Stmt* ret) {
+int parser_stmt_one (Stmt* ret) {
     // STMT_DECL
     if (accept(TK_VAL)) {
         if (!accept_err(TK_VAR)) {
@@ -197,7 +197,38 @@ int parser_stmt (Stmt* ret) {
             return 0;
         }
         *ret = (Stmt) { STMT_CALL, .call=e };
+    } else {
+        return 0;
     }
 
+    return 1;
+}
+
+int parser_stmt (Stmt* ret) {
+    Stmt s;
+    if (!parser_stmt_one(&s)) {
+        return 0;
+    }
+
+    int n = 1;
+    Stmt* vec = malloc(n*sizeof(Stmt));
+    vec[n-1] = s;
+
+    while (1) {
+        accept(';');    // optional
+        Stmt q;
+        if (!parser_stmt_one(&q)) {
+            break;
+        }
+        n++;
+        vec = realloc(vec, n*sizeof(Stmt));
+        vec[n-1] = q;
+    }
+
+    if (n == 1) {
+        *ret = s;
+    } else {
+        *ret = (Stmt) { STMT_SEQ, { .Seq={n,vec} } };
+    }
     return 1;
 }
