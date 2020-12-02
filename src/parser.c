@@ -181,7 +181,14 @@ int parser_stmt (Stmt* ret) {
         if (!parser_type(&tp)) {
             return 0;
         }
-        *ret = (Stmt) { STMT_DECL, .Decl={var,tp} };
+        if (!accept_err('=')) {
+            return 0;
+        }
+        Expr e;
+        if (!parser_expr(&e)) {
+            return 0;
+        }
+        *ret = (Stmt) { STMT_DECL, .Decl={var,tp,e} };
 
     // STMT_CALL
     } else if (accept(TK_CALL)) {

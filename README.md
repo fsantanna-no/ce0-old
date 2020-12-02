@@ -126,14 +126,14 @@ call f()    -- calls f passing ()
 # Syntax
 
 ```
-Stmt ::= `val´ VAR `:´ Type         -- declaration          val x: ()
-      |  `call´ Expr                -- call                 call f()
+Stmt ::= `val´ VAR `:´ Type `=´ Expr    -- declaration              val x: () = ()
+      |  `call´ Expr                    -- call                     call f()
 
-Expr ::= `(´ `)´                    -- unit value           ()
-      |  NATIVE                     -- native identifier    _printf
-      |  VAR                        -- variable identifier  i
-      |  `(´ Expr {`,´ Expr} `)´    -- tuple                (x,())
-      |  Expr INDEX                 -- tuple index          x.1
-      |  Expr `(´ Expr `)´          -- call                 f(x)
-      |  `(´ Expr `)´               -- group                (x)
+Expr ::= `(´ `)´                        -- unit value               ()
+      |  NATIVE                         -- native identifier        _printf
+      |  VAR                            -- variable identifier      i
+      |  `(´ Expr {`,´ Expr} `)´        -- tuple                    (x,())
+      |  Expr INDEX                     -- tuple index              x.1
+      |  Expr `(´ Expr `)´              -- call                     f(x)
+      |  `(´ Expr `)´                   -- group                    (x)
 ```

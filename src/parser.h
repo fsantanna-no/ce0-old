@@ -7,7 +7,8 @@ typedef enum {
 } TYPE;
 
 typedef enum {
-    EXPR_UNIT = 1,
+    EXPR_NONE = 0,
+    EXPR_UNIT,
     EXPR_NATIVE,
     EXPR_VAR,
     EXPR_TUPLE,
@@ -63,6 +64,7 @@ typedef struct Stmt {
         struct {
             Tk   var;
             Type type;
+            Expr init;
         } Decl;         // STMT_DECL
         Expr call;      // STMT_CALL
     };
