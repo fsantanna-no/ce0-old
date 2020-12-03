@@ -103,11 +103,15 @@ typedef struct Stmt {
             int size;
             struct Stmt* vec;
         } Seq;          // STMT_SEQ
-        struct {        // EXPR_IF
+        struct {        // STMT_IF
             struct Expr  cond;
             struct Stmt* true;
             struct Stmt* false;
         } If;
+        struct {        // STMT_FUNC
+            Type type;
+            struct Stmt* body;
+        } Func;
     };
 } Stmt;
 

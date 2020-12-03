@@ -87,8 +87,8 @@ int parser_type (Type* ret) {
         if (!parser_type(&tp)) {
             return 0;
         }
-        Type* inp = malloc(sizeof(*inp));
-        Type* out = malloc(sizeof(*out));
+        Type* inp = malloc(sizeof(Type));
+        Type* out = malloc(sizeof(Type));
         assert(inp != NULL);
         assert(out != NULL);
         *inp = *ret;
@@ -354,6 +354,30 @@ int parser_stmt (Stmt* ret) {
         }
 
         *ret = (Stmt) { STMT_IF, .If={e,pt,pf} };
+
+    } else if (accept(TK_FUNC)) {   // func
+        if (!accept(TX_VAR)) {      // f
+            return 0;
+        }
+        if (!accept(':')) {         // :
+            return 0;
+        }
+        Type tp;
+        if (!parser_type(&tp)) {    // () -> ()
+            return 0;
+        }
+        if (!accept('{')) { return 0; }
+
+        Stmt s;                     // return ()
+        if (!parser_stmts(&s)) {
+            return 0;
+        }
+        Stmt* ps = malloc(sizeof(Stmt));
+        assert(ps != NULL);
+        *ps = s;
+        *ret = (Stmt) { STMT_FUNC, .Func={tp,ps} };
+
+        if (!accept('}')) { return 0; }
 
     } else {
         return 0;

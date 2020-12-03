@@ -18,7 +18,7 @@ The following symbols are valid:
     {   }       -- block delimeter
     (   )       -- unit type, unit value, group expression
     ;           -- sequence separator
-    :           -- variable & type declaration
+    :           -- variable, type, function declarations
     =           -- variable assignment
     ,           -- tuple separator
     .           -- tuple index, type constructor & discriminator
@@ -34,6 +34,7 @@ The following keywords are reserved and cannot be used as identifiers:
 ```
     call        -- function call
     else        -- conditional statement
+    func        -- function declaration
     if          -- conditional statement
     type        -- new type declaration
     val         -- immutable variable declaration
@@ -243,4 +244,10 @@ Expr ::= `(´ `)´                        -- unit value               ()
       |  Expr `.´ TYPE `!´              -- discriminator            x.True!
       |  Expr `.´ TYPE `?´              -- predicate                x.False?
       |  `(´ Expr `)´                   -- group                    (x)
+
+Type ::= `(´ `)´                        -- unit                     ()
+      |  NATIVE                         -- native                   _char
+      |  TYPE                           -- user type                Bool
+      |  `(´ Type {`,´ Type} `)´        -- tuple                    ((),())
+      |  Type `->´ Type                 -- function                 () -> ()
 ```

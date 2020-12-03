@@ -496,6 +496,15 @@ void t_parser_stmt (void) {
         assert(s.If.false->sub==STMT_SEQ && s.If.false->Seq.size==0);
         fclose(ALL.inp);
     }
+    {
+        all_init(NULL, stropen("r", 0, "func f : () -> () { }"));
+        Stmt s;
+        assert(parser_stmt(&s));
+        assert(s.sub == STMT_FUNC);
+        assert(s.Func.type.sub == TYPE_FUNC);
+        assert(s.Func.body->sub == STMT_SEQ);
+        fclose(ALL.inp);
+    }
 }
 
 void t_code (void) {
