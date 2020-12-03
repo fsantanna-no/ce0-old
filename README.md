@@ -10,7 +10,7 @@ A comment starts with `--` and runs until the end of the line:
 -- this is a single line comment
 ```
 
-## Symbols
+## Symbols and Keywords
 
 The following symbols are valid:
 
@@ -27,8 +27,6 @@ The following symbols are valid:
     ->          -- function type signature
     $           -- null subtype
 ```
-
-## Keywords
 
 The following keywords are reserved and cannot be used as identifiers:
 
