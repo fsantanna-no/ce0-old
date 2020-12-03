@@ -65,8 +65,8 @@ void code_expr (Expr e) {
         case EXPR_CONS:
             // ((Bool) { Bool_False })
             fprintf(ALL.out,
-                "((%s) { %s_%s, ",
-                e.Cons.type.val.s, e.Cons.type.val.s, e.Cons.subtype.val.s);
+                "((%s) { %s, ",
+                e.Cons.type.val.s, e.Cons.subtype.val.s);
             code_expr(*e.Cons.arg);
             out(" })");
             break;
@@ -94,6 +94,11 @@ void code_expr (Expr e) {
             code_expr(*e.Dest.cons);
             fprintf(ALL.out, "._%s", e.Dest.subtype.val.s);
             break;
+        case EXPR_PRED:
+            out("((");
+            code_expr(*e.Dest.cons);
+            fprintf(ALL.out, ".sub == %s) ? (Bool){True,{}} : (Bool){False,{}})", e.Dest.subtype.val.s);
+            break;
     }
 }
 
@@ -118,12 +123,10 @@ void code_stmt (Stmt s) {
 
             // ENUM + STRUCT + UNION
             {
-                // enum { Bool_False, Bool_True } BOOL;
+                // enum { False, True } BOOL;
                 out("typedef enum {\n");
                     for (int i=0; i<s.Type.size; i++) {
                         out("    ");
-                        out(sup);                       // Bool
-                        out("_");
                         out(s.Type.vec[i].id.val.s);    // False
                         if (i < s.Type.size-1) {
                             out(",");
@@ -181,11 +184,11 @@ void code_stmt (Stmt s) {
                     }
 
                     fprintf(ALL.out,
-                        "        case %s_%s:\n"
-                        "            printf(\"%s.%s \");\n"  // Bool.True
-                        "            %s;\n"                  // ()
+                        "        case %s:\n"                // True
+                        "            printf(\"%s \");\n"    // True
+                        "            %s;\n"                 // ()
                         "            break;\n",
-                        sup, sub.id.val.s, sup, sub.id.val.s, arg
+                        sub.id.val.s, sub.id.val.s, arg
                     );
                 }
                 out("    }\n");

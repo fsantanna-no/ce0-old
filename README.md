@@ -12,15 +12,17 @@ A comment starts with `--` and runs until the end of the line:
 
 ## Symbols
 
-The following symbols are used:
+The following symbols are valid:
 
 ```
     {   }       -- block delimeter
     (   )       -- unit type, unit value, group expression
     ;           -- sequence separator
     :           -- variable & type declaration
+    =           -- variable assignment
     ,           -- tuple separator
-    .           -- tuple index
+    .           -- tuple index, type constructor & destructor
+    ?           -- type predicate
 ```
 
 ## Keywords
@@ -132,13 +134,15 @@ x = Tree.Node ($,10,$)
 x.Tree.Node.2               -- yields 10
 ```
 
-A subtype predicate TODO:
+A subtype predicate evaluates to a `Bool`:
 
 ```
-?Bool.False(Bool.True ())   -- yields false
-
-x = Tree.Node ($,10,$)
-?Tree.Node(x)               -- yields true
+type Member {
+    Student:   ()
+    Professor: ()
+}
+x = Member.Professor ()
+b = x.Professor?            -- yields Bool.True()
 ```
 
 # Statements
@@ -188,14 +192,14 @@ call h()
 
 ## Conditionals
 
-A conditional tests a value and executes one of its true or false branches
-depending on the test:
+A conditional tests a `Bool` value and executes one of its true or false
+branches depending on the test:
 
 ```
 if x {
-    call f()
+    call f()    -- if x is Bool.True
 } else {
-    call g()
+    call g()    -- if x is Bool.False
 }
 ```
 
@@ -218,6 +222,7 @@ Expr ::= `(´ `)´                        -- unit value               ()
       |  Expr `.´ INDEX                 -- tuple index              x.1
       |  Expr `(´ Expr `)´              -- call                     f(x)
       |  TYPE `.´ TYPE `(´ Expr `)´     -- constructor              Bool.True ()
-      |  TYPE `.´ TYPE                  -- destructor               Bool.True
+      |  Expr `.´ TYPE                  -- destructor               x.True
+      |  Expr `.´ TYPE `?´              -- predicate                x.False?
       |  `(´ Expr `)´                   -- group                    (x)
 ```

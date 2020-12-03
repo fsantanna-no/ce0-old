@@ -196,7 +196,11 @@ int parser_expr (Expr* ret) {
                 Expr* cons = malloc(sizeof(Expr));
                 assert(cons != NULL);
                 *cons = *ret;
-                *ret = (Expr) { EXPR_DEST, .Dest={cons,ALL.tk0} };
+                if (accept('?')) {
+                    *ret = (Expr) { EXPR_PRED, .Pred={cons,ALL.tk0} };
+                } else {
+                    *ret = (Expr) { EXPR_DEST, .Dest={cons,ALL.tk0} };
+                }
             } else {
                 return err_expected("index or subtype");
             }

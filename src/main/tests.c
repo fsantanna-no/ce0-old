@@ -592,8 +592,8 @@ void t_code (void) {
             "int main (void) {\n"
             "\n"
             "typedef enum {\n"
-            "    Bool_False,\n"
-            "    Bool_True\n"
+            "    False,\n"
+            "    True\n"
             "} BOOL;\n"
             "\n"
             "typedef struct Bool {\n"
@@ -606,12 +606,12 @@ void t_code (void) {
             "\n"
             "void show_Bool_ (Bool v) {\n"
             "    switch (v.sub) {\n"
-            "        case Bool_False:\n"
-            "            printf(\"Bool.False \");\n"
+            "        case False:\n"
+            "            printf(\"False \");\n"
             "            show_Unit_(v._False);\n"
             "            break;\n"
-            "        case Bool_True:\n"
-            "            printf(\"Bool.True \");\n"
+            "        case True:\n"
+            "            printf(\"True \");\n"
             "            show_Unit_(v._True);\n"
             "            break;\n"
             "    }\n"
@@ -649,18 +649,18 @@ void t_all (void) {
     ));
     // TYPE
     assert(all(
-        "Bool.False ()\n",
+        "False ()\n",
         "type Bool { False: () ; True: () }\n"
         "val b : Bool = Bool.False()\n"
         "call _show_Bool(b)\n"
     ));
     assert(all(
-        "Zz.Zz ()\n",
-        "type Zz { Zz:() }\n"
-        "type Yy { Yy:Zz }\n"
-        "type Xx { Xx:Yy }\n"
-        "val x : Xx = Xx.Xx(Yy.Yy(Zz.Zz()))\n"
-        "call _show_Zz(x.Xx.Yy)\n"
+        "Zz1 ()\n",
+        "type Zz { Zz1:() }\n"
+        "type Yy { Yy1:Zz }\n"
+        "type Xx { Xx1:Yy }\n"
+        "val x : Xx = Xx.Xx1(Yy.Yy1(Zz.Zz1()))\n"
+        "call _show_Zz(x.Xx1.Yy1)\n"
     ));
     // IF
     assert(all(
@@ -676,12 +676,17 @@ void t_all (void) {
         "if b { call _show_Unit() }\n"
     ));
     // PREDICATE
-puts("okokok");
     assert(all(
-        "Bool.False ()\n",
+        "()\n",
         "type Bool { False: () ; True: () }\n"
         "val b : Bool = Bool.True()\n"
-        "if ?Bool.True(b) { call _show_Unit(()) }\n"
+        "if b.True? { call _show_Unit(()) }\n"
+    ));
+    assert(all(
+        "()\n",
+        "type Bool { False: () ; True: () }\n"
+        "val b : Bool = Bool.True()\n"
+        "if b.False? { } else { call _show_Unit(()) }\n"
     ));
 }
 
