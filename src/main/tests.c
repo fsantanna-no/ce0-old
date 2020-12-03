@@ -77,9 +77,10 @@ void t_lexer (void) {
     }
     // KEYWORDS
     {
-        all_init(NULL, stropen("r", 0, "xval val valx type"));
+        all_init(NULL, stropen("r", 0, "xval val else valx type"));
         assert(ALL.tk1.enu == TX_VAR);
         lexer(); assert(ALL.tk1.enu == TK_VAL);
+        lexer(); assert(ALL.tk1.enu == TK_ELSE);
         lexer(); assert(ALL.tk1.enu == TX_VAR);
         lexer(); assert(ALL.tk1.enu == TK_TYPE);
         fclose(ALL.inp);
@@ -465,10 +466,29 @@ void t_parser_stmt (void) {
     {
         all_init(NULL, stropen("r", 0, "call f() ; call g()"));
         Stmt s;
-        assert(parser_stmt(&s));
+        assert(parser_stmts(&s));
         assert(s.sub == STMT_SEQ);
         assert(s.Seq.size == 2);
         assert(s.Seq.vec[1].sub == STMT_CALL);
+        fclose(ALL.inp);
+    }
+    // STMT_IF
+    {
+        all_init(NULL, stropen("r", 0, "if () { } else { call () }"));
+        Stmt s;
+        assert(parser_stmt(&s));
+        assert(s.sub == STMT_IF);
+        assert(s.If.cond.sub == EXPR_UNIT);
+        assert(s.If.true ->sub==STMT_SEQ && s.If.true ->Seq.size==0);
+        assert(s.If.false->sub==STMT_SEQ && s.If.false->Seq.size==1);
+        fclose(ALL.inp);
+    }
+    {
+        all_init(NULL, stropen("r", 0, "if () { call () } "));
+        Stmt s;
+        assert(parser_stmt(&s));
+        assert(s.sub == STMT_IF);
+        assert(s.If.false->sub==STMT_SEQ && s.If.false->Seq.size==0);
         fclose(ALL.inp);
     }
 }
@@ -533,7 +553,7 @@ void t_code (void) {
             stropen("r", 0, "val a : () = () ; call _show_Unit(a)")
         );
         Stmt s;
-        assert(parser_stmt(&s));
+        assert(parser_stmts(&s));
         code(s);
         fclose(ALL.out);
         char* ret =
@@ -559,7 +579,7 @@ void t_code (void) {
             stropen("r", 0, "type Bool { False: () ; True: () }")
         );
         Stmt s;
-        assert(parser_stmt(&s));
+        assert(parser_stmts(&s));
         code(s);
         fclose(ALL.out);
         char* ret =
@@ -607,6 +627,7 @@ void t_code (void) {
 }
 
 void t_all (void) {
+    // UNIT
     assert(all(
         "()\n",
         "call _show_Unit(())\n"
@@ -616,6 +637,7 @@ void t_all (void) {
         "val x: () = ()\n"
         "call _show_Unit(x)\n"
     ));
+    // NATIVE
     assert(all(
         "A",
         "val x: _char = _65\n"
@@ -625,6 +647,12 @@ void t_all (void) {
         "()\n",
         "call _show_Unit(((),()).1)\n"
     ));
+    // IF
+    assert(all(
+        "()\n",
+        "if () { call _show_Unit() }\n"
+    ));
+    // TYPE
     assert(all(
         "Bool.False ()\n",
         "type Bool { False: () ; True: () }\n"
@@ -639,6 +667,8 @@ void t_all (void) {
         "val x : Xx = Xx.Xx(Yy.Yy(Zz.Zz()))\n"
         "call _show_Zz(x.Xx.Yy)\n"
     ));
+    // PREDICATE
+puts("okokok");
     assert(all(
         "Bool.False ()\n",
         "type Bool { False: () ; True: () }\n"

@@ -8,6 +8,8 @@
 
 static char* reserved[] = {
     "call",
+    "else",
+    "if",
     "type",
     "val"
 };

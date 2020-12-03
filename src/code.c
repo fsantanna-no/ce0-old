@@ -99,6 +99,10 @@ void code_expr (Expr e) {
 
 void code_stmt (Stmt s) {
     switch (s.sub) {
+        case STMT_NONE:
+            assert(0 && "bug found");
+            break;
+
         case STMT_VAR:
             code_type(s.Var.type);
             fputs(" ", ALL.out);
@@ -207,6 +211,16 @@ void code_stmt (Stmt s) {
             for (int i=0; i<s.Seq.size; i++) {
                 code_stmt(s.Seq.vec[i]);
             }
+            break;
+
+        case STMT_IF:
+            out("if (");
+            code_expr(s.If.cond);
+            out(") {\n");
+            code_stmt(*s.If.true);
+            out("} else {\n");
+            code_stmt(*s.If.false);
+            out("}\n");
             break;
     }
 }

@@ -20,10 +20,12 @@ typedef enum {
 } EXPR;
 
 typedef enum {
-    STMT_VAR = 1,
+    STMT_NONE = 0,
+    STMT_VAR,
     STMT_TYPE,
     STMT_CALL,
-    STMT_SEQ
+    STMT_SEQ,
+    STMT_IF
 } STMT;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -95,12 +97,18 @@ typedef struct Stmt {
             int size;
             struct Stmt* vec;
         } Seq;          // STMT_SEQ
+        struct {        // EXPR_IF
+            struct Expr  cond;
+            struct Stmt* true;
+            struct Stmt* false;
+        } If;
     };
 } Stmt;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int parser_type (Type* ret);
-int parser_expr (Expr* ret);
-int parser_stmt (Stmt* ret);
-int parser_prog (Stmt* ret);
+int parser_type  (Type* ret);
+int parser_expr  (Expr* ret);
+int parser_stmt  (Stmt* ret);
+int parser_stmts (Stmt* ret);
+int parser_prog  (Stmt* ret);

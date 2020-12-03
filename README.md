@@ -28,9 +28,11 @@ The following symbols are used:
 The following keywords are reserved and cannot be used as identifiers:
 
 ```
-    type        -- declare new types
-    call        -- call functions
-    val         -- declare immutable variables
+    call        -- function call
+    else        -- conditional statement
+    if          -- conditional statement
+    type        -- new type declaration
+    val         -- immutable variable declaration
 ```
 
 ## Identifiers
@@ -113,30 +115,58 @@ f()         -- f   receives unit     ()
 add(x,y)    -- add receives tuple    (x,y)
 ```
 
-## Constructors
+## Constructors, Destructors, Predicates
 
 A constructor creates a value of a type from a given subtype and argument:
 
 ```
-True.Bool ()
+Bool.True ()
+```
+
+A destructor acesses the value of a type as one of its subtypes:
+
+```
+(Bool.True ()).True         -- yields ()
+
+x = Tree.Node ($,10,$)
+x.Tree.Node.2               -- yields 10
+```
+
+A subtype predicate TODO:
+
+```
+?Bool.False(Bool.True ())   -- yields false
+
+x = Tree.Node ($,10,$)
+?Tree.Node(x)               -- yields true
 ```
 
 # Statements
 
-## Variable declarations
-
-```
-val x : ()
-val y : ((),()) = ((),())
-```
-
 ## Type declarations
+
+A type declaration creates a new type.
+Each case in the type declaration defines a subtype of it:
 
 ```
 type Bool {
-    False: ()
-    True:  ()
+    False: ()       -- subtype False holds unit value
+    True:  ()       -- subtype True  holds unit value
 }
+
+type Tree {
+    Node: (Tree,(),Tree)    -- subtype Node holds left subtree, unit value, and right subtree
+}
+```
+
+Every recursive type includes an implicit void subtype `$´.
+
+## Variable declarations
+
+```
+val x : () = ()
+val x : Bool = Bool.True ()
+val y : (Bool,()) = (Bool.False (),())
 ```
 
 ## Calls
@@ -156,6 +186,19 @@ call f() ; call g()
 call h()
 ```
 
+## Conditionals
+
+A conditional tests a value and executes one of its true or false branches
+depending on the test:
+
+```
+if x {
+    call f()
+} else {
+    call g()
+}
+```
+
 # Syntax
 
 ```
@@ -165,13 +208,16 @@ Stmt ::= `val´ VAR `:´ Type `=´ Expr    -- variable declaration     val x: ()
          `}´
       |  `call´ Expr                    -- call                     call f()
       |  { Stmt [`;´] }                 -- sequence                 call f() ; call g()
+      |  `if´ Expr `{´ Stmt `}´         -- conditional              if x { call f() } else { call g() }
+         [`else´ `{´ Stmt `}´]
 
 Expr ::= `(´ `)´                        -- unit value               ()
       |  NATIVE                         -- native identifier        _printf
       |  VAR                            -- variable identifier      i
       |  `(´ Expr {`,´ Expr} `)´        -- tuple                    (x,())
-      |  Expr INDEX                     -- tuple index              x.1
+      |  Expr `.´ INDEX                 -- tuple index              x.1
       |  Expr `(´ Expr `)´              -- call                     f(x)
       |  TYPE `.´ TYPE `(´ Expr `)´     -- constructor              Bool.True ()
+      |  TYPE `.´ TYPE                  -- destructor               Bool.True
       |  `(´ Expr `)´                   -- group                    (x)
 ```

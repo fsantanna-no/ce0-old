@@ -47,6 +47,7 @@ int parser_type (Type* ret) {
             if (check(',')) {
                 int n = 1;
                 Type* vec = malloc(n*sizeof(Type));
+                assert(vec != NULL);
                 vec[n-1] = *ret;
                 while (accept(',')) {
                     Type tp;
@@ -98,6 +99,7 @@ static int parser_expr_one (Expr* ret) {
             if (check(',')) {
                 int n = 1;
                 Expr* vec = malloc(n*sizeof(Expr));
+                assert(vec != NULL);
                 vec[n-1] = *ret;
                 while (accept(',')) {
                     Expr e;
@@ -149,8 +151,8 @@ static int parser_expr_one (Expr* ret) {
             return 0;
         }
         Expr* parg = malloc(sizeof(Expr));
-        *parg = arg;
         assert(parg != NULL);
+        *parg = arg;
 
         *ret = (Expr) { EXPR_CONS, { .Cons={type,subtype,parg} } };
 
@@ -175,8 +177,8 @@ int parser_expr (Expr* ret) {
                 return 0;
             }
             Expr* parg = malloc(sizeof(Expr));
-            *parg = arg;
             assert(parg != NULL);
+            *parg = arg;
 
             Expr* func = malloc(sizeof(Expr));
             assert(func != NULL);
@@ -228,7 +230,7 @@ int parser_stmt_sub (Sub* ret) {
     return 1;
 }
 
-int parser_stmt_one (Stmt* ret) {
+int parser_stmt (Stmt* ret) {
     // STMT_VAR
     if (accept(TK_VAL)) {
         if (!accept_err(TX_VAR)) {
@@ -268,6 +270,7 @@ int parser_stmt_one (Stmt* ret) {
         }
         int n = 1;
         Sub* vec = malloc(n*sizeof(Sub));
+        assert(vec != NULL);
         vec[n-1] = s;
 
         while (1) {
@@ -294,6 +297,42 @@ int parser_stmt_one (Stmt* ret) {
             return 0;
         }
         *ret = (Stmt) { STMT_CALL, .call=e };
+
+    // STMT_IF
+    } else if (accept(TK_IF)) {         // if
+        Expr e;
+        if (!parser_expr(&e)) {         // x
+            return 0;
+        }
+
+        if (!accept_err('{')) { return 0; }
+
+        Stmt t;
+        if (!parser_stmts(&t)) {         // true()
+            return 0;
+        }
+        Stmt* pt = malloc(sizeof(Stmt));
+        assert(pt != NULL);
+        *pt = t;
+
+        if (!accept_err('}')) { return 0; }
+
+        Stmt* pf = malloc(sizeof(Stmt));
+        assert(pf != NULL);
+        if (accept(TK_ELSE)) {
+            if (!accept_err('{')) { return 0; }
+            Stmt f;
+            if (!parser_stmts(&f)) {     // false()
+                return 0;
+            }
+            *pf = f;
+            if (!accept_err('}')) { return 0; }
+        } else {
+            *pf = (Stmt) { STMT_SEQ, .Seq={0,NULL} };
+        }
+
+        *ret = (Stmt) { STMT_IF, .If={e,pt,pf} };
+
     } else {
         return 0;
     }
@@ -301,37 +340,28 @@ int parser_stmt_one (Stmt* ret) {
     return 1;
 }
 
-int parser_stmt (Stmt* ret) {
-    Stmt s;
-    if (!parser_stmt_one(&s)) {
-        return 0;
-    }
-
-    int n = 1;
-    Stmt* vec = malloc(n*sizeof(Stmt));
-    vec[n-1] = s;
+int parser_stmts (Stmt* ret) {
+    int n = 0;
+    Stmt* vec = NULL;
 
     while (1) {
         accept(';');    // optional
         Stmt q;
-        if (!parser_stmt_one(&q)) {
+        if (!parser_stmt(&q)) {
             break;
         }
         n++;
         vec = realloc(vec, n*sizeof(Stmt));
         vec[n-1] = q;
+        accept(';');    // optional
     }
 
-    if (n == 1) {
-        *ret = s;
-    } else {
-        *ret = (Stmt) { STMT_SEQ, { .Seq={n,vec} } };
-    }
+    *ret = (Stmt) { STMT_SEQ, { .Seq={n,vec} } };
     return 1;
 }
 
 int parser_prog (Stmt* ret) {
-    if (!parser_stmt(ret)) {
+    if (!parser_stmts(ret)) {
         return 0;
     }
     if (!accept(TK_EOF)) {
