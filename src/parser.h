@@ -10,6 +10,7 @@ typedef enum {
 typedef enum {
     EXPR_NONE = 0,
     EXPR_UNIT,
+    EXPR_ARG,
     EXPR_NATIVE,
     EXPR_VAR,
     EXPR_TUPLE,
@@ -27,7 +28,8 @@ typedef enum {
     STMT_CALL,
     STMT_SEQ,
     STMT_IF,
-    STMT_FUNC
+    STMT_FUNC,
+    STMT_RETURN
 } STMT;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -89,6 +91,7 @@ typedef struct Stmt {
     STMT sub;
     union {
         Expr call;      // STMT_CALL
+        Expr ret;       // STMT_RETURN
         struct {
             Tk   id;
             Type type;
@@ -110,6 +113,7 @@ typedef struct Stmt {
         } If;
         struct {        // STMT_FUNC
             Type type;
+            Tk id;
             struct Stmt* body;
         } Func;
     };

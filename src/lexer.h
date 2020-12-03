@@ -12,10 +12,12 @@ typedef enum {
     TX_INDEX,
 
     TK_RESERVED,    // all reserved keywords
+    TK_ARG,
     TK_CALL,
     TK_ELSE,
     TK_FUNC,
     TK_IF,
+    TK_RETURN,
     TK_TYPE,
     TK_VAL
 } TK;

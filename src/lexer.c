@@ -7,10 +7,12 @@
 #include "all.h"
 
 static char* reserved[] = {
+    "arg",
     "call",
     "else",
     "func",
     "if",
+    "return",
     "type",
     "val"
 };

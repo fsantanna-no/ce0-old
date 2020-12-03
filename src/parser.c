@@ -137,6 +137,10 @@ static int parser_expr_one (Expr* ret) {
             }
         }
 
+    // EXPR_ARG
+    } else if (accept(TK_ARG)) {
+        *ret = (Expr) { EXPR_ARG };
+
     // EXPR_NATIVE
     } else if (accept(TX_NATIVE)) {
         *ret = (Expr) { EXPR_NATIVE, .tk=ALL.tk0 };
@@ -355,10 +359,12 @@ int parser_stmt (Stmt* ret) {
 
         *ret = (Stmt) { STMT_IF, .If={e,pt,pf} };
 
+    // STMT_FUNC
     } else if (accept(TK_FUNC)) {   // func
         if (!accept(TX_VAR)) {      // f
             return 0;
         }
+        Tk id = ALL.tk0;
         if (!accept(':')) {         // :
             return 0;
         }
@@ -375,9 +381,17 @@ int parser_stmt (Stmt* ret) {
         Stmt* ps = malloc(sizeof(Stmt));
         assert(ps != NULL);
         *ps = s;
-        *ret = (Stmt) { STMT_FUNC, .Func={tp,ps} };
+        *ret = (Stmt) { STMT_FUNC, .Func={tp,id,ps} };
 
         if (!accept('}')) { return 0; }
+
+    // STMT_RETURN
+    } else if (accept(TK_RETURN)) {
+        Expr e;
+        if (!parser_expr(&e)) {
+            return 0;
+        }
+        *ret = (Stmt) { STMT_RETURN, .ret=e };
 
     } else {
         return 0;

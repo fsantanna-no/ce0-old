@@ -2,7 +2,7 @@
 
 # 1. Lexical rules
 
-## Comments
+## Comment
 
 A comment starts with `--` and runs until the end of the line:
 
@@ -32,10 +32,12 @@ The following symbols are valid:
 The following keywords are reserved and cannot be used as identifiers:
 
 ```
+    arg         -- function argument
     call        -- function call
     else        -- conditional statement
     func        -- function declaration
     if          -- conditional statement
+    return      -- function return
     type        -- new type declaration
     val         -- immutable variable declaration
 ```
@@ -79,7 +81,7 @@ The unit value is the unique value of the [unit type](TODO):
 ()
 ```
 
-## Variables
+## Variable
 
 A variable holds a value of its type:
 
@@ -87,7 +89,7 @@ A variable holds a value of its type:
 i    myCounter    x10
 ```
 
-## Native symbols
+## Native symbol
 
 A native symbol holds a value from the host language:
 
@@ -95,7 +97,7 @@ A native symbol holds a value from the host language:
 _printf    _i99
 ```
 
-## Tuples and Indexes
+## Tuple and Index
 
 A tuple holds a fixed number of values of different types:
 
@@ -110,7 +112,7 @@ A tuple index holds the value at the given position:
 (x,()).2    -- returns ()
 ```
 
-## Calls
+## Call
 
 A call invokes an expression as a function with the argument:
 
@@ -120,7 +122,7 @@ f()         -- f   receives unit     ()
 add(x,y)    -- add receives tuple    (x,y)
 ```
 
-## Constructors, Discriminators, and Predicates
+## Constructor, Discriminator and Predicate
 
 A constructor creates a value of a type from a given subtype and argument:
 
@@ -150,7 +152,7 @@ b = x.Professor?            -- yields Bool.True()
 
 # 3. Statements
 
-## Type declarations
+## Type declaration
 
 A type declaration creates a new type.
 Each case in the type declaration defines a subtype of it:
@@ -168,7 +170,7 @@ type Tree {
 
 Every recursive type includes an implicit void subtype `$´.
 
-## Variable declarations
+## Variable declaration
 
 ```
 val x : () = ()
@@ -176,7 +178,7 @@ val x : Bool = Bool.True ()
 val y : (Bool,()) = (Bool.False (),())
 ```
 
-## Calls
+## Call
 
 A call invokes a call expression:
 
@@ -184,7 +186,7 @@ A call invokes a call expression:
 call f()    -- calls f passing ()
 ```
 
-## Sequences
+## Sequence
 
 Statements execute one after the other and can be separated by semicolons:
 
@@ -193,7 +195,7 @@ call f() ; call g()
 call h()
 ```
 
-## Conditionals
+## Conditional
 
 A conditional tests a `Bool` value and executes one of its true or false
 branches depending on the test:
@@ -206,15 +208,16 @@ if x {
 }
 ```
 
-## Functions and Returns
+## Function, Argument and Return
 
 A function declares a block of statements that can be called afterwards with an
 argument.
+The argument can be acessed through the identifier `arg`.
 A return exits a function with a value:
 
 ```
 func f : () -> () {
-    return ()
+    return arg
 }
 ```
 
@@ -237,6 +240,7 @@ Stmt ::= `val´ VAR `:´ Type `=´ Expr    -- variable declaration     val x: ()
 Expr ::= `(´ `)´                        -- unit value               ()
       |  NATIVE                         -- native identifier        _printf
       |  VAR                            -- variable identifier      i
+      |  `arg´                          -- function argument        arg
       |  `(´ Expr {`,´ Expr} `)´        -- tuple                    (x,())
       |  Expr `.´ INDEX                 -- tuple index              x.1
       |  Expr `(´ Expr `)´              -- call                     f(x)

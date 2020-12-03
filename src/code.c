@@ -50,6 +50,9 @@ void code_expr (Expr e) {
         case EXPR_UNIT:
             out("1");
             break;
+        case EXPR_ARG:
+            out("arg");
+            break;
         case EXPR_NATIVE:
             out(&e.tk.val.s[1]);
             break;
@@ -224,6 +227,24 @@ void code_stmt (Stmt s) {
             out("} else {\n");
             code_stmt(*s.If.false);
             out("}\n");
+            break;
+
+        case STMT_FUNC:
+            assert(s.Func.type.sub == TYPE_FUNC);
+            code_type(*s.Func.type.Func.out);
+            out(" ");
+            out(s.Func.id.val.s);
+            out(" (");
+            code_type(*s.Func.type.Func.inp);
+            out(" arg) {\n");
+            code_stmt(*s.Func.body);
+            out("}\n");
+            break;
+
+        case STMT_RETURN:
+            out("return ");
+            code_expr(s.ret);
+            out(";\n");
             break;
     }
 }

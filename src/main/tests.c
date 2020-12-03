@@ -496,13 +496,16 @@ void t_parser_stmt (void) {
         assert(s.If.false->sub==STMT_SEQ && s.If.false->Seq.size==0);
         fclose(ALL.inp);
     }
+    // STMT_FUNC
     {
-        all_init(NULL, stropen("r", 0, "func f : () -> () { }"));
+        all_init(NULL, stropen("r", 0, "func f : () -> () { return () }"));
         Stmt s;
         assert(parser_stmt(&s));
         assert(s.sub == STMT_FUNC);
         assert(s.Func.type.sub == TYPE_FUNC);
+        assert(!strcmp(s.Func.id.val.s, "f"));
         assert(s.Func.body->sub == STMT_SEQ);
+        assert(s.Func.body->Seq.vec[0].sub == STMT_RETURN);
         fclose(ALL.inp);
     }
 }
@@ -701,6 +704,12 @@ void t_all (void) {
         "type Bool { False: () ; True: () }\n"
         "val b : Bool = Bool.True()\n"
         "if b.False? { } else { call _show_Unit(()) }\n"
+    ));
+    // FUNC
+    assert(all(
+        "()\n",
+        "func f : () -> () { return arg }\n"
+        "call _show_Unit(f())\n"
     ));
 }
 
