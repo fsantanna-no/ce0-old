@@ -137,6 +137,10 @@ static int parser_expr_one (Expr* ret) {
             }
         }
 
+    // EXPR_NULL
+    } else if (accept('$')) {
+        *ret = (Expr) { EXPR_NULL };
+
     // EXPR_ARG
     } else if (accept(TK_ARG)) {
         *ret = (Expr) { EXPR_ARG };
@@ -281,6 +285,10 @@ int parser_stmt (Stmt* ret) {
 
     // STMT_TYPE
     } else if (accept(TK_TYPE)) {       // type
+        int isrec = 0;
+        if (accept(TK_REC)) {           // rec
+            isrec = 1;
+        }
         if (!accept_err(TX_TYPE)) {
             return 0;
         }
@@ -314,7 +322,7 @@ int parser_stmt (Stmt* ret) {
             return 0;
         }
 
-        *ret = (Stmt) { STMT_TYPE, .Type={id,n,vec} };
+        *ret = (Stmt) { STMT_TYPE, .Type={isrec,id,n,vec} };
 
     // STMT_CALL
     } else if (accept(TK_CALL)) {

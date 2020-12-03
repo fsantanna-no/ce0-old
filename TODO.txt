@@ -1,9 +1,15 @@
-- continuar com tests old
+- tipos recursivos
 - tupla de tuplas ou de qq coisa que nao seja transformavel em void*
     - vou precisar do ENV
     // TODO: tuples
 
 - MINOR
-    - assert no EXPR_DISC
+    - funcoes recursivas
+    - assert no EXPR_DISC (gerar erro caso nao seja do subtipo certo)
     - show/cons omit ()
     - type names must contain lowercase (error in C generation upper/lower)
+
+
+type rec Nat {
+    Succ: Nat
+}

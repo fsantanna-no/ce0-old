@@ -57,6 +57,15 @@ puts("<<<");
     return !strcmp(out,xp);
 }
 
+void prelude (void) {
+    assert(all(
+        "()\n",
+        "type Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+    ));
+}
+
 void chap_01 (void) {
     assert(all(
         "()\n",
@@ -65,6 +74,7 @@ void chap_01 (void) {
 }
 
 int main (void) {
+    prelude();
     chap_01();
     puts("OK");
 }

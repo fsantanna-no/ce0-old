@@ -25,6 +25,7 @@ The following symbols are valid:
     !           -- type discriminator
     ?           -- type predicate
     ->          -- function type signature
+    $           -- null subtype
 ```
 
 ## Keywords
@@ -37,6 +38,7 @@ The following keywords are reserved and cannot be used as identifiers:
     else        -- conditional statement
     func        -- function declaration
     if          -- conditional statement
+    rec         -- type/function recursive declaration
     return      -- function return
     type        -- new type declaration
     val         -- immutable variable declaration
@@ -139,6 +141,8 @@ x = Tree.Node ($,10,$)
 x.Tree.Node!.2              -- yields 10
 ```
 
+The value `$` corresponds to the null subtype of all recursive types.
+
 A subtype predicate evaluates to a `Bool`:
 
 ```
@@ -162,13 +166,17 @@ type Bool {
     False: ()       -- subtype False holds unit value
     True:  ()       -- subtype True  holds unit value
 }
+```
 
-type Tree {
+A recursive type uses a `rec` declaration and always contains the implicit base
+null subtype `$´:
+
+```
+type rec Tree {
+    -- $: $                 -- implicit null subtype
     Node: (Tree,(),Tree)    -- subtype Node holds left subtree, unit value, and right subtree
 }
 ```
-
-Every recursive type includes an implicit void subtype `$´.
 
 ## Variable declaration
 
@@ -225,7 +233,7 @@ func f : () -> () {
 
 ```
 Stmt ::= `val´ VAR `:´ Type `=´ Expr    -- variable declaration     val x: () = ()
-      |  `type´ TYPE `{`                -- type declaration
+      |  `type´ [`rec´] TYPE `{`        -- type declaration
             { TYPE `:´ Type [`;´] }     -- subtypes
          `}´
       |  `call´ Expr                    -- call                     call f()
@@ -241,6 +249,7 @@ Expr ::= `(´ `)´                        -- unit value               ()
       |  NATIVE                         -- native identifier        _printf
       |  VAR                            -- variable identifier      i
       |  `arg´                          -- function argument        arg
+      |  `$´                            -- null recursive subtype   $
       |  `(´ Expr {`,´ Expr} `)´        -- tuple                    (x,())
       |  Expr `.´ INDEX                 -- tuple index              x.1
       |  Expr `(´ Expr `)´              -- call                     f(x)

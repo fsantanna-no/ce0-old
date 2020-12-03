@@ -17,7 +17,7 @@ int all (const char* xp, char* src) {
     }
     code(s);
     fclose(ALL.out);
-#if 0
+#if 1
 puts(">>>");
 puts(out);
 puts("<<<");
@@ -742,7 +742,15 @@ void t_all (void) {
         "        return Bool.True ()\n"
         "    }\n"
         "}\n"
-        "call _show_Bool(inv(Bool.True()))"
+        "call _show_Bool(inv(Bool.True()))\n"
+    ));
+    // TYPE REC
+    assert(all(
+        "()\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "call _show_Nat(Nat.Succ(Nat.Succ($)))\n"
     ));
 }
 

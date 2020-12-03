@@ -53,6 +53,9 @@ void code_expr (Expr e) {
         case EXPR_UNIT:
             out("1");
             break;
+        case EXPR_NULL:
+            out("NULL");
+            break;
         case EXPR_ARG:
             out("arg");
             break;

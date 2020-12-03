@@ -12,6 +12,7 @@ static char* reserved[] = {
     "else",
     "func",
     "if",
+    "rec",
     "return",
     "type",
     "val"
@@ -92,6 +93,7 @@ static TK lx_token (TK_val* val) {
         case '.':
         case '!':
         case '?':
+        case '$':
             return c;
 
         case EOF:

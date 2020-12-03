@@ -10,6 +10,7 @@ typedef enum {
 typedef enum {
     EXPR_NONE = 0,
     EXPR_UNIT,
+    EXPR_NULL,
     EXPR_ARG,
     EXPR_NATIVE,
     EXPR_VAR,
@@ -98,6 +99,7 @@ typedef struct Stmt {
             Expr init;
         } Var;          // STMT_VAR
         struct {
+            int  isrec;
             Tk   id;        // Bool
             int  size;      // 2 subs
             Sub* vec;       // [True,False]
