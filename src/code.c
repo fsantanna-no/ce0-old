@@ -33,6 +33,9 @@ char* code_type_ (Type tp) {
         case TYPE_TYPE:
             strcpy(out, tp.tk.val.s);
             break;
+        case TYPE_TUPLE:
+            sprintf(out, "TUPLE%d", tp.Tuple.size);
+            break;
         default:
             assert(0 && "TODO");
     }

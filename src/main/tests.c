@@ -664,6 +664,13 @@ void t_all (void) {
         "()\n",
         "call _show_Unit(((),()).1)\n"
     ));
+#if 0
+    // TODO: tuples
+    assert(all(
+        "()\n",
+        "call _show_Unit(((),((),())).1.2)\n"
+    ));
+#endif
     // TYPE
     assert(all(
         "False ()\n",
@@ -679,6 +686,17 @@ void t_all (void) {
         "val x : Xx = Xx.Xx1(Yy.Yy1(Zz.Zz1()))\n"
         "call _show_Zz(x.Xx1!.Yy1!)\n"
     ));
+#if 0
+    // TODO: tuples
+    assert(all(
+        "Zz1 ()\n",
+        "type Zz { Zz1:() }\n"
+        "type Yy { Yy1:() }\n"
+        "type Xx { Xx1:(Yy,Zz) }\n"
+        "val x : Xx = Xx.Xx1(Yy.Yy1(),Zz.Zz1())\n"
+        "call _show_Xx(x)\n"
+    ));
+#endif
     // IF
     assert(all(
         "()\n",
@@ -710,6 +728,21 @@ void t_all (void) {
         "()\n",
         "func f : () -> () { return arg }\n"
         "call _show_Unit(f())\n"
+    ));
+    assert(all(
+        "False ()\n",
+        "type Bool {\n"
+        "    False: ()\n"
+        "    True:  ()\n"
+        "}\n"
+        "func inv : (Bool -> Bool) {\n"
+        "    if arg.True? {\n"
+        "        return Bool.False ()\n"
+        "    } else {\n"
+        "        return Bool.True ()\n"
+        "    }\n"
+        "}\n"
+        "call _show_Bool(inv(Bool.True()))"
     ));
 }
 

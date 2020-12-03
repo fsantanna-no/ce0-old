@@ -229,13 +229,13 @@ Stmt ::= `val´ VAR `:´ Type `=´ Expr    -- variable declaration     val x: ()
             { TYPE `:´ Type [`;´] }     -- subtypes
          `}´
       |  `call´ Expr                    -- call                     call f()
-      |  { Stmt [`;´] }                 -- sequence                 call f() ; call g()
       |  `if´ Expr `{´ Stmt `}´         -- conditional              if x { call f() } else { call g() }
          [`else´ `{´ Stmt `}´]
       |  `func´ VAR `:´ Type `{´        -- function                 func f : ()->() { return () }
             Stmt
          `}´
       |  `return´ Expr                  -- function return          return ()
+      |  { Stmt [`;´] }                 -- sequence                 call f() ; call g()
 
 Expr ::= `(´ `)´                        -- unit value               ()
       |  NATIVE                         -- native identifier        _printf
