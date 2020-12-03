@@ -31,6 +31,9 @@ static int is_reserved (TK_val* val) {
 const char* lexer_tk2err (TK enu) {
     static char str[512];
     switch (enu) {
+        case TK_EOF:
+            sprintf(str, "end of file");
+            break;
         case TX_VAR:
             sprintf(str, "variable identifier");
             break;

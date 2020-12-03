@@ -443,7 +443,7 @@ int parser_prog (Stmt* ret) {
     if (!parser_stmts(&env,ret)) {
         return 0;
     }
-    if (!accept(TK_EOF)) {
+    if (!accept_err(TK_EOF)) {
         return 0;
     }
     return 1;

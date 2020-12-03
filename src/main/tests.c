@@ -12,12 +12,12 @@ int all (const char* xp, char* src) {
     );
     Stmt s;
     if (!parser_prog(&s)) {
-        puts(ALL.err);
+        //puts(ALL.err);
         return !strcmp(ALL.err, xp);
     }
     code(s);
     fclose(ALL.out);
-#if 1
+#if 0
 puts(">>>");
 puts(out);
 puts("<<<");
@@ -765,18 +765,22 @@ void t_all (void) {
     ));
     // ENV
     assert(all(
-        "ERR\n",
+        "(ln 1, col 1): expected end of file : have \"_show_Unit\"",
         "_show_Unit(x)\n"
+    ));
+    assert(all(
+        "ERR\n",
+        "call _show_Unit(x)\n"
     ));
     assert(all(
         "ERR\n",
         "func f : ()->() { val x:()=(); return x }\n"
-        "_show_Unit(x)\n"
+        "call _show_Unit(x)\n"
     ));
     assert(all(
         "ERR\n",
         "if () { val x:()=() }\n"
-        "_show_Unit(x)\n"
+        "call _show_Unit(x)\n"
     ));
     // TYPE REC
     assert(all(
