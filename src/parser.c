@@ -101,13 +101,13 @@ int parser_type (Type* ret) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static int parser_expr_one (Expr* ret) {
+static int parser_expr_one (Env* env, Expr* ret) {
     // EXPR_UNIT
     if (accept('(')) {
         if (accept(')')) {
-            *ret = (Expr) { EXPR_UNIT, NULL };
+            *ret = (Expr) { EXPR_UNIT, env };
         } else {
-            if (!parser_expr(ret)) {
+            if (!parser_expr(env, ret)) {
                 return 0;
             }
 
@@ -119,7 +119,7 @@ static int parser_expr_one (Expr* ret) {
                 vec[n-1] = *ret;
                 while (accept(',')) {
                     Expr e;
-                    if (!parser_expr(&e)) {
+                    if (!parser_expr(env, &e)) {
                         return 0;
                     }
                     n++;
@@ -171,14 +171,14 @@ static int parser_expr_one (Expr* ret) {
         }
 
         Expr arg;
-        if (!parser_expr_one(&arg)) {   // ()
+        if (!parser_expr_one(env, &arg)) {   // ()
             return 0;
         }
         Expr* parg = malloc(sizeof(Expr));
         assert(parg != NULL);
         *parg = arg;
 
-        *ret = (Expr) { EXPR_CONS, NULL, { .Cons={type,subtype,parg} } };
+        *ret = (Expr) { EXPR_CONS, env, { .Cons={type,subtype,parg} } };
 
     } else {
         return err_expected("expression");
@@ -186,9 +186,9 @@ static int parser_expr_one (Expr* ret) {
     return 1;
 }
 
-int parser_expr (Expr* ret) {
+int parser_expr (Env* env, Expr* ret) {
     Expr e;
-    if (!parser_expr_one(&e)) {
+    if (!parser_expr_one(env, &e)) {
         return 0;
     }
     *ret = e;
@@ -197,7 +197,7 @@ int parser_expr (Expr* ret) {
     // EXPR_CALL
         if (check('(')) {                // only checks, arg will accept
             Expr arg;
-            if (!parser_expr_one(&arg)) {   // f().() and not f.()()
+            if (!parser_expr_one(env, &arg)) {   // f().() and not f.()()
                 return 0;
             }
             Expr* parg = malloc(sizeof(Expr));
@@ -207,23 +207,23 @@ int parser_expr (Expr* ret) {
             Expr* func = malloc(sizeof(Expr));
             assert(func != NULL);
             *func = *ret;
-            *ret  = (Expr) { EXPR_CALL, NULL, .Call={func,parg} };
+            *ret  = (Expr) { EXPR_CALL, env, .Call={func,parg} };
         } else if (accept('.')) {
     // EXPR_INDEX
             if (accept(TX_INDEX)) {
                 Expr* tup = malloc(sizeof(Expr));
                 assert(tup != NULL);
                 *tup = *ret;
-                *ret = (Expr) { EXPR_INDEX, NULL, .Index={tup,ALL.tk0.val.n} };
+                *ret = (Expr) { EXPR_INDEX, env, .Index={tup,ALL.tk0.val.n} };
     // EXPR_DISC
             } else if (accept(TX_TYPE)) {
                 Expr* cons = malloc(sizeof(Expr));
                 assert(cons != NULL);
                 *cons = *ret;
                 if (accept('?')) {
-                    *ret = (Expr) { EXPR_PRED, NULL, .Pred={cons,ALL.tk0} };
+                    *ret = (Expr) { EXPR_PRED, env, .Pred={cons,ALL.tk0} };
                 } else if (accept('!')) {
-                    *ret = (Expr) { EXPR_DISC, NULL, .Disc={cons,ALL.tk0} };
+                    *ret = (Expr) { EXPR_DISC, env, .Disc={cons,ALL.tk0} };
                 } else {
                     return err_expected("`?´ or `!´");
                 }
@@ -277,7 +277,7 @@ int parser_stmt (Env** env, Stmt* ret) {
             return 0;
         }
         Expr e;
-        if (!parser_expr(&e)) {
+        if (!parser_expr(*env, &e)) {
             return 0;
         }
         *ret = (Stmt) { STMT_VAR, *env, .Var={id,tp,e} };
@@ -334,7 +334,7 @@ int parser_stmt (Env** env, Stmt* ret) {
     // STMT_CALL
     } else if (accept(TK_CALL)) {
         Expr e;
-        if (!parser_expr(&e)) {
+        if (!parser_expr(*env, &e)) {
             return 0;
         }
         *ret = (Stmt) { STMT_CALL, *env, .call=e };
@@ -342,7 +342,7 @@ int parser_stmt (Env** env, Stmt* ret) {
     // STMT_IF
     } else if (accept(TK_IF)) {         // if
         Expr e;
-        if (!parser_expr(&e)) {         // x
+        if (!parser_expr(*env, &e)) {         // x
             return 0;
         }
 
@@ -406,7 +406,7 @@ int parser_stmt (Env** env, Stmt* ret) {
     // STMT_RETURN
     } else if (accept(TK_RETURN)) {
         Expr e;
-        if (!parser_expr(&e)) {
+        if (!parser_expr(*env, &e)) {
             return 0;
         }
         *ret = (Stmt) { STMT_RETURN, *env, .ret=e };

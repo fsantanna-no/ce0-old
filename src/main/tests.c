@@ -202,7 +202,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "()"));
         Expr e;
-        assert(parser_expr(&e));
+        assert(parser_expr(NULL,&e));
         assert(e.sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
@@ -210,42 +210,42 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "(())"));
         Expr e;
-        assert(parser_expr(&e));
+        assert(parser_expr(NULL,&e));
         assert(e.sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "("));
         Expr e;
-        assert(!parser_expr(&e));
+        assert(!parser_expr(NULL,&e));
         assert(!strcmp(ALL.err, "(ln 1, col 2): expected expression : have end of file"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "(x"));
         Expr e;
-        assert(!parser_expr(&e));
+        assert(!parser_expr(NULL,&e));
         assert(!strcmp(ALL.err, "(ln 1, col 3): expected `)´ : have end of file"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "( ( ) )"));
         Expr e;
-        assert(parser_expr(&e));
+        assert(parser_expr(NULL,&e));
         assert(e.sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "(("));
         Expr e;
-        assert(!parser_expr(&e));
+        assert(!parser_expr(NULL,&e));
         assert(!strcmp(ALL.err, "(ln 1, col 3): expected expression : have end of file"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "(\n( \n"));
         Expr e;
-        assert(!parser_expr(&e));
+        assert(!parser_expr(NULL,&e));
         assert(!strcmp(ALL.err, "(ln 3, col 1): expected expression : have end of file"));
         fclose(ALL.inp);
     }
@@ -253,7 +253,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "x"));
         Expr e;
-        assert(parser_expr(&e));
+        assert(parser_expr(NULL,&e));
         assert(e.sub == EXPR_VAR); assert(!strcmp(e.tk.val.s,"x"));
         fclose(ALL.inp);
     }
@@ -261,7 +261,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "_x"));
         Expr e;
-        assert(parser_expr(&e));
+        assert(parser_expr(NULL,&e));
         assert(e.sub == EXPR_NATIVE); assert(!strcmp(e.tk.val.s,"_x"));
         fclose(ALL.inp);
     }
@@ -269,28 +269,28 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "((),x,"));
         Expr e;
-        assert(!parser_expr(&e));
+        assert(!parser_expr(NULL,&e));
         assert(!strcmp(ALL.err, "(ln 1, col 7): expected expression : have end of file"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "((),)"));
         Expr e;
-        assert(!parser_expr(&e));
+        assert(!parser_expr(NULL,&e));
         assert(!strcmp(ALL.err, "(ln 1, col 5): expected expression : have `)´"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "((),x:"));
         Expr e;
-        assert(!parser_expr(&e));
+        assert(!parser_expr(NULL,&e));
         assert(!strcmp(ALL.err, "(ln 1, col 6): expected `)´ : have `:´"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "((),x,())"));
         Expr e;
-        assert(parser_expr(&e));
+        assert(parser_expr(NULL,&e));
         assert(e.sub == EXPR_TUPLE);
         assert(e.Tuple.size == 3);
         assert(e.Tuple.vec[1].sub == EXPR_VAR && !strcmp(e.Tuple.vec[1].tk.val.s,"x"));
@@ -301,7 +301,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "xxx (  )"));
         Expr e;
-        assert(parser_expr(&e));
+        assert(parser_expr(NULL,&e));
         assert(e.sub == EXPR_CALL);
         assert(e.Call.func->sub == EXPR_VAR);
         assert(!strcmp(e.Call.func->tk.val.s, "xxx"));
@@ -311,7 +311,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "f()\n(  )\n()"));
         Expr e;
-        assert(parser_expr(&e));
+        assert(parser_expr(NULL,&e));
         assert(e.sub == EXPR_CALL);
         assert(e.Call.func->sub == EXPR_CALL);
         assert(e.Call.func->Call.func->sub == EXPR_CALL);
@@ -323,7 +323,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "Bool.True ()"));
         Expr e;
-        assert(parser_expr(&e));
+        assert(parser_expr(NULL,&e));
         assert(e.sub == EXPR_CONS);
         assert(!strcmp(e.Cons.type.val.s,"Bool"));
         assert(!strcmp(e.Cons.subtype.val.s,"True"));
@@ -334,7 +334,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "x.1"));
         Expr e;
-        assert(parser_expr(&e));
+        assert(parser_expr(NULL,&e));
         assert(e.sub == EXPR_INDEX);
         assert(e.Index.tuple->sub == EXPR_VAR);
         assert(e.Index.index == 1);
@@ -343,7 +343,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "x().1()"));
         Expr e;
-        assert(parser_expr(&e));
+        assert(parser_expr(NULL,&e));
         assert(e.sub == EXPR_CALL);
         assert(e.Call.func->sub == EXPR_INDEX);
         assert(e.Call.func->Index.tuple->sub == EXPR_CALL);
@@ -352,7 +352,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "x().."));
         Expr e;
-        assert(!parser_expr(&e));
+        assert(!parser_expr(NULL,&e));
         assert(!strcmp(ALL.err, "(ln 1, col 5): expected index or subtype : have `.´"));
         fclose(ALL.inp);
     }
