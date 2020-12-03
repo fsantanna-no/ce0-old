@@ -11,10 +11,15 @@ int all (const char* xp, char* src) {
         stropen("r", 0, src)
     );
     Stmt s;
-    if (!parser_prog(&s)) {
+    if (!parser(&s)) {
         //puts(ALL.err);
         return !strcmp(ALL.err, xp);
     }
+#if 0
+    if (!types(&s)) {
+        return !strcmp(ALL.err, xp);
+    }
+#endif
     code(s);
     fclose(ALL.out);
 #if 0

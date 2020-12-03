@@ -1,4 +1,6 @@
+- types.c
 - ENV
+    - lin/col for TK
 - tipos recursivos
 - tupla de tuplas ou de qq coisa que nao seja transformavel em void*
     - vou precisar do ENV

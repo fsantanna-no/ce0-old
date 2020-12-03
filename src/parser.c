@@ -1,6 +1,5 @@
 #include <assert.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "all.h"
 
@@ -429,7 +428,7 @@ int parser_stmts (Env** env, Stmt* ret) {
     return 1;
 }
 
-int parser_prog (Stmt* ret) {
+int parser (Stmt* ret) {
     Env* env = NULL;
     if (!parser_stmts(&env,ret)) {
         return 0;

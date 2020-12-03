@@ -137,4 +137,4 @@ int parser_type  (Type* ret);
 int parser_expr  (Env* env, Expr* ret);
 int parser_stmt  (Env** env, Stmt* ret);
 int parser_stmts (Env** env, Stmt* ret);
-int parser_prog  (Stmt* ret);
+int parser  (Stmt* ret);
