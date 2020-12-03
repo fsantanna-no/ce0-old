@@ -240,7 +240,6 @@ int parser_expr (Expr* ret) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-
 int parser_stmt_sub (Sub* ret) {
     if (!accept_err(TX_TYPE)) {
         return 0;
@@ -260,7 +259,7 @@ int parser_stmt_sub (Sub* ret) {
     return 1;
 }
 
-int parser_stmt (Stmt* ret) {
+int parser_stmt (Env** env, Stmt* ret) {
     // STMT_VAR
     if (accept(TK_VAL)) {
         if (!accept_err(TX_VAR)) {
@@ -281,7 +280,11 @@ int parser_stmt (Stmt* ret) {
         if (!parser_expr(&e)) {
             return 0;
         }
-        *ret = (Stmt) { STMT_VAR, NULL, .Var={id,tp,e} };
+        *ret = (Stmt) { STMT_VAR, *env, .Var={id,tp,e} };
+
+        Env* new = malloc(sizeof(Env));
+        *new = (Env) { ret, *env };
+        *env = new;
 
     // STMT_TYPE
     } else if (accept(TK_TYPE)) {       // type
@@ -322,7 +325,11 @@ int parser_stmt (Stmt* ret) {
             return 0;
         }
 
-        *ret = (Stmt) { STMT_TYPE, NULL, .Type={isrec,id,n,vec} };
+        *ret = (Stmt) { STMT_TYPE, *env, .Type={isrec,id,n,vec} };
+
+        Env* new = malloc(sizeof(Env));
+        *new = (Env) { ret, *env };
+        *env = new;
 
     // STMT_CALL
     } else if (accept(TK_CALL)) {
@@ -330,7 +337,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_expr(&e)) {
             return 0;
         }
-        *ret = (Stmt) { STMT_CALL, NULL, .call=e };
+        *ret = (Stmt) { STMT_CALL, *env, .call=e };
 
     // STMT_IF
     } else if (accept(TK_IF)) {         // if
@@ -342,7 +349,8 @@ int parser_stmt (Stmt* ret) {
         if (!accept_err('{')) { return 0; }
 
         Stmt t;
-        if (!parser_stmts(&t)) {         // true()
+        Env* trash1 = *env;
+        if (!parser_stmts(&trash1,&t)) {         // true()
             return 0;
         }
         Stmt* pt = malloc(sizeof(Stmt));
@@ -356,16 +364,17 @@ int parser_stmt (Stmt* ret) {
         if (accept(TK_ELSE)) {
             if (!accept_err('{')) { return 0; }
             Stmt f;
-            if (!parser_stmts(&f)) {     // false()
+            Env* trash2 = *env;
+            if (!parser_stmts(&trash2,&f)) {     // false()
                 return 0;
             }
             *pf = f;
             if (!accept_err('}')) { return 0; }
         } else {
-            *pf = (Stmt) { STMT_SEQ, NULL, .Seq={0,NULL} };
+            *pf = (Stmt) { STMT_SEQ, *env, .Seq={0,NULL} };
         }
 
-        *ret = (Stmt) { STMT_IF, NULL, .If={e,pt,pf} };
+        *ret = (Stmt) { STMT_IF, *env, .If={e,pt,pf} };
 
     // STMT_FUNC
     } else if (accept(TK_FUNC)) {   // func
@@ -383,13 +392,14 @@ int parser_stmt (Stmt* ret) {
         if (!accept('{')) { return 0; }
 
         Stmt s;                     // return ()
-        if (!parser_stmts(&s)) {
+        Env* trash = *env;
+        if (!parser_stmts(&trash, &s)) {
             return 0;
         }
         Stmt* ps = malloc(sizeof(Stmt));
         assert(ps != NULL);
         *ps = s;
-        *ret = (Stmt) { STMT_FUNC, NULL, .Func={tp,id,ps} };
+        *ret = (Stmt) { STMT_FUNC, *env, .Func={tp,id,ps} };
 
         if (!accept('}')) { return 0; }
 
@@ -399,7 +409,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_expr(&e)) {
             return 0;
         }
-        *ret = (Stmt) { STMT_RETURN, NULL, .ret=e };
+        *ret = (Stmt) { STMT_RETURN, *env, .ret=e };
 
     } else {
         return 0;
@@ -408,14 +418,14 @@ int parser_stmt (Stmt* ret) {
     return 1;
 }
 
-int parser_stmts (Stmt* ret) {
+int parser_stmts (Env** env, Stmt* ret) {
     int n = 0;
     Stmt* vec = NULL;
 
     while (1) {
         accept(';');    // optional
         Stmt q;
-        if (!parser_stmt(&q)) {
+        if (!parser_stmt(env,&q)) {
             break;
         }
         n++;
@@ -424,12 +434,13 @@ int parser_stmts (Stmt* ret) {
         accept(';');    // optional
     }
 
-    *ret = (Stmt) { STMT_SEQ, NULL, { .Seq={n,vec} } };
+    *ret = (Stmt) { STMT_SEQ, *env, { .Seq={n,vec} } };
     return 1;
 }
 
 int parser_prog (Stmt* ret) {
-    if (!parser_stmts(ret)) {
+    Env* env = NULL;
+    if (!parser_stmts(&env,ret)) {
         return 0;
     }
     if (!accept(TK_EOF)) {

@@ -135,6 +135,6 @@ typedef struct Env {
 
 int parser_type  (Type* ret);
 int parser_expr  (Expr* ret);
-int parser_stmt  (Stmt* ret);
-int parser_stmts (Stmt* ret);
+int parser_stmt  (Env** env, Stmt* ret);
+int parser_stmts (Env** env, Stmt* ret);
 int parser_prog  (Stmt* ret);

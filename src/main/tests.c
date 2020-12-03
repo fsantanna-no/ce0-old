@@ -362,36 +362,41 @@ void t_parser_stmt (void) {
     // STMT_VAR
     {
         all_init(NULL, stropen("r", 0, "val :"));
+        Env* env = NULL;
         Stmt s;
-        assert(!parser_stmt(&s));
+        assert(!parser_stmt(&env,&s));
         assert(!strcmp(ALL.err, "(ln 1, col 5): expected variable identifier : have `:´"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "val x x"));
+        Env* env = NULL;
         Stmt s;
-        assert(!parser_stmt(&s));
+        assert(!parser_stmt(&env,&s));
         assert(!strcmp(ALL.err, "(ln 1, col 7): expected `:´ : have \"x\""));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "val x: x"));
+        Env* env = NULL;
         Stmt s;
-        assert(!parser_stmt(&s));
+        assert(!parser_stmt(&env,&s));
         assert(!strcmp(ALL.err, "(ln 1, col 8): expected type : have \"x\""));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "val x: ()"));
+        Env* env = NULL;
         Stmt s;
-        assert(!parser_stmt(&s));
+        assert(!parser_stmt(&env,&s));
         assert(!strcmp(ALL.err, "(ln 1, col 10): expected `=´ : have end of file"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "val x: () = ()"));
+        Env* env = NULL;
         Stmt s;
-        assert(parser_stmt(&s));
+        assert(parser_stmt(&env,&s));
         assert(s.sub == STMT_VAR);
         assert(s.Var.id.enu == TX_VAR);
         assert(s.Var.type.sub == TYPE_UNIT);
@@ -400,8 +405,9 @@ void t_parser_stmt (void) {
     }
     {
         all_init(NULL, stropen("r", 0, "val x: ((),((),())) = ()"));
+        Env* env = NULL;
         Stmt s;
-        assert(parser_stmt(&s));
+        assert(parser_stmt(&env,&s));
         assert(s.sub == STMT_VAR);
         assert(s.Var.id.enu == TX_VAR);
         assert(s.Var.type.sub == TYPE_TUPLE);
@@ -409,37 +415,42 @@ void t_parser_stmt (void) {
     }
     {
         all_init(NULL, stropen("r", 0, "val a : (_char) = ()"));
+        Env* env = NULL;
         Stmt s;
-        assert(parser_stmt(&s));
+        assert(parser_stmt(&env,&s));
         assert(s.Var.type.sub == TYPE_NATIVE);
         fclose(ALL.inp);
     }
     // STMT_TYPE
     {
         all_init(NULL, stropen("r", 0, "type Bool"));
+        Env* env = NULL;
         Stmt s;
-        assert(!parser_stmt(&s));
+        assert(!parser_stmt(&env,&s));
         assert(!strcmp(ALL.err, "(ln 1, col 10): expected `{´ : have end of file"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "type Bool {}"));
+        Env* env = NULL;
         Stmt s;
-        assert(!parser_stmt(&s));
+        assert(!parser_stmt(&env,&s));
         assert(!strcmp(ALL.err, "(ln 1, col 12): expected type identifier : have `}´"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "type Bool { True: ()"));
+        Env* env = NULL;
         Stmt s;
-        assert(!parser_stmt(&s));
+        assert(!parser_stmt(&env,&s));
         assert(!strcmp(ALL.err, "(ln 1, col 21): expected `}´ : have end of file"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "type Bool { False:() ; True:() }"));
+        Env* env = NULL;
         Stmt s;
-        assert(parser_stmt(&s));
+        assert(parser_stmt(&env,&s));
         assert(s.sub == STMT_TYPE);
         assert(!strcmp(s.Type.id.val.s, "Bool"));
         assert(s.Type.size == 2);
@@ -450,8 +461,9 @@ void t_parser_stmt (void) {
     // STMT_CALL
     {
         all_init(NULL, stropen("r", 0, "call f()"));
+        Env* env = NULL;
         Stmt s;
-        assert(parser_stmt(&s));
+        assert(parser_stmt(&env,&s));
         assert(s.sub == STMT_CALL);
         assert(s.call.sub == EXPR_CALL);
         assert(s.call.Call.func->sub == EXPR_VAR);
@@ -460,8 +472,9 @@ void t_parser_stmt (void) {
     }
     {
         all_init(NULL, stropen("r", 0, "call _printf()"));
+        Env* env = NULL;
         Stmt s;
-        assert(parser_stmt(&s));
+        assert(parser_stmt(&env,&s));
         assert(s.sub == STMT_CALL);
         assert(s.call.sub == EXPR_CALL);
         assert(s.call.Call.func->sub == EXPR_NATIVE);
@@ -470,8 +483,9 @@ void t_parser_stmt (void) {
     }
     {
         all_init(NULL, stropen("r", 0, "call f() ; call g()"));
+        Env* env = NULL;
         Stmt s;
-        assert(parser_stmts(&s));
+        assert(parser_stmts(&env,&s));
         assert(s.sub == STMT_SEQ);
         assert(s.Seq.size == 2);
         assert(s.Seq.vec[1].sub == STMT_CALL);
@@ -480,8 +494,9 @@ void t_parser_stmt (void) {
     // STMT_IF
     {
         all_init(NULL, stropen("r", 0, "if () { } else { call () }"));
+        Env* env = NULL;
         Stmt s;
-        assert(parser_stmt(&s));
+        assert(parser_stmt(&env,&s));
         assert(s.sub == STMT_IF);
         assert(s.If.cond.sub == EXPR_UNIT);
         assert(s.If.true ->sub==STMT_SEQ && s.If.true ->Seq.size==0);
@@ -490,8 +505,9 @@ void t_parser_stmt (void) {
     }
     {
         all_init(NULL, stropen("r", 0, "if () { call () } "));
+        Env* env = NULL;
         Stmt s;
-        assert(parser_stmt(&s));
+        assert(parser_stmt(&env,&s));
         assert(s.sub == STMT_IF);
         assert(s.If.false->sub==STMT_SEQ && s.If.false->Seq.size==0);
         fclose(ALL.inp);
@@ -499,8 +515,9 @@ void t_parser_stmt (void) {
     // STMT_FUNC
     {
         all_init(NULL, stropen("r", 0, "func f : () -> () { return () }"));
+        Env* env = NULL;
         Stmt s;
-        assert(parser_stmt(&s));
+        assert(parser_stmt(&env,&s));
         assert(s.sub == STMT_FUNC);
         assert(s.Func.type.sub == TYPE_FUNC);
         assert(!strcmp(s.Func.id.val.s, "f"));
@@ -569,8 +586,9 @@ void t_code (void) {
             stropen("w", sizeof(out), out),
             stropen("r", 0, "val a : () = () ; call _show_Unit(a)")
         );
+        Env* env = NULL;
         Stmt s;
-        assert(parser_stmts(&s));
+        assert(parser_stmts(&env,&s));
         code(s);
         fclose(ALL.out);
         char* ret =
@@ -595,8 +613,9 @@ void t_code (void) {
             stropen("w", sizeof(out), out),
             stropen("r", 0, "type Bool { False: () ; True: () }")
         );
+        Env* env = NULL;
         Stmt s;
-        assert(parser_stmts(&s));
+        assert(parser_stmts(&env,&s));
         code(s);
         fclose(ALL.out);
         char* ret =
@@ -743,6 +762,21 @@ void t_all (void) {
         "    }\n"
         "}\n"
         "call _show_Bool(inv(Bool.True()))\n"
+    ));
+    // ENV
+    assert(all(
+        "ERR\n",
+        "_show_Unit(x)\n"
+    ));
+    assert(all(
+        "ERR\n",
+        "func f : ()->() { val x:()=(); return x }\n"
+        "_show_Unit(x)\n"
+    ));
+    assert(all(
+        "ERR\n",
+        "if () { val x:()=() }\n"
+        "_show_Unit(x)\n"
     ));
     // TYPE REC
     assert(all(
