@@ -647,11 +647,6 @@ void t_all (void) {
         "()\n",
         "call _show_Unit(((),()).1)\n"
     ));
-    // IF
-    assert(all(
-        "()\n",
-        "if () { call _show_Unit() }\n"
-    ));
     // TYPE
     assert(all(
         "Bool.False ()\n",
@@ -666,6 +661,19 @@ void t_all (void) {
         "type Xx { Xx:Yy }\n"
         "val x : Xx = Xx.Xx(Yy.Yy(Zz.Zz()))\n"
         "call _show_Zz(x.Xx.Yy)\n"
+    ));
+    // IF
+    assert(all(
+        "()\n",
+        "type Bool { False: () ; True: () }\n"
+        "val b : Bool = Bool.False()\n"
+        "if b { } else { call _show_Unit() }\n"
+    ));
+    assert(all(
+        "()\n",
+        "type Bool { False: () ; True: () }\n"
+        "val b : Bool = Bool.True()\n"
+        "if b { call _show_Unit() }\n"
     ));
     // PREDICATE
 puts("okokok");

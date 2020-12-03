@@ -216,7 +216,7 @@ void code_stmt (Stmt s) {
         case STMT_IF:
             out("if (");
             code_expr(s.If.cond);
-            out(") {\n");
+            out(".sub) {\n");           // Bool.sub returns 0 or 1
             code_stmt(*s.If.true);
             out("} else {\n");
             code_stmt(*s.If.false);
