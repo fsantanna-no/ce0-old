@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "all.h"
 
@@ -129,7 +130,7 @@ static int parser_expr_one (Env* env, Expr* ret) {
                 if (!accept_err(')')) {
                     return 0;
                 }
-                *ret = (Expr) { EXPR_TUPLE, .Tuple={n,vec} };
+                *ret = (Expr) { EXPR_TUPLE, env, .Tuple={n,vec} };
 
     // EXPR_PARENS
             } else if (!accept_err(')')) {
@@ -139,19 +140,19 @@ static int parser_expr_one (Env* env, Expr* ret) {
 
     // EXPR_NULL
     } else if (accept('$')) {
-        *ret = (Expr) { EXPR_NULL };
+        *ret = (Expr) { EXPR_NULL, env };
 
     // EXPR_ARG
     } else if (accept(TK_ARG)) {
-        *ret = (Expr) { EXPR_ARG };
+        *ret = (Expr) { EXPR_ARG, env };
 
     // EXPR_NATIVE
     } else if (accept(TX_NATIVE)) {
-        *ret = (Expr) { EXPR_NATIVE, .tk=ALL.tk0 };
+        *ret = (Expr) { EXPR_NATIVE, env, .tk=ALL.tk0 };
 
     // EXPR_VAR
     } else if (accept(TX_VAR)) {
-        *ret = (Expr) { EXPR_VAR, .tk=ALL.tk0 };
+        *ret = (Expr) { EXPR_VAR, env, .tk=ALL.tk0 };
 
     // EXPR_CONS
     } else if (accept(TX_TYPE)) {       // Bool
@@ -170,15 +171,13 @@ static int parser_expr_one (Env* env, Expr* ret) {
             return err_expected("`(´");
         }
 
-        Expr arg;
-        if (!parser_expr_one(env, &arg)) {   // ()
+        Expr* arg = malloc(sizeof(Expr));
+        assert(arg != NULL);
+        if (!parser_expr_one(env, arg)) {   // ()
             return 0;
         }
-        Expr* parg = malloc(sizeof(Expr));
-        assert(parg != NULL);
-        *parg = arg;
 
-        *ret = (Expr) { EXPR_CONS, env, { .Cons={type,subtype,parg} } };
+        *ret = (Expr) { EXPR_CONS, env, { .Cons={type,subtype,arg} } };
 
     } else {
         return err_expected("expression");
@@ -196,18 +195,16 @@ int parser_expr (Env* env, Expr* ret) {
     while (1) {
     // EXPR_CALL
         if (check('(')) {                // only checks, arg will accept
-            Expr arg;
-            if (!parser_expr_one(env, &arg)) {   // f().() and not f.()()
+            Expr* arg = malloc(sizeof(Expr));
+            assert(arg != NULL);
+            if (!parser_expr_one(env, arg)) {   // f().() and not f.()()
                 return 0;
             }
-            Expr* parg = malloc(sizeof(Expr));
-            assert(parg != NULL);
-            *parg = arg;
 
             Expr* func = malloc(sizeof(Expr));
             assert(func != NULL);
             *func = *ret;
-            *ret  = (Expr) { EXPR_CALL, env, .Call={func,parg} };
+            *ret  = (Expr) { EXPR_CALL, env, .Call={func,arg} };
         } else if (accept('.')) {
     // EXPR_INDEX
             if (accept(TX_INDEX)) {
@@ -348,33 +345,29 @@ int parser_stmt (Env** env, Stmt* ret) {
 
         if (!accept_err('{')) { return 0; }
 
-        Stmt t;
+        Stmt* t = malloc(sizeof(Stmt));
+        assert(t != NULL);
         Env* trash1 = *env;
-        if (!parser_stmts(&trash1,&t)) {         // true()
+        if (!parser_stmts(&trash1,t)) {         // true()
             return 0;
         }
-        Stmt* pt = malloc(sizeof(Stmt));
-        assert(pt != NULL);
-        *pt = t;
 
         if (!accept_err('}')) { return 0; }
 
-        Stmt* pf = malloc(sizeof(Stmt));
-        assert(pf != NULL);
+        Stmt* f = malloc(sizeof(Stmt));
+        assert(f != NULL);
         if (accept(TK_ELSE)) {
             if (!accept_err('{')) { return 0; }
-            Stmt f;
             Env* trash2 = *env;
-            if (!parser_stmts(&trash2,&f)) {     // false()
+            if (!parser_stmts(&trash2,f)) {     // false()
                 return 0;
             }
-            *pf = f;
             if (!accept_err('}')) { return 0; }
         } else {
-            *pf = (Stmt) { STMT_SEQ, *env, .Seq={0,NULL} };
+            *f = (Stmt) { STMT_SEQ, *env, .Seq={0,NULL} };
         }
 
-        *ret = (Stmt) { STMT_IF, *env, .If={e,pt,pf} };
+        *ret = (Stmt) { STMT_IF, *env, .If={e,t,f} };
 
     // STMT_FUNC
     } else if (accept(TK_FUNC)) {   // func
@@ -391,15 +384,13 @@ int parser_stmt (Env** env, Stmt* ret) {
         }
         if (!accept('{')) { return 0; }
 
-        Stmt s;                     // return ()
+        Stmt* s = malloc(sizeof(Stmt)); // return ()
+        assert(s != NULL);
         Env* trash = *env;
-        if (!parser_stmts(&trash, &s)) {
+        if (!parser_stmts(&trash, s)) {
             return 0;
         }
-        Stmt* ps = malloc(sizeof(Stmt));
-        assert(ps != NULL);
-        *ps = s;
-        *ret = (Stmt) { STMT_FUNC, *env, .Func={tp,id,ps} };
+        *ret = (Stmt) { STMT_FUNC, *env, .Func={tp,id,s} };
 
         if (!accept('}')) { return 0; }
 
