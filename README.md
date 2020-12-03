@@ -62,7 +62,7 @@ A native identifier starts with an underscore and might contain letters,
 digits, and underscores:
 
 ```
-_char    _printf    _i99        -- native identifiers
+_char    _printf    _errno      -- native identifiers
 ```
 
 A tuple index is a numeric value:
@@ -94,7 +94,7 @@ i    myCounter    x10
 A native symbol holds a value from the host language:
 
 ```
-_printf    _i99
+_printf    _errno
 ```
 
 ## Tuple and Index
@@ -117,9 +117,9 @@ A tuple index holds the value at the given position:
 A call invokes an expression as a function with the argument:
 
 ```
-f()         -- f   receives unit     ()
-(id)(x)     -- id  receives variable x
-add(x,y)    -- add receives tuple    (x,y)
+f ()        -- f   receives unit     ()
+(id) (x)    -- id  receives variable x
+add (x,y)   -- add receives tuple    (x,y)
 ```
 
 ## Constructor, Discriminator and Predicate
