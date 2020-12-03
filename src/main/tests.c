@@ -660,7 +660,7 @@ void t_all (void) {
         "type Yy { Yy1:Zz }\n"
         "type Xx { Xx1:Yy }\n"
         "val x : Xx = Xx.Xx1(Yy.Yy1(Zz.Zz1()))\n"
-        "call _show_Zz(x.Xx1.Yy1)\n"
+        "call _show_Zz(x.Xx1!.Yy1!)\n"
     ));
     // IF
     assert(all(

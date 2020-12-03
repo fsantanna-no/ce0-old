@@ -22,6 +22,7 @@ The following symbols are valid:
     =           -- variable assignment
     ,           -- tuple separator
     .           -- tuple index, type constructor & destructor
+    !           -- type destructor
     ?           -- type predicate
 ```
 
@@ -128,10 +129,10 @@ Bool.True ()
 A destructor acesses the value of a type as one of its subtypes:
 
 ```
-(Bool.True ()).True         -- yields ()
+(Bool.True ()).True!        -- yields ()
 
 x = Tree.Node ($,10,$)
-x.Tree.Node.2               -- yields 10
+x.Tree.Node!.2              -- yields 10
 ```
 
 A subtype predicate evaluates to a `Bool`:
@@ -222,7 +223,7 @@ Expr ::= `(´ `)´                        -- unit value               ()
       |  Expr `.´ INDEX                 -- tuple index              x.1
       |  Expr `(´ Expr `)´              -- call                     f(x)
       |  TYPE `.´ TYPE `(´ Expr `)´     -- constructor              Bool.True ()
-      |  Expr `.´ TYPE                  -- destructor               x.True
+      |  Expr `.´ TYPE `!´              -- destructor               x.True!
       |  Expr `.´ TYPE `?´              -- predicate                x.False?
       |  `(´ Expr `)´                   -- group                    (x)
 ```

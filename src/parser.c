@@ -198,8 +198,10 @@ int parser_expr (Expr* ret) {
                 *cons = *ret;
                 if (accept('?')) {
                     *ret = (Expr) { EXPR_PRED, .Pred={cons,ALL.tk0} };
-                } else {
+                } else if (accept('!')) {
                     *ret = (Expr) { EXPR_DEST, .Dest={cons,ALL.tk0} };
+                } else {
+                    return err_expected("`?´ or `!´");
                 }
             } else {
                 return err_expected("index or subtype");
