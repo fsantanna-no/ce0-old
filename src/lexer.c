@@ -94,6 +94,15 @@ static TK lx_token (TK_val* val) {
         case EOF:
             return TK_EOF;
 
+        case '-':
+            c = fgetc(ALL.inp);
+            if (c == '>') {
+                return TK_ARROW;
+            } else {
+                ungetc(c, ALL.inp);
+                return TK_ERR;
+            }
+
         default:
             // TX_INDEX
             if (isdigit(c)) {
@@ -172,7 +181,8 @@ static void lx_blanks (void) {
                     }
                 } else {
                     ungetc(c, ALL.inp);
-                    ungetc(c, ALL.inp);
+                    ungetc('-', ALL.inp);
+                    return;
                 }
                 break;
             default:

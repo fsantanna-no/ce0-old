@@ -4,6 +4,7 @@ typedef enum {
     TK_SINGLE = 256,   // all single-char tokens
 
     TK_EOF,
+    TK_ARROW,
 
     TX_NATIVE,
     TX_VAR,

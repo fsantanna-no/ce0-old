@@ -26,7 +26,8 @@ typedef enum {
     STMT_TYPE,
     STMT_CALL,
     STMT_SEQ,
-    STMT_IF
+    STMT_IF,
+    STMT_FUNC
 } STMT;
 
 ///////////////////////////////////////////////////////////////////////////////

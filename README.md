@@ -24,6 +24,7 @@ The following symbols are valid:
     .           -- tuple index, type constructor & discriminator
     !           -- type discriminator
     ?           -- type predicate
+    ->          -- function type signature
 ```
 
 ## Keywords
@@ -93,7 +94,7 @@ A native symbol holds a value from the host language:
 _printf    _i99
 ```
 
-## Tuples
+## Tuples and Indexes
 
 A tuple holds a fixed number of values of different types:
 
@@ -118,7 +119,7 @@ f()         -- f   receives unit     ()
 add(x,y)    -- add receives tuple    (x,y)
 ```
 
-## Constructors, Destructors, Predicates
+## Constructors, Discriminators, and Predicates
 
 A constructor creates a value of a type from a given subtype and argument:
 
@@ -204,6 +205,18 @@ if x {
 }
 ```
 
+## Functions and Returns
+
+A function declares a block of statements that can be called afterwards with an
+argument.
+A return exits a function with a value:
+
+```
+func f : () -> () {
+    return ()
+}
+```
+
 # 4. Syntax
 
 ```
@@ -215,6 +228,10 @@ Stmt ::= `val´ VAR `:´ Type `=´ Expr    -- variable declaration     val x: ()
       |  { Stmt [`;´] }                 -- sequence                 call f() ; call g()
       |  `if´ Expr `{´ Stmt `}´         -- conditional              if x { call f() } else { call g() }
          [`else´ `{´ Stmt `}´]
+      |  `func´ VAR `:´ Type `{´        -- function                 func f : ()->() { return () }
+            Stmt
+         `}´
+      |  `return´ Expr                  -- function return          return ()
 
 Expr ::= `(´ `)´                        -- unit value               ()
       |  NATIVE                         -- native identifier        _printf

@@ -75,6 +75,21 @@ void t_lexer (void) {
         assert(ALL.tk1.enu == TK_EOF);
         fclose(ALL.inp);
     }
+    // SYMBOLS
+    {
+        all_init(NULL, stropen("r", 0, "( -> ,"));
+        assert(ALL.tk1.enu == '(');
+        lexer(); assert(ALL.tk1.enu == TK_ARROW);
+        lexer(); assert(ALL.tk1.enu == ',');
+    }
+    {
+        all_init(NULL, stropen("r", 0, ": }{ :"));
+        assert(ALL.tk1.enu == ':');
+        lexer(); assert(ALL.tk1.enu == '}');
+        lexer(); assert(ALL.tk1.enu == '{');
+        lexer(); assert(ALL.tk1.enu == ':'); assert(ALL.tk1.col == 6);
+        fclose(ALL.inp);
+    }
     // KEYWORDS
     {
         all_init(NULL, stropen("r", 0, "xval val else valx type"));
@@ -119,15 +134,6 @@ void t_lexer (void) {
         lexer(); assert(ALL.tk1.enu == TK_EOF);
         fclose(ALL.inp);
     }
-    // SYMBOLS
-    {
-        all_init(NULL, stropen("r", 0, ": }{ :"));
-        assert(ALL.tk1.enu == ':');
-        lexer(); assert(ALL.tk1.enu == '}');
-        lexer(); assert(ALL.tk1.enu == '{');
-        lexer(); assert(ALL.tk1.enu == ':'); assert(ALL.tk1.col == 6);
-        fclose(ALL.inp);
-    }
     // TUPLE INDEX
     {
         all_init(NULL, stropen("r", 0, ".1a"));
@@ -145,6 +151,7 @@ void t_lexer (void) {
 }
 
 void t_parser_type (void) {
+    // TYPE_NATIVE
     {
         all_init(NULL, stropen("r", 0, "_char"));
         Type tp;
@@ -153,6 +160,7 @@ void t_parser_type (void) {
         assert(!strcmp(tp.tk.val.s,"_char"));
         fclose(ALL.inp);
     }
+    // TYPE_UNIT
     {
         all_init(NULL, stropen("r", 0, "()"));
         Type tp;
@@ -160,6 +168,7 @@ void t_parser_type (void) {
         assert(tp.sub == TYPE_UNIT);
         fclose(ALL.inp);
     }
+    // TYPE_TUPLE
     {
         all_init(NULL, stropen("r", 0, "((),())"));
         Type tp;
@@ -176,21 +185,17 @@ void t_parser_type (void) {
         assert(!strcmp(ALL.err, "(ln 1, col 1): expected type : have \"xxx\""));
         fclose(ALL.inp);
     }
-}
-
-#if 0
-void t_parser_data (void) {
+    // TYPE_FUNC
     {
-        all_init(NULL, stropen("r", 0, "data Err"));
-        Data dts;
-        parser_data(&dts);
-        assert(!strcmp(ALL.err, "(ln 1, col 9): expected data declaration : have end of line"));
-        //assert(parser_data(&dts));
-        //assert(ALL.data.datas.size == 1);
+        all_init(NULL, stropen("r", 0, "() -> ()"));
+        Type tp;
+        parser_type(&tp);
+        assert(tp.sub == TYPE_FUNC);
+        assert(tp.Func.inp->sub == TYPE_UNIT);
+        assert(tp.Func.out->sub == TYPE_UNIT);
         fclose(ALL.inp);
     }
 }
-#endif
 
 void t_parser_expr (void) {
     // UNIT

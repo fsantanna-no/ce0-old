@@ -80,6 +80,22 @@ int parser_type (Type* ret) {
     } else {
         return err_expected("type");
     }
+
+    // TYPE_FUNC
+    if (accept(TK_ARROW)) {
+        Type tp;
+        if (!parser_type(&tp)) {
+            return 0;
+        }
+        Type* inp = malloc(sizeof(*inp));
+        Type* out = malloc(sizeof(*out));
+        assert(inp != NULL);
+        assert(out != NULL);
+        *inp = *ret;
+        *out = tp;
+        *ret = (Type) { TYPE_FUNC, .Func={inp,out} };
+    }
+
     return 1;
 }
 
