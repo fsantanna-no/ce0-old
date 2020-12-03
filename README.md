@@ -1,6 +1,6 @@
 # ce0
 
-# Lexical rules
+# 1. Lexical rules
 
 ## Comments
 
@@ -66,7 +66,7 @@ A tuple index is a numeric value:
 1       2       3               -- tuple indexes
 ```
 
-# Expressions
+# 2. Expressions
 
 ## Unit
 
@@ -145,7 +145,7 @@ x = Member.Professor ()
 b = x.Professor?            -- yields Bool.True()
 ```
 
-# Statements
+# 3. Statements
 
 ## Type declarations
 
@@ -203,7 +203,7 @@ if x {
 }
 ```
 
-# Syntax
+# 4. Syntax
 
 ```
 Stmt ::= `val´ VAR `:´ Type `=´ Expr    -- variable declaration     val x: () = ()
