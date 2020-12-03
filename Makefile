@@ -6,5 +6,8 @@ SRC=$(wildcard src/*.c)
 tests: $(SRC) src/main/tests.c
 	gcc -g -o $@ $^ $(CFLAGS) $(LIBS)
 
+book: $(SRC) src/main/book.c
+	gcc -g -o $@ $^ $(CFLAGS) $(LIBS)
+
 main: $(SRC) src/main/main.c
 	gcc -g -o ce $^ $(CFLAGS) $(LIBS)
