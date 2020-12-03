@@ -90,14 +90,14 @@ void code_expr (Expr e) {
             code_expr(*e.Index.tuple);
             fprintf(ALL.out, "._%d", e.Index.index);
             break;
-        case EXPR_DEST:
-            code_expr(*e.Dest.cons);
-            fprintf(ALL.out, "._%s", e.Dest.subtype.val.s);
+        case EXPR_DISC:
+            code_expr(*e.Disc.cons);
+            fprintf(ALL.out, "._%s", e.Disc.subtype.val.s);
             break;
         case EXPR_PRED:
             out("((");
-            code_expr(*e.Dest.cons);
-            fprintf(ALL.out, ".sub == %s) ? (Bool){True,{}} : (Bool){False,{}})", e.Dest.subtype.val.s);
+            code_expr(*e.Disc.cons);
+            fprintf(ALL.out, ".sub == %s) ? (Bool){True,{}} : (Bool){False,{}})", e.Disc.subtype.val.s);
             break;
     }
 }

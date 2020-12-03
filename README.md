@@ -21,8 +21,8 @@ The following symbols are valid:
     :           -- variable & type declaration
     =           -- variable assignment
     ,           -- tuple separator
-    .           -- tuple index, type constructor & destructor
-    !           -- type destructor
+    .           -- tuple index, type constructor & discriminator
+    !           -- type discriminator
     ?           -- type predicate
 ```
 
@@ -223,7 +223,7 @@ Expr ::= `(´ `)´                        -- unit value               ()
       |  Expr `.´ INDEX                 -- tuple index              x.1
       |  Expr `(´ Expr `)´              -- call                     f(x)
       |  TYPE `.´ TYPE `(´ Expr `)´     -- constructor              Bool.True ()
-      |  Expr `.´ TYPE `!´              -- destructor               x.True!
+      |  Expr `.´ TYPE `!´              -- discriminator            x.True!
       |  Expr `.´ TYPE `?´              -- predicate                x.False?
       |  `(´ Expr `)´                   -- group                    (x)
 ```

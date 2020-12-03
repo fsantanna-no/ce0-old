@@ -191,7 +191,7 @@ int parser_expr (Expr* ret) {
                 assert(tup != NULL);
                 *tup = *ret;
                 *ret = (Expr) { EXPR_INDEX, .Index={tup,ALL.tk0.val.n} };
-    // EXPR_DEST
+    // EXPR_DISC
             } else if (accept(TX_TYPE)) {
                 Expr* cons = malloc(sizeof(Expr));
                 assert(cons != NULL);
@@ -199,7 +199,7 @@ int parser_expr (Expr* ret) {
                 if (accept('?')) {
                     *ret = (Expr) { EXPR_PRED, .Pred={cons,ALL.tk0} };
                 } else if (accept('!')) {
-                    *ret = (Expr) { EXPR_DEST, .Dest={cons,ALL.tk0} };
+                    *ret = (Expr) { EXPR_DISC, .Disc={cons,ALL.tk0} };
                 } else {
                     return err_expected("`?´ or `!´");
                 }
