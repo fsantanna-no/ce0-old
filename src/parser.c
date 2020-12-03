@@ -183,13 +183,21 @@ int parser_expr (Expr* ret) {
             *func = *ret;
             *ret  = (Expr) { EXPR_CALL, .Call={func,parg} };
         } else if (accept('.')) {
-            if (!accept_err(TX_INDEX)) {
-                return 0;
+    // EXPR_INDEX
+            if (accept(TX_INDEX)) {
+                Expr* tup = malloc(sizeof(Expr));
+                assert(tup != NULL);
+                *tup = *ret;
+                *ret = (Expr) { EXPR_INDEX, .Index={tup,ALL.tk0.val.n} };
+    // EXPR_DEST
+            } else if (accept(TX_TYPE)) {
+                Expr* cons = malloc(sizeof(Expr));
+                assert(cons != NULL);
+                *cons = *ret;
+                *ret = (Expr) { EXPR_DEST, .Dest={cons,ALL.tk0} };
+            } else {
+                return err_expected("index or subtype");
             }
-            Expr* tup = malloc(sizeof(Expr));
-            assert(tup != NULL);
-            *tup = *ret;
-            *ret = (Expr) { EXPR_INDEX, .Index={tup,ALL.tk0.val.n} };
         } else {
             break;
         }

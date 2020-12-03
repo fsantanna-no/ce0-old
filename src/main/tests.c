@@ -17,7 +17,7 @@ int all (const char* xp, char* src) {
     }
     code(s);
     fclose(ALL.out);
-#if 1
+#if 0
 puts(">>>");
 puts(out);
 puts("<<<");
@@ -343,6 +343,13 @@ void t_parser_expr (void) {
         assert(e.Call.func->Index.tuple->sub == EXPR_CALL);
         fclose(ALL.inp);
     }
+    {
+        all_init(NULL, stropen("r", 0, "x().."));
+        Expr e;
+        assert(!parser_expr(&e));
+        assert(!strcmp(ALL.err, "(ln 1, col 5): expected index or subtype : have `.´"));
+        fclose(ALL.inp);
+    }
 }
 
 void t_parser_stmt (void) {
@@ -520,7 +527,7 @@ void t_code (void) {
         assert(!strcmp(out,"((TUPLE2){ (void*)1,(void*)1 })._2"));
     }
     {
-        char out[256] = "";
+        char out[1024] = "";
         all_init (
             stropen("w", sizeof(out), out),
             stropen("r", 0, "val a : () = () ; call _show_Unit(a)")
@@ -534,7 +541,8 @@ void t_code (void) {
             "#include <stdio.h>\n"
             "typedef struct { void *_1, *_2;      } TUPLE2;\n"
             "typedef struct { void *_1, *_2, *_3; } TUPLE3;\n"
-            "#define show_Unit(x) (assert(((long)(x))==1), puts(\"()\"))\n"
+            "#define show_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
+            "#define show_Unit(x) (show_Unit_(x), puts(\"\"))\n"
             "int main (void) {\n"
             "\n"
             "int a = 1;\n"
@@ -559,7 +567,8 @@ void t_code (void) {
             "#include <stdio.h>\n"
             "typedef struct { void *_1, *_2;      } TUPLE2;\n"
             "typedef struct { void *_1, *_2, *_3; } TUPLE3;\n"
-            "#define show_Unit(x) (assert(((long)(x))==1), puts(\"()\"))\n"
+            "#define show_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
+            "#define show_Unit(x) (show_Unit_(x), puts(\"\"))\n"
             "int main (void) {\n"
             "\n"
             "typedef enum {\n"
@@ -575,15 +584,20 @@ void t_code (void) {
             "    };\n"
             "} Bool;\n"
             "\n"
-            "void show_Bool (Bool v) {\n"
+            "void show_Bool_ (Bool v) {\n"
             "    switch (v.sub) {\n"
             "        case Bool_False:\n"
-            "            printf(\"Bool.False\");\n"
+            "            printf(\"Bool.False \");\n"
+            "            show_Unit_(v._False);\n"
             "            break;\n"
             "        case Bool_True:\n"
-            "            printf(\"Bool.True\");\n"
+            "            printf(\"Bool.True \");\n"
+            "            show_Unit_(v._True);\n"
             "            break;\n"
             "    }\n"
+            "}\n"
+            "void show_Bool (Bool v) {\n"
+            "    show_Bool_(v);\n"
             "    puts(\"\");\n"
             "}\n"
             "\n"
@@ -618,18 +632,18 @@ void t_all (void) {
         "call _show_Bool(b)\n"
     ));
     assert(all(
+        "Zz.Zz ()\n",
+        "type Zz { Zz:() }\n"
+        "type Yy { Yy:Zz }\n"
+        "type Xx { Xx:Yy }\n"
+        "val x : Xx = Xx.Xx(Yy.Yy(Zz.Zz()))\n"
+        "call _show_Zz(x.Xx.Yy)\n"
+    ));
+    assert(all(
         "Bool.False ()\n",
         "type Bool { False: () ; True: () }\n"
         "val b : Bool = Bool.True()\n"
         "if ?Bool.True(b) { call _show_Unit(()) }\n"
-    ));
-    assert(all(
-        "Z ()\n",
-        "type Z { Z:() }\n"
-        "type Y { Y:Z }\n"
-        "type X { X:Y }\n"
-        "val x : X = X.X(Y(Z()))\n"
-        "call _show_Y(x.X.Y)\n"
     ));
 }
 

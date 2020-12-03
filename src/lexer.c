@@ -31,6 +31,11 @@ const char* lexer_tk2err (TK enu) {
         case TX_TYPE:
             sprintf(str, "type identifier");
             break;
+#if 0
+        case TX_INDEX:
+            sprintf(str, "tuple index");
+            break;
+#endif
         default:
             if (enu>0 && enu<TK_SINGLE) {
                 sprintf(str, "`%c´", enu);

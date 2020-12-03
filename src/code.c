@@ -19,20 +19,28 @@ void out (const char* v) {
     fputs(v, ALL.out);
 }
 
-void code_type (Type tp) {
+char* code_type_ (Type tp) {
+    static char out[256];
     switch (tp.sub) {
         case TYPE_NONE:
             assert(0 && "bug found");
         case TYPE_UNIT:
-            out("int");
+            strcpy(out, "int");
             break;
         case TYPE_NATIVE:
-            out(&tp.tk.val.s[1]);
+            strcpy(out, &tp.tk.val.s[1]);
             break;
         case TYPE_TYPE:
-            out(tp.tk.val.s);
+            strcpy(out, tp.tk.val.s);
             break;
+        default:
+            assert(0 && "TODO");
     }
+    return out;
+}
+
+void code_type (Type tp) {
+    out(code_type_(tp));
 }
 
 void code_expr (Expr e) {
@@ -57,8 +65,10 @@ void code_expr (Expr e) {
         case EXPR_CONS:
             // ((Bool) { Bool_False })
             fprintf(ALL.out,
-                "((%s) { %s_%s, {} })",
+                "((%s) { %s_%s, ",
                 e.Cons.type.val.s, e.Cons.type.val.s, e.Cons.subtype.val.s);
+            code_expr(*e.Cons.arg);
+            out(" })");
             break;
         case EXPR_TUPLE: {
             char str[16];
@@ -79,6 +89,10 @@ void code_expr (Expr e) {
         case EXPR_INDEX:
             code_expr(*e.Index.tuple);
             fprintf(ALL.out, "._%d", e.Index.index);
+            break;
+        case EXPR_DEST:
+            code_expr(*e.Dest.cons);
+            fprintf(ALL.out, "._%s", e.Dest.subtype.val.s);
             break;
     }
 }
@@ -143,57 +157,42 @@ void code_stmt (Stmt s) {
             {
                 // _show_Bool (Bool v)
                 fprintf(ALL.out,
-                    "void show_%s (%s v) {\n"
+                    "void show_%s_ (%s v) {\n"
                     "    switch (v.sub) {\n",
                     sup, sup
                 );
                 for (int i=0; i<s.Type.size; i++) {
                     Sub sub = s.Type.vec[i];
+
+                    char arg[1024];
+                    switch (sub.type.sub) {
+                        case TYPE_UNIT:        // ()
+                            sprintf(arg, "show_Unit_(v._%s)", sub.id.val.s);
+                            break;
+                        case TYPE_TYPE:
+                            sprintf(arg, "show_%s_(v._%s)", code_type_(sub.type), sub.id.val.s);
+                            break;
+                        default:
+                            assert(0 && "bug found");
+                    }
+
                     fprintf(ALL.out,
                         "        case %s_%s:\n"
-                        "            printf(\"%s.%s\");\n"
+                        "            printf(\"%s.%s \");\n"  // Bool.True
+                        "            %s;\n"                  // ()
                         "            break;\n",
-                        sup, sub.id.val.s, sup, sub.id.val.s
+                        sup, sub.id.val.s, sup, sub.id.val.s, arg
                     );
-
-#if 0
-                    if (cons.type.sub != TYPE_UNIT) {
-                        out("putchar('(');\n");
-                        void aux (Type type, char* arg, int first) {
-                            switch (type.sub) {
-                                case TYPE_TUPLE:
-                                    if (!first) {
-                                        out("putchar('(');\n");
-                                    }
-                                    for (int i=0; i<type.Tuple.size; i++) {
-                                        if (i > 0) {
-                                            out("printf(\",\");\n");
-                                        }
-                                        char arg_[256];
-                                        sprintf(arg_, "%s._%d", arg, i);
-                                        aux(type.Tuple.vec[i], arg_, 0);
-                                    }
-                                    if (!first) {
-                                        out("putchar(')');\n");
-                                    }
-                                    break;
-                                case TYPE_DATA:
-                                    fprintf(ALL.out[OGLOB], "_show_%s(%s);\n", type.Data.tk.val.s, arg);
-                                    break;
-                                default:
-                                    out("printf(\"%s\", \"???\");\n");
-                            }
-                        }
-                        char arg_[256];
-                        sprintf(arg_, "v%s_%s", (data.isrec?"->":"."), v);
-                        aux(cons.type, arg_, 1);
-                        out("putchar(')');\n");
-                    }
-#endif
                 }
                 out("    }\n");
-                out("    puts(\"\");\n");
                 out("}\n");
+                fprintf(ALL.out,
+                    "void show_%s (%s v) {\n"
+                    "    show_%s_(v);\n"
+                    "    puts(\"\");\n"
+                    "}\n",
+                    sup, sup, sup
+                );
             }
 
             break;
@@ -218,7 +217,8 @@ void code (Stmt s) {
         "#include <stdio.h>\n"
         "typedef struct { void *_1, *_2;      } TUPLE2;\n"
         "typedef struct { void *_1, *_2, *_3; } TUPLE3;\n"
-        "#define show_Unit(x) (assert(((long)(x))==1), puts(\"()\"))\n"
+        "#define show_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
+        "#define show_Unit(x) (show_Unit_(x), puts(\"\"))\n"
         "int main (void) {\n"
         "\n"
     );

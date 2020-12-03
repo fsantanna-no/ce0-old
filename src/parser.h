@@ -15,7 +15,8 @@ typedef enum {
     EXPR_TUPLE,
     EXPR_INDEX,
     EXPR_CALL,
-    EXPR_CONS
+    EXPR_CONS,
+    EXPR_DEST
 } EXPR;
 
 typedef enum {
@@ -64,6 +65,10 @@ typedef struct Expr {
             Tk subtype;
             struct Expr* arg;
         } Cons;
+        struct {        // EXPR_DEST
+            struct Expr* cons;
+            Tk subtype;
+        } Dest;
     };
 } Expr;
 
