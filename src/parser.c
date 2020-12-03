@@ -105,7 +105,7 @@ static int parser_expr_one (Expr* ret) {
     // EXPR_UNIT
     if (accept('(')) {
         if (accept(')')) {
-            *ret = (Expr) { EXPR_UNIT };
+            *ret = (Expr) { EXPR_UNIT, NULL };
         } else {
             if (!parser_expr(ret)) {
                 return 0;
@@ -178,7 +178,7 @@ static int parser_expr_one (Expr* ret) {
         assert(parg != NULL);
         *parg = arg;
 
-        *ret = (Expr) { EXPR_CONS, { .Cons={type,subtype,parg} } };
+        *ret = (Expr) { EXPR_CONS, NULL, { .Cons={type,subtype,parg} } };
 
     } else {
         return err_expected("expression");
@@ -207,23 +207,23 @@ int parser_expr (Expr* ret) {
             Expr* func = malloc(sizeof(Expr));
             assert(func != NULL);
             *func = *ret;
-            *ret  = (Expr) { EXPR_CALL, .Call={func,parg} };
+            *ret  = (Expr) { EXPR_CALL, NULL, .Call={func,parg} };
         } else if (accept('.')) {
     // EXPR_INDEX
             if (accept(TX_INDEX)) {
                 Expr* tup = malloc(sizeof(Expr));
                 assert(tup != NULL);
                 *tup = *ret;
-                *ret = (Expr) { EXPR_INDEX, .Index={tup,ALL.tk0.val.n} };
+                *ret = (Expr) { EXPR_INDEX, NULL, .Index={tup,ALL.tk0.val.n} };
     // EXPR_DISC
             } else if (accept(TX_TYPE)) {
                 Expr* cons = malloc(sizeof(Expr));
                 assert(cons != NULL);
                 *cons = *ret;
                 if (accept('?')) {
-                    *ret = (Expr) { EXPR_PRED, .Pred={cons,ALL.tk0} };
+                    *ret = (Expr) { EXPR_PRED, NULL, .Pred={cons,ALL.tk0} };
                 } else if (accept('!')) {
-                    *ret = (Expr) { EXPR_DISC, .Disc={cons,ALL.tk0} };
+                    *ret = (Expr) { EXPR_DISC, NULL, .Disc={cons,ALL.tk0} };
                 } else {
                     return err_expected("`?´ or `!´");
                 }
@@ -281,7 +281,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_expr(&e)) {
             return 0;
         }
-        *ret = (Stmt) { STMT_VAR, .Var={id,tp,e} };
+        *ret = (Stmt) { STMT_VAR, NULL, .Var={id,tp,e} };
 
     // STMT_TYPE
     } else if (accept(TK_TYPE)) {       // type
@@ -322,7 +322,7 @@ int parser_stmt (Stmt* ret) {
             return 0;
         }
 
-        *ret = (Stmt) { STMT_TYPE, .Type={isrec,id,n,vec} };
+        *ret = (Stmt) { STMT_TYPE, NULL, .Type={isrec,id,n,vec} };
 
     // STMT_CALL
     } else if (accept(TK_CALL)) {
@@ -330,7 +330,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_expr(&e)) {
             return 0;
         }
-        *ret = (Stmt) { STMT_CALL, .call=e };
+        *ret = (Stmt) { STMT_CALL, NULL, .call=e };
 
     // STMT_IF
     } else if (accept(TK_IF)) {         // if
@@ -362,10 +362,10 @@ int parser_stmt (Stmt* ret) {
             *pf = f;
             if (!accept_err('}')) { return 0; }
         } else {
-            *pf = (Stmt) { STMT_SEQ, .Seq={0,NULL} };
+            *pf = (Stmt) { STMT_SEQ, NULL, .Seq={0,NULL} };
         }
 
-        *ret = (Stmt) { STMT_IF, .If={e,pt,pf} };
+        *ret = (Stmt) { STMT_IF, NULL, .If={e,pt,pf} };
 
     // STMT_FUNC
     } else if (accept(TK_FUNC)) {   // func
@@ -389,7 +389,7 @@ int parser_stmt (Stmt* ret) {
         Stmt* ps = malloc(sizeof(Stmt));
         assert(ps != NULL);
         *ps = s;
-        *ret = (Stmt) { STMT_FUNC, .Func={tp,id,ps} };
+        *ret = (Stmt) { STMT_FUNC, NULL, .Func={tp,id,ps} };
 
         if (!accept('}')) { return 0; }
 
@@ -399,7 +399,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_expr(&e)) {
             return 0;
         }
-        *ret = (Stmt) { STMT_RETURN, .ret=e };
+        *ret = (Stmt) { STMT_RETURN, NULL, .ret=e };
 
     } else {
         return 0;
@@ -424,7 +424,7 @@ int parser_stmts (Stmt* ret) {
         accept(';');    // optional
     }
 
-    *ret = (Stmt) { STMT_SEQ, { .Seq={n,vec} } };
+    *ret = (Stmt) { STMT_SEQ, NULL, { .Seq={n,vec} } };
     return 1;
 }
 

@@ -50,9 +50,11 @@ typedef struct Type {
     };
 } Type;
 
+struct Env;
 
 typedef struct Expr {
     EXPR sub;
+    struct Env* env;
     union {
         Tk tk;          // EXPR_NATIVE, EXPR_VAR
         struct {        // EXPR_TUPLE
@@ -90,6 +92,7 @@ typedef struct {
 
 typedef struct Stmt {
     STMT sub;
+    struct Env* env;
     union {
         Expr call;      // STMT_CALL
         Expr ret;       // STMT_RETURN
@@ -120,6 +123,13 @@ typedef struct Stmt {
         } Func;
     };
 } Stmt;
+
+///////////////////////////////////////////////////////////////////////////////
+
+typedef struct Env {
+    Stmt* stmt;         // STMT_TYPE, STMT_VAR
+    struct Env* prev;
+} Env;
 
 ///////////////////////////////////////////////////////////////////////////////
 
