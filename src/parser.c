@@ -101,13 +101,13 @@ int parser_type (Type* ret) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static int parser_expr_one (Env* env, Expr* ret) {
+int parser_expr_one (Expr* ret) {
     // EXPR_UNIT
     if (accept('(')) {
         if (accept(')')) {
-            *ret = (Expr) { EXPR_UNIT, env };
+            *ret = (Expr) { EXPR_UNIT };
         } else {
-            if (!parser_expr(env, ret)) {
+            if (!parser_expr(ret)) {
                 return 0;
             }
 
@@ -119,7 +119,7 @@ static int parser_expr_one (Env* env, Expr* ret) {
                 vec[n-1] = *ret;
                 while (accept(',')) {
                     Expr e;
-                    if (!parser_expr(env, &e)) {
+                    if (!parser_expr(&e)) {
                         return 0;
                     }
                     n++;
@@ -129,7 +129,7 @@ static int parser_expr_one (Env* env, Expr* ret) {
                 if (!accept_err(')')) {
                     return 0;
                 }
-                *ret = (Expr) { EXPR_TUPLE, env, .Tuple={n,vec} };
+                *ret = (Expr) { EXPR_TUPLE, .Tuple={n,vec} };
 
     // EXPR_PARENS
             } else if (!accept_err(')')) {
@@ -139,19 +139,19 @@ static int parser_expr_one (Env* env, Expr* ret) {
 
     // EXPR_NULL
     } else if (accept('$')) {
-        *ret = (Expr) { EXPR_NULL, env };
+        *ret = (Expr) { EXPR_NULL };
 
     // EXPR_ARG
     } else if (accept(TK_ARG)) {
-        *ret = (Expr) { EXPR_ARG, env };
+        *ret = (Expr) { EXPR_ARG };
 
     // EXPR_NATIVE
     } else if (accept(TX_NATIVE)) {
-        *ret = (Expr) { EXPR_NATIVE, env, .tk=ALL.tk0 };
+        *ret = (Expr) { EXPR_NATIVE, .tk=ALL.tk0 };
 
     // EXPR_VAR
     } else if (accept(TX_VAR)) {
-        *ret = (Expr) { EXPR_VAR, env, .tk=ALL.tk0 };
+        *ret = (Expr) { EXPR_VAR, .tk=ALL.tk0 };
 
     // EXPR_CONS
     } else if (accept(TX_TYPE)) {       // Bool
@@ -172,11 +172,11 @@ static int parser_expr_one (Env* env, Expr* ret) {
 
         Expr* arg = malloc(sizeof(Expr));
         assert(arg != NULL);
-        if (!parser_expr_one(env, arg)) {   // ()
+        if (!parser_expr_one(arg)) {   // ()
             return 0;
         }
 
-        *ret = (Expr) { EXPR_CONS, env, { .Cons={type,subtype,arg} } };
+        *ret = (Expr) { EXPR_CONS, { .Cons={type,subtype,arg} } };
 
     } else {
         return err_expected("expression");
@@ -184,9 +184,9 @@ static int parser_expr_one (Env* env, Expr* ret) {
     return 1;
 }
 
-int parser_expr (Env* env, Expr* ret) {
+int parser_expr (Expr* ret) {
     Expr e;
-    if (!parser_expr_one(env, &e)) {
+    if (!parser_expr_one(&e)) {
         return 0;
     }
     *ret = e;
@@ -196,30 +196,30 @@ int parser_expr (Env* env, Expr* ret) {
         if (check('(')) {                // only checks, arg will accept
             Expr* arg = malloc(sizeof(Expr));
             assert(arg != NULL);
-            if (!parser_expr_one(env, arg)) {   // f().() and not f.()()
+            if (!parser_expr_one(arg)) {   // f().() and not f.()()
                 return 0;
             }
 
             Expr* func = malloc(sizeof(Expr));
             assert(func != NULL);
             *func = *ret;
-            *ret  = (Expr) { EXPR_CALL, env, .Call={func,arg} };
+            *ret  = (Expr) { EXPR_CALL, .Call={func,arg} };
         } else if (accept('.')) {
     // EXPR_INDEX
             if (accept(TX_INDEX)) {
                 Expr* tup = malloc(sizeof(Expr));
                 assert(tup != NULL);
                 *tup = *ret;
-                *ret = (Expr) { EXPR_INDEX, env, .Index={tup,ALL.tk0.val.n} };
+                *ret = (Expr) { EXPR_INDEX, .Index={tup,ALL.tk0.val.n} };
     // EXPR_DISC
             } else if (accept(TX_TYPE)) {
                 Expr* cons = malloc(sizeof(Expr));
                 assert(cons != NULL);
                 *cons = *ret;
                 if (accept('?')) {
-                    *ret = (Expr) { EXPR_PRED, env, .Pred={cons,ALL.tk0} };
+                    *ret = (Expr) { EXPR_PRED, .Pred={cons,ALL.tk0} };
                 } else if (accept('!')) {
-                    *ret = (Expr) { EXPR_DISC, env, .Disc={cons,ALL.tk0} };
+                    *ret = (Expr) { EXPR_DISC, .Disc={cons,ALL.tk0} };
                 } else {
                     return err_expected("`?´ or `!´");
                 }
@@ -255,7 +255,7 @@ int parser_stmt_sub (Sub* ret) {
     return 1;
 }
 
-int parser_stmt (Env** env, Stmt* ret) {
+int parser_stmt (Stmt* ret) {
     // STMT_VAR
     if (accept(TK_VAL)) {
         if (!accept_err(TX_VAR)) {
@@ -273,14 +273,16 @@ int parser_stmt (Env** env, Stmt* ret) {
             return 0;
         }
         Expr e;
-        if (!parser_expr(*env, &e)) {
+        if (!parser_expr(&e)) {
             return 0;
         }
-        *ret = (Stmt) { STMT_VAR, *env, .Var={id,tp,e} };
+        *ret = (Stmt) { STMT_VAR, .Var={id,tp,e} };
 
+#if 0 // ENV
         Env* new = malloc(sizeof(Env));
         *new = (Env) { ret, *env };
         *env = new;
+#endif
 
     // STMT_TYPE
     } else if (accept(TK_TYPE)) {       // type
@@ -321,24 +323,26 @@ int parser_stmt (Env** env, Stmt* ret) {
             return 0;
         }
 
-        *ret = (Stmt) { STMT_TYPE, *env, .Type={isrec,id,n,vec} };
+        *ret = (Stmt) { STMT_TYPE, .Type={isrec,id,n,vec} };
 
+#if 0 // ENV
         Env* new = malloc(sizeof(Env));
         *new = (Env) { ret, *env };
         *env = new;
+#endif
 
     // STMT_CALL
     } else if (accept(TK_CALL)) {
         Expr e;
-        if (!parser_expr(*env, &e)) {
+        if (!parser_expr(&e)) {
             return 0;
         }
-        *ret = (Stmt) { STMT_CALL, *env, .call=e };
+        *ret = (Stmt) { STMT_CALL, .call=e };
 
     // STMT_IF
     } else if (accept(TK_IF)) {         // if
         Expr e;
-        if (!parser_expr(*env, &e)) {         // x
+        if (!parser_expr(&e)) {         // x
             return 0;
         }
 
@@ -346,8 +350,8 @@ int parser_stmt (Env** env, Stmt* ret) {
 
         Stmt* t = malloc(sizeof(Stmt));
         assert(t != NULL);
-        Env* trash1 = *env;
-        if (!parser_stmts(&trash1,t)) {         // true()
+        // ENV Env* trash1 = *env;
+        if (!parser_stmts(t)) {         // true()
             return 0;
         }
 
@@ -357,16 +361,16 @@ int parser_stmt (Env** env, Stmt* ret) {
         assert(f != NULL);
         if (accept(TK_ELSE)) {
             if (!accept_err('{')) { return 0; }
-            Env* trash2 = *env;
-            if (!parser_stmts(&trash2,f)) {     // false()
+            // ENV Env* trash2 = *env;
+            if (!parser_stmts(f)) {     // false()
                 return 0;
             }
             if (!accept_err('}')) { return 0; }
         } else {
-            *f = (Stmt) { STMT_SEQ, *env, .Seq={0,NULL} };
+            *f = (Stmt) { STMT_SEQ, .Seq={0,NULL} };
         }
 
-        *ret = (Stmt) { STMT_IF, *env, .If={e,t,f} };
+        *ret = (Stmt) { STMT_IF, .If={e,t,f} };
 
     // STMT_FUNC
     } else if (accept(TK_FUNC)) {   // func
@@ -385,21 +389,21 @@ int parser_stmt (Env** env, Stmt* ret) {
 
         Stmt* s = malloc(sizeof(Stmt)); // return ()
         assert(s != NULL);
-        Env* trash = *env;
-        if (!parser_stmts(&trash, s)) {
+        // ENV Env* trash = *env;
+        if (!parser_stmts( s)) {
             return 0;
         }
-        *ret = (Stmt) { STMT_FUNC, *env, .Func={tp,id,s} };
+        *ret = (Stmt) { STMT_FUNC, .Func={tp,id,s} };
 
         if (!accept('}')) { return 0; }
 
     // STMT_RETURN
     } else if (accept(TK_RETURN)) {
         Expr e;
-        if (!parser_expr(*env, &e)) {
+        if (!parser_expr(&e)) {
             return 0;
         }
-        *ret = (Stmt) { STMT_RETURN, *env, .ret=e };
+        *ret = (Stmt) { STMT_RETURN, .ret=e };
 
     } else {
         return 0;
@@ -408,14 +412,14 @@ int parser_stmt (Env** env, Stmt* ret) {
     return 1;
 }
 
-int parser_stmts (Env** env, Stmt* ret) {
+int parser_stmts (Stmt* ret) {
     int n = 0;
     Stmt* vec = NULL;
 
     while (1) {
         accept(';');    // optional
         Stmt q;
-        if (!parser_stmt(env,&q)) {
+        if (!parser_stmt(&q)) {
             break;
         }
         n++;
@@ -424,13 +428,12 @@ int parser_stmts (Env** env, Stmt* ret) {
         accept(';');    // optional
     }
 
-    *ret = (Stmt) { STMT_SEQ, *env, { .Seq={n,vec} } };
+    *ret = (Stmt) { STMT_SEQ, { .Seq={n,vec} } };
     return 1;
 }
 
 int parser (Stmt* ret) {
-    Env* env = NULL;
-    if (!parser_stmts(&env,ret)) {
+    if (!parser_stmts(ret)) {
         return 0;
     }
     if (!accept_err(TK_EOF)) {
