@@ -35,6 +35,7 @@ void code_type__ (char* out, Type* tp) {
             Stmt* s = env_get(tp->env, tp->tk.val.s);
             if (s!=NULL && s->User.isrec) strcat(out, "struct ");
             strcat(out, tp->tk.val.s);
+            if (s!=NULL && s->User.isrec) strcat(out, "*");
             break;
         }
         case TYPE_TUPLE:
@@ -242,22 +243,33 @@ void code_stmt (Stmt* s) {
 
             // SHOW
             {
+                int isrec = s->User.isrec;
+                char* op = (isrec ? "->" : ".");
+
                 // _show_Bool (Bool v)
                 fprintf(ALL.out,
-                    "void show_%s_ (%s v) {\n"
-                    "    switch (v.sub) {\n",
-                    sup, sup
+                    "void show_%s_ (%s%s v) {\n",
+                    sup, sup, (isrec ? "*" : "")
                 );
+                if (isrec) {
+                    out (
+                        "if (v == NULL) {\n"
+                        "    printf(\"$\");\n"
+                        "    return;\n"
+                        "}\n"
+                    );
+                }
+                fprintf(ALL.out, "    switch (v%ssub) {\n", op);
                 for (int i=0; i<s->User.size; i++) {
                     Sub* sub = &s->User.vec[i];
 
                     char arg[1024];
                     switch (sub->type.sub) {
                         case TYPE_UNIT:        // ()
-                            sprintf(arg, "show_Unit_(v._%s)", sub->id.val.s);
+                            sprintf(arg, "show_Unit_(v%s_%s)", op, sub->id.val.s);
                             break;
                         case TYPE_USER:
-                            sprintf(arg, "show_%s_(v._%s)", code_type_(&sub->type), sub->id.val.s);
+                            sprintf(arg, "show_%s_(v%s_%s)", sub->type.tk.val.s, op, sub->id.val.s);
                             break;
                         default:
                             assert(0 && "bug found");
@@ -274,11 +286,11 @@ void code_stmt (Stmt* s) {
                 out("    }\n");
                 out("}\n");
                 fprintf(ALL.out,
-                    "void show_%s (%s v) {\n"
+                    "void show_%s (%s%s v) {\n"
                     "    show_%s_(v);\n"
                     "    puts(\"\");\n"
                     "}\n",
-                    sup, sup, sup
+                    sup, sup, (isrec ? "*" : ""), sup
                 );
             }
 
