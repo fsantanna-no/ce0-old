@@ -9,7 +9,7 @@ int err_message (Tk tk, const char* v) {
     return 0;
 }
 
-Stmt* env_get (Env* env, const char* xp) {
+Stmt* env_stmt (Env* env, const char* xp) {
     while (env != NULL) {
         const char* id = NULL;
         switch (env->stmt->sub) {
@@ -54,7 +54,7 @@ Type* env_type (Expr* e) {
             return &ret;
 
         case EXPR_VAR: {
-            Stmt* s = env_get(e->env, e->tk.val.s);
+            Stmt* s = env_stmt(e->env, e->tk.val.s);
             assert(s != NULL);
             return (s->sub == STMT_VAR) ? &s->Var.type : &s->Func.type;
         }
@@ -80,7 +80,7 @@ Type* env_type (Expr* e) {
 
         case EXPR_DISC: {   // x.True
             Type* tp = env_type(e->Disc.cons);        // Bool
-            Stmt* s  = env_get(e->env, tp->tk.val.s); // type Bool { ... }
+            Stmt* s  = env_stmt(e->env, tp->tk.val.s); // type Bool { ... }
             assert(s != NULL);
             for (int i=0; i<s->User.size; i++) {
                 if (!strcmp(s->User.vec[i].id.val.s, e->Disc.subtype.val.s)) {
@@ -150,7 +150,7 @@ int types_expr (Env* env, Expr* e) {
         case EXPR_NATIVE:
             break;
         case EXPR_VAR:
-            if (env_get(env, e->tk.val.s) == NULL) {
+            if (env_stmt(env, e->tk.val.s) == NULL) {
                 char err[512];
                 sprintf(err, "undeclared variable \"%s\"", e->tk.val.s);
                 return err_message(e->tk, err);

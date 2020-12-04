@@ -3,6 +3,6 @@ typedef struct Env {
     struct Env* prev;
 } Env;
 
-Stmt* env_get (Env* env, const char* xp);
+Stmt* env_stmt (Env* env, const char* xp);
 Type* env_type (Expr* e);
 int types (Stmt* s);

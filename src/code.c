@@ -32,7 +32,7 @@ void code_type__ (char* out, Type* tp) {
             strcat(out, &tp->tk.val.s[1]);
             break;
         case TYPE_USER: {
-            Stmt* s = env_get(tp->env, tp->tk.val.s);
+            Stmt* s = env_stmt(tp->env, tp->tk.val.s);
             if (s!=NULL && s->User.isrec) strcat(out, "struct ");
             strcat(out, tp->tk.val.s);
             if (s!=NULL && s->User.isrec) strcat(out, "*");
