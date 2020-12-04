@@ -41,12 +41,12 @@ typedef struct Type {
     union {
         Tk tk;          // TYPE_NATIVE, TYPE_USER
         struct {        // TYPE_TUPLE
-            int size;
-            struct Type* vec;
+            int size;                   // 2
+            struct Type* vec;           // ((),())
         } Tuple;
         struct {        // TYPE_FUNC
-            struct Type* inp;
-            struct Type* out;
+            struct Type* inp;           // : ()
+            struct Type* out;           // -> ()
         } Func;
     };
 } Type;
@@ -59,36 +59,36 @@ typedef struct Expr {
     union {
         Tk tk;          // EXPR_NATIVE, EXPR_VAR
         struct {        // EXPR_TUPLE
-            int size;
-            struct Expr* vec;
+            int size;                   // 2
+            struct Expr* vec;           // (x,y)
         } Tuple;
         struct {        // EXPR_INDEX
-            struct Expr* tuple;
-            int index;
+            struct Expr* tuple;         // x
+            int index;                  // .3
         } Index;
         struct {        // EXPR_CALL
-            struct Expr* func;
-            struct Expr* arg;
+            struct Expr* func;          // f
+            struct Expr* arg;           // (x,y)
         } Call;
         struct {        // EXPR_CONS
-            Tk user;
-            Tk subuser;
+            Tk user;                    // Bool
+            Tk subuser;                 // .True
             struct Expr* arg;
         } Cons;
         struct {        // EXPR_DISC
-            struct Expr* cons;
-            Tk subuser;
+            struct Expr* cons;          // Bool
+            Tk subuser;                 // .True!
         } Disc;
         struct {        // EXPR_PRED
-            struct Expr* cons;
-            Tk subuser;
+            struct Expr* cons;          // Bool
+            Tk subuser;                 // .True?
         } Pred;
     };
 } Expr;
 
 typedef struct {
-    Tk   id;        // True
-    Type type;      // ()
+    Tk   id;                            // True:
+    Type type;                          // ()
 } Sub;
 
 typedef struct Stmt {
@@ -97,29 +97,29 @@ typedef struct Stmt {
         Expr call;      // STMT_CALL
         Expr ret;       // STMT_RETURN
         struct {
-            Tk   id;
-            Type type;
-            Expr init;
+            Tk   id;                    // x:
+            Type type;                  // Bool
+            Expr init;                  // = y
         } Var;          // STMT_VAR
         struct {
-            int  isrec;
-            Tk   id;        // Bool
-            int  size;      // 2 subs
-            Sub* vec;       // [True,False]
+            int  isrec;                 // rec
+            Tk   id;                    // Bool
+            int  size;                  // 2 subs
+            Sub* vec;                   // [True,False]
         } User;         // STMT_USER
         struct {
-            int size;
-            struct Stmt* vec;
+            int size;                   // 3
+            struct Stmt* vec;           // a ; b ; c
         } Seq;          // STMT_SEQ
         struct {        // STMT_IF
-            struct Expr  cond;
-            struct Stmt* true;
-            struct Stmt* false;
+            struct Expr  cond;          // if (tst)
+            struct Stmt* true;          // { ... }
+            struct Stmt* false;         // else { ... }
         } If;
         struct {        // STMT_FUNC
-            Tk id;
-            Type type;
-            struct Stmt* body;
+            Tk id;                      // func f
+            Type type;                  // : () -> ()
+            struct Stmt* body;          // { ... }
         } Func;
     };
 } Stmt;
