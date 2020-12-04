@@ -762,7 +762,7 @@ void t_all (void) {
     ));
     // TYPE REC
     assert(all(
-        "()\n",
+        "True ()\n",
         "type Bool {\n"
         "    False: ()\n"
         "    True:  ()\n"
