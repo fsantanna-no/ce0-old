@@ -1,1 +1,1 @@
-int types (Stmt s);
+int types (Stmt* s);

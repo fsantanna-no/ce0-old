@@ -278,12 +278,6 @@ int parser_stmt (Stmt* ret) {
         }
         *ret = (Stmt) { STMT_VAR, .Var={id,tp,e} };
 
-#if 0 // ENV
-        Env* new = malloc(sizeof(Env));
-        *new = (Env) { ret, *env };
-        *env = new;
-#endif
-
     // STMT_TYPE
     } else if (accept(TK_TYPE)) {       // type
         int isrec = 0;
@@ -325,12 +319,6 @@ int parser_stmt (Stmt* ret) {
 
         *ret = (Stmt) { STMT_TYPE, .Type={isrec,id,n,vec} };
 
-#if 0 // ENV
-        Env* new = malloc(sizeof(Env));
-        *new = (Env) { ret, *env };
-        *env = new;
-#endif
-
     // STMT_CALL
     } else if (accept(TK_CALL)) {
         Expr e;
@@ -350,7 +338,6 @@ int parser_stmt (Stmt* ret) {
 
         Stmt* t = malloc(sizeof(Stmt));
         assert(t != NULL);
-        // ENV Env* trash1 = *env;
         if (!parser_stmts(t)) {         // true()
             return 0;
         }
@@ -361,7 +348,6 @@ int parser_stmt (Stmt* ret) {
         assert(f != NULL);
         if (accept(TK_ELSE)) {
             if (!accept_err('{')) { return 0; }
-            // ENV Env* trash2 = *env;
             if (!parser_stmts(f)) {     // false()
                 return 0;
             }
@@ -389,8 +375,7 @@ int parser_stmt (Stmt* ret) {
 
         Stmt* s = malloc(sizeof(Stmt)); // return ()
         assert(s != NULL);
-        // ENV Env* trash = *env;
-        if (!parser_stmts( s)) {
+        if (!parser_stmts(s)) {
             return 0;
         }
         *ret = (Stmt) { STMT_FUNC, .Func={tp,id,s} };

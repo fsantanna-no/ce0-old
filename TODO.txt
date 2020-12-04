@@ -7,7 +7,10 @@
     // TODO: tuples
 
 - MINOR
+    - funcoes as values (now we have ENV:var,func,type)
     - funcoes recursivas
+        - special rec syntax
+        - change env before body
     - assert no EXPR_DISC (gerar erro caso nao seja do subtipo certo)
     - show/cons omit ()
     - type names must contain lowercase (error in C generation upper/lower)

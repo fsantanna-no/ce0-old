@@ -15,11 +15,10 @@ int all (const char* xp, char* src) {
         //puts(ALL.err);
         return !strcmp(ALL.err, xp);
     }
-#if 0
-    if (!types(s)) {
+    if (!types(&s)) {
+        //puts(ALL.err);
         return !strcmp(ALL.err, xp);
     }
-#endif
     code(&s);
     fclose(ALL.out);
 #if 0
@@ -755,16 +754,16 @@ void t_all (void) {
         "_show_Unit(x)\n"
     ));
     assert(all(
-        "ERR\n",
+        "(ln 1, col 17): undeclared variable \"x\"",
         "call _show_Unit(x)\n"
     ));
     assert(all(
-        "ERR\n",
+        "(ln 2, col 17): undeclared variable \"x\"",
         "func f : ()->() { val x:()=(); return x }\n"
         "call _show_Unit(x)\n"
     ));
     assert(all(
-        "ERR\n",
+        "(ln 2, col 17): undeclared variable \"x\"",
         "if () { val x:()=() }\n"
         "call _show_Unit(x)\n"
     ));
