@@ -210,13 +210,17 @@ int parser_expr (Expr* ret) {
                 *tup = *ret;
                 *ret = (Expr) { EXPR_INDEX, NULL, .Index={tup,ALL.tk0.val.n} };
     // EXPR_DISC
-            } else if (accept(TX_USER)) {
+            } else if (accept(TX_USER) || accept(TK_NIL)) {
+                int isnil = (ALL.tk0.enu == TK_NIL);
                 Expr* cons = malloc(sizeof(Expr));
                 assert(cons != NULL);
                 *cons = *ret;
                 if (accept('?')) {
                     *ret = (Expr) { EXPR_PRED, NULL, .Pred={cons,ALL.tk0} };
                 } else if (accept('!')) {
+                    if (isnil) {
+                        return 0;
+                    }
                     *ret = (Expr) { EXPR_DISC, NULL, .Disc={cons,ALL.tk0} };
                 } else {
                     return err_expected("`?´ or `!´");

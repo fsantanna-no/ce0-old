@@ -174,8 +174,11 @@ void code_expr (Expr* e) {
             break;
         case EXPR_PRED:
             out("((");
-            code_expr(e->Disc.cons);
-            fprintf(ALL.out, ".sub == %s) ? (Bool){True,{}} : (Bool){False,{}})", e->Disc.subtype.val.s);
+            code_expr(e->Pred.cons);
+            fprintf(ALL.out, "%s == %s) ? (Bool){True,{}} : (Bool){False,{}})",
+                (e->Pred.subtype.enu == TK_NIL) ? "" : ".sub",
+                e->Pred.subtype.val.s
+            );
             break;
     }
 }

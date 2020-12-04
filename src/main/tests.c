@@ -763,6 +763,18 @@ void t_all (void) {
     // TYPE REC
     assert(all(
         "()\n",
+        "type Bool {\n"
+        "    False: ()\n"
+        "    True:  ()\n"
+        "}\n"
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "val n: Nat = Nil\n"
+        "call _show_Bool(n.Nil?)\n"
+    ));
+    assert(all(
+        "()\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
