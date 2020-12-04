@@ -31,7 +31,7 @@ void code_type__ (char* out, Type* tp) {
         case TYPE_NATIVE:
             strcat(out, &tp->tk.val.s[1]);
             break;
-        case TYPE_TYPE:
+        case TYPE_USER:
             strcat(out, tp->tk.val.s);
             break;
         case TYPE_TUPLE:
@@ -138,18 +138,18 @@ void code_stmt (Stmt* s) {
             out(";\n");
             break;
 
-        case STMT_TYPE: {
-            const char* sup = s->Type.id.val.s;
-            const char* SUP = strupper(s->Type.id.val.s);
+        case STMT_USER: {
+            const char* sup = s->User.id.val.s;
+            const char* SUP = strupper(s->User.id.val.s);
 
             // ENUM + STRUCT + UNION
             {
                 // enum { False, True } BOOL;
                 out("typedef enum {\n");
-                    for (int i=0; i<s->Type.size; i++) {
+                    for (int i=0; i<s->User.size; i++) {
                         out("    ");
-                        out(s->Type.vec[i].id.val.s);    // False
-                        if (i < s->Type.size-1) {
+                        out(s->User.vec[i].id.val.s);    // False
+                        if (i < s->User.size-1) {
                             out(",");
                         }
                         out("\n");
@@ -165,8 +165,8 @@ void code_stmt (Stmt* s) {
                     "    union {\n",
                     sup, SUP
                 );
-                for (int i=0; i<s->Type.size; i++) {
-                    Sub sub = s->Type.vec[i];
+                for (int i=0; i<s->User.size; i++) {
+                    Sub sub = s->User.vec[i];
                     out("        ");
                     code_type(&sub.type);
                     out(" _");
@@ -189,15 +189,15 @@ void code_stmt (Stmt* s) {
                     "    switch (v.sub) {\n",
                     sup, sup
                 );
-                for (int i=0; i<s->Type.size; i++) {
-                    Sub* sub = &s->Type.vec[i];
+                for (int i=0; i<s->User.size; i++) {
+                    Sub* sub = &s->User.vec[i];
 
                     char arg[1024];
                     switch (sub->type.sub) {
                         case TYPE_UNIT:        // ()
                             sprintf(arg, "show_Unit_(v._%s)", sub->id.val.s);
                             break;
-                        case TYPE_TYPE:
+                        case TYPE_USER:
                             sprintf(arg, "show_%s_(v._%s)", code_type_(&sub->type), sub->id.val.s);
                             break;
                         default:

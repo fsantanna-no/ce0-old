@@ -73,9 +73,9 @@ int parser_type (Type* ret) {
     } else if (accept(TX_NATIVE)) {
         *ret = (Type) { TYPE_NATIVE, .tk=ALL.tk0 };
 
-    // TYPE_TYPE
-    } else if (accept(TX_TYPE)) {
-        *ret = (Type) { TYPE_TYPE, .tk=ALL.tk0 };
+    // TYPE_USER
+    } else if (accept(TX_USER)) {
+        *ret = (Type) { TYPE_USER, .tk=ALL.tk0 };
 
     } else {
         return err_expected("type");
@@ -154,14 +154,14 @@ int parser_expr_one (Expr* ret) {
         *ret = (Expr) { EXPR_VAR, NULL, .tk=ALL.tk0 };
 
     // EXPR_CONS
-    } else if (accept(TX_TYPE)) {       // Bool
+    } else if (accept(TX_USER)) {       // Bool
         Tk type = ALL.tk0;
 
         if (!accept_err('.')) {         // .
             return 0;
         }
 
-        if (!accept_err(TX_TYPE)) {     // True
+        if (!accept_err(TX_USER)) {     // True
             return 0;
         }
         Tk subtype = ALL.tk0;
@@ -210,7 +210,7 @@ int parser_expr (Expr* ret) {
                 *tup = *ret;
                 *ret = (Expr) { EXPR_INDEX, NULL, .Index={tup,ALL.tk0.val.n} };
     // EXPR_DISC
-            } else if (accept(TX_TYPE)) {
+            } else if (accept(TX_USER)) {
                 Expr* cons = malloc(sizeof(Expr));
                 assert(cons != NULL);
                 *cons = *ret;
@@ -235,7 +235,7 @@ int parser_expr (Expr* ret) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int parser_stmt_sub (Sub* ret) {
-    if (!accept_err(TX_TYPE)) {
+    if (!accept_err(TX_USER)) {
         return 0;
     }
     Tk id = ALL.tk0;                // True
@@ -276,13 +276,13 @@ int parser_stmt (Stmt* ret) {
         }
         *ret = (Stmt) { STMT_VAR, .Var={id,tp,e} };
 
-    // STMT_TYPE
+    // STMT_USER
     } else if (accept(TK_TYPE)) {       // type
         int isrec = 0;
         if (accept(TK_REC)) {           // rec
             isrec = 1;
         }
-        if (!accept_err(TX_TYPE)) {
+        if (!accept_err(TX_USER)) {
             return 0;
         }
         Tk id = ALL.tk0;                // Bool
@@ -315,7 +315,7 @@ int parser_stmt (Stmt* ret) {
             return 0;
         }
 
-        *ret = (Stmt) { STMT_TYPE, .Type={isrec,id,n,vec} };
+        *ret = (Stmt) { STMT_USER, .User={isrec,id,n,vec} };
 
     // STMT_CALL
     } else if (accept(TK_CALL)) {

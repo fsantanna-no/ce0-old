@@ -8,7 +8,7 @@ typedef enum {
 
     TX_NATIVE,
     TX_VAR,
-    TX_TYPE,
+    TX_USER,
     TX_INDEX,
 
     TK_RESERVED,    // all reserved keywords

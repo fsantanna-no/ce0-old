@@ -2,7 +2,7 @@ typedef enum {
     TYPE_NONE,
     TYPE_UNIT,
     TYPE_NATIVE,
-    TYPE_TYPE,
+    TYPE_USER,
     TYPE_TUPLE,
     TYPE_FUNC
 } TYPE;
@@ -25,7 +25,7 @@ typedef enum {
 typedef enum {
     STMT_NONE = 0,
     STMT_VAR,
-    STMT_TYPE,
+    STMT_USER,
     STMT_CALL,
     STMT_SEQ,
     STMT_IF,
@@ -38,7 +38,7 @@ typedef enum {
 typedef struct Type {
     TYPE sub;
     union {
-        Tk tk;          // TYPE_NATIVE, TYPE_TYPE
+        Tk tk;          // TYPE_NATIVE, TYPE_USER
         struct {        // TYPE_TUPLE
             int size;
             struct Type* vec;
@@ -105,7 +105,7 @@ typedef struct Stmt {
             Tk   id;        // Bool
             int  size;      // 2 subs
             Sub* vec;       // [True,False]
-        } Type;         // STMT_TYPE
+        } User;         // STMT_USER
         struct {
             int size;
             struct Stmt* vec;

@@ -231,8 +231,8 @@ func f : () -> () {
 
 ```
 Stmt ::= `val´ VAR `:´ Type `=´ Expr    -- variable declaration     val x: () = ()
-      |  `type´ [`rec´] TYPE `{`        -- type declaration
-            { TYPE `:´ Type [`;´] }     -- subtypes
+      |  `type´ [`rec´] USER `{`        -- user type declaration
+            { USER `:´ Type [`;´] }     -- subtypes
          `}´
       |  `call´ Expr                    -- call                     call f()
       |  `if´ Expr `{´ Stmt `}´         -- conditional              if x { call f() } else { call g() }
@@ -251,14 +251,14 @@ Expr ::= `(´ `)´                        -- unit value               ()
       |  `(´ Expr {`,´ Expr} `)´        -- tuple                    (x,())
       |  Expr `.´ INDEX                 -- tuple index              x.1
       |  Expr `(´ Expr `)´              -- call                     f(x)
-      |  TYPE `.´ TYPE `(´ Expr `)´     -- constructor              Bool.True ()
-      |  Expr `.´ TYPE `!´              -- discriminator            x.True!
-      |  Expr `.´ TYPE `?´              -- predicate                x.False?
+      |  USER `.´ USER `(´ Expr `)´     -- constructor              Bool.True ()
+      |  Expr `.´ USER `!´              -- discriminator            x.True!
+      |  Expr `.´ USER `?´              -- predicate                x.False?
       |  `(´ Expr `)´                   -- group                    (x)
 
 Type ::= `(´ `)´                        -- unit                     ()
       |  NATIVE                         -- native                   _char
-      |  TYPE                           -- user type                Bool
+      |  USER                           -- user type                Bool
       |  `(´ Type {`,´ Type} `)´        -- tuple                    ((),())
       |  Type `->´ Type                 -- function                 () -> ()
 ```

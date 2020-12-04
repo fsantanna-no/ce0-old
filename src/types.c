@@ -5,7 +5,7 @@
 #include "all.h"
 
 typedef struct Env {
-    Stmt* stmt;         // STMT_TYPE, STMT_VAR
+    Stmt* stmt;         // STMT_USER, STMT_VAR
     struct Env* prev;
 } Env;
 
@@ -19,8 +19,8 @@ Stmt* env_get (Env* env, const char* xp) {
     while (env != NULL) {
         const char* id = NULL;
         switch (env->stmt->sub) {
-            case STMT_TYPE:
-                id = env->stmt->Type.id.val.s;
+            case STMT_USER:
+                id = env->stmt->User.id.val.s;
                 break;
             case STMT_VAR:
                 id = env->stmt->Var.id.val.s;
@@ -68,7 +68,7 @@ Type* env_type (Expr* e) {
             return env_type(e->Call.func)->Func.out;
 
         case EXPR_CONS:     // Bool.True()
-            ret = (Type) { TYPE_TYPE, {.tk=e->Cons.type} };
+            ret = (Type) { TYPE_USER, {.tk=e->Cons.type} };
             return &ret;
 
         case EXPR_TUPLE: {
@@ -87,9 +87,9 @@ Type* env_type (Expr* e) {
         case EXPR_DISC: {   // x.True
             Type* tp   = env_type(e->Disc.cons);        // Bool
             Stmt* stmt = env_get(e->env, tp->tk.val.s); // type Bool { ... }
-            for (int i=0; i<stmt->Type.size; i++) {
-                if (!strcmp(stmt->Type.vec[i].id.val.s, e->Disc.subtype.val.s)) {
-                    return &stmt->Type.vec[i].type;
+            for (int i=0; i<stmt->User.size; i++) {
+                if (!strcmp(stmt->User.vec[i].id.val.s, e->Disc.subtype.val.s)) {
+                    return &stmt->User.vec[i].type;
                 }
             }
             assert(0 && "bug found");
@@ -98,7 +98,7 @@ Type* env_type (Expr* e) {
         case EXPR_PRED: {
             Type* ret = malloc(sizeof(Type));
             assert(ret != NULL);
-            *ret = (Type) { TYPE_TYPE, {} };
+            *ret = (Type) { TYPE_USER, {} };
             strcpy(ret->tk.val.s, "Bool");
             return ret;
         }
@@ -204,9 +204,9 @@ int types_stmt (Env** env, Stmt* s) {
             }
             break;
 
-        case STMT_TYPE:
-            for (int i=0; i<s->Type.size; i++) {
-                if (!types_type(*env, &s->Type.vec[i].type)) {
+        case STMT_USER:
+            for (int i=0; i<s->User.size; i++) {
+                if (!types_type(*env, &s->User.vec[i].type)) {
                     return 0;
                 }
             }

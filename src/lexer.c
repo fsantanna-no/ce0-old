@@ -37,7 +37,7 @@ const char* lexer_tk2err (TK enu) {
         case TX_VAR:
             sprintf(str, "variable identifier");
             break;
-        case TX_TYPE:
+        case TX_USER:
             sprintf(str, "type identifier");
             break;
 #if 0
@@ -65,7 +65,7 @@ const char* lexer_tk2str (Tk* tk) {
             break;
         case TX_NATIVE:
         case TX_VAR:
-        case TX_TYPE:
+        case TX_USER:
             sprintf(str, "\"%s\"", tk->val.s);
             break;
         default:
@@ -127,7 +127,7 @@ static TK lx_token (TK_val* val) {
                 ungetc(c, ALL.inp);
                 return TX_INDEX;
             } else if (isalpha(c) || c=='_') {
-                // var,type,native
+                // var,user,native
             } else {
                 return TK_ERR;
             }
@@ -151,7 +151,7 @@ static TK lx_token (TK_val* val) {
             } else if (islower(val->s[0])) {
                 return TX_VAR;
             } else if (isupper(val->s[0])) {
-                return TX_TYPE;
+                return TX_USER;
             } else {
                 // impossible case
             }

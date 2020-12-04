@@ -1,3 +1,4 @@
+- TYPE -> USER
 - tipos recursivos
 - tupla de tuplas ou de qq coisa que nao seja transformavel em void*
     - vou precisar do ENV
@@ -7,6 +8,7 @@
     - types.c
         - types_type
         - verify duplicates for types/subtypes/vars/funcs
+        - verify assigns, calls args/ret
     - funcoes as values (now we have ENV:var,func,type)
     - funcoes recursivas
         - special rec syntax

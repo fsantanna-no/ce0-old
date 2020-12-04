@@ -117,10 +117,10 @@ void t_lexer (void) {
     {
         all_init(NULL, stropen("r", 0, "c1 C1 Ca a C"));
         assert(ALL.tk1.enu == TX_VAR);  assert(!strcmp(ALL.tk1.val.s, "c1"));
-        lexer(); assert(ALL.tk1.enu == TX_TYPE); assert(!strcmp(ALL.tk1.val.s, "C1"));
-        lexer(); assert(ALL.tk1.enu == TX_TYPE); assert(!strcmp(ALL.tk1.val.s, "Ca")); assert(ALL.tk1.lin == 1);
+        lexer(); assert(ALL.tk1.enu == TX_USER); assert(!strcmp(ALL.tk1.val.s, "C1"));
+        lexer(); assert(ALL.tk1.enu == TX_USER); assert(!strcmp(ALL.tk1.val.s, "Ca")); assert(ALL.tk1.lin == 1);
         lexer(); assert(ALL.tk1.enu == TX_VAR);  assert(!strcmp(ALL.tk1.val.s, "a")); assert(ALL.tk1.col == 10);
-        lexer(); assert(ALL.tk1.enu == TX_TYPE); assert(!strcmp(ALL.tk1.val.s, "C"));
+        lexer(); assert(ALL.tk1.enu == TX_USER); assert(!strcmp(ALL.tk1.val.s, "C"));
         lexer(); assert(ALL.tk1.enu == TK_EOF);
         fclose(ALL.inp);
     }
@@ -444,11 +444,11 @@ void t_parser_stmt (void) {
         all_init(NULL, stropen("r", 0, "type Bool { False:() ; True:() }"));
         Stmt s;
         assert(parser_stmt(&s));
-        assert(s.sub == STMT_TYPE);
-        assert(!strcmp(s.Type.id.val.s, "Bool"));
-        assert(s.Type.size == 2);
-        assert(s.Type.vec[0].type.sub == TYPE_UNIT);
-        assert(!strcmp(s.Type.vec[1].id.val.s, "True"));
+        assert(s.sub == STMT_USER);
+        assert(!strcmp(s.User.id.val.s, "Bool"));
+        assert(s.User.size == 2);
+        assert(s.User.vec[0].type.sub == TYPE_UNIT);
+        assert(!strcmp(s.User.vec[1].id.val.s, "True"));
         fclose(ALL.inp);
     }
     // STMT_CALL
