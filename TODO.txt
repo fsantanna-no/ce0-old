@@ -1,3 +1,4 @@
+- STMT_FUNC invert id/type
 - tipos recursivos
 - tupla de tuplas ou de qq coisa que nao seja transformavel em void*
     - vou precisar do ENV
@@ -5,7 +6,7 @@
 
 - MINOR
     - types.c
-        - types_type
+        - types_type: verify if user types exist
         - verify duplicates for types/subtypes/vars/funcs
         - verify assigns, calls args/ret
     - funcoes as values (now we have ENV:var,func,type)

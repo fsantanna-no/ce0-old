@@ -31,9 +31,12 @@ void code_type__ (char* out, Type* tp) {
         case TYPE_NATIVE:
             strcat(out, &tp->tk.val.s[1]);
             break;
-        case TYPE_USER:
+        case TYPE_USER: {
+            Stmt* s = env_get(tp->env, tp->tk.val.s);
+            if (s!=NULL && s->User.isrec) strcat(out, "struct ");
             strcat(out, tp->tk.val.s);
             break;
+        }
         case TYPE_TUPLE:
             strcat(out, "TUPLE");
             for (int i=0; i<tp->Tuple.size; i++) {

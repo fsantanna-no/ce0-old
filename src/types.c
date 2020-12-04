@@ -4,12 +4,6 @@
 
 #include "all.h"
 
-typedef struct Env {
-    Stmt* stmt;         // STMT_USER, STMT_VAR
-    struct Env* prev;
-} Env;
-
-
 int err_message (Tk tk, const char* v) {
     sprintf(ALL.err, "(ln %ld, col %ld): %s", tk.lin, tk.col, v);
     return 0;
@@ -46,7 +40,7 @@ Type* env_type (Expr* e) {
             assert(0 && "bug found");
 
         case EXPR_UNIT:
-            ret = (Type) { TYPE_UNIT };
+            ret = (Type) { TYPE_UNIT, e->env };
             return &ret;
 
         case EXPR_NULL:
@@ -56,7 +50,7 @@ Type* env_type (Expr* e) {
             assert(0 && "TODO");
 
         case EXPR_NATIVE:
-            ret = (Type) { TYPE_NATIVE };
+            ret = (Type) { TYPE_NATIVE, e->env };
             return &ret;
 
         case EXPR_VAR: {
@@ -68,7 +62,7 @@ Type* env_type (Expr* e) {
             return env_type(e->Call.func)->Func.out;
 
         case EXPR_CONS:     // Bool.True()
-            ret = (Type) { TYPE_USER, {.tk=e->Cons.type} };
+            ret = (Type) { TYPE_USER, e->env, {.tk=e->Cons.type} };
             return &ret;
 
         case EXPR_TUPLE: {
@@ -77,7 +71,7 @@ Type* env_type (Expr* e) {
             for (int i=0; i<e->Tuple.size; i++) {
                 vec[i] = *env_type(&e->Tuple.vec[i]);
             }
-            ret = (Type) { TYPE_TUPLE, {.Tuple={e->Tuple.size,vec}} };
+            ret = (Type) { TYPE_TUPLE, e->env, {.Tuple={e->Tuple.size,vec}} };
             return &ret;
         }
 
@@ -85,11 +79,12 @@ Type* env_type (Expr* e) {
             return &env_type(e->Index.tuple)->Tuple.vec[e->Index.index];
 
         case EXPR_DISC: {   // x.True
-            Type* tp   = env_type(e->Disc.cons);        // Bool
-            Stmt* stmt = env_get(e->env, tp->tk.val.s); // type Bool { ... }
-            for (int i=0; i<stmt->User.size; i++) {
-                if (!strcmp(stmt->User.vec[i].id.val.s, e->Disc.subtype.val.s)) {
-                    return &stmt->User.vec[i].type;
+            Type* tp = env_type(e->Disc.cons);        // Bool
+            Stmt* s  = env_get(e->env, tp->tk.val.s); // type Bool { ... }
+            assert(s != NULL);
+            for (int i=0; i<s->User.size; i++) {
+                if (!strcmp(s->User.vec[i].id.val.s, e->Disc.subtype.val.s)) {
+                    return &s->User.vec[i].type;
                 }
             }
             assert(0 && "bug found");
@@ -98,7 +93,7 @@ Type* env_type (Expr* e) {
         case EXPR_PRED: {
             Type* ret = malloc(sizeof(Type));
             assert(ret != NULL);
-            *ret = (Type) { TYPE_USER, {} };
+            *ret = (Type) { TYPE_USER, e->env, {} };
             strcpy(ret->tk.val.s, "Bool");
             return ret;
         }
@@ -123,6 +118,22 @@ void env_dump (Env* env) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int types_type (Env* env, Type* tp) {
+    tp->env = env;
+    switch (tp->sub) {
+        case TYPE_NONE:
+            assert(0 && "bug found");
+        case TYPE_UNIT:
+        case TYPE_NATIVE:
+        case TYPE_USER:
+            break;
+        case TYPE_TUPLE:
+            for (int i=0; i<tp->Tuple.size; i++) {
+                types_type(env, &tp->Tuple.vec[i]);
+            }
+            break;
+        default:
+            assert(0 && "TODO");
+    }
     return 1;
 }
 
@@ -197,6 +208,9 @@ int types_stmt (Env** env, Stmt* s) {
             if (!types_expr(*env, &s->Var.init)) {
                 return 0;
             }
+            if (!types_type(*env, &s->Var.type)) {
+                return 0;
+            }
             {
                 Env* new = malloc(sizeof(Env));
                 *new = (Env) { s, *env };
@@ -205,15 +219,15 @@ int types_stmt (Env** env, Stmt* s) {
             break;
 
         case STMT_USER:
+            {   // change env fisrt b/c of rec
+                Env* new = malloc(sizeof(Env));
+                *new = (Env) { s, *env };
+                *env = new;
+            }
             for (int i=0; i<s->User.size; i++) {
                 if (!types_type(*env, &s->User.vec[i].type)) {
                     return 0;
                 }
-            }
-            {
-                Env* new = malloc(sizeof(Env));
-                *new = (Env) { s, *env };
-                *env = new;
             }
             break;
 
