@@ -1,12 +1,12 @@
-- types.c
-    - types_type
-- ENV
 - tipos recursivos
 - tupla de tuplas ou de qq coisa que nao seja transformavel em void*
     - vou precisar do ENV
     // TODO: tuples
 
 - MINOR
+    - types.c
+        - types_type
+        - verify duplicates for types/subtypes/vars/funcs
     - funcoes as values (now we have ENV:var,func,type)
     - funcoes recursivas
         - special rec syntax
