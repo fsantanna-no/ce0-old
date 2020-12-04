@@ -1,4 +1,5 @@
 - types.c
+    - types_type
 - ENV
 - tipos recursivos
 - tupla de tuplas ou de qq coisa que nao seja transformavel em void*
