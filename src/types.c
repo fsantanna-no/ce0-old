@@ -43,7 +43,7 @@ Type* env_type (Expr* e) {
             ret = (Type) { TYPE_UNIT, e->env };
             return &ret;
 
-        case EXPR_NULL:
+        case EXPR_NIL:
             assert(0 && "TODO");
 
         case EXPR_ARG:
@@ -145,7 +145,7 @@ int types_expr (Env* env, Expr* e) {
         case EXPR_NONE:
             assert(0 && "bug found");
         case EXPR_UNIT:
-        case EXPR_NULL:
+        case EXPR_NIL:
         case EXPR_ARG:
         case EXPR_NATIVE:
             break;

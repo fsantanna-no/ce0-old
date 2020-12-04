@@ -68,7 +68,7 @@ void code_expr_tuple (Expr* e) {
         case EXPR_NONE:
             assert(0 && "bug found");
         case EXPR_UNIT:
-        case EXPR_NULL:
+        case EXPR_NIL:
         case EXPR_ARG:
         case EXPR_NATIVE:
         case EXPR_VAR:
@@ -125,7 +125,7 @@ void code_expr (Expr* e) {
         case EXPR_UNIT:
             out("1");
             break;
-        case EXPR_NULL:
+        case EXPR_NIL:
             out("NULL");
             break;
         case EXPR_ARG:
@@ -254,7 +254,7 @@ void code_stmt (Stmt* s) {
                 if (isrec) {
                     out (
                         "if (v == NULL) {\n"
-                        "    printf(\"$\");\n"
+                        "    printf(\"Nil\");\n"
                         "    return;\n"
                         "}\n"
                     );

@@ -25,7 +25,6 @@ The following symbols are valid:
     !           -- type discriminator
     ?           -- type predicate
     ->          -- function type signature
-    $           -- null subtype
 ```
 
 The following keywords are reserved and cannot be used as identifiers:
@@ -36,6 +35,7 @@ The following keywords are reserved and cannot be used as identifiers:
     else        -- conditional statement
     func        -- function declaration
     if          -- conditional statement
+    Nil         -- null subtype
     rec         -- type/function recursive declaration
     return      -- function return
     type        -- new type declaration
@@ -135,11 +135,11 @@ A destructor acesses the value of a type as one of its subtypes:
 ```
 (Bool.True ()).True!        -- yields ()
 
-x = Tree.Node ($,10,$)
+x = Tree.Node (Nil,10,Nil)
 x.Tree.Node!.2              -- yields 10
 ```
 
-The value `$` corresponds to the null subtype of all recursive types.
+The value `Nil` corresponds to the null subtype of all recursive types.
 
 A subtype predicate evaluates to a `Bool`:
 
@@ -150,6 +150,14 @@ type Member {
 }
 x = Member.Professor ()
 b = x.Professor?            -- yields Bool.True()
+```
+
+Constructors from recursive data types require a [pool destination](TODO),
+since they allocate memory:
+
+```
+val n: Nat[] = Succ(Succ(Nil))    -- n is a pool
+n = Succ(n)
 ```
 
 # 3. Statements
@@ -167,11 +175,11 @@ type Bool {
 ```
 
 A recursive type uses a `rec` declaration and always contains the implicit base
-null subtype `$´:
+null subtype `Nil´:
 
 ```
 type rec Tree {
-    -- $: $                 -- implicit null subtype
+    -- Nil: ()              -- implicit null subtype
     Node: (Tree,(),Tree)    -- subtype Node holds left subtree, unit value, and right subtree
 }
 ```
@@ -219,7 +227,7 @@ if x {
 A function declares a block of statements that can be called afterwards with an
 argument.
 The argument can be acessed through the identifier `arg`.
-A return exits a function with a value:
+A `return` exits a function with a value:
 
 ```
 func f : () -> () {
@@ -247,7 +255,7 @@ Expr ::= `(´ `)´                        -- unit value               ()
       |  NATIVE                         -- native identifier        _printf
       |  VAR                            -- variable identifier      i
       |  `arg´                          -- function argument        arg
-      |  `$´                            -- null recursive subtype   $
+      |  `Nil´                          -- null recursive subtype   Nil
       |  `(´ Expr {`,´ Expr} `)´        -- tuple                    (x,())
       |  Expr `.´ INDEX                 -- tuple index              x.1
       |  Expr `(´ Expr `)´              -- call                     f(x)

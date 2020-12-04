@@ -10,7 +10,7 @@ typedef enum {
 typedef enum {
     EXPR_NONE = 0,
     EXPR_UNIT,
-    EXPR_NULL,
+    EXPR_NIL,
     EXPR_ARG,
     EXPR_NATIVE,
     EXPR_VAR,

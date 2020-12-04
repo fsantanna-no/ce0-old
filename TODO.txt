@@ -1,3 +1,4 @@
+- $ -> Nil, null, Null, None, Nothing
 - STMT_FUNC invert id/type
 - tipos recursivos
 - tupla de tuplas ou de qq coisa que nao seja transformavel em void*
