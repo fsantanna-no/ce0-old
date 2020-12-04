@@ -19,22 +19,22 @@ void out (const char* v) {
     fputs(v, ALL.out);
 }
 
-char* code_type_ (Type tp) {
+char* code_type_ (Type* tp) {
     static char out[256];
-    switch (tp.sub) {
+    switch (tp->sub) {
         case TYPE_NONE:
             assert(0 && "bug found");
         case TYPE_UNIT:
             strcpy(out, "int");
             break;
         case TYPE_NATIVE:
-            strcpy(out, &tp.tk.val.s[1]);
+            strcpy(out, &tp->tk.val.s[1]);
             break;
         case TYPE_TYPE:
-            strcpy(out, tp.tk.val.s);
+            strcpy(out, tp->tk.val.s);
             break;
         case TYPE_TUPLE:
-            sprintf(out, "TUPLE%d", tp.Tuple.size);
+            sprintf(out, "TUPLE%d", tp->Tuple.size);
             break;
         default:
             assert(0 && "TODO");
@@ -42,12 +42,12 @@ char* code_type_ (Type tp) {
     return out;
 }
 
-void code_type (Type tp) {
+void code_type (Type* tp) {
     out(code_type_(tp));
 }
 
-void code_expr (Expr e) {
-    switch (e.sub) {
+void code_expr (Expr* e) {
+    switch (e->sub) {
         case EXPR_NONE:
             assert(0 && "bug found");
         case EXPR_UNIT:
@@ -60,84 +60,84 @@ void code_expr (Expr e) {
             out("arg");
             break;
         case EXPR_NATIVE:
-            out(&e.tk.val.s[1]);
+            out(&e->tk.val.s[1]);
             break;
         case EXPR_VAR:
-            out(e.tk.val.s);
+            out(e->tk.val.s);
             break;
         case EXPR_CALL:
-            code_expr(*e.Call.func);
+            code_expr(e->Call.func);
             out("(");
-            code_expr(*e.Call.arg);
+            code_expr(e->Call.arg);
             out(")");
             break;
         case EXPR_CONS:
             // ((Bool) { Bool_False })
             fprintf(ALL.out,
                 "((%s) { %s, ",
-                e.Cons.type.val.s, e.Cons.subtype.val.s);
-            code_expr(*e.Cons.arg);
+                e->Cons.type.val.s, e->Cons.subtype.val.s);
+            code_expr(e->Cons.arg);
             out(" })");
             break;
         case EXPR_TUPLE: {
             char str[16];
-            sprintf(str, "((TUPLE%d)", e.Tuple.size);
+            sprintf(str, "((TUPLE%d)", e->Tuple.size);
             out(str);
             out("{ ");
-            for (int i=0; i<e.Tuple.size; i++) {
+            for (int i=0; i<e->Tuple.size; i++) {
                 //fprintf (ALL.out[OGLOB], "%c _%d=", ((i==0) ? ' ' : ','), i);
                 if (i != 0) {
                     out(",");
                 }
                 out("(void*)");
-                code_expr(e.Tuple.vec[i]);
+                code_expr(&e->Tuple.vec[i]);
             }
             out(" })");
             break;
         }
         case EXPR_INDEX:
-            code_expr(*e.Index.tuple);
-            fprintf(ALL.out, "._%d", e.Index.index);
+            code_expr(e->Index.tuple);
+            fprintf(ALL.out, "._%d", e->Index.index);
             break;
         case EXPR_DISC:
-            code_expr(*e.Disc.cons);
-            fprintf(ALL.out, "._%s", e.Disc.subtype.val.s);
+            code_expr(e->Disc.cons);
+            fprintf(ALL.out, "._%s", e->Disc.subtype.val.s);
             break;
         case EXPR_PRED:
             out("((");
-            code_expr(*e.Disc.cons);
-            fprintf(ALL.out, ".sub == %s) ? (Bool){True,{}} : (Bool){False,{}})", e.Disc.subtype.val.s);
+            code_expr(e->Disc.cons);
+            fprintf(ALL.out, ".sub == %s) ? (Bool){True,{}} : (Bool){False,{}})", e->Disc.subtype.val.s);
             break;
     }
 }
 
-void code_stmt (Stmt s) {
-    switch (s.sub) {
+void code_stmt (Stmt* s) {
+    switch (s->sub) {
         case STMT_NONE:
             assert(0 && "bug found");
             break;
 
         case STMT_VAR:
-            code_type(s.Var.type);
+            code_type(&s->Var.type);
             fputs(" ", ALL.out);
-            fputs(s.Var.id.val.s, ALL.out);
+            fputs(s->Var.id.val.s, ALL.out);
             fputs(" = ", ALL.out);
-            code_expr(s.Var.init);
+            code_expr(&s->Var.init);
             out(";\n");
             break;
 
         case STMT_TYPE: {
-            const char* sup = s.Type.id.val.s;
-            const char* SUP = strupper(s.Type.id.val.s);
+            const char* sup = s->Type.id.val.s;
+            const char* SUP = strupper(s->Type.id.val.s);
 
             // ENUM + STRUCT + UNION
             {
                 // enum { False, True } BOOL;
                 out("typedef enum {\n");
-                    for (int i=0; i<s.Type.size; i++) {
+                    for (int i=0; i<s->Type.size; i++) {
                         out("    ");
-                        out(s.Type.vec[i].id.val.s);    // False
-                        if (i < s.Type.size-1) {
+                        out(s->Type.vec[i].id.val.s);    // False
+                        if (i < s->Type.size-1) {
                             out(",");
                         }
                         out("\n");
@@ -153,10 +153,10 @@ void code_stmt (Stmt s) {
                     "    union {\n",
                     sup, SUP
                 );
-                for (int i=0; i<s.Type.size; i++) {
-                    Sub sub = s.Type.vec[i];
+                for (int i=0; i<s->Type.size; i++) {
+                    Sub sub = s->Type.vec[i];
                     out("        ");
-                    code_type(sub.type);
+                    code_type(&sub.type);
                     out(" _");
                     out(sub.id.val.s);      // int _True
                     out(";\n");
@@ -177,16 +177,16 @@ void code_stmt (Stmt s) {
                     "    switch (v.sub) {\n",
                     sup, sup
                 );
-                for (int i=0; i<s.Type.size; i++) {
-                    Sub sub = s.Type.vec[i];
+                for (int i=0; i<s->Type.size; i++) {
+                    Sub* sub = &s->Type.vec[i];
 
                     char arg[1024];
-                    switch (sub.type.sub) {
+                    switch (sub->type.sub) {
                         case TYPE_UNIT:        // ()
-                            sprintf(arg, "show_Unit_(v._%s)", sub.id.val.s);
+                            sprintf(arg, "show_Unit_(v._%s)", sub->id.val.s);
                             break;
                         case TYPE_TYPE:
-                            sprintf(arg, "show_%s_(v._%s)", code_type_(sub.type), sub.id.val.s);
+                            sprintf(arg, "show_%s_(v._%s)", code_type_(&sub->type), sub->id.val.s);
                             break;
                         default:
                             assert(0 && "bug found");
@@ -197,7 +197,7 @@ void code_stmt (Stmt s) {
                         "            printf(\"%s \");\n"    // True
                         "            %s;\n"                 // ()
                         "            break;\n",
-                        sub.id.val.s, sub.id.val.s, arg
+                        sub->id.val.s, sub->id.val.s, arg
                     );
                 }
                 out("    }\n");
@@ -215,47 +215,47 @@ void code_stmt (Stmt s) {
         }
 
         case STMT_CALL:
-            code_expr(s.call);
+            code_expr(&s->call);
             out(";\n");
             break;
 
         case STMT_SEQ:
-            for (int i=0; i<s.Seq.size; i++) {
-                code_stmt(s.Seq.vec[i]);
+            for (int i=0; i<s->Seq.size; i++) {
+                code_stmt(&s->Seq.vec[i]);
             }
             break;
 
         case STMT_IF:
             out("if (");
-            code_expr(s.If.cond);
+            code_expr(&s->If.cond);
             out(".sub) {\n");           // Bool.sub returns 0 or 1
-            code_stmt(*s.If.true);
+            code_stmt(s->If.true);
             out("} else {\n");
-            code_stmt(*s.If.false);
+            code_stmt(s->If.false);
             out("}\n");
             break;
 
         case STMT_FUNC:
-            assert(s.Func.type.sub == TYPE_FUNC);
-            code_type(*s.Func.type.Func.out);
+            assert(s->Func.type.sub == TYPE_FUNC);
+            code_type(s->Func.type.Func.out);
             out(" ");
-            out(s.Func.id.val.s);
+            out(s->Func.id.val.s);
             out(" (");
-            code_type(*s.Func.type.Func.inp);
+            code_type(s->Func.type.Func.inp);
             out(" arg) {\n");
-            code_stmt(*s.Func.body);
+            code_stmt(s->Func.body);
             out("}\n");
             break;
 
         case STMT_RETURN:
             out("return ");
-            code_expr(s.ret);
+            code_expr(&s->ret);
             out(";\n");
             break;
     }
 }
 
-void code (Stmt s) {
+void code (Stmt* s) {
     out (
         "#include <assert.h>\n"
         "#include <stdio.h>\n"

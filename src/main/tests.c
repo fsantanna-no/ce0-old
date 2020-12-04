@@ -15,10 +15,12 @@ int all (const char* xp, char* src) {
         //puts(ALL.err);
         return !strcmp(ALL.err, xp);
     }
+#if 0
     if (!types(s)) {
         return !strcmp(ALL.err, xp);
     }
-    code(s);
+#endif
+    code(&s);
     fclose(ALL.out);
 #if 0
 puts(">>>");
@@ -536,7 +538,7 @@ void t_code (void) {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
         Expr e = { EXPR_UNIT, NULL };
-        code_expr(e);
+        code_expr(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"1"));
     }
@@ -547,7 +549,7 @@ void t_code (void) {
         Expr e = { EXPR_VAR, NULL, {} };
             e.tk.enu = TX_VAR;
             strcpy(e.tk.val.s, "xxx");
-        code_expr(e);
+        code_expr(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"xxx"));
     }
@@ -558,7 +560,7 @@ void t_code (void) {
         Expr e = { EXPR_NATIVE, NULL, {} };
             e.tk.enu = TX_NATIVE;
             strcpy(e.tk.val.s, "_printf");
-        code_expr(e);
+        code_expr(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"printf"));
     }
@@ -568,7 +570,7 @@ void t_code (void) {
         all_init(stropen("w",sizeof(out),out), NULL);
         Expr es[2] = {{EXPR_UNIT, NULL},{EXPR_UNIT, NULL}};
         Expr e = { EXPR_TUPLE, NULL, {.Tuple={2,es}} };
-        code_expr(e);
+        code_expr(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"((TUPLE2){ (void*)1,(void*)1 })"));
     }
@@ -579,7 +581,7 @@ void t_code (void) {
         Expr es[2] = {{EXPR_UNIT, NULL},{EXPR_UNIT, NULL}};
         Expr tuple = { EXPR_TUPLE, NULL, {.Tuple={2,es}} };
         Expr e = { EXPR_INDEX, NULL, { .Index={.tuple=&tuple,.index=2} } };
-        code_expr(e);
+        code_expr(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"((TUPLE2){ (void*)1,(void*)1 })._2"));
     }
@@ -592,7 +594,7 @@ void t_code (void) {
         Env* env = NULL;
         Stmt s;
         assert(parser_stmts(&env,&s));
-        code(s);
+        code(&s);
         fclose(ALL.out);
         char* ret =
             "#include <assert.h>\n"
@@ -619,7 +621,7 @@ void t_code (void) {
         Env* env = NULL;
         Stmt s;
         assert(parser_stmts(&env,&s));
-        code(s);
+        code(&s);
         fclose(ALL.out);
         char* ret =
             "#include <assert.h>\n"
@@ -797,7 +799,6 @@ void t_all (void) {
 
 void t_parser (void) {
     t_parser_type();
-    //t_parser_data();
     t_parser_expr();
     t_parser_stmt();
 }
