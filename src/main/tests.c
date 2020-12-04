@@ -626,10 +626,12 @@ void t_code (void) {
             "        case False:\n"
             "            printf(\"False \");\n"
             "            show_Unit_(v._False);\n"
+            "            printf(\"\");\n"
             "            break;\n"
             "        case True:\n"
             "            printf(\"True \");\n"
             "            show_Unit_(v._True);\n"
+            "            printf(\"\");\n"
             "            break;\n"
             "    }\n"
             "}\n"
@@ -774,7 +776,7 @@ void t_all (void) {
         "call _show_Bool(n.Nil?)\n"
     ));
     assert(all(
-        "()\n",
+        "Succ (Succ (Nil))\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -783,7 +785,7 @@ void t_all (void) {
     ));
     // needs implicit pool
     assert(all(
-        "()\n",
+        "Succ (Succ (Nil))\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"

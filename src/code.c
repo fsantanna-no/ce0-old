@@ -78,16 +78,20 @@ void code_expr_0 (Expr* e) {
             code_expr_0(e->Call.arg);
             break;
         case EXPR_CONS: {
-            Stmt* s = env_stmt(e->env, e->Cons.user.val.s);
-            assert(s!=NULL && s->sub==STMT_USER);
-            if (s->User.isrec) {
-                out(e->Cons.user.val.s);
-                out(" xxx = {};\n");
-            } else {
-                // nothing
-            }
+            code_expr_0(e->Cons.arg);   // child "x2" is used by parent "x1"
 
-            code_expr_0(e->Cons.arg);
+            char* user = e->Cons.user.val.s;
+            Stmt* s = env_stmt(e->env, user);
+            assert(s!=NULL && s->sub==STMT_USER);
+
+            // Bool xxx1 = (Bool) { False, {_False=1} };
+            // Nat  xxx1 = (Nat)  { Succ,  {_Succ=&xxx2} };
+            char* sub = e->Cons.subuser.val.s;
+            fprintf(ALL.out,
+                "%s xxx%d = ((%s) { %s, { ._%s=",
+                user, e->N, user, sub, sub);
+            code_expr_1(e->Cons.arg);
+            out(" } });\n");
             break;
         }
         case EXPR_INDEX:
@@ -156,16 +160,7 @@ void code_expr_1 (Expr* e) {
         case EXPR_CONS: {
             Stmt* s = env_stmt(e->env, e->Cons.user.val.s);
             assert(s!=NULL && s->sub==STMT_USER);
-            if (s->User.isrec) {
-                out("&xxx");
-            } else {
-                // ((Bool) { Bool_False })
-                fprintf(ALL.out,
-                    "((%s) { %s, ",
-                    e->Cons.user.val.s, e->Cons.subuser.val.s);
-                code_expr_1(e->Cons.arg);
-                out(" })");
-            }
+            fprintf(ALL.out, "%sxxx%d", (s->User.isrec ? "&" : ""), e->N);
             break;
         }
         case EXPR_TUPLE:
@@ -297,12 +292,15 @@ void code_stmt (Stmt* s) {
                             assert(0 && "bug found");
                     }
 
+                    int no = (sub->type.sub==TYPE_UNIT || sub->type.sub==TYPE_TUPLE);
+
                     fprintf(ALL.out,
                         "        case %s:\n"                // True
-                        "            printf(\"%s \");\n"    // True
+                        "            printf(\"%s %s\");\n"  // True (
                         "            %s;\n"                 // ()
+                        "            printf(\"%s\");\n"     // )
                         "            break;\n",
-                        sub->id.val.s, sub->id.val.s, arg
+                        sub->id.val.s, sub->id.val.s, no?"":"(", arg, no?"":")"
                     );
                 }
                 out("    }\n");

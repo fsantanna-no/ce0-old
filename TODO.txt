@@ -1,10 +1,10 @@
-- N for nodes
 - tipos recursivos
 - tupla de tuplas ou de qq coisa que nao seja transformavel em void*
     - vou precisar do ENV
     // TODO: tuples
 
 - MINOR
+    - -Wno-format-zero-length
     - types.c
         - types_type: verify if user types exist
         - verify duplicates for types/subtypes/vars/funcs
@@ -18,6 +18,30 @@
     - type names must contain lowercase (error in C generation upper/lower)
 
 
+Recursive types
 type rec Nat {
     Succ: Nat
 }
+
+Constructors from recursive data types require a [pool destination](TODO),
+since they allocate memory:
+
+Constants are made static:
+
+```
+val n: Nat = Nat.Succ(Nat.Succ(Nil))
+```
+
+```
+Nat x2 = (Nat) { Succ, {._Succ=NULL} };
+Nat x1 = (Nat) { Succ, {._Succ=&x2} };
+Nat* n = &x1;
+```
+
+
+```
+val n: Nat[] = Succ(Succ(Nil))    -- n is a pool
+n = Succ(n)
+```
+
+

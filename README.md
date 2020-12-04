@@ -152,14 +152,6 @@ x = Member.Professor ()
 b = x.Professor?            -- yields Bool.True()
 ```
 
-Constructors from recursive data types require a [pool destination](TODO),
-since they allocate memory:
-
-```
-val n: Nat[] = Succ(Succ(Nil))    -- n is a pool
-n = Succ(n)
-```
-
 # 3. Statements
 
 ## Type declaration
