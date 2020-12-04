@@ -117,8 +117,8 @@ typedef struct Stmt {
             struct Stmt* false;
         } If;
         struct {        // STMT_FUNC
-            Type type;
             Tk id;
+            Type type;
             struct Stmt* body;
         } Func;
     };

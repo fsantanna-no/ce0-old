@@ -376,7 +376,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_stmts(s)) {
             return 0;
         }
-        *ret = (Stmt) { STMT_FUNC, .Func={tp,id,s} };
+        *ret = (Stmt) { STMT_FUNC, .Func={id,tp,s} };
 
         if (!accept('}')) { return 0; }
 
