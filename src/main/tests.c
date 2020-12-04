@@ -554,7 +554,8 @@ void t_code (void) {
         Expr e = { EXPR_TUPLE, {.Tuple={2,es}} };
         code_expr(&e);
         fclose(ALL.out);
-        assert(!strcmp(out,"((TUPLE2){ (void*)1,(void*)1 })"));
+//puts(out);
+        assert(!strcmp(out,"((TUPLE__int__int){ 1,1 })"));
     }
     // EXPR_INDEX
     {
@@ -565,7 +566,7 @@ void t_code (void) {
         Expr e = { EXPR_INDEX, { .Index={.tuple=&tuple,.index=2} } };
         code_expr(&e);
         fclose(ALL.out);
-        assert(!strcmp(out,"((TUPLE2){ (void*)1,(void*)1 })._2"));
+        assert(!strcmp(out,"((TUPLE__int__int){ 1,1 })._2"));
     }
     {
         char out[1024] = "";
@@ -580,8 +581,6 @@ void t_code (void) {
         char* ret =
             "#include <assert.h>\n"
             "#include <stdio.h>\n"
-            "typedef struct { void *_1, *_2;      } TUPLE2;\n"
-            "typedef struct { void *_1, *_2, *_3; } TUPLE3;\n"
             "#define show_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
             "#define show_Unit(x) (show_Unit_(x), puts(\"\"))\n"
             "int main (void) {\n"
@@ -606,8 +605,6 @@ void t_code (void) {
         char* ret =
             "#include <assert.h>\n"
             "#include <stdio.h>\n"
-            "typedef struct { void *_1, *_2;      } TUPLE2;\n"
-            "typedef struct { void *_1, *_2, *_3; } TUPLE3;\n"
             "#define show_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
             "#define show_Unit(x) (show_Unit_(x), puts(\"\"))\n"
             "int main (void) {\n"
@@ -668,7 +665,7 @@ void t_all (void) {
         "()\n",
         "call _show_Unit(((),()).1)\n"
     ));
-#if 0
+#if 1
     // TODO: tuples
     assert(all(
         "()\n",

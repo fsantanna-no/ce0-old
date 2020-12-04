@@ -19,32 +19,45 @@ void out (const char* v) {
     fputs(v, ALL.out);
 }
 
-char* code_type_ (Type* tp) {
-    static char out[256];
+///////////////////////////////////////////////////////////////////////////////
+
+void code_type__ (char* out, Type* tp) {
     switch (tp->sub) {
         case TYPE_NONE:
             assert(0 && "bug found");
         case TYPE_UNIT:
-            strcpy(out, "int");
+            strcat(out, "int");
             break;
         case TYPE_NATIVE:
-            strcpy(out, &tp->tk.val.s[1]);
+            strcat(out, &tp->tk.val.s[1]);
             break;
         case TYPE_TYPE:
-            strcpy(out, tp->tk.val.s);
+            strcat(out, tp->tk.val.s);
             break;
         case TYPE_TUPLE:
-            sprintf(out, "TUPLE%d", tp->Tuple.size);
+            strcat(out, "TUPLE__");
+            for (int i=0; i<tp->Tuple.size; i++) {
+                strcat(out, "__");
+                code_type__(out, &tp->Tuple.vec[i]);
+            }
             break;
         default:
             assert(0 && "TODO");
     }
+}
+
+char* code_type_ (Type* tp) {
+    static char out[256];
+    out[0] = '\0';
+    code_type__(out, tp);
     return out;
 }
 
 void code_type (Type* tp) {
     out(code_type_(tp));
 }
+
+///////////////////////////////////////////////////////////////////////////////
 
 void code_expr (Expr* e) {
     switch (e->sub) {
@@ -110,6 +123,8 @@ void code_expr (Expr* e) {
             break;
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////
 
 void code_stmt (Stmt* s) {
     switch (s->sub) {
@@ -255,12 +270,12 @@ void code_stmt (Stmt* s) {
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
 void code (Stmt* s) {
     out (
         "#include <assert.h>\n"
         "#include <stdio.h>\n"
-        "typedef struct { void *_1, *_2;      } TUPLE2;\n"
-        "typedef struct { void *_1, *_2, *_3; } TUPLE3;\n"
         "#define show_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
         "#define show_Unit(x) (show_Unit_(x), puts(\"\"))\n"
         "int main (void) {\n"
