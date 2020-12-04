@@ -53,7 +53,10 @@ typedef struct Type {
 
 struct Env;
 
+extern int _N_;
+
 typedef struct Expr {
+    int N;
     EXPR sub;
     struct Env* env;    // see types.c
     union {

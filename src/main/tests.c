@@ -519,7 +519,7 @@ void t_code (void) {
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr e = { EXPR_UNIT, NULL };
+        Expr e = { _N_++, EXPR_UNIT, NULL };
         code_expr_1(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"1"));
@@ -528,7 +528,7 @@ void t_code (void) {
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr e = { EXPR_VAR, NULL, {} };
+        Expr e = { _N_++, EXPR_VAR, NULL, {} };
             e.tk.enu = TX_VAR;
             strcpy(e.tk.val.s, "xxx");
         code_expr_1(&e);
@@ -539,7 +539,7 @@ void t_code (void) {
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr e = { EXPR_NATIVE, NULL, {} };
+        Expr e = { _N_++, EXPR_NATIVE, NULL, {} };
             e.tk.enu = TX_NATIVE;
             strcpy(e.tk.val.s, "_printf");
         code_expr_1(&e);
@@ -550,8 +550,8 @@ void t_code (void) {
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr es[2] = {{EXPR_UNIT},{EXPR_UNIT}};
-        Expr e = { EXPR_TUPLE, NULL, {.Tuple={2,es}} };
+        Expr es[2] = {{_N_++,EXPR_UNIT},{_N_++,EXPR_UNIT}};
+        Expr e = { _N_++, EXPR_TUPLE, NULL, {.Tuple={2,es}} };
         code_expr_1(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"((TUPLE__int__int) { 1,1 })"));
@@ -560,9 +560,9 @@ void t_code (void) {
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr es[2] = {{EXPR_UNIT,NULL},{EXPR_UNIT,NULL}};
-        Expr tuple = { EXPR_TUPLE, NULL, {.Tuple={2,es}} };
-        Expr e = { EXPR_INDEX, NULL, { .Index={.tuple=&tuple,.index=2} } };
+        Expr es[2] = {{_N_++,EXPR_UNIT,NULL},{_N_++,EXPR_UNIT,NULL}};
+        Expr tuple = { _N_++, EXPR_TUPLE, NULL, {.Tuple={2,es}} };
+        Expr e = { _N_++, EXPR_INDEX, NULL, { .Index={.tuple=&tuple,.index=2} } };
         code_expr_1(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"((TUPLE__int__int) { 1,1 })._2"));
