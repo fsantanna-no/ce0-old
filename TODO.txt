@@ -1,3 +1,4 @@
+- cons type->user, subuser
 - tipos recursivos
 - tupla de tuplas ou de qq coisa que nao seja transformavel em void*
     - vou precisar do ENV

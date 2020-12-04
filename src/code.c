@@ -77,9 +77,19 @@ void code_expr_0 (Expr* e) {
             code_expr_0(e->Call.func);
             code_expr_0(e->Call.arg);
             break;
-        case EXPR_CONS:
+        case EXPR_CONS: {
+            Stmt* s = env_stmt(e->env, e->Cons.type.val.s);
+            assert(s!=NULL && s->sub==STMT_USER);
+            if (s->User.isrec) {
+                out(e->Cons.type.val.s);
+                out(" xxx = {};\n");
+            } else {
+                // nothing
+            }
+
             code_expr_0(e->Cons.arg);
             break;
+        }
         case EXPR_INDEX:
             code_expr_0(e->Index.tuple);
             break;
@@ -143,14 +153,21 @@ void code_expr_1 (Expr* e) {
             code_expr_1(e->Call.arg);
             out(")");
             break;
-        case EXPR_CONS:
-            // ((Bool) { Bool_False })
-            fprintf(ALL.out,
-                "((%s) { %s, ",
-                e->Cons.type.val.s, e->Cons.subtype.val.s);
-            code_expr_1(e->Cons.arg);
-            out(" })");
+        case EXPR_CONS: {
+            Stmt* s = env_stmt(e->env, e->Cons.type.val.s);
+            assert(s!=NULL && s->sub==STMT_USER);
+            if (s->User.isrec) {
+                out("&xxx");
+            } else {
+                // ((Bool) { Bool_False })
+                fprintf(ALL.out,
+                    "((%s) { %s, ",
+                    e->Cons.type.val.s, e->Cons.subtype.val.s);
+                code_expr_1(e->Cons.arg);
+                out(" })");
+            }
             break;
+        }
         case EXPR_TUPLE:
             out("((");
             code_type(env_type(e));
