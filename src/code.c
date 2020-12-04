@@ -78,10 +78,10 @@ void code_expr_0 (Expr* e) {
             code_expr_0(e->Call.arg);
             break;
         case EXPR_CONS: {
-            Stmt* s = env_stmt(e->env, e->Cons.type.val.s);
+            Stmt* s = env_stmt(e->env, e->Cons.user.val.s);
             assert(s!=NULL && s->sub==STMT_USER);
             if (s->User.isrec) {
-                out(e->Cons.type.val.s);
+                out(e->Cons.user.val.s);
                 out(" xxx = {};\n");
             } else {
                 // nothing
@@ -154,7 +154,7 @@ void code_expr_1 (Expr* e) {
             out(")");
             break;
         case EXPR_CONS: {
-            Stmt* s = env_stmt(e->env, e->Cons.type.val.s);
+            Stmt* s = env_stmt(e->env, e->Cons.user.val.s);
             assert(s!=NULL && s->sub==STMT_USER);
             if (s->User.isrec) {
                 out("&xxx");
@@ -162,7 +162,7 @@ void code_expr_1 (Expr* e) {
                 // ((Bool) { Bool_False })
                 fprintf(ALL.out,
                     "((%s) { %s, ",
-                    e->Cons.type.val.s, e->Cons.subtype.val.s);
+                    e->Cons.user.val.s, e->Cons.subuser.val.s);
                 code_expr_1(e->Cons.arg);
                 out(" })");
             }
@@ -187,15 +187,15 @@ void code_expr_1 (Expr* e) {
             break;
         case EXPR_DISC:
             code_expr_1(e->Disc.cons);
-            fprintf(ALL.out, "._%s", e->Disc.subtype.val.s);
+            fprintf(ALL.out, "._%s", e->Disc.subuser.val.s);
             break;
         case EXPR_PRED: {
-            int isnil = (e->Pred.subtype.enu == TK_NIL);
+            int isnil = (e->Pred.subuser.enu == TK_NIL);
             out("((");
             code_expr_1(e->Pred.cons);
             fprintf(ALL.out, "%s == %s) ? (Bool){True,{._True=1}} : (Bool){False,{._False=1}})",
                 (isnil ? "" : ".sub"),
-                (isnil ? "NULL" : e->Pred.subtype.val.s)
+                (isnil ? "NULL" : e->Pred.subuser.val.s)
             );
             break;
         }

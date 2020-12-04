@@ -155,7 +155,7 @@ int parser_expr_one (Expr* ret) {
 
     // EXPR_CONS
     } else if (accept(TX_USER)) {       // Bool
-        Tk type = ALL.tk0;
+        Tk user = ALL.tk0;
 
         if (!accept_err('.')) {         // .
             return 0;
@@ -164,7 +164,7 @@ int parser_expr_one (Expr* ret) {
         if (!accept_err(TX_USER)) {     // True
             return 0;
         }
-        Tk subtype = ALL.tk0;
+        Tk subuser = ALL.tk0;
 
         if (!check('(')) { // only checks, arg will accept
             return err_expected("`(´");
@@ -176,7 +176,7 @@ int parser_expr_one (Expr* ret) {
             return 0;
         }
 
-        *ret = (Expr) { EXPR_CONS, NULL, { .Cons={type,subtype,arg} } };
+        *ret = (Expr) { EXPR_CONS, NULL, { .Cons={user,subuser,arg} } };
 
     } else {
         return err_expected("expression");

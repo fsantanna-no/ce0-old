@@ -62,7 +62,7 @@ Type* env_type (Expr* e) {
             return env_type(e->Call.func)->Func.out;
 
         case EXPR_CONS:     // Bool.True()
-            ret = (Type) { TYPE_USER, e->env, {.tk=e->Cons.type} };
+            ret = (Type) { TYPE_USER, e->env, {.tk=e->Cons.user} };
             return &ret;
 
         case EXPR_TUPLE: {
@@ -83,7 +83,7 @@ Type* env_type (Expr* e) {
             Stmt* s  = env_stmt(e->env, tp->tk.val.s); // type Bool { ... }
             assert(s != NULL);
             for (int i=0; i<s->User.size; i++) {
-                if (!strcmp(s->User.vec[i].id.val.s, e->Disc.subtype.val.s)) {
+                if (!strcmp(s->User.vec[i].id.val.s, e->Disc.subuser.val.s)) {
                     return &s->User.vec[i].type;
                 }
             }

@@ -329,8 +329,8 @@ void t_parser_expr (void) {
         Expr e;
         assert(parser_expr(&e));
         assert(e.sub == EXPR_CONS);
-        assert(!strcmp(e.Cons.type.val.s,"Bool"));
-        assert(!strcmp(e.Cons.subtype.val.s,"True"));
+        assert(!strcmp(e.Cons.user.val.s,"Bool"));
+        assert(!strcmp(e.Cons.subuser.val.s,"True"));
         assert(e.Cons.arg->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }

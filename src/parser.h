@@ -71,17 +71,17 @@ typedef struct Expr {
             struct Expr* arg;
         } Call;
         struct {        // EXPR_CONS
-            Tk type;
-            Tk subtype;
+            Tk user;
+            Tk subuser;
             struct Expr* arg;
         } Cons;
         struct {        // EXPR_DISC
             struct Expr* cons;
-            Tk subtype;
+            Tk subuser;
         } Disc;
         struct {        // EXPR_PRED
             struct Expr* cons;
-            Tk subtype;
+            Tk subuser;
         } Pred;
     };
 } Expr;
