@@ -59,6 +59,61 @@ void code_type (Type* tp) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+void code_expr_tuple (Expr* e) {
+    switch (e->sub) {
+        case EXPR_NONE:
+            assert(0 && "bug found");
+        case EXPR_UNIT:
+        case EXPR_NULL:
+        case EXPR_ARG:
+        case EXPR_NATIVE:
+        case EXPR_VAR:
+            break;
+        case EXPR_CALL:
+            code_expr_tuple(e->Call.func);
+            code_expr_tuple(e->Call.arg);
+            break;
+        case EXPR_CONS:
+            code_expr_tuple(e->Cons.arg);
+            break;
+        case EXPR_INDEX:
+            code_expr_tuple(e->Index.tuple);
+            break;
+        case EXPR_DISC:
+            code_expr_tuple(e->Disc.cons);
+            break;
+        case EXPR_PRED:
+            code_expr_tuple(e->Disc.cons);
+            break;
+
+        case EXPR_TUPLE: {
+            for (int i=0; i<e->Tuple.size; i++) {
+                code_expr_tuple(&e->Tuple.vec[i]);
+            }
+
+            Type* tp  = env_type(e);
+            char tp_[256];
+            strcpy(tp_, code_type_(tp));
+            out("#ifndef __");
+            out(tp_);
+            out("__\n");
+            out("#define __");
+            out(tp_);
+            out("__\n");
+            out("typedef struct {\n");
+            for (int i=0; i<tp->Tuple.size; i++) {
+                code_type(&tp->Tuple.vec[i]);
+                fprintf(ALL.out, " _%d;\n", i+1);
+            }
+            out("} ");
+            out(tp_);
+            out(";\n");
+            out("#endif\n");
+            break;
+        }
+    }
+}
+
 void code_expr (Expr* e) {
     switch (e->sub) {
         case EXPR_NONE:
@@ -130,6 +185,7 @@ void code_stmt (Stmt* s) {
             break;
 
         case STMT_VAR:
+            code_expr_tuple(&s->Var.init);
             code_type(&s->Var.type);
             fputs(" ", ALL.out);
             fputs(s->Var.id.val.s, ALL.out);
@@ -227,6 +283,7 @@ void code_stmt (Stmt* s) {
         }
 
         case STMT_CALL:
+            code_expr_tuple(&s->call);
             code_expr(&s->call);
             out(";\n");
             break;
@@ -238,6 +295,7 @@ void code_stmt (Stmt* s) {
             break;
 
         case STMT_IF:
+            code_expr_tuple(&s->If.cond);
             out("if (");
             code_expr(&s->If.cond);
             out(".sub) {\n");           // Bool.sub returns 0 or 1
@@ -260,6 +318,7 @@ void code_stmt (Stmt* s) {
             break;
 
         case STMT_RETURN:
+            code_expr_tuple(&s->ret);
             out("return ");
             code_expr(&s->ret);
             out(";\n");

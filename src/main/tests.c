@@ -664,13 +664,10 @@ void t_all (void) {
         "()\n",
         "call _show_Unit(((),()).1)\n"
     ));
-#if 1
-    // TODO: tuples
     assert(all(
         "()\n",
-        "call _show_Unit(((),((),())).1.2)\n"
+        "call _show_Unit(((),((),())).2.1)\n"
     ));
-#endif
     // TYPE
     assert(all(
         "False ()\n",
