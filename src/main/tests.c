@@ -520,7 +520,7 @@ void t_code (void) {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
         Expr e = { EXPR_UNIT, NULL };
-        code_expr(&e);
+        code_expr_1(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"1"));
     }
@@ -531,7 +531,7 @@ void t_code (void) {
         Expr e = { EXPR_VAR, NULL, {} };
             e.tk.enu = TX_VAR;
             strcpy(e.tk.val.s, "xxx");
-        code_expr(&e);
+        code_expr_1(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"xxx"));
     }
@@ -542,7 +542,7 @@ void t_code (void) {
         Expr e = { EXPR_NATIVE, NULL, {} };
             e.tk.enu = TX_NATIVE;
             strcpy(e.tk.val.s, "_printf");
-        code_expr(&e);
+        code_expr_1(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"printf"));
     }
@@ -552,7 +552,7 @@ void t_code (void) {
         all_init(stropen("w",sizeof(out),out), NULL);
         Expr es[2] = {{EXPR_UNIT},{EXPR_UNIT}};
         Expr e = { EXPR_TUPLE, NULL, {.Tuple={2,es}} };
-        code_expr(&e);
+        code_expr_1(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"((TUPLE__int__int) { 1,1 })"));
     }
@@ -563,7 +563,7 @@ void t_code (void) {
         Expr es[2] = {{EXPR_UNIT,NULL},{EXPR_UNIT,NULL}};
         Expr tuple = { EXPR_TUPLE, NULL, {.Tuple={2,es}} };
         Expr e = { EXPR_INDEX, NULL, { .Index={.tuple=&tuple,.index=2} } };
-        code_expr(&e);
+        code_expr_1(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"((TUPLE__int__int) { 1,1 })._2"));
     }

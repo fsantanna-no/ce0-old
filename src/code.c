@@ -63,7 +63,7 @@ void code_type (Type* tp) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void code_expr_tuple (Expr* e) {
+void code_expr_0 (Expr* e) {
     switch (e->sub) {
         case EXPR_NONE:
             assert(0 && "bug found");
@@ -74,25 +74,25 @@ void code_expr_tuple (Expr* e) {
         case EXPR_VAR:
             break;
         case EXPR_CALL:
-            code_expr_tuple(e->Call.func);
-            code_expr_tuple(e->Call.arg);
+            code_expr_0(e->Call.func);
+            code_expr_0(e->Call.arg);
             break;
         case EXPR_CONS:
-            code_expr_tuple(e->Cons.arg);
+            code_expr_0(e->Cons.arg);
             break;
         case EXPR_INDEX:
-            code_expr_tuple(e->Index.tuple);
+            code_expr_0(e->Index.tuple);
             break;
         case EXPR_DISC:
-            code_expr_tuple(e->Disc.cons);
+            code_expr_0(e->Disc.cons);
             break;
         case EXPR_PRED:
-            code_expr_tuple(e->Disc.cons);
+            code_expr_0(e->Disc.cons);
             break;
 
         case EXPR_TUPLE: {
             for (int i=0; i<e->Tuple.size; i++) {
-                code_expr_tuple(&e->Tuple.vec[i]);
+                code_expr_0(&e->Tuple.vec[i]);
             }
 
             Type* tp  = env_type(e);
@@ -118,7 +118,7 @@ void code_expr_tuple (Expr* e) {
     }
 }
 
-void code_expr (Expr* e) {
+void code_expr_1 (Expr* e) {
     switch (e->sub) {
         case EXPR_NONE:
             assert(0 && "bug found");
@@ -138,9 +138,9 @@ void code_expr (Expr* e) {
             out(e->tk.val.s);
             break;
         case EXPR_CALL:
-            code_expr(e->Call.func);
+            code_expr_1(e->Call.func);
             out("(");
-            code_expr(e->Call.arg);
+            code_expr_1(e->Call.arg);
             out(")");
             break;
         case EXPR_CONS:
@@ -148,7 +148,7 @@ void code_expr (Expr* e) {
             fprintf(ALL.out,
                 "((%s) { %s, ",
                 e->Cons.type.val.s, e->Cons.subtype.val.s);
-            code_expr(e->Cons.arg);
+            code_expr_1(e->Cons.arg);
             out(" })");
             break;
         case EXPR_TUPLE:
@@ -160,22 +160,22 @@ void code_expr (Expr* e) {
                 if (i != 0) {
                     out(",");
                 }
-                code_expr(&e->Tuple.vec[i]);
+                code_expr_1(&e->Tuple.vec[i]);
             }
             out(" })");
             break;
         case EXPR_INDEX:
-            code_expr(e->Index.tuple);
+            code_expr_1(e->Index.tuple);
             fprintf(ALL.out, "._%d", e->Index.index);
             break;
         case EXPR_DISC:
-            code_expr(e->Disc.cons);
+            code_expr_1(e->Disc.cons);
             fprintf(ALL.out, "._%s", e->Disc.subtype.val.s);
             break;
         case EXPR_PRED: {
             int isnil = (e->Pred.subtype.enu == TK_NIL);
             out("((");
-            code_expr(e->Pred.cons);
+            code_expr_1(e->Pred.cons);
             fprintf(ALL.out, "%s == %s) ? (Bool){True,{._True=1}} : (Bool){False,{._False=1}})",
                 (isnil ? "" : ".sub"),
                 (isnil ? "NULL" : e->Pred.subtype.val.s)
@@ -194,12 +194,12 @@ void code_stmt (Stmt* s) {
             break;
 
         case STMT_VAR:
-            code_expr_tuple(&s->Var.init);
+            code_expr_0(&s->Var.init);
             code_type(&s->Var.type);
             fputs(" ", ALL.out);
             fputs(s->Var.id.val.s, ALL.out);
             fputs(" = ", ALL.out);
-            code_expr(&s->Var.init);
+            code_expr_1(&s->Var.init);
             out(";\n");
             break;
 
@@ -303,8 +303,8 @@ void code_stmt (Stmt* s) {
         }
 
         case STMT_CALL:
-            code_expr_tuple(&s->call);
-            code_expr(&s->call);
+            code_expr_0(&s->call);
+            code_expr_1(&s->call);
             out(";\n");
             break;
 
@@ -315,9 +315,9 @@ void code_stmt (Stmt* s) {
             break;
 
         case STMT_IF:
-            code_expr_tuple(&s->If.cond);
+            code_expr_0(&s->If.cond);
             out("if (");
-            code_expr(&s->If.cond);
+            code_expr_1(&s->If.cond);
             out(".sub) {\n");           // Bool.sub returns 0 or 1
             code_stmt(s->If.true);
             out("} else {\n");
@@ -338,9 +338,9 @@ void code_stmt (Stmt* s) {
             break;
 
         case STMT_RETURN:
-            code_expr_tuple(&s->ret);
+            code_expr_0(&s->ret);
             out("return ");
-            code_expr(&s->ret);
+            code_expr_1(&s->ret);
             out(";\n");
             break;
     }
