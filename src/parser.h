@@ -38,7 +38,7 @@ typedef enum {
 typedef struct Type {
     TYPE sub;
     union {
-        Tk tk;          // TYPE_NATIVE
+        Tk tk;          // TYPE_NATIVE, TYPE_TYPE
         struct {        // TYPE_TUPLE
             int size;
             struct Type* vec;
@@ -50,8 +50,11 @@ typedef struct Type {
     };
 } Type;
 
+struct Env;
+
 typedef struct Expr {
     EXPR sub;
+    struct Env* env;   // see types.c
     union {
         Tk tk;          // EXPR_NATIVE, EXPR_VAR
         struct {        // EXPR_TUPLE

@@ -519,7 +519,7 @@ void t_code (void) {
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr e = { EXPR_UNIT };
+        Expr e = { EXPR_UNIT, NULL };
         code_expr(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"1"));
@@ -528,7 +528,7 @@ void t_code (void) {
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr e = { EXPR_VAR, {} };
+        Expr e = { EXPR_VAR, NULL, {} };
             e.tk.enu = TX_VAR;
             strcpy(e.tk.val.s, "xxx");
         code_expr(&e);
@@ -539,7 +539,7 @@ void t_code (void) {
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr e = { EXPR_NATIVE, {} };
+        Expr e = { EXPR_NATIVE, NULL, {} };
             e.tk.enu = TX_NATIVE;
             strcpy(e.tk.val.s, "_printf");
         code_expr(&e);
@@ -551,22 +551,21 @@ void t_code (void) {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
         Expr es[2] = {{EXPR_UNIT},{EXPR_UNIT}};
-        Expr e = { EXPR_TUPLE, {.Tuple={2,es}} };
+        Expr e = { EXPR_TUPLE, NULL, {.Tuple={2,es}} };
         code_expr(&e);
         fclose(ALL.out);
-//puts(out);
-        assert(!strcmp(out,"((TUPLE__int__int){ 1,1 })"));
+        assert(!strcmp(out,"((TUPLE__int__int) { 1,1 })"));
     }
     // EXPR_INDEX
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr es[2] = {{EXPR_UNIT},{EXPR_UNIT}};
-        Expr tuple = { EXPR_TUPLE, {.Tuple={2,es}} };
-        Expr e = { EXPR_INDEX, { .Index={.tuple=&tuple,.index=2} } };
+        Expr es[2] = {{EXPR_UNIT,NULL},{EXPR_UNIT,NULL}};
+        Expr tuple = { EXPR_TUPLE, NULL, {.Tuple={2,es}} };
+        Expr e = { EXPR_INDEX, NULL, { .Index={.tuple=&tuple,.index=2} } };
         code_expr(&e);
         fclose(ALL.out);
-        assert(!strcmp(out,"((TUPLE__int__int){ 1,1 })._2"));
+        assert(!strcmp(out,"((TUPLE__int__int) { 1,1 })._2"));
     }
     {
         char out[1024] = "";

@@ -39,6 +39,73 @@ Stmt* env_get (Env* env, const char* xp) {
     return NULL;
 }
 
+Type* env_type (Expr* e) {
+    static Type ret;
+    switch (e->sub) {
+        case EXPR_NONE:
+            assert(0 && "bug found");
+
+        case EXPR_UNIT:
+            ret = (Type) { TYPE_UNIT };
+            return &ret;
+
+        case EXPR_NULL:
+            assert(0 && "TODO");
+
+        case EXPR_ARG:
+            assert(0 && "TODO");
+
+        case EXPR_NATIVE:
+            ret = (Type) { TYPE_NATIVE };
+            return &ret;
+
+        case EXPR_VAR: {
+            Stmt* s = env_get(e->env, e->tk.val.s);
+            assert(s != NULL);
+            return (s->sub == STMT_VAR) ? &s->Var.type : &s->Func.type;
+        }
+        case EXPR_CALL:     // f()
+            return env_type(e->Call.func)->Func.out;
+
+        case EXPR_CONS:     // Bool.True()
+            ret = (Type) { TYPE_TYPE, {.tk=e->Cons.type} };
+            return &ret;
+
+        case EXPR_TUPLE: {
+            Type* vec = malloc(e->Tuple.size*sizeof(Type));
+            assert(vec != NULL);
+            for (int i=0; i<e->Tuple.size; i++) {
+                vec[i] = *env_type(&e->Tuple.vec[i]);
+            }
+            ret = (Type) { TYPE_TUPLE, {.Tuple={e->Tuple.size,vec}} };
+            return &ret;
+        }
+
+        case EXPR_INDEX:    // x.1
+            return &env_type(e->Index.tuple)->Tuple.vec[e->Index.index];
+
+        case EXPR_DISC: {   // x.True
+            Type* tp   = env_type(e->Disc.cons);        // Bool
+            Stmt* stmt = env_get(e->env, tp->tk.val.s); // type Bool { ... }
+            for (int i=0; i<stmt->Type.size; i++) {
+                if (!strcmp(stmt->Type.vec[i].id.val.s, e->Disc.subtype.val.s)) {
+                    return &stmt->Type.vec[i].type;
+                }
+            }
+            assert(0 && "bug found");
+        }
+
+        case EXPR_PRED: {
+            Type* ret = malloc(sizeof(Type));
+            assert(ret != NULL);
+            *ret = (Type) { TYPE_TYPE, {} };
+            strcpy(ret->tk.val.s, "Bool");
+            return ret;
+        }
+    }
+    assert(0 && "bug found");
+}
+
 #if 0
 void env_dump (Env* env) {
     while (env != NULL) {
@@ -62,6 +129,7 @@ int types_type (Env* env, Type* tp) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int types_expr (Env* env, Expr* e) {
+    e->env = env;
     switch (e->sub) {
         case EXPR_NONE:
             assert(0 && "bug found");

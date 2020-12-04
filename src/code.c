@@ -35,7 +35,7 @@ void code_type__ (char* out, Type* tp) {
             strcat(out, tp->tk.val.s);
             break;
         case TYPE_TUPLE:
-            strcat(out, "TUPLE__");
+            strcat(out, "TUPLE");
             for (int i=0; i<tp->Tuple.size; i++) {
                 strcat(out, "__");
                 code_type__(out, &tp->Tuple.vec[i]);
@@ -92,22 +92,19 @@ void code_expr (Expr* e) {
             code_expr(e->Cons.arg);
             out(" })");
             break;
-        case EXPR_TUPLE: {
-            char str[16];
-            sprintf(str, "((TUPLE%d)", e->Tuple.size);
-            out(str);
-            out("{ ");
+        case EXPR_TUPLE:
+            out("((");
+            code_type(env_type(e));
+            out(") { ");
             for (int i=0; i<e->Tuple.size; i++) {
                 //fprintf (ALL.out[OGLOB], "%c _%d=", ((i==0) ? ' ' : ','), i);
                 if (i != 0) {
                     out(",");
                 }
-                out("(void*)");
                 code_expr(&e->Tuple.vec[i]);
             }
             out(" })");
             break;
-        }
         case EXPR_INDEX:
             code_expr(e->Index.tuple);
             fprintf(ALL.out, "._%d", e->Index.index);
