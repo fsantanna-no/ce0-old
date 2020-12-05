@@ -264,9 +264,9 @@ void code_stmt (Stmt* s) {
                 int isrec = s->User.isrec;
                 char* op = (isrec ? "->" : ".");
 
-                // _show_Bool (Bool v)
+                // _output_Bool (Bool v)
                 fprintf(ALL.out,
-                    "void show_%s_ (%s%s v) {\n",
+                    "void output_%s_ (%s%s v) {\n",
                     sup, sup, (isrec ? "*" : "")
                 );
                 if (isrec) {
@@ -290,12 +290,13 @@ void code_stmt (Stmt* s) {
                             break;
                         case TYPE_USER:
                             yes = par = 1;
-                            sprintf(arg, "show_%s_(v%s_%s)", sub->type.tk.val.s, op, sub->id.val.s);
+                            sprintf(arg, "output_%s_(v%s_%s)", sub->type.tk.val.s, op, sub->id.val.s);
                             break;
                         case TYPE_TUPLE:
                             yes = 1;
                             par = 0;
-                            assert(0 && "TODO");
+                            sprintf(arg, "output_%s_(v%s_%s)", sub->type.tk.val.s, op, sub->id.val.s);
+                            break;
                         default:
                             assert(0 && "bug found");
                     }
@@ -312,8 +313,8 @@ void code_stmt (Stmt* s) {
                 out("    }\n");
                 out("}\n");
                 fprintf(ALL.out,
-                    "void show_%s (%s%s v) {\n"
-                    "    show_%s_(v);\n"
+                    "void output_%s (%s%s v) {\n"
+                    "    output_%s_(v);\n"
                     "    puts(\"\");\n"
                     "}\n",
                     sup, sup, (isrec ? "*" : ""), sup
@@ -373,8 +374,8 @@ void code (Stmt* s) {
     out (
         "#include <assert.h>\n"
         "#include <stdio.h>\n"
-        "#define show_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
-        "#define show_Unit(x) (show_Unit_(x), puts(\"\"))\n"
+        "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
+        "#define output_Unit(x) (output_Unit_(x), puts(\"\"))\n"
         "int main (void) {\n"
         "\n"
     );

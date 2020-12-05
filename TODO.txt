@@ -1,3 +1,4 @@
+- show -> output
 - show tuple in user
 - POOLS
 - output: keyword, special function, checks the type of expr and forwards to show_Type

@@ -12,11 +12,11 @@ int all (const char* xp, char* src) {
     );
     Stmt s;
     if (!parser(&s)) {
-        //puts(ALL.err);
+        puts(ALL.err);
         return !strcmp(ALL.err, xp);
     }
     if (!env(&s)) {
-        //puts(ALL.err);
+        puts(ALL.err);
         return !strcmp(ALL.err, xp);
     }
     code(&s);
@@ -333,6 +333,15 @@ void t_parser_expr (void) {
         assert(e.Cons.arg->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
+    {
+        all_init(NULL, stropen("r", 0, "Zz1 ((),())"));
+        Expr e;
+        assert(parser_expr(&e));
+        assert(e.sub == EXPR_CONS);
+        assert(!strcmp(e.Cons.sub.val.s,"Zz1"));
+        assert(e.Cons.arg->sub == EXPR_TUPLE);
+        fclose(ALL.inp);
+    }
     // EXPR_INDEX
     {
         all_init(NULL, stropen("r", 0, "x.1"));
@@ -570,7 +579,7 @@ void t_code (void) {
         char out[1024] = "";
         all_init (
             stropen("w", sizeof(out), out),
-            stropen("r", 0, "val a : () = () ; call _show_Unit(a)")
+            stropen("r", 0, "val a : () = () ; call _output_Unit(a)")
         );
         Stmt s;
         assert(parser_stmts(&s));
@@ -579,12 +588,12 @@ void t_code (void) {
         char* ret =
             "#include <assert.h>\n"
             "#include <stdio.h>\n"
-            "#define show_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
-            "#define show_Unit(x) (show_Unit_(x), puts(\"\"))\n"
+            "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
+            "#define output_Unit(x) (output_Unit_(x), puts(\"\"))\n"
             "int main (void) {\n"
             "\n"
             "int a = 1;\n"
-            "show_Unit(a);\n"
+            "output_Unit(a);\n"
             "\n"
             "}\n";
         assert(!strcmp(out,ret));
@@ -603,8 +612,8 @@ void t_code (void) {
         char* ret =
             "#include <assert.h>\n"
             "#include <stdio.h>\n"
-            "#define show_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
-            "#define show_Unit(x) (show_Unit_(x), puts(\"\"))\n"
+            "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
+            "#define output_Unit(x) (output_Unit_(x), puts(\"\"))\n"
             "int main (void) {\n"
             "\n"
             "typedef enum {\n"
@@ -620,7 +629,7 @@ void t_code (void) {
             "    };\n"
             "} Bool;\n"
             "\n"
-            "void show_Bool_ (Bool v) {\n"
+            "void output_Bool_ (Bool v) {\n"
             "    switch (v.sub) {\n"
             "        case False:\n"
             "            printf(\"False\");\n"
@@ -634,8 +643,8 @@ void t_code (void) {
             "            break;\n"
             "    }\n"
             "}\n"
-            "void show_Bool (Bool v) {\n"
-            "    show_Bool_(v);\n"
+            "void output_Bool (Bool v) {\n"
+            "    output_Bool_(v);\n"
             "    puts(\"\");\n"
             "}\n"
             "\n"
@@ -648,12 +657,12 @@ void t_all (void) {
     // UNIT
     assert(all(
         "()\n",
-        "call _show_Unit(())\n"
+        "call _output_Unit(())\n"
     ));
     assert(all(
         "()\n",
         "val x: () = ()\n"
-        "call _show_Unit(x)\n"
+        "call _output_Unit(x)\n"
     ));
     // NATIVE
     assert(all(
@@ -663,18 +672,22 @@ void t_all (void) {
     ));
     assert(all(
         "()\n",
-        "call _show_Unit(((),()).1)\n"
+        "call _output_Unit(((),()).1)\n"
     ));
     assert(all(
         "()\n",
-        "call _show_Unit(((),((),())).2.1)\n"
+        "call _output_Unit(((),((),())).2.1)\n"
+    ));
+    assert(all(
+        "((),())\n",
+        "call _output_TUPLE((),())\n"
     ));
     // TYPE
     assert(all(
         "False\n",
         "type Bool { False: () ; True: () }\n"
         "val b : Bool = False()\n"
-        "call _show_Bool(b)\n"
+        "call _output_Bool(b)\n"
     ));
     assert(all(
         "Zz1\n",
@@ -682,7 +695,13 @@ void t_all (void) {
         "type Yy { Yy1:Zz }\n"
         "type Xx { Xx1:Yy }\n"
         "val x : Xx = Xx1(Yy1(Zz1))\n"
-        "call _show_Zz(x.Xx1!.Yy1!)\n"
+        "call _output_Zz(x.Xx1!.Yy1!)\n"
+    ));
+    assert(all(
+        "Zz1 ((),())\n",
+        "type Zz { Zz1:((),()) }\n"
+        "val x : Zz = Zz1 ((),())\n"
+        "call _output_Zz(x)\n"
     ));
 #if 0
     // TODO: tuples
@@ -692,7 +711,7 @@ void t_all (void) {
         "type Yy { Yy1:() }\n"
         "type Xx { Xx1:(Yy,Zz) }\n"
         "val x : Xx = Xx.Xx1(Yy.Yy1(),Zz.Zz1())\n"
-        "call _show_Xx(x)\n"
+        "call _output_Xx(x)\n"
     ));
 #endif
     // IF
@@ -700,32 +719,32 @@ void t_all (void) {
         "()\n",
         "type Bool { False: () ; True: () }\n"
         "val b : Bool = False()\n"
-        "if b { } else { call _show_Unit() }\n"
+        "if b { } else { call _output_Unit() }\n"
     ));
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
         "val b : Bool = True\n"
-        "if b { call _show_Unit() }\n"
+        "if b { call _output_Unit() }\n"
     ));
     // PREDICATE
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
         "val b : Bool = True()\n"
-        "if b.True? { call _show_Unit(()) }\n"
+        "if b.True? { call _output_Unit(()) }\n"
     ));
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
         "val b : Bool = True()\n"
-        "if b.False? { } else { call _show_Unit(()) }\n"
+        "if b.False? { } else { call _output_Unit(()) }\n"
     ));
     // FUNC
     assert(all(
         "()\n",
         "func f : () -> () { return arg }\n"
-        "call _show_Unit(f())\n"
+        "call _output_Unit(f())\n"
     ));
     assert(all(
         "False\n",
@@ -740,26 +759,26 @@ void t_all (void) {
         "        return True ()\n"
         "    }\n"
         "}\n"
-        "call _show_Bool(inv(True))\n"
+        "call _output_Bool(inv(True))\n"
     ));
     // ENV
     assert(all(
-        "(ln 1, col 1): expected end of file : have \"_show_Unit\"",
-        "_show_Unit(x)\n"
+        "(ln 1, col 1): expected end of file : have \"_output_Unit\"",
+        "_output_Unit(x)\n"
     ));
     assert(all(
         "(ln 1, col 17): undeclared variable \"x\"",
-        "call _show_Unit(x)\n"
+        "call _output_Unit(x)\n"
     ));
     assert(all(
         "(ln 2, col 17): undeclared variable \"x\"",
         "func f : ()->() { val x:()=(); return x }\n"
-        "call _show_Unit(x)\n"
+        "call _output_Unit(x)\n"
     ));
     assert(all(
         "(ln 2, col 17): undeclared variable \"x\"",
         "if () { val x:()=() }\n"
-        "call _show_Unit(x)\n"
+        "call _output_Unit(x)\n"
     ));
     // TYPE REC
     assert(all(
@@ -772,7 +791,7 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "val n: Nat = Nil\n"
-        "call _show_Bool(n.Nil?)\n"
+        "call _output_Bool(n.Nil?)\n"
     ));
     assert(all(
         "Succ (Succ (Nil))\n",
@@ -780,7 +799,7 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "val n: Nat = Succ(Succ(Nil))\n"
-        "call _show_Nat(n)\n"
+        "call _output_Nat(n)\n"
     ));
     // needs implicit pool
     assert(all(
@@ -788,7 +807,7 @@ void t_all (void) {
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "call _show_Nat(Succ(Succ(Nil)))\n"
+        "call _output_Nat(Succ(Succ(Nil)))\n"
     ));
 }
 
