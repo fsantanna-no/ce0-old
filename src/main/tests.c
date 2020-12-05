@@ -15,7 +15,7 @@ int all (const char* xp, char* src) {
         //puts(ALL.err);
         return !strcmp(ALL.err, xp);
     }
-    if (!types(&s)) {
+    if (!env(&s)) {
         //puts(ALL.err);
         return !strcmp(ALL.err, xp);
     }

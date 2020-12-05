@@ -3,12 +3,13 @@ typedef struct Env {
     struct Env* prev;
 } Env;
 
-// Returns the declaration of given variable or user type identifier.
-Stmt* env_stmt (Env* env, const char* xp);  // env_stmt(e, "x") -> {STMT_VAR, .Var={"x",(),init)}}
+// Returns the statement declaration of given variable or user type identifier.
+Stmt* env_find_decl (Env* env, const char* xp);  // env_find_decl(e, "x") -> {STMT_VAR, {"x",(),init)}}
 
 // Returns the type of given expression.
-Type* env_type (Expr* e);                   // env_type({EXPR_VAR, "x")}) -> ()
+Type* env_expr_type (Expr* e);                   // env_expr_type({EXPR_VAR, "x")}) -> ()
 
-//
+// Returs the super user statement declaration given a sub user identifier.
+Stmt* env_find_super (Env* env, const char* sub);   // env_find_super(e, "True") -> {STMT_USER, {"Bool",...}}
 
-int types (Stmt* s);
+int env (Stmt* s);

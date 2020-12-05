@@ -1,9 +1,14 @@
-- xxx2 -> _2
+- env_find_decl
+- env_expr_type
+- env_find_super
+- env_types
+
+- find_user_from_subuser
+    - Nat.Succ -> Succ
+    - True () -> True
 - POOLS
 
 - MINOR
-    - Nat.Succ -> Succ
-    - True () -> True
     - -Wno-format-zero-length
     - types.c
         - types_type: verify if user types exist

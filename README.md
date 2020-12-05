@@ -21,7 +21,7 @@ The following symbols are valid:
     :           -- variable, type, function declarations
     =           -- variable assignment
     ,           -- tuple separator
-    .           -- tuple index, type constructor & discriminator
+    .           -- tuple index, type predicate & discriminator
     !           -- type discriminator
     ?           -- type predicate
     ->          -- function type signature
@@ -102,14 +102,14 @@ _printf    _errno
 A tuple holds a fixed number of values of different types:
 
 ```
-((),())     -- a pair of units
-(x,(),y)    -- a triple
+((),False)              -- a pair with () and False
+(x,(),y)                -- a triple
 ```
 
 A tuple index holds the value at the given position:
 
 ```
-(x,()).2    -- returns ()
+(x,()).2                -- returns ()
 ```
 
 ## Call
@@ -117,26 +117,27 @@ A tuple index holds the value at the given position:
 A call invokes an expression as a function with the argument:
 
 ```
-f ()        -- f   receives unit     ()
-(id) (x)    -- id  receives variable x
-add (x,y)   -- add receives tuple    (x,y)
+f ()                    -- f   receives unit     ()
+(id) (x)                -- id  receives variable x
+add (x,y)               -- add receives tuple    (x,y)
 ```
 
 ## Constructor, Discriminator and Predicate
 
-A constructor creates a value of a type from a given subtype and argument:
+A constructor creates a value of a type given a subtype and argument:
 
 ```
-Bool.True ()
+True ()                 -- value of type Bool
+False                   -- () is optional
 ```
 
 A destructor acesses the value of a type as one of its subtypes:
 
 ```
-(Bool.True ()).True!        -- yields ()
+(True ()).True!         -- yields ()
 
-x = Tree.Node (Nil,10,Nil)
-x.Tree.Node!.2              -- yields 10
+x = Node (Nil,(),Nil)
+x.Node!.2               -- yields ()
 ```
 
 The value `Nil` corresponds to the null subtype of all recursive types.
@@ -148,8 +149,8 @@ type Member {
     Student:   ()
     Professor: ()
 }
-x = Member.Professor ()
-b = x.Professor?            -- yields Bool.True()
+x = Professor
+b = x.Professor?        -- yields True
 ```
 
 # 3. Statements
@@ -180,8 +181,8 @@ type rec Tree {
 
 ```
 val x : () = ()
-val x : Bool = Bool.True ()
-val y : (Bool,()) = (Bool.False (),())
+val x : Bool = True
+val y : (Bool,()) = (False,())
 ```
 
 ## Call
@@ -208,9 +209,9 @@ branches depending on the test:
 
 ```
 if x {
-    call f()    -- if x is Bool.True
+    call f()    -- if x is True
 } else {
-    call g()    -- if x is Bool.False
+    call g()    -- if x is False
 }
 ```
 
@@ -236,13 +237,13 @@ type rec Nat {  -- a natural number is either zero (`Nil`) or
     Succ: Nat   -- a successor of a natural number (`Succ(Nat)`)
 }
 
-val two: Nat = Nat.Succ(Nat.Succ(Nil))  -- two is the successor of the successor of zero
+val two: Nat = Succ(Succ(Nil))  -- two is the successor of the successor of zero
 ```
 
 Values of recursive types are always references:
 
 ```
-val x: Nat = Nat.Succ(Nat.Succ(Nil))
+val x: Nat = Succ(Succ(Nil))
 val y: Nat = x  -- x,y share a reference, no deep copy is made
 ```
 
@@ -291,7 +292,7 @@ Expr ::= `(´ `)´                        -- unit value               ()
       |  `(´ Expr {`,´ Expr} `)´        -- tuple                    (x,())
       |  Expr `.´ INDEX                 -- tuple index              x.1
       |  Expr `(´ Expr `)´              -- call                     f(x)
-      |  USER `.´ USER `(´ Expr `)´     -- constructor              Bool.True ()
+      |  USER [`(´ Expr `)´]            -- constructor              True ()
       |  Expr `.´ USER `!´              -- discriminator            x.True!
       |  Expr `.´ USER `?´              -- predicate                x.False?
       |  `(´ Expr `)´                   -- group                    (x)

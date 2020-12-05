@@ -2,7 +2,7 @@
 
 #include "lexer.h"
 #include "parser.h"
-#include "types.h"
+#include "env.h"
 #include "code.h"
 
 FILE* stropen  (const char* mode, size_t size, char* str);

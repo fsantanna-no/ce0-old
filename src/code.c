@@ -32,7 +32,7 @@ void code_type__ (char* out, Type* tp) {
             strcat(out, &tp->tk.val.s[1]);
             break;
         case TYPE_USER: {
-            Stmt* s = env_stmt(tp->env, tp->tk.val.s);
+            Stmt* s = env_find_decl(tp->env, tp->tk.val.s);
             if (s!=NULL && s->User.isrec) strcat(out, "struct ");
             strcat(out, tp->tk.val.s);
             if (s!=NULL && s->User.isrec) strcat(out, "*");
@@ -81,7 +81,7 @@ void code_expr_0 (Expr* e) {
             code_expr_0(e->Cons.arg);   // child "x2" is used by parent "x1"
 
             char* user = e->Cons.user.val.s;
-            Stmt* s = env_stmt(e->env, user);
+            Stmt* s = env_find_decl(e->env, user);
             assert(s!=NULL && s->sub==STMT_USER);
 
             // Bool _1 = (Bool) { False, {_False=1} };
@@ -109,7 +109,7 @@ void code_expr_0 (Expr* e) {
                 code_expr_0(&e->Tuple.vec[i]);
             }
 
-            Type* tp  = env_type(e);
+            Type* tp  = env_expr_type(e);
             char tp_[256];
             strcpy(tp_, code_type_(tp));
             out("#ifndef __");
@@ -158,14 +158,14 @@ void code_expr_1 (Expr* e) {
             out(")");
             break;
         case EXPR_CONS: {
-            Stmt* s = env_stmt(e->env, e->Cons.user.val.s);
+            Stmt* s = env_find_decl(e->env, e->Cons.user.val.s);
             assert(s!=NULL && s->sub==STMT_USER);
             fprintf(ALL.out, "%s_%d", (s->User.isrec ? "&" : ""), e->N);
             break;
         }
         case EXPR_TUPLE:
             out("((");
-            code_type(env_type(e));
+            code_type(env_expr_type(e));
             out(") { ");
             for (int i=0; i<e->Tuple.size; i++) {
                 //fprintf (ALL.out[OGLOB], "%c _%d=", ((i==0) ? ' ' : ','), i);
