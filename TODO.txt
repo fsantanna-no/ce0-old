@@ -1,4 +1,4 @@
-- True () -> True
+- show tuple in user
 - POOLS
 - output: keyword, special function, checks the type of expr and forwards to show_Type
 
@@ -15,3 +15,4 @@
         - change env before body
     - assert no EXPR_DISC (gerar erro caso nao seja do subtipo certo)
     - type names must contain lowercase (error in C generation upper/lower)
+    - output/input for strings, output_type/input_type for users

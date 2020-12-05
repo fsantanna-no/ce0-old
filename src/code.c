@@ -281,27 +281,32 @@ void code_stmt (Stmt* s) {
                 for (int i=0; i<s->User.size; i++) {
                     Sub* sub = &s->User.vec[i];
 
-                    char arg[1024];
+                    char arg[1024] = "";
+                    int yes = 0;
+                    int par = 0;
                     switch (sub->type.sub) {
-                        case TYPE_UNIT:        // ()
-                            sprintf(arg, "show_Unit_(v%s_%s)", op, sub->id.val.s);
+                        case TYPE_UNIT:
+                            yes = par = 0;
                             break;
                         case TYPE_USER:
+                            yes = par = 1;
                             sprintf(arg, "show_%s_(v%s_%s)", sub->type.tk.val.s, op, sub->id.val.s);
                             break;
+                        case TYPE_TUPLE:
+                            yes = 1;
+                            par = 0;
+                            assert(0 && "TODO");
                         default:
                             assert(0 && "bug found");
                     }
 
-                    int no = (sub->type.sub==TYPE_UNIT || sub->type.sub==TYPE_TUPLE);
-
                     fprintf(ALL.out,
-                        "        case %s:\n"                // True
-                        "            printf(\"%s %s\");\n"  // True (
-                        "            %s;\n"                 // ()
-                        "            printf(\"%s\");\n"     // )
+                        "        case %s:\n"                  // True
+                        "            printf(\"%s%s%s\");\n"   // True (
+                        "            %s;\n"                   // ()
+                        "            printf(\"%s\");\n"       // )
                         "            break;\n",
-                        sub->id.val.s, sub->id.val.s, no?"":"(", arg, no?"":")"
+                        sub->id.val.s, sub->id.val.s, yes?" ":"", par?"(":"", arg, par?")":""
                     );
                 }
                 out("    }\n");

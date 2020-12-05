@@ -623,13 +623,13 @@ void t_code (void) {
             "void show_Bool_ (Bool v) {\n"
             "    switch (v.sub) {\n"
             "        case False:\n"
-            "            printf(\"False \");\n"
-            "            show_Unit_(v._False);\n"
+            "            printf(\"False\");\n"
+            "            ;\n"
             "            printf(\"\");\n"
             "            break;\n"
             "        case True:\n"
-            "            printf(\"True \");\n"
-            "            show_Unit_(v._True);\n"
+            "            printf(\"True\");\n"
+            "            ;\n"
             "            printf(\"\");\n"
             "            break;\n"
             "    }\n"
@@ -671,13 +671,13 @@ void t_all (void) {
     ));
     // TYPE
     assert(all(
-        "False ()\n",
+        "False\n",
         "type Bool { False: () ; True: () }\n"
         "val b : Bool = False()\n"
         "call _show_Bool(b)\n"
     ));
     assert(all(
-        "Zz1 ()\n",
+        "Zz1\n",
         "type Zz { Zz1:() }\n"
         "type Yy { Yy1:Zz }\n"
         "type Xx { Xx1:Yy }\n"
@@ -728,7 +728,7 @@ void t_all (void) {
         "call _show_Unit(f())\n"
     ));
     assert(all(
-        "False ()\n",
+        "False\n",
         "type Bool {\n"
         "    False: ()\n"
         "    True:  ()\n"
@@ -763,7 +763,7 @@ void t_all (void) {
     ));
     // TYPE REC
     assert(all(
-        "True ()\n",
+        "True\n",
         "type Bool {\n"
         "    False: ()\n"
         "    True:  ()\n"
