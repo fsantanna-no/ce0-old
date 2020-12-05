@@ -159,14 +159,10 @@ int parser_expr_one (Expr* ret) {
     } else if (accept(TX_USER)) {       // True
         Tk sub = ALL.tk0;
 
-        if (!check('(')) { // only checks, arg will accept
-            return err_expected("`(´");
-        }
-
         Expr* arg = malloc(sizeof(Expr));
         assert(arg != NULL);
         if (!parser_expr_one(arg)) {   // ()
-            return 0;
+            *arg = (Expr) { _N_++, EXPR_UNIT, NULL };
         }
 
         *ret = (Expr) { _N_++, EXPR_CONS, NULL, { .Cons={sub,arg} } };

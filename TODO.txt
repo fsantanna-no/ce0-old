@@ -1,7 +1,9 @@
 - True () -> True
 - POOLS
+- output: keyword, special function, checks the type of expr and forwards to show_Type
 
 - MINOR
+    - input function polymorphic
     - -Wno-format-zero-length
     - types.c
         - types_type: verify if user types exist
@@ -12,5 +14,4 @@
         - special rec syntax
         - change env before body
     - assert no EXPR_DISC (gerar erro caso nao seja do subtipo certo)
-    - show/cons omit ()
     - type names must contain lowercase (error in C generation upper/lower)

@@ -72,6 +72,8 @@ const char* lexer_tk2str (Tk* tk) {
         default:
             if (tk->enu>0 && tk->enu<TK_SINGLE) {
                 sprintf(str, "`%c´", tk->enu);
+           } else if (tk->enu > TK_RESERVED) {
+                sprintf(str, "`%s`", reserved[tk->enu-TK_RESERVED-1]);
             } else {
 //printf("%d\n", tk->enu);
                 assert(0 && "TODO");

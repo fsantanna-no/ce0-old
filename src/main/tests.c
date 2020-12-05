@@ -681,7 +681,7 @@ void t_all (void) {
         "type Zz { Zz1:() }\n"
         "type Yy { Yy1:Zz }\n"
         "type Xx { Xx1:Yy }\n"
-        "val x : Xx = Xx1(Yy1(Zz1()))\n"
+        "val x : Xx = Xx1(Yy1(Zz1))\n"
         "call _show_Zz(x.Xx1!.Yy1!)\n"
     ));
 #if 0
@@ -705,7 +705,7 @@ void t_all (void) {
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
-        "val b : Bool = True()\n"
+        "val b : Bool = True\n"
         "if b { call _show_Unit() }\n"
     ));
     // PREDICATE
@@ -735,12 +735,12 @@ void t_all (void) {
         "}\n"
         "func inv : (Bool -> Bool) {\n"
         "    if arg.True? {\n"
-        "        return False ()\n"
+        "        return False\n"
         "    } else {\n"
         "        return True ()\n"
         "    }\n"
         "}\n"
-        "call _show_Bool(inv(True()))\n"
+        "call _show_Bool(inv(True))\n"
     ));
     // ENV
     assert(all(

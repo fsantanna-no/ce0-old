@@ -124,7 +124,7 @@ add (x,y)               -- add receives tuple    (x,y)
 
 ## Constructor, Discriminator and Predicate
 
-A constructor creates a value of a type given a subtype and argument:
+A constructor creates a value of a type given a subtype and its argument:
 
 ```
 True ()                 -- value of type Bool
