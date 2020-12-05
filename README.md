@@ -1,4 +1,10 @@
-# ce0
+# Ce
+
+A simple language with automatic memory management:
+
+- bounded memory allocation
+- deterministic deallocation
+- no garbage collection
 
 # 1. Lexical rules
 
@@ -187,10 +193,21 @@ type rec Tree {
 
 ## Variable declaration
 
+A variable declaration determines an identifier, a type, and an assignment
+expression:
+
 ```
-val x : () = ()
-val x : Bool = True
-val y : (Bool,()) = (False,())
+val x : () = ()                 -- assigns `()` to variable `x` of type `()`
+val y : Bool = True             -- assigns `True` to variable `y` of type `Bool`
+val z : (Bool,()) = (False,())  -- assigns a tuple to variable `z`
+```
+
+If the type is recursive and the assignment requires dynamic allocation, the
+declaration must also include a [pool](TODO) with brackets:
+
+```
+val x[]: Nat = f()      -- the constructors in `f` are allocated in a pool
+val y[64]: Nat = f()    -- the pool can be bounded to limit the number of nodes
 ```
 
 ## Call
@@ -236,7 +253,19 @@ func f : () -> () {
 }
 ```
 
-# 5. Recursive types
+# 5. Pools and recursive types
+
+The use of recursive types such as lists and trees require dynamic allocation
+since their sizes are unbounded.
+
+Pools are containers for linked values of recursive types.
+A pool is associated with the root variable of a recursive type.
+When the root goes out of scope, all pool memory is automatically reclaimed.
+A pool may be bounded to use the stack and adhere to the properties as follows:
+
+- bounded memory allocation
+- deterministic deallocation
+- no garbage collection
 
 A recursive type declaration uses itself in one of its subtypes:
 
@@ -255,7 +284,9 @@ val x: Nat = Succ(Succ(Nil))
 val y: Nat = x  -- x,y share a reference, no deep copy is made
 ```
 
-Internally, constructors are also handled as references:
+If the constructors reside in the scope of the assignee, no dynamic memory
+allocation is required.
+Internally, the constructors can be references allocated in the stack:
 
 ```
 Nat _2 = (Nat) { Succ, {._Succ=NULL} };   -- declares last value first
@@ -264,17 +295,47 @@ Nat* x = &_1;                             -- points to last reference
 Nat* y = x;                               -- copies reference
 ```
 
-<!--
-Constructors from recursive data types require a [pool destination](TODO),
-since they allocate memory:
-
+If the constructors do not survive the scope of the assignee, they are
+allocated in a memory pool declared with brackets in the assignee:
 
 ```
-val n: Nat[] = Succ(Succ(Nil))    -- n is a pool
-n = Succ(n)
+func f: () -> Nat {
+    val x: Nat = Succ(Succ(Nil))
+    return x        -- x does not survive the scope
+}
+val y[]: Nat = f()  -- y is a memory pool for a Nat tree
 ```
--->
 
+The pool may be bounded (e.g. `y[64]`) which limits the number of nodes in the
+tree and permits stack allocation (instead of `malloc`).
+
+All dependencies of the assignment are tracked and all constructors are
+allocated in the same pool.
+When the pool goes out of scope, the stack unwinds and all allocated memory is
+automatically reclaimed.
+
+Internally, the pool is forwarded to all constructors locations where the
+actual allocation takes place:
+
+```
+void f (Pool* pool) {
+    Nat* _2 = pool_alloc(pool, sizeof(Nat));    // constructors allocate
+    Nat* _1 = pool_alloc(pool, sizeof(Nat));    // in the forwarded pool
+    *_2 = (Nat) { Succ, {._Succ=NULL} };
+    *_1 = (Nat) { Succ, {._Succ=_2} };
+    x = _1;
+    return x;
+}
+
+Nat  _yv[64];               // stack-allocated buffer
+Pool _yp = { _yv, 64, 0 };  // buffer, max size, cur size
+Nat* y = f(&_yp);
+```
+
+If the pool is unbouded (e.g. `y[]`), all allocation is made in the heap with
+`malloc`.
+Then, when the root reference (e.g. `y`) goes out of scope, it is traversed to
+`free` all memory.
 
 # 4. Syntax
 

@@ -1,3 +1,4 @@
+- repl
 - POOLS
 
 - MINOR
@@ -14,3 +15,76 @@
     - assert no EXPR_DISC (gerar erro caso nao seja do subtipo certo)
     - type names must contain lowercase (error in C generation upper/lower)
     - output/input for strings, output_type/input_type for users
+
+void *heap_locations;
+void *stack_location;
+
+void determine_locations (int any_int) {
+   free(heap_location = malloc(248));
+   stack_location = &any_int;
+}
+
+int main(int argc, char *argv[]) {
+  determine_locations(argc);
+      .
+      .
+      .
+  return 0;
+}
+
+<!--
+- full previous
+```
+typedef struct {
+    void* buf;      // stack-allocated buffer
+    int   max;      // maximum size
+    int   cur;      // current size
+} Pool;
+void* pool_alloc (Pool* pool, int n) {
+    if (pool == NULL) {
+        return malloc(n);
+    } else {
+        void* ret = &pool->buf[pool->cur];
+        pool->cur += n;
+        if (pool->cur <= cur->max) {
+            return ret;
+        } else {
+            return NULL;
+        }
+    }
+}
+void f (Pool* pool) {
+    int _cur = pool->cur;
+    Nat* _2 = pool_alloc(pool, sizeof(Nat));
+    Nat* _1 = pool_alloc(pool, sizeof(Nat));
+    if (_2==NULL || _1==NULL) {
+        pool->cur = _cur;
+    } else {
+        *_2 = (Nat) { Succ, {._Succ=NULL} };
+        *_1 = (Nat) { Succ, {._Succ=_2} };
+        x = _1;
+    }
+}
+```
+
+
+- further examples: add inside, add outside
+```
+func f: () -> Nat {
+    val x: Nat = Succ(Succ(Nil))
+    val y: Nat = Succ(Succ(Nil))
+    val z: Nat = add(x,y)
+    return z
+}
+val y[]: Nat = f()
+```
+```
+func f: () -> Nat {
+    val x: Nat = Succ(Succ(Nil))
+    val y: Nat = Succ(Succ(Nil))
+    val z: Nat = add(x,y)
+    return z
+}
+val y[]: Nat = add(two,f())
+```
+-->
