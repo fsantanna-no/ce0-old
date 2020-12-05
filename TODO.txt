@@ -1,11 +1,4 @@
-- env_find_decl
-- env_expr_type
-- env_find_super
-- env_types
-
-- find_user_from_subuser
-    - Nat.Succ -> Succ
-    - True () -> True
+- True () -> True
 - POOLS
 
 - MINOR

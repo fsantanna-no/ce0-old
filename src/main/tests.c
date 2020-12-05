@@ -325,12 +325,11 @@ void t_parser_expr (void) {
     }
     // EXPR_CONS
     {
-        all_init(NULL, stropen("r", 0, "Bool.True ()"));
+        all_init(NULL, stropen("r", 0, "True ()"));
         Expr e;
         assert(parser_expr(&e));
         assert(e.sub == EXPR_CONS);
-        assert(!strcmp(e.Cons.user.val.s,"Bool"));
-        assert(!strcmp(e.Cons.subuser.val.s,"True"));
+        assert(!strcmp(e.Cons.sub.val.s,"True"));
         assert(e.Cons.arg->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
@@ -674,7 +673,7 @@ void t_all (void) {
     assert(all(
         "False ()\n",
         "type Bool { False: () ; True: () }\n"
-        "val b : Bool = Bool.False()\n"
+        "val b : Bool = False()\n"
         "call _show_Bool(b)\n"
     ));
     assert(all(
@@ -682,7 +681,7 @@ void t_all (void) {
         "type Zz { Zz1:() }\n"
         "type Yy { Yy1:Zz }\n"
         "type Xx { Xx1:Yy }\n"
-        "val x : Xx = Xx.Xx1(Yy.Yy1(Zz.Zz1()))\n"
+        "val x : Xx = Xx1(Yy1(Zz1()))\n"
         "call _show_Zz(x.Xx1!.Yy1!)\n"
     ));
 #if 0
@@ -700,26 +699,26 @@ void t_all (void) {
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
-        "val b : Bool = Bool.False()\n"
+        "val b : Bool = False()\n"
         "if b { } else { call _show_Unit() }\n"
     ));
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
-        "val b : Bool = Bool.True()\n"
+        "val b : Bool = True()\n"
         "if b { call _show_Unit() }\n"
     ));
     // PREDICATE
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
-        "val b : Bool = Bool.True()\n"
+        "val b : Bool = True()\n"
         "if b.True? { call _show_Unit(()) }\n"
     ));
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
-        "val b : Bool = Bool.True()\n"
+        "val b : Bool = True()\n"
         "if b.False? { } else { call _show_Unit(()) }\n"
     ));
     // FUNC
@@ -736,12 +735,12 @@ void t_all (void) {
         "}\n"
         "func inv : (Bool -> Bool) {\n"
         "    if arg.True? {\n"
-        "        return Bool.False ()\n"
+        "        return False ()\n"
         "    } else {\n"
-        "        return Bool.True ()\n"
+        "        return True ()\n"
         "    }\n"
         "}\n"
-        "call _show_Bool(inv(Bool.True()))\n"
+        "call _show_Bool(inv(True()))\n"
     ));
     // ENV
     assert(all(
@@ -780,7 +779,7 @@ void t_all (void) {
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "val n: Nat = Nat.Succ(Nat.Succ(Nil))\n"
+        "val n: Nat = Succ(Succ(Nil))\n"
         "call _show_Nat(n)\n"
     ));
     // needs implicit pool
@@ -789,7 +788,7 @@ void t_all (void) {
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "call _show_Nat(Nat.Succ(Nat.Succ(Nil)))\n"
+        "call _show_Nat(Succ(Succ(Nil)))\n"
     ));
 }
 

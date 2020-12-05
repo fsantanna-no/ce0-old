@@ -4,7 +4,7 @@ typedef struct Env {
 } Env;
 
 // Returns the statement declaration of given variable or user type identifier.
-Stmt* env_find_decl (Env* env, const char* xp);  // env_find_decl(e, "x") -> {STMT_VAR, {"x",(),init)}}
+Stmt* env_find_decl (Env* env, const char* id);  // env_find_decl(e, "x") -> {STMT_VAR, {"x",(),init)}}
 
 // Returns the type of given expression.
 Type* env_expr_type (Expr* e);                   // env_expr_type({EXPR_VAR, "x")}) -> ()

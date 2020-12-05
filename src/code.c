@@ -80,16 +80,17 @@ void code_expr_0 (Expr* e) {
         case EXPR_CONS: {
             code_expr_0(e->Cons.arg);   // child "x2" is used by parent "x1"
 
-            char* user = e->Cons.user.val.s;
-            Stmt* s = env_find_decl(e->env, user);
-            assert(s!=NULL && s->sub==STMT_USER);
+            Stmt* user = env_find_super(e->env, e->Cons.sub.val.s);
+            assert(user != NULL);
+
+            char* sup = user->User.id.val.s;
+            char* sub = e->Cons.sub.val.s;
 
             // Bool _1 = (Bool) { False, {_False=1} };
             // Nat  _1 = (Nat)  { Succ,  {_Succ=&_2} };
-            char* sub = e->Cons.subuser.val.s;
             fprintf(ALL.out,
                 "%s _%d = ((%s) { %s, { ._%s=",
-                user, e->N, user, sub, sub);
+                sup, e->N, sup, sub, sub);
             code_expr_1(e->Cons.arg);
             out(" } });\n");
             break;
@@ -158,9 +159,9 @@ void code_expr_1 (Expr* e) {
             out(")");
             break;
         case EXPR_CONS: {
-            Stmt* s = env_find_decl(e->env, e->Cons.user.val.s);
-            assert(s!=NULL && s->sub==STMT_USER);
-            fprintf(ALL.out, "%s_%d", (s->User.isrec ? "&" : ""), e->N);
+            Stmt* user = env_find_super(e->env, e->Cons.sub.val.s);
+            assert(user != NULL);
+            fprintf(ALL.out, "%s_%d", (user->User.isrec ? "&" : ""), e->N);
             break;
         }
         case EXPR_TUPLE:
@@ -182,15 +183,15 @@ void code_expr_1 (Expr* e) {
             break;
         case EXPR_DISC:
             code_expr_1(e->Disc.cons);
-            fprintf(ALL.out, "._%s", e->Disc.subuser.val.s);
+            fprintf(ALL.out, "._%s", e->Disc.sub.val.s);
             break;
         case EXPR_PRED: {
-            int isnil = (e->Pred.subuser.enu == TK_NIL);
+            int isnil = (e->Pred.sub.enu == TK_NIL);
             out("((");
             code_expr_1(e->Pred.cons);
             fprintf(ALL.out, "%s == %s) ? (Bool){True,{._True=1}} : (Bool){False,{._False=1}})",
                 (isnil ? "" : ".sub"),
-                (isnil ? "NULL" : e->Pred.subuser.val.s)
+                (isnil ? "NULL" : e->Pred.sub.val.s)
             );
             break;
         }

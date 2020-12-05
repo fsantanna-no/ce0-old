@@ -9,24 +9,38 @@ int err_message (Tk tk, const char* v) {
     return 0;
 }
 
-Stmt* env_find_decl (Env* env, const char* xp) {
+Stmt* env_find_decl (Env* env, const char* id) {
     while (env != NULL) {
-        const char* id = NULL;
+        const char* cur = NULL;
         switch (env->stmt->sub) {
             case STMT_USER:
-                id = env->stmt->User.id.val.s;
+                cur = env->stmt->User.id.val.s;
                 break;
             case STMT_VAR:
-                id = env->stmt->Var.id.val.s;
+                cur = env->stmt->Var.id.val.s;
                 break;
             case STMT_FUNC:
-                id = env->stmt->Func.id.val.s;
+                cur = env->stmt->Func.id.val.s;
                 break;
             default:
                 assert(0 && "bug found");
         }
-        if (id!=NULL && !strcmp(xp,id)) {
+        if (cur!=NULL && !strcmp(id,cur)) {
             return env->stmt;
+        }
+        env = env->prev;
+    }
+    return NULL;
+}
+
+Stmt* env_find_super (Env* env, const char* sub) {
+    while (env != NULL) {
+        if (env->stmt->sub == STMT_USER) {
+            for (int i=0; i<env->stmt->User.size; i++) {
+                if (!strcmp(sub, env->stmt->User.vec[i].id.val.s)) {
+                    return env->stmt;
+                }
+            }
         }
         env = env->prev;
     }
@@ -61,9 +75,12 @@ Type* env_expr_type (Expr* e) {
         case EXPR_CALL:     // f()
             return env_expr_type(e->Call.func)->Func.out;
 
-        case EXPR_CONS:     // Bool.True()
-            ret = (Type) { TYPE_USER, e->env, {.tk=e->Cons.user} };
+        case EXPR_CONS: {   // Bool.True()
+            Stmt* user = env_find_super(e->env, e->Cons.sub.val.s);
+            assert(user != NULL);
+            ret = (Type) { TYPE_USER, e->env, {.tk=user->User.id} };
             return &ret;
+        }
 
         case EXPR_TUPLE: {
             Type* vec = malloc(e->Tuple.size*sizeof(Type));
@@ -83,7 +100,7 @@ Type* env_expr_type (Expr* e) {
             Stmt* s  = env_find_decl(e->env, tp->tk.val.s); // type Bool { ... }
             assert(s != NULL);
             for (int i=0; i<s->User.size; i++) {
-                if (!strcmp(s->User.vec[i].id.val.s, e->Disc.subuser.val.s)) {
+                if (!strcmp(s->User.vec[i].id.val.s, e->Disc.sub.val.s)) {
                     return &s->User.vec[i].type;
                 }
             }

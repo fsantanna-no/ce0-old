@@ -74,17 +74,16 @@ typedef struct Expr {
             struct Expr* arg;           // (x,y)
         } Call;
         struct {        // EXPR_CONS
-            Tk user;                    // Bool
-            Tk subuser;                 // .True
+            Tk sub;                     // .True
             struct Expr* arg;
         } Cons;
         struct {        // EXPR_DISC
             struct Expr* cons;          // Bool
-            Tk subuser;                 // .True!
+            Tk sub;                     // .True!
         } Disc;
         struct {        // EXPR_PRED
             struct Expr* cons;          // Bool
-            Tk subuser;                 // .True?
+            Tk sub;                     // .True?
         } Pred;
     };
 } Expr;
