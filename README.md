@@ -227,6 +227,46 @@ func f : () -> () {
 }
 ```
 
+# 5. Recursive types
+
+A recursive type declaration uses itself in one of its subtypes:
+
+```
+type rec Nat {  -- a natural number is either zero (`Nil`) or
+    Succ: Nat   -- a successor of a natural number (`Succ(Nat)`)
+}
+
+val two: Nat = Nat.Succ(Nat.Succ(Nil))  -- two is the successor of the successor of zero
+```
+
+Values of recursive types are always references:
+
+```
+val x: Nat = Nat.Succ(Nat.Succ(Nil))
+val y: Nat = x  -- x,y share a reference, no deep copy is made
+```
+
+Internally, constructors are also handled as references:
+
+```
+Nat _2 = (Nat) { Succ, {._Succ=NULL} };   -- declares last value first
+Nat _1 = (Nat) { Succ, {._Succ=&_2} };    -- points to previous value
+Nat* x = &_1;                             -- points to last reference
+Nat* y = x;                               -- copies reference
+```
+
+<!--
+Constructors from recursive data types require a [pool destination](TODO),
+since they allocate memory:
+
+
+```
+val n: Nat[] = Succ(Succ(Nil))    -- n is a pool
+n = Succ(n)
+```
+-->
+
+
 # 4. Syntax
 
 ```

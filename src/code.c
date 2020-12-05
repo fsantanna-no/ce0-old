@@ -84,11 +84,11 @@ void code_expr_0 (Expr* e) {
             Stmt* s = env_stmt(e->env, user);
             assert(s!=NULL && s->sub==STMT_USER);
 
-            // Bool xxx1 = (Bool) { False, {_False=1} };
-            // Nat  xxx1 = (Nat)  { Succ,  {_Succ=&xxx2} };
+            // Bool _1 = (Bool) { False, {_False=1} };
+            // Nat  _1 = (Nat)  { Succ,  {_Succ=&_2} };
             char* sub = e->Cons.subuser.val.s;
             fprintf(ALL.out,
-                "%s xxx%d = ((%s) { %s, { ._%s=",
+                "%s _%d = ((%s) { %s, { ._%s=",
                 user, e->N, user, sub, sub);
             code_expr_1(e->Cons.arg);
             out(" } });\n");
@@ -160,7 +160,7 @@ void code_expr_1 (Expr* e) {
         case EXPR_CONS: {
             Stmt* s = env_stmt(e->env, e->Cons.user.val.s);
             assert(s!=NULL && s->sub==STMT_USER);
-            fprintf(ALL.out, "%sxxx%d", (s->User.isrec ? "&" : ""), e->N);
+            fprintf(ALL.out, "%s_%d", (s->User.isrec ? "&" : ""), e->N);
             break;
         }
         case EXPR_TUPLE:
