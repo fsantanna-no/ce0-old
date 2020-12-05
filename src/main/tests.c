@@ -12,16 +12,16 @@ int all (const char* xp, char* src) {
     );
     Stmt s;
     if (!parser(&s)) {
-        puts(ALL.err);
+        //puts(ALL.err);
         return !strcmp(ALL.err, xp);
     }
     if (!env(&s)) {
-        puts(ALL.err);
+        //puts(ALL.err);
         return !strcmp(ALL.err, xp);
     }
     code(&s);
     fclose(ALL.out);
-#if 1
+#if 0
 puts(">>>");
 puts(out);
 puts("<<<");
@@ -30,7 +30,7 @@ puts("<<<");
 
     // compile
     {
-        FILE* f = popen("gcc -xc -", "w");
+        FILE* f = popen("gcc -Wall -Wno-unused-function -Wno-format-zero-length -xc -", "w");
         assert(f != NULL);
         fputs(out, f);
         fclose(f);
