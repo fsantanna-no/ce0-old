@@ -152,7 +152,7 @@ int parser_expr_one (Expr* ret) {
         *ret = (Expr) { _N_++, EXPR_NATIVE, NULL, .tk=ALL.tk0 };
 
     // EXPR_VAR
-    } else if (accept(TX_VAR)) {
+    } else if (accept(TX_VAR) || accept(TK_OUTPUT)) {
         *ret = (Expr) { _N_++, EXPR_VAR, NULL, .tk=ALL.tk0 };
 
     // EXPR_CONS

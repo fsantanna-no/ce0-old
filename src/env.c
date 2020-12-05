@@ -307,7 +307,10 @@ int env_stmt (Env** env, Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+static Stmt out_stmt = { STMT_VAR, .Var={ {TX_VAR,{.s="output"},0,0},{TYPE_NONE},{EXPR_NONE} } };
+static Env  out_env  = { &out_stmt, NULL };
+
 int env (Stmt* s) {
-    Env* env = NULL;
+    Env* env = &out_env;
     return env_stmt(&env, s);
 }

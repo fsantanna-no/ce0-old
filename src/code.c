@@ -63,6 +63,54 @@ void code_type (Type* tp) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+void code_tuple_0 (Type* tp) {
+    char tp_[256];
+    strcpy(tp_, code_type_(tp));
+
+    // IFDEF
+    out("#ifndef __");
+    out(tp_);
+    out("__\n");
+    out("#define __");
+    out(tp_);
+    out("__\n");
+
+    // STRUCT
+    out("typedef struct {\n");
+    for (int i=0; i<tp->Tuple.size; i++) {
+        code_type(&tp->Tuple.vec[i]);
+        fprintf(ALL.out, " _%d;\n", i+1);
+    }
+    out("} ");
+    out(tp_);
+    out(";\n");
+
+    // OUTPUT
+    fprintf(ALL.out,
+        "void output_%s_ (%s v) {\n"
+        "    printf(\"(\");\n",
+        tp_, tp_
+    );
+    for (int i=0; i<tp->Tuple.size; i++) {
+        if (i > 0) {
+            fprintf(ALL.out, "    printf(\",\");\n");
+        }
+        fprintf(ALL.out, "    output_%s_(v._%d);\n", code_type_(&tp->Tuple.vec[i]), i+1);
+    }
+    fprintf(ALL.out,
+        "    printf(\")\");\n"
+        "}\n"
+        "void output_%s (%s v) {\n"
+        "    output_%s_(v);\n"
+        "    puts(\"\");\n"
+        "}\n",
+        tp_, tp_, tp_
+    );
+
+    // IFDEF
+    out("#endif\n");
+}
+
 void code_expr_0 (Expr* e) {
     switch (e->sub) {
         case EXPR_NONE:
@@ -109,25 +157,7 @@ void code_expr_0 (Expr* e) {
             for (int i=0; i<e->Tuple.size; i++) {
                 code_expr_0(&e->Tuple.vec[i]);
             }
-
-            Type* tp  = env_expr_type(e);
-            char tp_[256];
-            strcpy(tp_, code_type_(tp));
-            out("#ifndef __");
-            out(tp_);
-            out("__\n");
-            out("#define __");
-            out(tp_);
-            out("__\n");
-            out("typedef struct {\n");
-            for (int i=0; i<tp->Tuple.size; i++) {
-                code_type(&tp->Tuple.vec[i]);
-                fprintf(ALL.out, " _%d;\n", i+1);
-            }
-            out("} ");
-            out(tp_);
-            out(";\n");
-            out("#endif\n");
+            code_tuple_0(env_expr_type(e));
             break;
         }
     }
@@ -153,7 +183,12 @@ void code_expr_1 (Expr* e) {
             out(e->tk.val.s);
             break;
         case EXPR_CALL:
-            code_expr_1(e->Call.func);
+            if (e->Call.func->sub==EXPR_VAR && !strcmp(e->Call.func->tk.val.s,"output")) {
+                out("output_");
+                code_type(env_expr_type(e->Call.arg));
+            } else {
+                code_expr_1(e->Call.func);
+            }
             out("(");
             code_expr_1(e->Call.arg);
             out(")");
@@ -220,6 +255,14 @@ void code_stmt (Stmt* s) {
             const char* sup = s->User.id.val.s;
             const char* SUP = strupper(s->User.id.val.s);
 
+            // tuple subtypes
+            for (int i=0; i<s->User.size; i++) {
+                Type* tp = &s->User.vec[i].type;
+                if (tp->sub == TYPE_TUPLE) {
+                    code_tuple_0(tp);
+                }
+            }
+
             // ENUM + STRUCT + UNION
             {
                 // enum { False, True } BOOL;
@@ -259,7 +302,7 @@ void code_stmt (Stmt* s) {
             }
             out("\n");
 
-            // SHOW
+            // OUTPUT
             {
                 int isrec = s->User.isrec;
                 char* op = (isrec ? "->" : ".");
@@ -295,7 +338,7 @@ void code_stmt (Stmt* s) {
                         case TYPE_TUPLE:
                             yes = 1;
                             par = 0;
-                            sprintf(arg, "output_%s_(v%s_%s)", sub->type.tk.val.s, op, sub->id.val.s);
+                            sprintf(arg, "output_%s_(v%s_%s)", code_type_(&sub->type), op, sub->id.val.s);
                             break;
                         default:
                             assert(0 && "bug found");
@@ -374,8 +417,8 @@ void code (Stmt* s) {
     out (
         "#include <assert.h>\n"
         "#include <stdio.h>\n"
-        "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
-        "#define output_Unit(x) (output_Unit_(x), puts(\"\"))\n"
+        "#define output_int_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
+        "#define output_int(x)  (output_int_(x), puts(\"\"))\n"
         "int main (void) {\n"
         "\n"
     );

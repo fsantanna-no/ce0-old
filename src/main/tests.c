@@ -588,8 +588,8 @@ void t_code (void) {
         char* ret =
             "#include <assert.h>\n"
             "#include <stdio.h>\n"
-            "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
-            "#define output_Unit(x) (output_Unit_(x), puts(\"\"))\n"
+            "#define output_int_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
+            "#define output_int(x)  (output_int_(x), puts(\"\"))\n"
             "int main (void) {\n"
             "\n"
             "int a = 1;\n"
@@ -612,8 +612,8 @@ void t_code (void) {
         char* ret =
             "#include <assert.h>\n"
             "#include <stdio.h>\n"
-            "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
-            "#define output_Unit(x) (output_Unit_(x), puts(\"\"))\n"
+            "#define output_int_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
+            "#define output_int(x)  (output_int_(x), puts(\"\"))\n"
             "int main (void) {\n"
             "\n"
             "typedef enum {\n"
@@ -657,12 +657,12 @@ void t_all (void) {
     // UNIT
     assert(all(
         "()\n",
-        "call _output_Unit(())\n"
+        "call output()\n"
     ));
     assert(all(
         "()\n",
         "val x: () = ()\n"
-        "call _output_Unit(x)\n"
+        "call _output_int(x)\n"
     ));
     // NATIVE
     assert(all(
@@ -672,15 +672,21 @@ void t_all (void) {
     ));
     assert(all(
         "()\n",
-        "call _output_Unit(((),()).1)\n"
+        "call _output_int(((),()).1)\n"
     ));
     assert(all(
         "()\n",
-        "call _output_Unit(((),((),())).2.1)\n"
+        "call _output_int(((),((),())).2.1)\n"
+    ));
+    // OUTPUT
+    assert(all(
+        "()\n",
+        "val x: () = ()\n"
+        "call output(x)\n"
     ));
     assert(all(
         "((),())\n",
-        "call _output_TUPLE((),())\n"
+        "call output((),())\n"
     ));
     // TYPE
     assert(all(
@@ -701,7 +707,7 @@ void t_all (void) {
         "Zz1 ((),())\n",
         "type Zz { Zz1:((),()) }\n"
         "val x : Zz = Zz1 ((),())\n"
-        "call _output_Zz(x)\n"
+        "call output(x)\n"
     ));
 #if 0
     // TODO: tuples
@@ -719,32 +725,32 @@ void t_all (void) {
         "()\n",
         "type Bool { False: () ; True: () }\n"
         "val b : Bool = False()\n"
-        "if b { } else { call _output_Unit() }\n"
+        "if b { } else { call output() }\n"
     ));
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
         "val b : Bool = True\n"
-        "if b { call _output_Unit() }\n"
+        "if b { call output() }\n"
     ));
     // PREDICATE
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
         "val b : Bool = True()\n"
-        "if b.True? { call _output_Unit(()) }\n"
+        "if b.True? { call output(()) }\n"
     ));
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
         "val b : Bool = True()\n"
-        "if b.False? { } else { call _output_Unit(()) }\n"
+        "if b.False? { } else { call output(()) }\n"
     ));
     // FUNC
     assert(all(
         "()\n",
         "func f : () -> () { return arg }\n"
-        "call _output_Unit(f())\n"
+        "call output(f())\n"
     ));
     assert(all(
         "False\n",
@@ -759,7 +765,7 @@ void t_all (void) {
         "        return True ()\n"
         "    }\n"
         "}\n"
-        "call _output_Bool(inv(True))\n"
+        "call output(inv(True))\n"
     ));
     // ENV
     assert(all(
@@ -767,18 +773,18 @@ void t_all (void) {
         "_output_Unit(x)\n"
     ));
     assert(all(
-        "(ln 1, col 17): undeclared variable \"x\"",
-        "call _output_Unit(x)\n"
+        "(ln 1, col 13): undeclared variable \"x\"",
+        "call output(x)\n"
     ));
     assert(all(
-        "(ln 2, col 17): undeclared variable \"x\"",
+        "(ln 2, col 13): undeclared variable \"x\"",
         "func f : ()->() { val x:()=(); return x }\n"
-        "call _output_Unit(x)\n"
+        "call output(x)\n"
     ));
     assert(all(
-        "(ln 2, col 17): undeclared variable \"x\"",
+        "(ln 2, col 13): undeclared variable \"x\"",
         "if () { val x:()=() }\n"
-        "call _output_Unit(x)\n"
+        "call output(x)\n"
     ));
     // TYPE REC
     assert(all(

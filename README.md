@@ -36,6 +36,7 @@ The following keywords are reserved and cannot be used as identifiers:
     func        -- function declaration
     if          -- conditional statement
     Nil         -- null subtype
+    output      -- output function
     rec         -- type/function recursive declaration
     return      -- function return
     type        -- new type declaration
@@ -120,6 +121,13 @@ A call invokes an expression as a function with the argument:
 f ()                    -- f   receives unit     ()
 (id) (x)                -- id  receives variable x
 add (x,y)               -- add receives tuple    (x,y)
+```
+
+The special function `output` shows the given argument in the screen:
+
+```
+x = ((),())
+output(x)               -- shows "((),())" in the screen
 ```
 
 ## Constructor, Discriminator and Predicate
