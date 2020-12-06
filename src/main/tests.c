@@ -657,6 +657,7 @@ void t_code (void) {
             "    output_Bool_(v);\n"
             "    puts(\"\");\n"
             "}\n"
+            ";\n"
             "\n"
             "}\n";
         assert(!strcmp(out,ret));
