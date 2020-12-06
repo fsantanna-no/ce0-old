@@ -160,7 +160,7 @@ x.Node!.2               -- yields ()
 
 The value `Nil` corresponds to the null subtype of all recursive types.
 
-A predicate checks if the value of a type is of one of its subtypes.
+A predicate checks if the value of a type is of its given subtype.
 It sufixes the value with a dot `.`, a subtype identifier, and a question mark
 `?`:
 
@@ -192,20 +192,20 @@ null subtype `Nil´:
 
 ```
 type rec Tree {
-    -- Nil: ()              -- implicit null subtype
+    -- Nil: ()              -- implicit null subtype always present
     Node: (Tree,(),Tree)    -- subtype Node holds left subtree, unit value, and right subtree
 }
 ```
 
 ## Variable declaration
 
-A variable declaration determines an identifier, a type, and an assignment
-expression:
+A variable declaration binds a value to a name with a specified type:
 
 ```
 val x : () = ()                 -- assigns `()` to variable `x` of type `()`
 val y : Bool = True             -- assigns `True` to variable `y` of type `Bool`
 val z : (Bool,()) = (False,())  -- assigns a tuple to variable `z`
+val t : Tree = Node(Nil,(),Node(Nil,(),Nil))
 ```
 
 If the type is recursive and the assignment requires dynamic allocation, the
@@ -218,7 +218,7 @@ val y[64]: Nat = f()    -- the pool can be bounded to limit the number of nodes
 
 ## Call
 
-A call invokes a call expression:
+A call statement invokes a call expression:
 
 ```
 call f()    -- calls f passing ()
@@ -248,8 +248,9 @@ if x {
 
 ## Function, Argument and Return
 
-A function declares a block of statements that can be called afterwards with an
-argument.
+A function declaration binds a block of statements to a name which can be
+[called](TODO) afterwards.
+The declaration also determines the type of the argument and return values.
 The argument can be acessed through the identifier `arg`.
 A `return` exits a function with a value:
 
