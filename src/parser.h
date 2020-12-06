@@ -94,14 +94,16 @@ typedef struct {
 } Sub;
 
 typedef struct Stmt {
+    int N;
     STMT sub;
     struct Env* env;    // see env.c
     union {
         Expr call;      // STMT_CALL
         Expr ret;       // STMT_RETURN
         struct {
-            Tk   id;                    // x:
-            Type type;                  // Bool
+            Tk   id;                    // x
+            int  pool;                  // -, [], [n], (0,-1,n)
+            Type type;                  // : Bool
             Expr init;                  // = y
         } Var;          // STMT_VAR
         struct {

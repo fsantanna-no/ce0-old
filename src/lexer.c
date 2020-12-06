@@ -43,7 +43,7 @@ const char* lexer_tk2err (TK enu) {
             sprintf(str, "type identifier");
             break;
 #if 0
-        case TX_INDEX:
+        case TX_NUM:
             sprintf(str, "tuple index");
             break;
 #endif
@@ -93,6 +93,8 @@ static TK lx_token (TK_val* val) {
         case '}':
         case '(':
         case ')':
+        case '[':
+        case ']':
         case ';':
         case ':':
         case '=':
@@ -115,7 +117,7 @@ static TK lx_token (TK_val* val) {
             }
 
         default:
-            // TX_INDEX
+            // TX_NUM
             if (isdigit(c)) {
                 int i = 0;
                 while (isalnum(c)) {
@@ -128,7 +130,7 @@ static TK lx_token (TK_val* val) {
                 }
                 val->n = atoi(val->s);
                 ungetc(c, ALL.inp);
-                return TX_INDEX;
+                return TX_NUM;
             } else if (isalpha(c) || c=='_') {
                 // var,user,native
             } else {

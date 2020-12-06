@@ -312,6 +312,18 @@ void code_stmt (Stmt* s) {
             break;
 
         case STMT_VAR:
+            if (s->Var.pool == 0) {
+                // no pool
+            } else if (s->Var.pool == -1) {
+                out("Pool* _pool = NULL;\n");
+            } else {
+                fprintf (ALL.out,
+                    "Pool _%d;\n"
+                    "Pool* _pool = &_%d;\n",
+                    s->N, s->N
+                );
+            }
+
             code_expr_0(&s->Var.init);
             code_to_c(&s->Var.type);
             fputs(" ", ALL.out);

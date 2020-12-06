@@ -24,6 +24,7 @@ The following symbols are valid:
 ```
     {   }       -- block delimeter
     (   )       -- unit type, unit value, group expression
+    [   ]       -- pool declaration
     ;           -- sequence separator
     :           -- variable, type, function declaration
     ->          -- function type signature
@@ -56,14 +57,14 @@ A variable identifier starts with a  lowercase letter and might contain
 letters, digits, and underscores:
 
 ```
-i       myCounter   x_10        -- variable identifiers
+i    myCounter    x_10          -- variable identifiers
 ```
 
 A type identifier starts with an uppercase letter and might contain letters,
 digits, and underscores:
 
 ```
-Int     A10         Tree        -- type identifiers
+Int    A10    Tree              -- type identifiers
 ```
 
 A native identifier starts with an underscore and might contain letters,
@@ -76,7 +77,7 @@ _char    _printf    _errno      -- native identifiers
 A tuple index is a numeric value:
 
 ```
-1       2       3               -- tuple indexes
+1    2    3                     -- tuple indexes
 ```
 
 # 2. Expressions
@@ -356,7 +357,8 @@ Then, when the root reference (e.g. `y`) goes out of scope, it is traversed to
 # 4. Syntax
 
 ```
-Stmt ::= `val´ VAR `:´ Type `=´ Expr    -- variable declaration     val x: () = ()
+Stmt ::= `val´ VAR [`[´[NUM]`]´] `:´    -- variable declaration     val x: () = ()
+            Type `=´ Expr
       |  `type´ [`rec´] USER `{`        -- user type declaration
             { USER `:´ Type [`;´] }     -- subtypes
          `}´
@@ -375,7 +377,7 @@ Expr ::= `(´ `)´                        -- unit value               ()
       |  `arg´                          -- function argument        arg
       |  `Nil´                          -- null recursive subtype   Nil
       |  `(´ Expr {`,´ Expr} `)´        -- tuple                    (x,())
-      |  Expr `.´ INDEX                 -- tuple index              x.1
+      |  Expr `.´ NUM                   -- tuple index              x.1
       |  Expr `(´ Expr `)´              -- call                     f(x)
       |  USER [`(´ Expr `)´]            -- constructor              True ()
       |  Expr `.´ USER `!´              -- discriminator            x.True!

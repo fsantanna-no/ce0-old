@@ -148,7 +148,7 @@ void t_lexer (void) {
     {
         all_init(NULL, stropen("r", 0, ".10"));
         assert(ALL.tk1.enu == '.');
-        lexer(); assert(ALL.tk1.enu == TX_INDEX);
+        lexer(); assert(ALL.tk1.enu == TX_NUM);
         assert(ALL.tk1.val.n == 10);
         fclose(ALL.inp);
     }
@@ -842,7 +842,7 @@ void t_all (void) {
         "    val x: Nat = Succ(Succ(Nil))\n"
         "    return x\n"
         "}\n"
-        "val y: Nat = f()\n"
+        "val y[]: Nat = f()\n"
         "call output(y)\n"
     ));
 }

@@ -3,7 +3,7 @@
 
 #include "all.h"
 
-int _N_ = 0;
+int _N_ = 1;    // TODO: see env.c _N_=0
 
 int err_expected (const char* v) {
     sprintf(ALL.err, "(ln %ld, col %ld): expected %s : have %s",
@@ -193,7 +193,7 @@ int parser_expr (Expr* ret) {
             *ret  = (Expr) { _N_++, EXPR_CALL, NULL, .Call={func,arg} };
         } else if (accept('.')) {
     // EXPR_INDEX
-            if (accept(TX_INDEX)) {
+            if (accept(TX_NUM)) {
                 Expr* tup = malloc(sizeof(Expr));
                 assert(tup != NULL);
                 *tup = *ret;
@@ -254,6 +254,19 @@ int parser_stmt (Stmt* ret) {
             return 0;
         }
         Tk id = ALL.tk0;
+
+        int pool = 0;                   // no pool
+        if (accept('[')) {
+            if (accept(TX_NUM)) {
+                pool = ALL.tk0.val.n;   // bounded
+            } else {
+                pool = -1;              // unbounded
+            }
+            if (!accept_err(']')) {
+                return 0;
+            }
+        }
+
         if (!accept_err(':')) {
             return 0;
         }
@@ -268,7 +281,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_expr(&e)) {
             return 0;
         }
-        *ret = (Stmt) { STMT_VAR, NULL, .Var={id,tp,e} };
+        *ret = (Stmt) { _N_++, STMT_VAR, NULL, .Var={id,pool,tp,e} };
 
     // STMT_USER
     } else if (accept(TK_TYPE)) {       // type
@@ -309,7 +322,7 @@ int parser_stmt (Stmt* ret) {
             return 0;
         }
 
-        *ret = (Stmt) { STMT_USER, NULL, .User={isrec,id,n,vec} };
+        *ret = (Stmt) { _N_++, STMT_USER, NULL, .User={isrec,id,n,vec} };
 
     // STMT_CALL
     } else if (accept(TK_CALL)) {
@@ -317,7 +330,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_expr(&e)) {
             return 0;
         }
-        *ret = (Stmt) { STMT_CALL, NULL, .call=e };
+        *ret = (Stmt) { _N_++, STMT_CALL, NULL, .call=e };
 
     // STMT_IF
     } else if (accept(TK_IF)) {         // if
@@ -345,10 +358,10 @@ int parser_stmt (Stmt* ret) {
             }
             if (!accept_err('}')) { return 0; }
         } else {
-            *f = (Stmt) { STMT_SEQ, NULL, .Seq={0,NULL} };
+            *f = (Stmt) { _N_++, STMT_SEQ, NULL, .Seq={0,NULL} };
         }
 
-        *ret = (Stmt) { STMT_IF, NULL, .If={e,t,f} };
+        *ret = (Stmt) { _N_++, STMT_IF, NULL, .If={e,t,f} };
 
     // STMT_FUNC
     } else if (accept(TK_FUNC)) {   // func
@@ -370,7 +383,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_stmts(s)) {
             return 0;
         }
-        *ret = (Stmt) { STMT_FUNC, NULL, .Func={id,tp,s} };
+        *ret = (Stmt) { _N_++, STMT_FUNC, NULL, .Func={id,tp,s} };
 
         if (!accept('}')) { return 0; }
 
@@ -380,7 +393,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_expr(&e)) {
             return 0;
         }
-        *ret = (Stmt) { STMT_RETURN, NULL, .ret=e };
+        *ret = (Stmt) { _N_++, STMT_RETURN, NULL, .ret=e };
 
     } else {
         return 0;
@@ -405,7 +418,7 @@ int parser_stmts (Stmt* ret) {
         accept(';');    // optional
     }
 
-    *ret = (Stmt) { STMT_SEQ, NULL, { .Seq={n,vec} } };
+    *ret = (Stmt) { _N_++, STMT_SEQ, NULL, { .Seq={n,vec} } };
     return 1;
 }
 
