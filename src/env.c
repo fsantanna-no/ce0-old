@@ -191,11 +191,7 @@ int check_undeclared (Stmt* s) {
         return 1;
     }
 
-    int check_stmt (Stmt* s) {
-        return 1;
-    }
-
-    visit_stmt(s, check_stmt, check_expr, check_type);
+    visit_stmt(s, NULL, check_expr, check_type);
     return OK;
 }
 

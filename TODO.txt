@@ -1,5 +1,5 @@
-- visitor
-- remove NONE
+- visitor for code
+- env_pool_cons
 - POOLS
     - como fazer track em code?
     - Succ(f()) é problema?
@@ -20,7 +20,6 @@
     - input function polymorphic
     - -Wno-format-zero-length
     - types.c
-        - types_type: verify if user types exist
         - verify duplicates for types/subtypes/vars/funcs
         - verify assigns, calls args/ret
     - funcoes as values (now we have ENV:var,func,type)

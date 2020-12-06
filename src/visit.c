@@ -3,7 +3,7 @@
 #include "all.h"
 
 void visit_type (Type* tp, f_type ft) {
-    if (!ft(tp)) {
+    if (ft!=NULL && !ft(tp)) {
         return;
     }
     switch (tp->sub) {
@@ -24,7 +24,7 @@ void visit_type (Type* tp, f_type ft) {
 }
 
 void visit_expr (Expr* e, f_expr fe) {
-    if (!fe(e)) {
+    if (fe!=NULL && !fe(e)) {
         return;
     }
     switch (e->sub) {
@@ -59,7 +59,7 @@ void visit_expr (Expr* e, f_expr fe) {
 }
 
 void visit_stmt (Stmt* s, f_stmt fs, f_expr fe, f_type ft) {
-    if (!fs(s)) {
+    if (fs!=NULL && !fs(s)) {
         return;
     }
     switch (s->sub) {

@@ -100,58 +100,6 @@ void code_to_ce (Type* tp) {
 
 // tuple structs pre declarations
 
-void code_tuple_0 (Type* tp) {
-    assert(tp->sub == TYPE_TUPLE);
-
-    char tp_c [256];
-    char tp_ce[256];
-    strcpy(tp_c,  to_c (tp));
-    strcpy(tp_ce, to_ce(tp));
-
-    // IFDEF
-    out("#ifndef __");
-    out(tp_ce);
-    out("__\n");
-    out("#define __");
-    out(tp_ce);
-    out("__\n");
-
-    // STRUCT
-    out("typedef struct {\n");
-    for (int i=0; i<tp->Tuple.size; i++) {
-        code_to_c(&tp->Tuple.vec[i]);
-        fprintf(ALL.out, " _%d;\n", i+1);
-    }
-    out("} ");
-    out(tp_ce);
-    out(";\n");
-
-    // OUTPUT
-    fprintf(ALL.out,
-        "void output_%s_ (%s v) {\n"
-        "    printf(\"(\");\n",
-        tp_ce, tp_c
-    );
-    for (int i=0; i<tp->Tuple.size; i++) {
-        if (i > 0) {
-            fprintf(ALL.out, "    printf(\",\");\n");
-        }
-        fprintf(ALL.out, "    output_%s_(v._%d);\n", to_ce(&tp->Tuple.vec[i]), i+1);
-    }
-    fprintf(ALL.out,
-        "    printf(\")\");\n"
-        "}\n"
-        "void output_%s (%s v) {\n"
-        "    output_%s_(v);\n"
-        "    puts(\"\");\n"
-        "}\n",
-        tp_ce, tp_c, tp_ce
-    );
-
-    // IFDEF
-    out("#endif\n");
-}
-
 // cons structs pre allocations
 
 void code_expr_cons_0 (Expr* e) {
@@ -202,7 +150,6 @@ void code_expr_0 (Expr* e) {
             for (int i=0; i<e->Tuple.size; i++) {
                 code_expr_0(&e->Tuple.vec[i]);
             }
-            code_tuple_0(env_expr_type(e));
             break;
         }
     }
@@ -334,14 +281,6 @@ void code_stmt (Stmt* s) {
         case STMT_USER: {
             const char* sup = s->User.id.val.s;
             const char* SUP = strupper(s->User.id.val.s);
-
-            // tuple subtypes
-            for (int i=0; i<s->User.size; i++) {
-                Type* tp = &s->User.vec[i].type;
-                if (tp->sub == TYPE_TUPLE) {
-                    code_tuple_0(tp);
-                }
-            }
 
             // ENUM + STRUCT + UNION
             {
@@ -512,6 +451,76 @@ void code_stmt (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+void code_0 (Stmt* s) {
+    int ft (Type* tp) {
+        if (tp->sub == TYPE_TUPLE) {
+            char tp_c [256];
+            char tp_ce[256];
+            strcpy(tp_c,  to_c (tp));
+            strcpy(tp_ce, to_ce(tp));
+
+            // IFDEF
+            out("#ifndef __");
+            out(tp_ce);
+            out("__\n");
+            out("#define __");
+            out(tp_ce);
+            out("__\n");
+
+            // STRUCT
+            out("typedef struct {\n");
+            for (int i=0; i<tp->Tuple.size; i++) {
+                code_to_c(&tp->Tuple.vec[i]);
+                fprintf(ALL.out, " _%d;\n", i+1);
+            }
+            out("} ");
+            out(tp_ce);
+            out(";\n");
+
+            // OUTPUT
+            fprintf(ALL.out,
+                "void output_%s_ (%s v) {\n"
+                "    printf(\"(\");\n",
+                tp_ce, tp_c
+            );
+            for (int i=0; i<tp->Tuple.size; i++) {
+                if (i > 0) {
+                    fprintf(ALL.out, "    printf(\",\");\n");
+                }
+                fprintf(ALL.out, "    output_%s_(v._%d);\n", to_ce(&tp->Tuple.vec[i]), i+1);
+            }
+            fprintf(ALL.out,
+                "    printf(\")\");\n"
+                "}\n"
+                "void output_%s (%s v) {\n"
+                "    output_%s_(v);\n"
+                "    puts(\"\");\n"
+                "}\n",
+                tp_ce, tp_c, tp_ce
+            );
+
+            // IFDEF
+            out("#endif\n");
+        }
+        return 1;
+    }
+
+    int fe (Expr* e) {
+        if (e->sub == EXPR_TUPLE) {
+            for (int i=0; i<e->Tuple.size; i++) {
+                visit_expr(&e->Tuple.vec[i], fe);   // first visit child
+            }
+            ft(env_expr_type(e));                   // second visit myself
+            return 0;
+        }
+        return 1;
+    }
+
+    visit_stmt(s, NULL, fe, ft);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 void code (Stmt* s) {
     out (
         "#include <assert.h>\n"
@@ -526,6 +535,7 @@ void code (Stmt* s) {
         "int main (void) {\n"
         "\n"
     );
+    code_0(s);
     code_stmt(s);
     fprintf(ALL.out, "\n");
     out("}\n");
