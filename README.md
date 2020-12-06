@@ -1,6 +1,7 @@
 # Ce
 
-A simple language with automatic memory management:
+A simple (functional?) language with algebraic data types and automatic memory
+management:
 
 - bounded memory allocation
 - deterministic deallocation
@@ -24,13 +25,13 @@ The following symbols are valid:
     {   }       -- block delimeter
     (   )       -- unit type, unit value, group expression
     ;           -- sequence separator
-    :           -- variable, type, function declarations
+    :           -- variable, type, function declaration
+    ->          -- function type signature
     =           -- variable assignment
     ,           -- tuple separator
     .           -- tuple index, type predicate & discriminator
     !           -- type discriminator
     ?           -- type predicate
-    ->          -- function type signature
 ```
 
 The following keywords are reserved and cannot be used as identifiers:
@@ -43,7 +44,7 @@ The following keywords are reserved and cannot be used as identifiers:
     if          -- conditional statement
     Nil         -- null subtype
     output      -- output function
-    rec         -- type/function recursive declaration
+    rec         -- type, function recursive declaration
     return      -- function return
     type        -- new type declaration
     val         -- immutable variable declaration
@@ -55,7 +56,7 @@ A variable identifier starts with a  lowercase letter and might contain
 letters, digits, and underscores:
 
 ```
-i       myCounter   x10         -- variable identifiers
+i       myCounter   x_10        -- variable identifiers
 ```
 
 A type identifier starts with an uppercase letter and might contain letters,
@@ -93,7 +94,7 @@ The unit value is the unique value of the [unit type](TODO):
 A variable holds a value of its type:
 
 ```
-i    myCounter    x10
+i    myCounter    x_10
 ```
 
 ## Native symbol
@@ -116,12 +117,12 @@ A tuple holds a fixed number of values of different types:
 A tuple index holds the value at the given position:
 
 ```
-(x,()).2                -- returns ()
+(x,()).2                -- yields ()
 ```
 
 ## Call
 
-A call invokes an expression as a function with the argument:
+A call invokes an expression as a function with the given argument:
 
 ```
 f ()                    -- f   receives unit     ()
@@ -143,9 +144,11 @@ A constructor creates a value of a type given a subtype and its argument:
 ```
 True ()                 -- value of type Bool
 False                   -- () is optional
+Data (True,())
 ```
 
-A destructor acesses the value of a type as one of its subtypes:
+A discriminator sufixes a value with `.`, a subtype identifier, and `!`.
+It accesses the value of a type as one of its subtypes:
 
 ```
 (True ()).True!         -- yields ()
@@ -156,7 +159,8 @@ x.Node!.2               -- yields ()
 
 The value `Nil` corresponds to the null subtype of all recursive types.
 
-A subtype predicate evaluates to a `Bool`:
+A subtype predicate sufixes a value with `.`, a subtype identifier, and `?`.
+It checks if the value of a type is one of its subtypes:
 
 ```
 type Member {

@@ -1,4 +1,11 @@
 - repl
+    - cei
+    - inp buffer
+        - strcat
+    - compile on each enter
+    - read exp or stmt
+        - _1 = exp ; output(_1);
+    - >>> if not finished
 - POOLS
 
 - MINOR
