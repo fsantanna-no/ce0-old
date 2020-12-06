@@ -284,14 +284,14 @@ type rec Nat {  -- a natural number is either zero (`Nil`) or
     Succ: Nat   -- a successor of a natural number (`Succ(Nat)`)
 }
 
-val two: Nat = Succ(Succ(Nil))  -- two is the successor of the successor of zero
+val two: Nat = Succ(Succ(Nil))  -- `two` is the successor of the successor of zero (represented as `Nil`)
 ```
 
 Values of recursive types are always references:
 
 ```
 val x: Nat = Succ(Succ(Nil))
-val y: Nat = x  -- x,y share a reference, no deep copy is made
+val y: Nat = x  -- x,y share the same reference, no copy is made
 ```
 
 If the constructors reside in the scope of the assignee, no dynamic memory
@@ -299,8 +299,9 @@ allocation is required.
 Internally, the constructors can be references allocated in the stack:
 
 ```
-Nat _2 = (Nat) { Succ, {._Succ=NULL} };   -- declares last value first
-Nat _1 = (Nat) { Succ, {._Succ=&_2} };    -- points to previous value
+-- x = y = Succ(Succ(Nil))
+Nat _2 = (Nat) { Succ, {._Succ=NULL} };   -- declares last value first (Succ(Nil)
+Nat _1 = (Nat) { Succ, {._Succ=&_2} };    -- points to previous value  (Succ(...))
 Nat* x = &_1;                             -- points to last reference
 Nat* y = x;                               -- copies reference
 ```
@@ -310,22 +311,25 @@ allocated in a memory pool declared with brackets in the assignee:
 
 ```
 func f: () -> Nat {
-    val x: Nat = Succ(Succ(Nil))
-    return x        -- x does not survive the scope
+    val x: Nat = Succ(Succ(Nil))    -- constructor inside a function
+    return x                        -- `x` does not survive the scope
 }
-val y[]: Nat = f()  -- y is a memory pool for a Nat tree
+val y[]: Nat = f()                  -- `y` is a memory pool for a Nat tree to be allocated inside `f`
 ```
 
-The pool may be bounded (e.g. `y[64]`) which limits the number of nodes in the
-tree and permits stack allocation (instead of `malloc`).
-
-All dependencies of the assignment are tracked and all constructors are
+All dependencies of an assignment are tracked and all constructors are
 allocated in the same pool.
-When the pool goes out of scope, the stack unwinds and all allocated memory is
+When the pool itself goes out of scope, all allocated memory inside it is
+traversed and is automatically reclaimed.
+
+The pool may be declared with bounded size (e.g. `y[64]`), which limits the
+number of nodes in the tree.
+This allows the pool items to be allocated in the stack (instead of `malloc`).
+When the pool goes out of scope, the stack unwinds and all memory is
 automatically reclaimed.
 
 Internally, the pool is forwarded to all constructors locations where the
-actual allocation takes place:
+actual allocations takes place:
 
 ```
 void f (Pool* pool) {
@@ -337,15 +341,17 @@ void f (Pool* pool) {
     return x;
 }
 
-Nat  _yv[64];               // stack-allocated buffer
+Nat  _yv[64];               // stack-allocated buffer (if bounded)
 Pool _yp = { _yv, 64, 0 };  // buffer, max size, cur size
-Nat* y = f(&_yp);
+Nat* y = f(&_yp);           // pool is NULL if unbounded
 ```
 
+<!--
 If the pool is unbouded (e.g. `y[]`), all allocation is made in the heap with
 `malloc`.
 Then, when the root reference (e.g. `y`) goes out of scope, it is traversed to
 `free` all memory.
+-->
 
 # 4. Syntax
 
