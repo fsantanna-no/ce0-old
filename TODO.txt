@@ -1,3 +1,4 @@
+- MAIN
 - POOLS
 
 - MINOR
@@ -22,6 +23,18 @@
         - prevent side effect of expr to be lost:
             - _1 = exp ; output(_1);
         - >>> if not finished
+
+- Ce0
+    - implemented in C
+    - simplest possible
+    - immutable
+- Ce
+    - implemented in Ce0
+    - mutable
+    - type inference
+    - pattern matching
+    - lambdas
+    - synchronous concurrency
 
 void *heap_locations;
 void *stack_location;
