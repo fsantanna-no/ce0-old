@@ -102,7 +102,11 @@ void code_to_ce (Type* tp) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// tuple structs pre declarations
+
 void code_tuple_0 (Type* tp) {
+    assert(tp->sub == TYPE_TUPLE);
+
     char tp_c [256];
     char tp_ce[256];
     strcpy(tp_c,  to_c (tp));
@@ -152,6 +156,26 @@ void code_tuple_0 (Type* tp) {
     out("#endif\n");
 }
 
+// cons structs pre allocations
+
+void code_expr_cons_0 (Expr* e) {
+    assert(e->sub == EXPR_CONS);
+
+    Stmt* user = env_find_super(e->env, e->Cons.sub.val.s);
+    assert(user != NULL);
+
+    char* sup = user->User.id.val.s;
+    char* sub = e->Cons.sub.val.s;
+
+    // Bool _1 = (Bool) { False, {_False=1} };
+    // Nat  _1 = (Nat)  { Succ,  {_Succ=&_2} };
+    fprintf(ALL.out,
+        "%s _%d = ((%s) { %s, { ._%s=",
+        sup, e->N, sup, sub, sub);
+    code_expr_1(e->Cons.arg);
+    out(" } });\n");
+}
+
 void code_expr_0 (Expr* e) {
     switch (e->sub) {
         case EXPR_NONE:
@@ -166,24 +190,10 @@ void code_expr_0 (Expr* e) {
             code_expr_0(e->Call.func);
             code_expr_0(e->Call.arg);
             break;
-        case EXPR_CONS: {
+        case EXPR_CONS:
             code_expr_0(e->Cons.arg);   // child "x2" is used by parent "x1"
-
-            Stmt* user = env_find_super(e->env, e->Cons.sub.val.s);
-            assert(user != NULL);
-
-            char* sup = user->User.id.val.s;
-            char* sub = e->Cons.sub.val.s;
-
-            // Bool _1 = (Bool) { False, {_False=1} };
-            // Nat  _1 = (Nat)  { Succ,  {_Succ=&_2} };
-            fprintf(ALL.out,
-                "%s _%d = ((%s) { %s, { ._%s=",
-                sup, e->N, sup, sub, sub);
-            code_expr_1(e->Cons.arg);
-            out(" } });\n");
+            code_expr_cons_0(e);
             break;
-        }
         case EXPR_INDEX:
             code_expr_0(e->Index.tuple);
             break;
@@ -485,12 +495,18 @@ void code_stmt (Stmt* s) {
                 }
             }
 
+            char tp_out[256] = "";
+            to_c_(tp_out, s->Func.type.Func.out);
+
+            char tp_inp[256] = "";
+            to_c_(tp_inp, s->Func.type.Func.inp);
+
             fprintf (ALL.out,
                 "%s %s (%s %s arg) {\n",
-                to_c(s->Func.type.Func.out),
+                tp_out,
                 s->Func.id.val.s,
                 (isrec ? "Pool* pool," : ""),
-                to_c(s->Func.type.Func.inp)
+                tp_inp
             );
             code_stmt(s->Func.body);
             out("}\n");
