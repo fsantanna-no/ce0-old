@@ -223,17 +223,46 @@ void code_expr_1 (Expr* e) {
         case EXPR_VAR:
             out(e->tk.val.s);
             break;
-        case EXPR_CALL:
-            if (e->Call.func->sub==EXPR_VAR && !strcmp(e->Call.func->tk.val.s,"output")) {
-                out("output_");
-                code_to_ce(env_expr_type(e->Call.arg));
-            } else {
+
+        case EXPR_CALL: {
+            if (e->Call.func->sub == EXPR_NATIVE) {
                 code_expr_1(e->Call.func);
+                out("(");
+                code_expr_1(e->Call.arg);
+                out(")");
+            } else {
+                assert(e->Call.func->sub == EXPR_VAR);
+
+                int isrec = 0;
+
+                if (!strcmp(e->Call.func->tk.val.s,"output")) {
+                    out("output_");
+                    code_to_ce(env_expr_type(e->Call.arg));
+                } else {
+                    code_expr_1(e->Call.func);
+
+                    // f(x) -> f(pool,x)
+                    // f(x) -> (x -> User)
+                    Type* tp = env_expr_type(e->Call.func);
+                    assert(tp->sub == TYPE_FUNC);
+                    if (tp->Func.out->sub == TYPE_USER) {
+                        // (x -> User) -> User
+                        Stmt* s = env_find_decl(e->env, tp->Func.out->tk.val.s);
+                        assert(s!=NULL && s->sub==STMT_USER);
+                        isrec = s->User.isrec;
+                    }
+                }
+
+                out("(");
+                if (isrec) {
+                    out("_pool, ");
+                }
+                code_expr_1(e->Call.arg);
+                out(")");
             }
-            out("(");
-            code_expr_1(e->Call.arg);
-            out(")");
             break;
+        }
+
         case EXPR_CONS: {
             Stmt* user = env_find_super(e->env, e->Cons.sub.val.s);
             assert(user != NULL);
@@ -434,8 +463,9 @@ void code_stmt (Stmt* s) {
         case STMT_FUNC: {
             assert(s->Func.type.sub == TYPE_FUNC);
 
+            // f: a -> User
+            // f: (Pool,a) -> User
             int isrec = 0; {
-                // f: . -> User
                 if (s->Func.type.Func.out->sub == TYPE_USER) {
                     Stmt* decl = env_find_decl(s->env, s->Func.type.Func.out->tk.val.s);
                     assert(decl!=NULL && decl->sub==STMT_USER);
