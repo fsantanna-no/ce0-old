@@ -1,5 +1,10 @@
-- MAIN
 - POOLS
+
+- RECS
+    - f : () -> (Nat,List)
+    - x[]: (Nat,List) = f()
+        - funcao retornar dois recs
+        - mas o retorno tem que ser uma variavel só que em teoria teria que guardar os dois recs no mesmo pool?
 
 - MINOR
     - input function polymorphic
@@ -15,6 +20,7 @@
     - assert no EXPR_DISC (gerar erro caso nao seja do subtipo certo)
     - type names must contain lowercase (error in C generation upper/lower)
     - output/input for strings, output_type/input_type for users
+    - #define UNIT 1 // #define Unit int
     - Heap vs Stack:
         - https://stackoverflow.com/questions/8385322/difference-between-static-memory-allocation-and-dynamic-memory-allocation
     - Cleanup

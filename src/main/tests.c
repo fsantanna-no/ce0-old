@@ -21,7 +21,7 @@ int all (const char* xp, char* src) {
     }
     code(&s);
     fclose(ALL.out);
-#if 0
+#if 1
 puts(">>>");
 puts(out);
 puts("<<<");
@@ -588,8 +588,8 @@ void t_code (void) {
         char* ret =
             "#include <assert.h>\n"
             "#include <stdio.h>\n"
-            "#define output_int_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
-            "#define output_int(x)  (output_int_(x), puts(\"\"))\n"
+            "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
+            "#define output_Unit(x)  (output_Unit_(x), puts(\"\"))\n"
             "int main (void) {\n"
             "\n"
             "int a = 1;\n"
@@ -612,8 +612,8 @@ void t_code (void) {
         char* ret =
             "#include <assert.h>\n"
             "#include <stdio.h>\n"
-            "#define output_int_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
-            "#define output_int(x)  (output_int_(x), puts(\"\"))\n"
+            "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
+            "#define output_Unit(x)  (output_Unit_(x), puts(\"\"))\n"
             "int main (void) {\n"
             "\n"
             "typedef enum {\n"
@@ -662,7 +662,7 @@ void t_all (void) {
     assert(all(
         "()\n",
         "val x: () = ()\n"
-        "call _output_int(x)\n"
+        "call _output_Unit(x)\n"
     ));
     // NATIVE
     assert(all(
@@ -672,11 +672,11 @@ void t_all (void) {
     ));
     assert(all(
         "()\n",
-        "call _output_int(((),()).1)\n"
+        "call _output_Unit(((),()).1)\n"
     ));
     assert(all(
         "()\n",
-        "call _output_int(((),((),())).2.1)\n"
+        "call _output_Unit(((),((),())).2.1)\n"
     ));
     // OUTPUT
     assert(all(
@@ -805,15 +805,35 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "val n: Nat = Succ(Succ(Nil))\n"
+        "call output(n)\n"
+    ));
+    assert(all(
+        "Succ (Succ (Nil))\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "val n: Nat = Succ(Succ(Nil))\n"
         "call _output_Nat(n)\n"
     ));
-    // needs implicit pool
     assert(all(
         "Succ (Succ (Nil))\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "call _output_Nat(Succ(Succ(Nil)))\n"
+    ));
+    // POOL
+    assert(all(
+        "Succ (Succ (Nil))\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "func f: () -> Nat {\n"
+        "    val x: Nat = Succ(Succ(Nil))\n"
+        "    return x\n"
+        "}\n"
+        "val y: Nat = f()\n"
+        "call output(y)\n"
     ));
 }
 

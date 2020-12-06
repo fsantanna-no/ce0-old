@@ -72,8 +72,12 @@ Type* env_expr_type (Expr* e) {
             assert(s != NULL);
             return (s->sub == STMT_VAR) ? &s->Var.type : &s->Func.type;
         }
-        case EXPR_CALL:     // f()
-            return env_expr_type(e->Call.func)->Func.out;
+        case EXPR_CALL: {   // f()
+            assert(e->Call.func->sub == EXPR_VAR);
+            Type* tp = env_expr_type(e->Call.func);
+            assert(tp->sub == TYPE_FUNC);
+            return tp->Func.out;
+        }
 
         case EXPR_CONS: {   // Bool.True()
             Stmt* user = env_find_super(e->env, e->Cons.sub.val.s);
@@ -307,7 +311,7 @@ int env_stmt (Env** env, Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static Stmt out_stmt = { STMT_VAR, .Var={ {TX_VAR,{.s="output"},0,0},{TYPE_NONE},{EXPR_NONE} } };
+static Stmt out_stmt = { STMT_VAR, .Var={ {TX_VAR,{.s="output"},0,0},{TYPE_FUNC},{EXPR_NONE} } };
 static Env  out_env  = { &out_stmt, NULL };
 
 int env (Stmt* s) {
