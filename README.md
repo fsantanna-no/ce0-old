@@ -250,7 +250,8 @@ if x {
 
 A function declaration binds a block of statements to a name which can be
 [called](TODO) afterwards.
-The declaration also determines the type of the argument and return values.
+The declaration also determines the types of the argument and return values
+separated by an arrow `->`.
 The argument can be acessed through the identifier `arg`.
 A `return` exits a function with a value:
 
@@ -262,13 +263,15 @@ func f : () -> () {
 
 # 5. Pools and recursive types
 
-The use of recursive types such as lists and trees require dynamic allocation
+Recursive types, such as lists and trees, require dynamic memory allocation
 since their sizes are unbounded.
 
-Pools are containers for linked values of recursive types.
+Pools are containers for mutually referred values of recursive types.
 A pool is associated with the root variable of a recursive type.
 When the root goes out of scope, all pool memory is automatically reclaimed.
-A pool may be bounded to use the stack and adhere to the properties as follows:
+A pool can be optionally declared with a bounded size, allowing it to be
+allocated in the stack.
+Pools enable to the following properties for recursive types:
 
 - bounded memory allocation
 - deterministic deallocation
