@@ -37,7 +37,7 @@ typedef enum {
 
 typedef struct Type {
     TYPE sub;
-    struct Env* env;    // see types.c
+    struct Env* env;    // see env.c
     union {
         Tk tk;          // TYPE_NATIVE, TYPE_USER
         struct {        // TYPE_TUPLE
@@ -58,7 +58,7 @@ extern int _N_;
 typedef struct Expr {
     int N;
     EXPR sub;
-    struct Env* env;    // see types.c
+    struct Env* env;    // see env.c
     union {
         Tk tk;          // EXPR_NATIVE, EXPR_VAR
         struct {        // EXPR_TUPLE
@@ -95,6 +95,7 @@ typedef struct {
 
 typedef struct Stmt {
     STMT sub;
+    struct Env* env;    // see env.c
     union {
         Expr call;      // STMT_CALL
         Expr ret;       // STMT_RETURN

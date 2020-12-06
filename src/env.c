@@ -220,6 +220,7 @@ int env_expr (Env* env, Expr* e) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int env_stmt (Env** env, Stmt* s) {
+    s->env = *env;
     switch (s->sub) {
         case STMT_NONE:
             assert(0 && "bug found");
@@ -311,7 +312,7 @@ int env_stmt (Env** env, Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static Stmt out_stmt = { STMT_VAR, .Var={ {TX_VAR,{.s="output"},0,0},{TYPE_FUNC},{EXPR_NONE} } };
+static Stmt out_stmt = { STMT_VAR, NULL, .Var={ {TX_VAR,{.s="output"},0,0},{TYPE_FUNC},{EXPR_NONE} } };
 static Env  out_env  = { &out_stmt, NULL };
 
 int env (Stmt* s) {

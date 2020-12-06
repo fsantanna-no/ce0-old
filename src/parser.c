@@ -268,7 +268,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_expr(&e)) {
             return 0;
         }
-        *ret = (Stmt) { STMT_VAR, .Var={id,tp,e} };
+        *ret = (Stmt) { STMT_VAR, NULL, .Var={id,tp,e} };
 
     // STMT_USER
     } else if (accept(TK_TYPE)) {       // type
@@ -309,7 +309,7 @@ int parser_stmt (Stmt* ret) {
             return 0;
         }
 
-        *ret = (Stmt) { STMT_USER, .User={isrec,id,n,vec} };
+        *ret = (Stmt) { STMT_USER, NULL, .User={isrec,id,n,vec} };
 
     // STMT_CALL
     } else if (accept(TK_CALL)) {
@@ -317,7 +317,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_expr(&e)) {
             return 0;
         }
-        *ret = (Stmt) { STMT_CALL, .call=e };
+        *ret = (Stmt) { STMT_CALL, NULL, .call=e };
 
     // STMT_IF
     } else if (accept(TK_IF)) {         // if
@@ -345,10 +345,10 @@ int parser_stmt (Stmt* ret) {
             }
             if (!accept_err('}')) { return 0; }
         } else {
-            *f = (Stmt) { STMT_SEQ, .Seq={0,NULL} };
+            *f = (Stmt) { STMT_SEQ, NULL, .Seq={0,NULL} };
         }
 
-        *ret = (Stmt) { STMT_IF, .If={e,t,f} };
+        *ret = (Stmt) { STMT_IF, NULL, .If={e,t,f} };
 
     // STMT_FUNC
     } else if (accept(TK_FUNC)) {   // func
@@ -370,7 +370,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_stmts(s)) {
             return 0;
         }
-        *ret = (Stmt) { STMT_FUNC, .Func={id,tp,s} };
+        *ret = (Stmt) { STMT_FUNC, NULL, .Func={id,tp,s} };
 
         if (!accept('}')) { return 0; }
 
@@ -380,7 +380,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_expr(&e)) {
             return 0;
         }
-        *ret = (Stmt) { STMT_RETURN, .ret=e };
+        *ret = (Stmt) { STMT_RETURN, NULL, .ret=e };
 
     } else {
         return 0;
@@ -405,7 +405,7 @@ int parser_stmts (Stmt* ret) {
         accept(';');    // optional
     }
 
-    *ret = (Stmt) { STMT_SEQ, { .Seq={n,vec} } };
+    *ret = (Stmt) { STMT_SEQ, NULL, { .Seq={n,vec} } };
     return 1;
 }
 

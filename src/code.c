@@ -431,17 +431,29 @@ void code_stmt (Stmt* s) {
             out("}\n");
             break;
 
-        case STMT_FUNC:
+        case STMT_FUNC: {
             assert(s->Func.type.sub == TYPE_FUNC);
-            code_to_c(s->Func.type.Func.out);
-            out(" ");
-            out(s->Func.id.val.s);
-            out(" (");
-            code_to_c(s->Func.type.Func.inp);
-            out(" arg) {\n");
+
+            int isrec = 0; {
+                // f: . -> User
+                if (s->Func.type.Func.out->sub == TYPE_USER) {
+                    Stmt* decl = env_find_decl(s->env, s->Func.type.Func.out->tk.val.s);
+                    assert(decl!=NULL && decl->sub==STMT_USER);
+                    isrec = decl->User.isrec;
+                }
+            }
+
+            fprintf (ALL.out,
+                "%s %s (%s %s arg) {\n",
+                to_c(s->Func.type.Func.out),
+                s->Func.id.val.s,
+                (isrec ? "Pool* pool," : ""),
+                to_c(s->Func.type.Func.inp)
+            );
             code_stmt(s->Func.body);
             out("}\n");
             break;
+        }
 
         case STMT_RETURN:
             code_expr_0(&s->ret);
@@ -460,6 +472,11 @@ void code (Stmt* s) {
         "#include <stdio.h>\n"
         "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
         "#define output_Unit(x)  (output_Unit_(x), puts(\"\"))\n"
+        "typedef struct {\n"
+        "    void* buf;\n"  // stack-allocated buffer
+        "    int max;\n"    // maximum size
+        "    int cur;\n"    // current size
+        "} Pool;\n"
         "int main (void) {\n"
         "\n"
     );
