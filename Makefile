@@ -9,5 +9,8 @@ tests: $(SRC) src/main/tests.c
 book: $(SRC) src/main/book.c
 	gcc -g -o $@ $^ $(CFLAGS) $(LIBS)
 
+cei: $(SRC) src/main/cei.c
+	gcc -g -o cei $^ $(CFLAGS) $(LIBS)
+
 main: $(SRC) src/main/main.c
 	gcc -g -o ce $^ $(CFLAGS) $(LIBS)

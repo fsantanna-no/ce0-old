@@ -1,11 +1,3 @@
-- repl
-    - cei
-    - inp buffer
-        - strcat
-    - compile on each enter
-    - read exp or stmt
-        - _1 = exp ; output(_1);
-    - >>> if not finished
 - POOLS
 
 - MINOR
@@ -22,6 +14,14 @@
     - assert no EXPR_DISC (gerar erro caso nao seja do subtipo certo)
     - type names must contain lowercase (error in C generation upper/lower)
     - output/input for strings, output_type/input_type for users
+    - Heap vs Stack:
+        - https://stackoverflow.com/questions/8385322/difference-between-static-memory-allocation-and-dynamic-memory-allocation
+    - Cleanup
+        - http://echorand.me/site/notes/articles/c_cleanup/cleanup_attribute_c.html
+    - repl
+        - prevent side effect of expr to be lost:
+            - _1 = exp ; output(_1);
+        - >>> if not finished
 
 void *heap_locations;
 void *stack_location;
