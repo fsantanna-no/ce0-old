@@ -139,16 +139,17 @@ output(x)               -- shows "((),())" in the screen
 
 ## Constructor, Discriminator and Predicate
 
-A constructor creates a value of a type given a subtype and its argument:
+A constructor creates a value of a type given one subtype and its argument:
 
 ```
 True ()                 -- value of type Bool
 False                   -- () is optional
-Data (True,())
+Car (True,())           -- subtype Car holds a tuple
 ```
 
-A discriminator sufixes a value with `.`, a subtype identifier, and `!`.
-It accesses the value of a type as one of its subtypes:
+A discriminator accesses the value of a type as one of its subtypes.
+It sufixes the value with a dot `.`, a subtype identifier, and an exclamation
+mark `!`:
 
 ```
 (True ()).True!         -- yields ()
@@ -159,8 +160,9 @@ x.Node!.2               -- yields ()
 
 The value `Nil` corresponds to the null subtype of all recursive types.
 
-A subtype predicate sufixes a value with `.`, a subtype identifier, and `?`.
-It checks if the value of a type is one of its subtypes:
+A predicate checks if the value of a type is of one of its subtypes.
+It sufixes the value with a dot `.`, a subtype identifier, and a question mark
+`?`:
 
 ```
 type Member {
