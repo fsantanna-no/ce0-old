@@ -102,59 +102,6 @@ void code_to_ce (Type* tp) {
 
 // cons structs pre allocations
 
-void code_expr_cons_0 (Expr* e) {
-    assert(e->sub == EXPR_CONS);
-
-    Stmt* user = env_find_super(e->env, e->Cons.sub.val.s);
-    assert(user != NULL);
-
-    char* sup = user->User.id.val.s;
-    char* sub = e->Cons.sub.val.s;
-
-    // Bool _1 = (Bool) { False, {_False=1} };
-    // Nat  _1 = (Nat)  { Succ,  {_Succ=&_2} };
-    fprintf(ALL.out,
-        "%s _%d = ((%s) { %s, { ._%s=",
-        sup, e->N, sup, sub, sub);
-    code_expr_1(e->Cons.arg);
-    out(" } });\n");
-}
-
-void code_expr_0 (Expr* e) {
-    switch (e->sub) {
-        case EXPR_UNIT:
-        case EXPR_NIL:
-        case EXPR_ARG:
-        case EXPR_NATIVE:
-        case EXPR_VAR:
-            break;
-        case EXPR_CALL:
-            code_expr_0(e->Call.func);
-            code_expr_0(e->Call.arg);
-            break;
-        case EXPR_CONS:
-            code_expr_0(e->Cons.arg);   // child "x2" is used by parent "x1"
-            code_expr_cons_0(e);
-            break;
-        case EXPR_INDEX:
-            code_expr_0(e->Index.tuple);
-            break;
-        case EXPR_DISC:
-            code_expr_0(e->Disc.cons);
-            break;
-        case EXPR_PRED:
-            code_expr_0(e->Disc.cons);
-            break;
-
-        case EXPR_TUPLE: {
-            for (int i=0; i<e->Tuple.size; i++) {
-                code_expr_0(&e->Tuple.vec[i]);
-            }
-            break;
-        }
-    }
-}
-
 void code_expr_1 (Expr* e) {
     switch (e->sub) {
         case EXPR_UNIT:
@@ -256,6 +203,8 @@ void code_expr_1 (Expr* e) {
 
 void code_stmt (Stmt* s) {
     switch (s->sub) {
+        case STMT_USER:
+            break;
         case STMT_VAR:
             if (s->Var.pool == 0) {
                 // no pool
@@ -269,7 +218,6 @@ void code_stmt (Stmt* s) {
                 );
             }
 
-            code_expr_0(&s->Var.init);
             code_to_c(&s->Var.type);
             fputs(" ", ALL.out);
             fputs(s->Var.id.val.s, ALL.out);
@@ -278,7 +226,156 @@ void code_stmt (Stmt* s) {
             out(";\n");
             break;
 
-        case STMT_USER: {
+        case STMT_CALL:
+            code_expr_1(&s->call);
+            out(";\n");
+            break;
+
+        case STMT_SEQ:
+            for (int i=0; i<s->Seq.size; i++) {
+                code_stmt(&s->Seq.vec[i]);
+            }
+            break;
+
+        case STMT_IF:
+            out("if (");
+            code_expr_1(&s->If.cond);
+            out(".sub) {\n");           // Bool.sub returns 0 or 1
+            code_stmt(s->If.true);
+            out("} else {\n");
+            code_stmt(s->If.false);
+            out("}\n");
+            break;
+
+        case STMT_FUNC: {
+            assert(s->Func.type.sub == TYPE_FUNC);
+
+            // f: a -> User
+            // f: (Pool,a) -> User
+            int isrec = 0; {
+                if (s->Func.type.Func.out->sub == TYPE_USER) {
+                    Stmt* decl = env_find_decl(s->env, s->Func.type.Func.out->tk.val.s);
+                    assert(decl!=NULL && decl->sub==STMT_USER);
+                    isrec = decl->User.isrec;
+                }
+            }
+
+            char tp_out[256] = "";
+            to_c_(tp_out, s->Func.type.Func.out);
+
+            char tp_inp[256] = "";
+            to_c_(tp_inp, s->Func.type.Func.inp);
+
+            fprintf (ALL.out,
+                "%s %s (%s %s arg) {\n",
+                tp_out,
+                s->Func.id.val.s,
+                (isrec ? "Pool* pool," : ""),
+                tp_inp
+            );
+            code_stmt(s->Func.body);
+            out("}\n");
+            break;
+        }
+
+        case STMT_RETURN:
+            out("return ");
+            code_expr_1(&s->ret);
+            out(";\n");
+            break;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+void code_0 (Stmt* s) {
+    int ft (Type* tp) {
+        if (tp->sub == TYPE_TUPLE) {
+            char tp_c [256];
+            char tp_ce[256];
+            strcpy(tp_c,  to_c (tp));
+            strcpy(tp_ce, to_ce(tp));
+
+            // IFDEF
+            out("#ifndef __");
+            out(tp_ce);
+            out("__\n");
+            out("#define __");
+            out(tp_ce);
+            out("__\n");
+
+            // STRUCT
+            out("typedef struct {\n");
+            for (int i=0; i<tp->Tuple.size; i++) {
+                code_to_c(&tp->Tuple.vec[i]);
+                fprintf(ALL.out, " _%d;\n", i+1);
+            }
+            out("} ");
+            out(tp_ce);
+            out(";\n");
+
+            // OUTPUT
+            fprintf(ALL.out,
+                "void output_%s_ (%s v) {\n"
+                "    printf(\"(\");\n",
+                tp_ce, tp_c
+            );
+            for (int i=0; i<tp->Tuple.size; i++) {
+                if (i > 0) {
+                    fprintf(ALL.out, "    printf(\",\");\n");
+                }
+                fprintf(ALL.out, "    output_%s_(v._%d);\n", to_ce(&tp->Tuple.vec[i]), i+1);
+            }
+            fprintf(ALL.out,
+                "    printf(\")\");\n"
+                "}\n"
+                "void output_%s (%s v) {\n"
+                "    output_%s_(v);\n"
+                "    puts(\"\");\n"
+                "}\n",
+                tp_ce, tp_c, tp_ce
+            );
+
+            // IFDEF
+            out("#endif\n");
+        }
+        return 1;
+    }
+
+    int fe (Expr* e) {
+        if (e->sub == EXPR_TUPLE) {
+            for (int i=0; i<e->Tuple.size; i++) {
+                visit_expr(&e->Tuple.vec[i], fe);   // first visit child
+            }
+            ft(env_expr_type(e));                   // second visit myself
+            return 0;
+        } else if (e->sub == EXPR_CONS) {
+            visit_expr(e->Cons.arg, fe);            // first visit child
+
+            Stmt* user = env_find_super(e->env, e->Cons.sub.val.s);
+            assert(user != NULL);
+
+            char* sup = user->User.id.val.s;
+            char* sub = e->Cons.sub.val.s;
+
+            // Bool _1 = (Bool) { False, {_False=1} };
+            // Nat  _1 = (Nat)  { Succ,  {_Succ=&_2} };
+            fprintf(ALL.out,
+                "%s _%d = ((%s) { %s, { ._%s=",
+                sup, e->N, sup, sub, sub);
+            code_expr_1(e->Cons.arg);
+            out(" } });\n");
+            return 0;
+        }
+        return 1;
+    }
+
+    int fs (Stmt* s) {
+        if (s->sub == STMT_USER) {
+            for (int i=0; i<s->User.size; i++) {        // first generate tuples
+                visit_type(&s->User.vec[i].type, ft);
+            }
+
             const char* sup = s->User.id.val.s;
             const char* SUP = strupper(s->User.id.val.s);
 
@@ -382,141 +479,12 @@ void code_stmt (Stmt* s) {
                     sup, sup, (isrec ? "*" : ""), sup
                 );
             }
-
-            break;
-        }
-
-        case STMT_CALL:
-            code_expr_0(&s->call);
-            code_expr_1(&s->call);
-            out(";\n");
-            break;
-
-        case STMT_SEQ:
-            for (int i=0; i<s->Seq.size; i++) {
-                code_stmt(&s->Seq.vec[i]);
-            }
-            break;
-
-        case STMT_IF:
-            code_expr_0(&s->If.cond);
-            out("if (");
-            code_expr_1(&s->If.cond);
-            out(".sub) {\n");           // Bool.sub returns 0 or 1
-            code_stmt(s->If.true);
-            out("} else {\n");
-            code_stmt(s->If.false);
-            out("}\n");
-            break;
-
-        case STMT_FUNC: {
-            assert(s->Func.type.sub == TYPE_FUNC);
-
-            // f: a -> User
-            // f: (Pool,a) -> User
-            int isrec = 0; {
-                if (s->Func.type.Func.out->sub == TYPE_USER) {
-                    Stmt* decl = env_find_decl(s->env, s->Func.type.Func.out->tk.val.s);
-                    assert(decl!=NULL && decl->sub==STMT_USER);
-                    isrec = decl->User.isrec;
-                }
-            }
-
-            char tp_out[256] = "";
-            to_c_(tp_out, s->Func.type.Func.out);
-
-            char tp_inp[256] = "";
-            to_c_(tp_inp, s->Func.type.Func.inp);
-
-            fprintf (ALL.out,
-                "%s %s (%s %s arg) {\n",
-                tp_out,
-                s->Func.id.val.s,
-                (isrec ? "Pool* pool," : ""),
-                tp_inp
-            );
-            code_stmt(s->Func.body);
-            out("}\n");
-            break;
-        }
-
-        case STMT_RETURN:
-            code_expr_0(&s->ret);
-            out("return ");
-            code_expr_1(&s->ret);
-            out(";\n");
-            break;
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
-void code_0 (Stmt* s) {
-    int ft (Type* tp) {
-        if (tp->sub == TYPE_TUPLE) {
-            char tp_c [256];
-            char tp_ce[256];
-            strcpy(tp_c,  to_c (tp));
-            strcpy(tp_ce, to_ce(tp));
-
-            // IFDEF
-            out("#ifndef __");
-            out(tp_ce);
-            out("__\n");
-            out("#define __");
-            out(tp_ce);
-            out("__\n");
-
-            // STRUCT
-            out("typedef struct {\n");
-            for (int i=0; i<tp->Tuple.size; i++) {
-                code_to_c(&tp->Tuple.vec[i]);
-                fprintf(ALL.out, " _%d;\n", i+1);
-            }
-            out("} ");
-            out(tp_ce);
-            out(";\n");
-
-            // OUTPUT
-            fprintf(ALL.out,
-                "void output_%s_ (%s v) {\n"
-                "    printf(\"(\");\n",
-                tp_ce, tp_c
-            );
-            for (int i=0; i<tp->Tuple.size; i++) {
-                if (i > 0) {
-                    fprintf(ALL.out, "    printf(\",\");\n");
-                }
-                fprintf(ALL.out, "    output_%s_(v._%d);\n", to_ce(&tp->Tuple.vec[i]), i+1);
-            }
-            fprintf(ALL.out,
-                "    printf(\")\");\n"
-                "}\n"
-                "void output_%s (%s v) {\n"
-                "    output_%s_(v);\n"
-                "    puts(\"\");\n"
-                "}\n",
-                tp_ce, tp_c, tp_ce
-            );
-
-            // IFDEF
-            out("#endif\n");
-        }
-        return 1;
-    }
-
-    int fe (Expr* e) {
-        if (e->sub == EXPR_TUPLE) {
-            for (int i=0; i<e->Tuple.size; i++) {
-                visit_expr(&e->Tuple.vec[i], fe);   // first visit child
-            }
-            ft(env_expr_type(e));                   // second visit myself
             return 0;
         }
         return 1;
     }
 
-    visit_stmt(s, NULL, fe, ft);
+    visit_stmt(s, fs, fe, ft);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
