@@ -21,7 +21,7 @@ int all (const char* xp, char* src) {
     }
     code(&s);
     fclose(ALL.out);
-#if 1
+#if 0
 puts(">>>");
 puts(out);
 puts("<<<");
@@ -795,6 +795,10 @@ void t_all (void) {
         "(ln 2, col 13): undeclared variable \"x\"",
         "if () { val x:()=() }\n"
         "call output(x)\n"
+    ));
+    assert(all(
+        "(ln 1, col 8): undeclared type \"Xx\"",
+        "val x: Xx = Xx1\n"
     ));
     // TYPE REC
     assert(all(

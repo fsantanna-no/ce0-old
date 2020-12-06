@@ -50,9 +50,6 @@ Stmt* env_find_super (Env* env, const char* sub) {
 Type* env_expr_type (Expr* e) {
     static Type ret;
     switch (e->sub) {
-        case EXPR_NONE:
-            assert(0 && "bug found");
-
         case EXPR_UNIT:
             ret = (Type) { TYPE_UNIT, e->env };
             return &ret;
@@ -122,11 +119,10 @@ Type* env_expr_type (Expr* e) {
     assert(0 && "bug found");
 }
 
-#if 0
 void env_dump (Env* env) {
     while (env != NULL) {
-        if (env->stmt->sub == STMT_TYPE) {
-            puts(env->stmt->Type.id.val.s);
+        if (env->stmt->sub == STMT_USER) {
+            puts(env->stmt->User.id.val.s);
         } else {
             assert(env->stmt->sub == STMT_VAR);
             puts(env->stmt->Var.id.val.s);
@@ -134,190 +130,162 @@ void env_dump (Env* env) {
         env = env->prev;
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+
+#if 0
+void env_pool_cons (Stmt* s) {
+    void exprs (Expr* e) {
+    }
+    void rets (Stmt* t) {
+        switch (t->sub) {
+            case STMT_VAR:
+            case STMT_USER:
+            case STMT_CALL:
+            case STMT_FUNC:
+                break;
+            case STMT_SEQ:
+                for (int i=0; i<t->Seq.size; i++) {
+                    env_pool_cons(&t->Seq.vec[i]);
+                }
+                break;
+            case STMT_IF:
+                env_pool_cons(t->If.true);
+                env_pool_cons(t->If.false);
+                break;
+            case STMT_RETURN:
+                exprs(t->ret);
+                break;
+        }
+    }
+    rets();
+}
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int env_type (Env* env, Type* tp) {
-    tp->env = env;
-    switch (tp->sub) {
-        case TYPE_NONE:
-            assert(0 && "bug found");
-        case TYPE_UNIT:
-        case TYPE_NATIVE:
-        case TYPE_USER:
-            break;
-        case TYPE_TUPLE:
-            for (int i=0; i<tp->Tuple.size; i++) {
-                env_type(env, &tp->Tuple.vec[i]);
+int check_undeclared (Stmt* s) {
+    int OK = 1;
+
+    int check_type (Type* tp) {
+        if (tp->sub == TYPE_USER) {
+            if (env_find_decl(tp->env, tp->tk.val.s) == NULL) {
+                char err[512];
+                sprintf(err, "undeclared type \"%s\"", tp->tk.val.s);
+                OK = err_message(tp->tk, err);
             }
-            break;
-        default:
-            assert(0 && "TODO");
+        }
+        return 1;
     }
-    return 1;
-}
 
-///////////////////////////////////////////////////////////////////////////////
-
-int env_expr (Env* env, Expr* e) {
-    e->env = env;
-    switch (e->sub) {
-        case EXPR_NONE:
-            assert(0 && "bug found");
-        case EXPR_UNIT:
-        case EXPR_NIL:
-        case EXPR_ARG:
-        case EXPR_NATIVE:
-            break;
-        case EXPR_VAR:
-            if (env_find_decl(env, e->tk.val.s) == NULL) {
+    int check_expr (Expr* e) {
+        if (e->sub == EXPR_VAR) {
+            if (env_find_decl(e->env, e->tk.val.s) == NULL) {
                 char err[512];
                 sprintf(err, "undeclared variable \"%s\"", e->tk.val.s);
-                return err_message(e->tk, err);
+                OK = err_message(e->tk, err);
             }
-            break;
-        case EXPR_CALL:
-            if (!env_expr(env, e->Call.func)) {
-                return 0;
-            }
-            if (!env_expr(env, e->Call.arg)) {
-                return 0;
-            }
-            break;
-        case EXPR_CONS:
-            if (!env_expr(env, e->Cons.arg)) {
-                return 0;
-            }
-            break;
-        case EXPR_TUPLE: {
-            for (int i=0; i<e->Tuple.size; i++) {
-                if (!env_expr(env, &e->Tuple.vec[i])) {
-                    return 0;
-                }
-            }
-            break;
         }
-        case EXPR_INDEX:
-            if (!env_expr(env, e->Index.tuple)) {
-                return 0;
-            }
-            break;
-        case EXPR_DISC:
-            if (!env_expr(env, e->Disc.cons)) {
-                return 0;
-            }
-            break;
-        case EXPR_PRED:
-            if (!env_expr(env, e->Disc.cons)) {
-                return 0;
-            }
-            break;
+        return 1;
     }
-    return 1;
-}
 
-///////////////////////////////////////////////////////////////////////////////
-
-int env_stmt (Env** env, Stmt* s) {
-    s->env = *env;
-    switch (s->sub) {
-        case STMT_NONE:
-            assert(0 && "bug found");
-            break;
-
-        case STMT_VAR:
-            if (!env_expr(*env, &s->Var.init)) {
-                return 0;
-            }
-            if (!env_type(*env, &s->Var.type)) {
-                return 0;
-            }
-            {
-                Env* new = malloc(sizeof(Env));
-                *new = (Env) { s, *env };
-                *env = new;
-            }
-            break;
-
-        case STMT_USER:
-            {   // change env fisrt b/c of rec
-                Env* new = malloc(sizeof(Env));
-                *new = (Env) { s, *env };
-                *env = new;
-            }
-            for (int i=0; i<s->User.size; i++) {
-                if (!env_type(*env, &s->User.vec[i].type)) {
-                    return 0;
-                }
-            }
-            break;
-
-        case STMT_CALL:
-            if (!env_expr(*env, &s->call)) {
-                return 0;
-            }
-            break;
-
-        case STMT_SEQ:
-            for (int i=0; i<s->Seq.size; i++) {
-                if (!env_stmt(env, &s->Seq.vec[i])) {
-                    return 0;
-                }
-            }
-            break;
-
-        case STMT_IF: {
-            if (!env_expr(*env, &s->If.cond)) {
-                return 0;
-            }
-            Env* trash1 = *env;
-            if (!env_stmt(&trash1, s->If.true)) {
-                return 0;
-            }
-            Env* trash2 = *env;
-            if (!env_stmt(&trash2, s->If.false)) {
-                return 0;
-            }
-            break;
-        }
-
-        case STMT_FUNC: {
-            if (!env_type(*env, s->Func.type.Func.out)) {
-                return 0;
-            }
-            if (!env_type(*env, s->Func.type.Func.inp)) {
-                return 0;
-            }
-            Env* trash = *env;
-            if (!env_stmt(&trash, s->Func.body)) {
-                return 0;
-            }
-            {   // TODO: rec function must change env before body
-                Env* new = malloc(sizeof(Env));
-                *new = (Env) { s, *env };
-                *env = new;
-            }
-            break;
-        }
-
-        case STMT_RETURN:
-            if (!env_expr(*env, &s->ret)) {
-                return 0;
-            }
-            break;
+    int check_stmt (Stmt* s) {
+        return 1;
     }
-    return 1;
+
+    visit_stmt(s, check_stmt, check_expr, check_type);
+    return OK;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
 // TODO: _N_=0
-static Stmt out_stmt = { 0, STMT_VAR, NULL,
-                         .Var={ {TX_VAR,{.s="output"},0,0},0,{TYPE_FUNC},{EXPR_NONE} } };
-static Env  out_env  = { &out_stmt, NULL };
+// predeclare function `output`
+Stmt s_ = { 0, STMT_VAR, NULL,
+           .Var={ {TX_VAR,{.s="output"},0,0},0,{TYPE_FUNC},{EXPR_UNIT} } };
+Env env_ = { &s_, NULL };
+
+void set_env_stmt_expr_type (Stmt* s) {
+    Env* env = &env_;
+
+    int set_env_type (Type* tp) {
+        tp->env = env;
+        return 1;
+    }
+
+    int set_env_expr (Expr* e) {
+        e->env = env;
+        return 1;
+    }
+
+    int set_env_stmt (Stmt* s) {
+        s->env = env;
+        switch (s->sub) {
+            case STMT_RETURN:
+            case STMT_CALL:
+            case STMT_SEQ:
+                break;
+
+            case STMT_VAR: {
+                visit_type(&s->Var.type, set_env_type);
+                visit_expr(&s->Var.init, set_env_expr); // visit expr before stmt below
+                Env* new = malloc(sizeof(Env));         // visit stmt after expr above
+                *new = (Env) { s, env };
+                env = new;
+                return 0;                               // do not visit expr again
+            }
+
+            case STMT_USER: {
+                Env* new = malloc(sizeof(Env));
+                *new = (Env) { s, env };
+                env = new;
+                break;
+            }
+
+            case STMT_IF: {
+                Env* save = env;
+                visit_expr(&s->If.cond, set_env_expr);  // visit expr before stmts below
+                visit_stmt(s->If.true,  set_env_stmt, set_env_expr, set_env_type);
+                env = save;
+                visit_stmt(s->If.false, set_env_stmt, set_env_expr, set_env_type);
+                env = save;
+                return 0;                               // do not visit children, I just did that
+            }
+
+            case STMT_FUNC: {
+                Env* save = env;
+                visit_type(&s->Func.type, set_env_type);
+                visit_stmt(s->Func.body, set_env_stmt, set_env_expr, set_env_type);
+                env = save;
+
+                // set all EXPR_CONS that should be allocated in the pool
+                if (s->Func.type.Func.out->sub == TYPE_USER) {
+                    Stmt* decl = env_find_decl(s->env, s->Func.type.Func.out->tk.val.s);
+                    assert(decl!=NULL && decl->sub==STMT_USER);
+                    if (decl->User.isrec) {
+                        //assert(0 && "ok");
+                        //env_pool_cons(s->Func.body);
+                    }
+                }
+
+                // TODO: rec function must change env before body
+                Env* new = malloc(sizeof(Env));
+                *new = (Env) { s, env };
+                env = new;
+
+                return 0;       // do not visit children, I just did that
+            }
+        }
+        return 1;
+    }
+    visit_stmt(s, set_env_stmt, set_env_expr, set_env_type);
+}
+
+///////////////////////////////////////////////////////////////////////////////
 
 int env (Stmt* s) {
-    Env* env = &out_env;
-    return env_stmt(&env, s);
+    set_env_stmt_expr_type(s);
+    return check_undeclared(s);
 }

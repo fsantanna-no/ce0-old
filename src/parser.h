@@ -1,6 +1,5 @@
 typedef enum {
-    TYPE_NONE,
-    TYPE_UNIT,
+    TYPE_UNIT = 1,
     TYPE_NATIVE,
     TYPE_USER,
     TYPE_TUPLE,
@@ -8,8 +7,7 @@ typedef enum {
 } TYPE;
 
 typedef enum {
-    EXPR_NONE = 0,
-    EXPR_UNIT,
+    EXPR_UNIT = 1,
     EXPR_NIL,
     EXPR_ARG,
     EXPR_NATIVE,
@@ -23,8 +21,7 @@ typedef enum {
 } EXPR;
 
 typedef enum {
-    STMT_NONE = 0,
-    STMT_VAR,
+    STMT_VAR = 1,
     STMT_USER,
     STMT_CALL,
     STMT_SEQ,

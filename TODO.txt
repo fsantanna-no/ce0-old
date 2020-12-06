@@ -1,6 +1,14 @@
+- visitor
+- remove NONE
 - POOLS
     - como fazer track em code?
     - Succ(f()) é problema?
+    - id()
+        func f: () -> Nat {
+            val x: Nat = ...
+            return id(x)    -- does not return x, but pass x to id which might return it
+        }                   -- solution is to make x also go to the pool
+        val x[] = f()
 
 - RECS
     - f : () -> (Nat,List)

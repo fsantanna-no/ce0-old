@@ -23,8 +23,6 @@ void out (const char* v) {
 
 void to_c_ (char* out, Type* tp) {
     switch (tp->sub) {
-        case TYPE_NONE:
-            assert(0 && "bug found");
         case TYPE_UNIT:
             strcat(out, "int");
             break;
@@ -65,8 +63,6 @@ void code_to_c (Type* tp) {
 
 void to_ce_ (char* out, Type* tp) {
     switch (tp->sub) {
-        case TYPE_NONE:
-            assert(0 && "bug found");
         case TYPE_UNIT:
             strcat(out, "Unit");
             break;
@@ -178,8 +174,6 @@ void code_expr_cons_0 (Expr* e) {
 
 void code_expr_0 (Expr* e) {
     switch (e->sub) {
-        case EXPR_NONE:
-            assert(0 && "bug found");
         case EXPR_UNIT:
         case EXPR_NIL:
         case EXPR_ARG:
@@ -216,8 +210,6 @@ void code_expr_0 (Expr* e) {
 
 void code_expr_1 (Expr* e) {
     switch (e->sub) {
-        case EXPR_NONE:
-            assert(0 && "bug found");
         case EXPR_UNIT:
             out("1");
             break;
@@ -317,10 +309,6 @@ void code_expr_1 (Expr* e) {
 
 void code_stmt (Stmt* s) {
     switch (s->sub) {
-        case STMT_NONE:
-            assert(0 && "bug found");
-            break;
-
         case STMT_VAR:
             if (s->Var.pool == 0) {
                 // no pool

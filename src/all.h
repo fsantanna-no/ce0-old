@@ -2,6 +2,7 @@
 
 #include "lexer.h"
 #include "parser.h"
+#include "visit.h"
 #include "env.h"
 #include "code.h"
 

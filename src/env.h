@@ -12,4 +12,6 @@ Type* env_expr_type (Expr* e);                   // env_expr_type({EXPR_VAR, "x"
 // Returs the super user statement declaration given a sub user identifier.
 Stmt* env_find_super (Env* env, const char* sub);   // env_find_super(e, "True") -> {STMT_USER, {"Bool",...}}
 
+void env_dump (Env* env);
+
 int env (Stmt* s);
