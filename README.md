@@ -262,7 +262,46 @@ func f : () -> () {
 }
 ```
 
-# 5. Pools and recursive types
+# 4. Syntax
+
+```
+Stmt ::= `val´ VAR [`[´[NUM]`]´] `:´    -- variable declaration     val x: () = ()
+            Type `=´ Expr
+      |  `type´ [`rec´] USER `{`        -- user type declaration
+            { USER `:´ Type [`;´] }     -- subtypes
+         `}´
+      |  `call´ Expr                    -- call                     call f()
+      |  `if´ Expr `{´ Stmt `}´         -- conditional              if x { call f() } else { call g() }
+         [`else´ `{´ Stmt `}´]
+      |  `func´ VAR `:´ Type `{´        -- function                 func f : ()->() { return () }
+            Stmt
+         `}´
+      |  `return´ Expr                  -- function return          return ()
+      |  { Stmt [`;´] }                 -- sequence                 call f() ; call g()
+
+Expr ::= `(´ `)´                        -- unit value               ()
+      |  NATIVE                         -- native identifier        _printf
+      |  VAR                            -- variable identifier      i
+      |  `arg´                          -- function argument        arg
+      |  `Nil´                          -- null recursive subtype   Nil
+      |  `(´ Expr {`,´ Expr} `)´        -- tuple                    (x,())
+      |  Expr `.´ NUM                   -- tuple index              x.1
+      |  Expr `(´ Expr `)´              -- call                     f(x)
+      |  USER [`(´ Expr `)´]            -- constructor              True ()
+      |  Expr `.´ USER `!´              -- discriminator            x.True!
+      |  Expr `.´ USER `?´              -- predicate                x.False?
+      |  `(´ Expr `)´                   -- group                    (x)
+
+Type ::= `(´ `)´                        -- unit                     ()
+      |  NATIVE                         -- native                   _char
+      |  USER                           -- user type                Bool
+      |  `(´ Type {`,´ Type} `)´        -- tuple                    ((),())
+      |  Type `->´ Type                 -- function                 () -> ()
+```
+
+# A. Pools and recursive types
+
+## Goals
 
 Recursive types, such as lists and trees, require dynamic memory allocation
 since their sizes are unbounded.
@@ -277,6 +316,8 @@ Pools enable to the following properties for recursive types:
 - bounded memory allocation
 - deterministic deallocation
 - no garbage collection
+
+## Basics
 
 A recursive type declaration uses itself in one of its subtypes:
 
@@ -354,39 +395,90 @@ Then, when the root reference (e.g. `y`) goes out of scope, it is traversed to
 `free` all memory.
 -->
 
-# 4. Syntax
+## Details
+
+### Pool allocation
+
+A bounded pool is defined internally as follows:
 
 ```
-Stmt ::= `val´ VAR [`[´[NUM]`]´] `:´    -- variable declaration     val x: () = ()
-            Type `=´ Expr
-      |  `type´ [`rec´] USER `{`        -- user type declaration
-            { USER `:´ Type [`;´] }     -- subtypes
-         `}´
-      |  `call´ Expr                    -- call                     call f()
-      |  `if´ Expr `{´ Stmt `}´         -- conditional              if x { call f() } else { call g() }
-         [`else´ `{´ Stmt `}´]
-      |  `func´ VAR `:´ Type `{´        -- function                 func f : ()->() { return () }
-            Stmt
-         `}´
-      |  `return´ Expr                  -- function return          return ()
-      |  { Stmt [`;´] }                 -- sequence                 call f() ; call g()
+typedef struct {
+    void* buf;      // stack-allocated buffer
+    int   max;      // maximum size
+    int   cur;      // current size
+} Pool;
+```
 
-Expr ::= `(´ `)´                        -- unit value               ()
-      |  NATIVE                         -- native identifier        _printf
-      |  VAR                            -- variable identifier      i
-      |  `arg´                          -- function argument        arg
-      |  `Nil´                          -- null recursive subtype   Nil
-      |  `(´ Expr {`,´ Expr} `)´        -- tuple                    (x,())
-      |  Expr `.´ NUM                   -- tuple index              x.1
-      |  Expr `(´ Expr `)´              -- call                     f(x)
-      |  USER [`(´ Expr `)´]            -- constructor              True ()
-      |  Expr `.´ USER `!´              -- discriminator            x.True!
-      |  Expr `.´ USER `?´              -- predicate                x.False?
-      |  `(´ Expr `)´                   -- group                    (x)
+Pool allocation depends if the pool is bounded or unbounded:
 
-Type ::= `(´ `)´                        -- unit                     ()
-      |  NATIVE                         -- native                   _char
-      |  USER                           -- user type                Bool
-      |  `(´ Type {`,´ Type} `)´        -- tuple                    ((),())
-      |  Type `->´ Type                 -- function                 () -> ()
+```
+void* pool_alloc (Pool* pool, int n) {
+    if (pool == NULL) {                     // pool is unbounded
+        return malloc(n);                   // fall back to `malloc`
+    } else {
+        void* ret = &pool->buf[pool->cur];
+        pool->cur += n;                     // nodes are allocated sequentially
+        if (pool->cur <= cur->max) {
+            return ret;
+        } else {
+            return NULL;
+        }
+    }
+}
+```
+
+A dynamic constructor must check if all allocations succeeded.
+
+Illustrative example:
+
+```
+func f: () -> Nat {
+    val x: Nat = Succ(Succ(Nil))
+    return x
+}
+val y[]: Nat = f()    -- y[] or y[N]
+```
+
+Generated code:
+
+```
+void f (Pool* pool) {
+    int _cur = pool->cur;                       // current pool size
+    Nat* _2 = pool_alloc(pool, sizeof(Nat));
+    Nat* _1 = pool_alloc(pool, sizeof(Nat));
+    if (_2==NULL || _1==NULL) {                 // one of them failed
+        if (pool == NULL) {
+            free(_1);                           // free both
+            free(_2);
+        } else {
+            pool->cur = _cur;                   // restore pool size
+        }
+    } else {
+        *_2 = (Nat) { Succ, {._Succ=NULL} };    // assign both
+        *_1 = (Nat) { Succ, {._Succ=_2} };
+        x = _1;                                 // root value
+    }
+}
+```
+
+### Tracking assignments
+
+1. Check the root assignment for dependencies in nested scopes:
+
+```
+val y: Nat = Succ(Succ(Nil))    -- same scope: static allocation
+```
+
+```
+val y[]: Nat = f()              -- body of `f` is nested: pool allocation
+```
+
+2. Check `return` of body for dependencies:
+
+```
+return x                        -- check `x`
+```
+
+```
+val x: Nat = Succ(Succ(Nil))    -- constructor must be allocated in the received pool
 ```
