@@ -326,7 +326,8 @@ type rec Nat {  -- a natural number is either zero (`Nil`) or
     Succ: Nat   -- a successor of a natural number (`Succ(Nat)`)
 }
 
-val two: Nat = Succ(Succ(Nil))  -- `two` is the successor of the successor of zero (represented as `Nil`)
+val two: Nat = Succ(Succ(Nil))  -- `two` is the successor of the successor of zero
+                                -- (represented as `Nil`)
 ```
 
 Values of recursive types are always references:
@@ -356,7 +357,8 @@ func f: () -> Nat {
     val x: Nat = Succ(Succ(Nil))    -- constructor inside a function
     return x                        -- `x` does not survive the scope
 }
-val y[]: Nat = f()                  -- `y` is a memory pool for a Nat tree to be allocated inside `f`
+val y[]: Nat = f()                  -- `y` is a memory pool for a Nat tree
+                                    -- to be allocated inside `f`
 ```
 
 All dependencies of an assignment are tracked and all constructors are

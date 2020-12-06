@@ -1,4 +1,6 @@
 - POOLS
+    - como fazer track em code?
+    - Succ(f()) é problema?
 
 - RECS
     - f : () -> (Nat,List)
