@@ -30,7 +30,7 @@ puts("<<<");
 
     // compile
     {
-        FILE* f = popen("gcc -Wall -Wno-unused-function -Wno-format-zero-length -xc -", "w");
+        FILE* f = popen(GCC " -xc -", "w");
         assert(f != NULL);
         fputs(out, f);
         fclose(f);
@@ -96,7 +96,7 @@ void chap_01 (void) {
         "val n: (Nat,Nat) = (Nil, Succ(Nil))\n"
         "call output(n)\n"
     );
-    assert(all("(Nil, Succ (Nil))\n", INP));
+    assert(all("(Nil,Succ (Nil))\n", INP));
 
     strcpy(INP, _bool);
     strcat(INP, _nat);

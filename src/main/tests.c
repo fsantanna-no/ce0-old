@@ -30,7 +30,7 @@ puts("<<<");
 
     // compile
     {
-        FILE* f = popen("gcc -Wall -Wno-unused-function -Wno-format-zero-length -xc -", "w");
+        FILE* f = popen(GCC " -xc -", "w");
         assert(f != NULL);
         fputs(out, f);
         fclose(f);

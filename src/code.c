@@ -163,8 +163,8 @@ int ft (Type* tp) {
                     vec[i] = (Type) { TYPE_NIL, tmp.env };
                     tmp.Tuple.vec = vec;
                     //ft(&tmp);
-                    fprintf(ALL.out, "#ifndef __%s\n", to_ce(&tmp));
-                    fprintf(ALL.out, "#define __%s\n", to_ce(&tmp));
+                    fprintf(ALL.out, "#ifndef __%s__\n", to_ce(&tmp));
+                    fprintf(ALL.out, "#define __%s__\n", to_ce(&tmp));
                     fprintf(ALL.out, "typedef %s %s;\n", tp_ce, to_ce(&tmp));
                     fprintf(ALL.out, "#endif\n");
                 }

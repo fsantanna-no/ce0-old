@@ -33,7 +33,7 @@ int main (int argc, char* argv[]) {
             fout = fopen(out, "w");
         } else {
             char gcc[128];
-            sprintf(gcc, "gcc -o %s -xc -", out);
+            sprintf(gcc, GCC " -o %s -xc -", out);
             fout = popen(gcc, "w");
         }
     }
