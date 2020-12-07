@@ -402,7 +402,9 @@ void code_stmt (Stmt* s) {
                     if (sub.type.sub==TYPE_USER && (!strcmp(sup,sub.type.tk.val.s))) {
                         fprintf (ALL.out,
                             "    %s_free(&(*p)->_%s);\n"
-                            "    free(*p);\n",
+                            "    if (BET((long)_STACK,(long)*p,(long)&p)) {\n"
+                            "       free(*p);\n"
+                            "    }\n",
                             sup, sub.id.val.s
                         );
                     }
@@ -586,6 +588,9 @@ void code (Stmt* s) {
         "#include <assert.h>\n"
         "#include <stdio.h>\n"
         "#include <stdlib.h>\n"
+        "#define MIN(x,y)   (((x) < (y)) ? (x) : (y))\n"
+        "#define MAX(x,y)   (((x) > (y)) ? (x) : (y))\n"
+        "#define BET(x,y,z) (MIN(x,z)<y && y<MAX(x,z))\n"
         "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
         "#define output_Unit(x)  (output_Unit_(x), puts(\"\"))\n"
         "#define output_Nil_(x)  assert(0 && \"bug found\")\n"
@@ -609,6 +614,7 @@ void code (Stmt* s) {
         "    }\n"
         "}\n"
         "int main (void) {\n"
+        "    void* _STACK = &_STACK;\n"
         "\n"
     );
     code_stmt(s);

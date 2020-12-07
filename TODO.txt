@@ -36,7 +36,7 @@
     - output/input for strings, output_type/input_type for users
     - #define UNIT 1 // #define Unit int
     - Heap vs Stack:
-        - https://stackoverflow.com/questions/8385322/difference-between-static-memory-allocation-and-dynamic-memory-allocation
+        - https://stackoverflow.com/questions/16360620/find-out-whether-a-pointer-is-pointing-at-the-stack-heap-or-program-text
     - Cleanup
         - http://echorand.me/site/notes/articles/c_cleanup/cleanup_attribute_c.html
     - repl

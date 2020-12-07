@@ -105,6 +105,14 @@ void chap_01 (void) {
         "call output(n)\n"
     );
     assert(all("Succ (Nil)\n", INP));
+
+    strcpy(INP, _bool);
+    strcat(INP, _nat);
+    strcat (INP,
+        "val n[]: Nat = Succ(add(Nil, Succ(Nil)))\n"
+        "call output(n)\n"
+    );
+    assert(all("Succ (Succ (Nil))\n", INP));
 }
 
 int main (void) {
