@@ -57,8 +57,11 @@ Type* env_expr_type (Expr* e) {
         case EXPR_NIL:
             assert(0 && "TODO");
 
-        case EXPR_ARG:
-            assert(0 && "TODO");
+        case EXPR_ARG: {
+            Stmt* s = env_find_decl(e->env, "arg");
+            assert(s->sub == STMT_VAR);
+            return &s->Var.type;
+        }
 
         case EXPR_NATIVE:
             ret = (Type) { TYPE_NATIVE, e->env };
@@ -263,12 +266,28 @@ void set_env_stmt_expr_type (Stmt* s) {
                 visit_type(&s->Func.type, set_env_type);
 
                 // body of recursive function depends on new env
-                Env* new = malloc(sizeof(Env));
-                *new = (Env) { s, env };
-                env = new;
+                {
+                    Env* new = malloc(sizeof(Env));
+                    *new = (Env) { s, env };
+                    env = new;
+                }
 
                 Env* save = env;
+
+                // body depends on arg
+                {
+                    Stmt* arg = malloc(sizeof(Stmt));
+                    *arg = (Stmt) {
+                        0, STMT_VAR, NULL,
+                        .Var={ {TX_VAR,{.s="arg"},0,0},0,*s->Func.type.Func.out,{EXPR_UNIT} }
+                    };
+                    Env* new = malloc(sizeof(Env));
+                    *new = (Env) { arg, env };
+                    env = new;
+                }
+
                 visit_stmt(s->Func.body, set_env_stmt, set_env_expr, set_env_type);
+
                 env = save;
 
                 // set all EXPR_CONS that should be allocated in the pool
