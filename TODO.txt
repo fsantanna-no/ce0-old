@@ -10,6 +10,7 @@
         val x[] = f()
 
 - RECS
+    - remover keyword rec?
     - f : () -> (Nat,List)
     - x[]: (Nat,List) = f()
         - funcao retornar dois recs

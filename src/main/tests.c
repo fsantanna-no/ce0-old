@@ -899,6 +899,38 @@ void t_all (void) {
         "val y[]: Nat = f()\n"
         "call output(y)\n"
     ));
+    assert(all(
+        "Succ (Succ (Succ (Nil)))\n",
+        "type Bool {\n"
+        "    False: ()\n"
+        "    True:  ()\n"
+        "}\n"
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "func len: Nat -> Nat {\n"
+        "    if arg.Nil? {\n"
+        "        return Nil\n"
+        "    } else {\n"
+        "        return Succ(len(arg.Succ!))\n"
+        "    }\n"
+        "}\n"
+        "val x: Nat = Succ(Succ(Succ(Nil)))\n"
+        "val y[]: Nat = len(x)\n"
+        "call output(y)\n"
+    ));
+assert(0 && "OK");
+    assert(all(
+        "Nil\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "func f: () -> Nat {\n"
+        "    return Succ(Succ(Nil))\n"
+        "}\n"
+        "val y[1]: Nat = f()\n"
+        "call output(y)\n"
+    ));
 }
 
 void t_parser (void) {

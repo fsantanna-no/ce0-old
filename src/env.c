@@ -97,7 +97,7 @@ Type* env_expr_type (Expr* e) {
             return &env_expr_type(e->Index.tuple)->Tuple.vec[e->Index.index];
 
         case EXPR_DISC: {   // x.True
-            Type* tp = env_expr_type(e->Disc.cons);        // Bool
+            Type* tp = env_expr_type(e->Disc.cons);         // Bool
             Stmt* s  = env_find_decl(e->env, tp->tk.val.s); // type Bool { ... }
             assert(s != NULL);
             for (int i=0; i<s->User.size; i++) {
@@ -154,10 +154,13 @@ void set_pool_cons (Stmt* s) {
                 } else if (e->sub == EXPR_VAR) {
                     // find respective STMT_VAR
                     Stmt* y = env_find_decl(e->env, e->tk.val.s);
-                    assert(y!=NULL && y->sub==STMT_VAR);
-
-                    // find all EXPR_CONS/EXPR_VAR inside STMT_VAR init
-                    visit_expr(&y->Var.init, fe);
+                    assert(y != NULL);
+                    if (y->sub == STMT_VAR) {
+                        // find all EXPR_CONS/EXPR_VAR inside STMT_VAR init
+                        visit_expr(&y->Var.init, fe);
+                    } else {
+                        assert(y->sub == STMT_FUNC);
+                    }
                 }
                 return 1;
             }
@@ -257,8 +260,14 @@ void set_env_stmt_expr_type (Stmt* s) {
             }
 
             case STMT_FUNC: {
-                Env* save = env;
                 visit_type(&s->Func.type, set_env_type);
+
+                // body of recursive function depends on new env
+                Env* new = malloc(sizeof(Env));
+                *new = (Env) { s, env };
+                env = new;
+
+                Env* save = env;
                 visit_stmt(s->Func.body, set_env_stmt, set_env_expr, set_env_type);
                 env = save;
 
@@ -271,11 +280,6 @@ void set_env_stmt_expr_type (Stmt* s) {
                         //env_pool_cons(s->Func.body);
                     }
                 }
-
-                // TODO: rec function must change env before body
-                Env* new = malloc(sizeof(Env));
-                *new = (Env) { s, env };
-                env = new;
 
                 return 0;       // do not visit children, I just did that
             }

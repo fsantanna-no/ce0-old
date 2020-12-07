@@ -235,17 +235,22 @@ int fe_1 (Expr* e) {
             fprintf(ALL.out, "._%d", e->Index.index);
             return 0;
 
-        case EXPR_DISC:
+        case EXPR_DISC: {
+            Type* tp = env_expr_type(e->Disc.cons);         // Bool
+            Stmt* s  = env_find_decl(e->env, tp->tk.val.s); // type Bool { ... }
             visit_expr(e->Disc.cons, fe_1);
-            fprintf(ALL.out, "._%s", e->Disc.sub.val.s);
+            fprintf(ALL.out, "%s_%s", (s->User.isrec ? "->" : "."), e->Disc.sub.val.s);
             return 0;
+        }
 
         case EXPR_PRED: {
+            Type* tp = env_expr_type(e->Disc.cons);         // Bool
+            Stmt* s  = env_find_decl(e->env, tp->tk.val.s); // type Bool { ... }
             int isnil = (e->Pred.sub.enu == TK_NIL);
             out("((");
             visit_expr(e->Pred.cons, fe_1);
             fprintf(ALL.out, "%s == %s) ? (Bool){True,{._True=1}} : (Bool){False,{._False=1}})",
-                (isnil ? "" : ".sub"),
+                (isnil ? "" : (s->User.isrec ? "->sub" : ".sub")),
                 (isnil ? "NULL" : e->Pred.sub.val.s)
             );
             return 0;
@@ -291,7 +296,7 @@ int fe_0 (Expr* e) {
             // Nat* _1 = (Nat*) pool_alloc(pool, sizeof(Nat));
             // *_1 = __1;
             fprintf(ALL.out,
-                "%s* _%d = (%s*) pool_alloc(pool, sizeof(%s));\n"
+                "%s* _%d = (%s*) pool_alloc(_pool, sizeof(%s));\n"
                 "assert(_%d!=NULL && \"TODO\");\n"
                 "*_%d = __%d;\n",
                     sup, e->N, sup, sup, e->N, e->N, e->N);
@@ -455,10 +460,10 @@ void code_stmt (Stmt* s) {
                 out("Pool* _pool = NULL;\n");
             } else {
                 fprintf (ALL.out,
-                    "%s _buf[%d*sizeof(%s)];\n"
+                    "%s _buf[%d];\n"
                     "Pool _%d = { _buf,sizeof(_buf),0 };\n"
                     "Pool* _pool = &_%d;\n",
-                    sup, s->Var.pool, sup, s->N, s->N
+                    sup, s->Var.pool, s->N, s->N
                 );
             }
 
@@ -534,7 +539,7 @@ void code_stmt (Stmt* s) {
                 "%s %s (%s %s arg) {\n",
                 tp_out,
                 s->Func.id.val.s,
-                (isrec ? "Pool* pool," : ""),
+                (isrec ? "Pool* _pool," : ""),
                 tp_inp
             );
             code_stmt(s->Func.body);
