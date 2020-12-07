@@ -463,6 +463,11 @@ void f (Pool* pool) {
 }
 ```
 
+### Pool deallocation
+
+- stack
+- __cleanup__
+
 ### Tracking assignments
 
 1. Check the root assignment for dependencies in nested scopes:

@@ -1,11 +1,6 @@
 - POOLS
-    - como fazer track em code?
-        - comecei pelo EXPR_CONS dentro de STMT_RETURN
-            - depois tenho que ir atras dos EXPR_VAR
     - testar nao caber no pool
-    - clean/free para tirar mleak do penultimo teste
-        - fazer um com stack addr pra dar problema
-    - gerar codigo dinamico para cons em return
+    - clean/free, fazer um com stack addr pra dar problema
     - Succ(f()) é problema? ou seja, cabeca estatico e cauda dinamico
     - id()
         func f: () -> Nat {

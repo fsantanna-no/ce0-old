@@ -21,7 +21,7 @@ int all (const char* xp, char* src) {
     }
     code(&s);
     fclose(ALL.out);
-#if 1
+#if 0
 puts(">>>");
 puts(out);
 puts("<<<");

@@ -139,18 +139,31 @@ void env_dump (Env* env) {
 //      - recurse into EXPR_VAR in it
 
 void set_pool_cons (Stmt* s) {
-    // identify all rets
-    int f_rets (Stmt* s) {
-        if (s->sub == STMT_RETURN) {
+    // find all STMT_RETURN
+    int f_rets (Stmt* x) {
+        if (x->sub == STMT_RETURN) {
             int fe (Expr* e) {
+                // find all EXPR_CONS inside STMT_RETURN expr/STMT_VAR init
                 if (e->sub == EXPR_CONS) {
+                    // set EXPR_CONS to "ispool"
                     Stmt* user = env_find_super(e->env, e->Cons.sub.val.s);
                     assert(user != NULL);
                     e->Cons.ispool = user->User.isrec;  // ispool only if is also rec
+
+                // find all EXPR_VAR inside STMT_RETURN expr/STMT_VAR init
+                } else if (e->sub == EXPR_VAR) {
+                    // find respective STMT_VAR
+                    Stmt* y = env_find_decl(e->env, e->tk.val.s);
+                    assert(y!=NULL && y->sub==STMT_VAR);
+
+                    // find all EXPR_CONS/EXPR_VAR inside STMT_VAR init
+                    visit_expr(&y->Var.init, fe);
                 }
                 return 1;
             }
-            visit_expr(&s->ret, fe);
+
+            // find all EXPR_CONS/EXPR_VAR inside STMT_RETURN expr
+            visit_expr(&x->ret, fe);
         }
         return 1;
     }
