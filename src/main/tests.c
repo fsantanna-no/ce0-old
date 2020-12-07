@@ -576,7 +576,7 @@ void t_code (void) {
         assert(!strcmp(out,"((TUPLE__int__int) { 1,1 })._2"));
     }
     {
-        char out[1024] = "";
+        char out[8192] = "";
         all_init (
             stropen("w", sizeof(out), out),
             stropen("r", 0, "val a : () = () ; call _output_Unit(a)")
@@ -588,6 +588,7 @@ void t_code (void) {
         char* ret =
             "#include <assert.h>\n"
             "#include <stdio.h>\n"
+            "#include <stdlib.h>\n"
             "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
             "#define output_Unit(x)  (output_Unit_(x), puts(\"\"))\n"
             "typedef struct {\n"
@@ -595,6 +596,19 @@ void t_code (void) {
             "    int max;\n"
             "    int cur;\n"
             "} Pool;\n"
+            "void* pool_alloc (Pool* pool, int n) {\n"
+            "    if (pool == NULL) {\n"
+            "        return malloc(n);\n"
+            "    } else {\n"
+            "        void* ret = pool->buf + pool->cur;\n"
+            "        pool->cur += n;\n"
+            "        if (pool->cur <= pool->max) {\n"
+            "            return ret;\n"
+            "        } else {\n"
+            "            return NULL;\n"
+            "        }\n"
+            "    }\n"
+            "}\n"
             "int main (void) {\n"
             "\n"
             "int a = 1;\n"
@@ -605,7 +619,7 @@ void t_code (void) {
     }
     // STMT_TYPE
     {
-        char out[1024] = "";
+        char out[8192] = "";
         all_init (
             stropen("w", sizeof(out), out),
             stropen("r", 0, "type Bool { False: () ; True: () }")
@@ -617,6 +631,7 @@ void t_code (void) {
         char* ret =
             "#include <assert.h>\n"
             "#include <stdio.h>\n"
+            "#include <stdlib.h>\n"
             "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
             "#define output_Unit(x)  (output_Unit_(x), puts(\"\"))\n"
             "typedef struct {\n"
@@ -624,6 +639,19 @@ void t_code (void) {
             "    int max;\n"
             "    int cur;\n"
             "} Pool;\n"
+            "void* pool_alloc (Pool* pool, int n) {\n"
+            "    if (pool == NULL) {\n"
+            "        return malloc(n);\n"
+            "    } else {\n"
+            "        void* ret = pool->buf + pool->cur;\n"
+            "        pool->cur += n;\n"
+            "        if (pool->cur <= pool->max) {\n"
+            "            return ret;\n"
+            "        } else {\n"
+            "            return NULL;\n"
+            "        }\n"
+            "    }\n"
+            "}\n"
             "int main (void) {\n"
             "\n"
             "typedef enum {\n"

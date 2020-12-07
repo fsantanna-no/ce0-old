@@ -520,13 +520,27 @@ void code (Stmt* s) {
     out (
         "#include <assert.h>\n"
         "#include <stdio.h>\n"
+        "#include <stdlib.h>\n"
         "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
         "#define output_Unit(x)  (output_Unit_(x), puts(\"\"))\n"
         "typedef struct {\n"
-        "    void* buf;\n"  // stack-allocated buffer
-        "    int max;\n"    // maximum size
-        "    int cur;\n"    // current size
+        "    void* buf;\n"      // stack-allocated buffer
+        "    int max;\n"        // maximum size
+        "    int cur;\n"        // current size
         "} Pool;\n"
+        "void* pool_alloc (Pool* pool, int n) {\n"
+        "    if (pool == NULL) {\n"                     // pool is unbounded
+        "        return malloc(n);\n"                   // fall back to `malloc`
+        "    } else {\n"
+        "        void* ret = pool->buf + pool->cur;\n"
+        "        pool->cur += n;\n"                     // nodes are allocated sequentially
+        "        if (pool->cur <= pool->max) {\n"
+        "            return ret;\n"
+        "        } else {\n"
+        "            return NULL;\n"
+        "        }\n"
+        "    }\n"
+        "}\n"
         "int main (void) {\n"
         "\n"
     );
