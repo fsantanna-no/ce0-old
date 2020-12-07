@@ -21,7 +21,7 @@ int all (const char* xp, char* src) {
     }
     code(&s);
     fclose(ALL.out);
-#if 1
+#if 0
 puts(">>>");
 puts(out);
 puts("<<<");
@@ -96,6 +96,23 @@ const char _nat[] =
     "        return sub(x.Succ!,y.Succ!)\n"
     "    }\n"
     "}\n"
+    "\n"
+    "func mul: (Nat,Nat) -> Nat {\n"
+    "    val x: Nat = arg.1\n"
+    "    val y: Nat = arg.2\n"
+    "    if y.Nil? {\n"
+    "        return Nil\n"
+    "    } else {\n"
+    "        return add(mul(x,y.Succ!),x)\n"
+    "    }\n"
+    "}\n"
+    "\n"
+    "val one:   Nat = Succ(Nil)\n"
+    "val two:   Nat = Succ(one)\n"
+    "val three: Nat = Succ(two)\n"
+    "val four:  Nat = Succ(three)\n"
+    "val five:  Nat = Succ(four)\n"
+    "val six:   Nat = Succ(five)\n"
 ;
 
 void chap_01 (void) {
@@ -131,6 +148,14 @@ void chap_01 (void) {
         "call output(n)\n"
     );
     assert(all("Succ (Nil)\n", INP));
+
+    strcpy(INP, _bool);
+    strcat(INP, _nat);
+    strcat (INP,
+        "val n[]: Nat = mul(two,three)\n"
+        "call output(n)\n"
+    );
+    assert(all("Succ (Succ (Succ (Succ (Succ (Succ (Nil))))))\n", INP));
 }
 
 int main (void) {
