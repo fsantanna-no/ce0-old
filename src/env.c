@@ -133,36 +133,27 @@ void env_dump (Env* env) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-///////////////////////////////////////////////////////////////////////////////
+// Identify all EXPR_CONS that need to be allocated in the surrounding pool.
+//  - identify all STMT_RETURN
+//      - mark all EXPR_CONS in it
+//      - recurse into EXPR_VAR in it
 
-#if 0
-void env_pool_cons (Stmt* s) {
-    void exprs (Expr* e) {
-    }
-    void rets (Stmt* t) {
-        switch (t->sub) {
-            case STMT_VAR:
-            case STMT_USER:
-            case STMT_CALL:
-            case STMT_FUNC:
-                break;
-            case STMT_SEQ:
-                for (int i=0; i<t->Seq.size; i++) {
-                    env_pool_cons(&t->Seq.vec[i]);
+void set_pool_cons (Stmt* s) {
+    // identify all rets
+    int f_rets (Stmt* s) {
+        if (s->sub == STMT_RETURN) {
+            int fe (Expr* e) {
+                if (e->sub == EXPR_CONS) {
+                    e->Cons.ispool = 1;
                 }
-                break;
-            case STMT_IF:
-                env_pool_cons(t->If.true);
-                env_pool_cons(t->If.false);
-                break;
-            case STMT_RETURN:
-                exprs(t->ret);
-                break;
+                return 1;
+            }
+            visit_expr(&s->ret, fe);
         }
+        return 1;
     }
-    rets();
+    visit_stmt(s, f_rets, NULL, NULL);
 }
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -283,5 +274,6 @@ void set_env_stmt_expr_type (Stmt* s) {
 
 int env (Stmt* s) {
     set_env_stmt_expr_type(s);
+    set_pool_cons(s);
     return check_undeclared(s);
 }

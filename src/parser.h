@@ -73,6 +73,7 @@ typedef struct Expr {
         struct {        // EXPR_CONS
             Tk sub;                     // .True
             struct Expr* arg;
+            int ispool;
         } Cons;
         struct {        // EXPR_DISC
             struct Expr* cons;          // Bool

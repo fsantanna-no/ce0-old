@@ -165,7 +165,7 @@ int parser_expr_one (Expr* ret) {
             *arg = (Expr) { _N_++, EXPR_UNIT, NULL };
         }
 
-        *ret = (Expr) { _N_++, EXPR_CONS, NULL, { .Cons={sub,arg} } };
+        *ret = (Expr) { _N_++, EXPR_CONS, NULL, { .Cons={sub,arg,0} } };
 
     } else {
         return err_expected("expression");

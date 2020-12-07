@@ -1,8 +1,9 @@
-- visitor for code
-- env_pool_cons
 - POOLS
+    - ger ar codigo dinamico para cons em return
+    - comecei pelo EXPR_CONS dentro de STMT_RETURN
+        - depois tenho que ir atras dos EXPR_VAR
     - como fazer track em code?
-    - Succ(f()) é problema?
+    - Succ(f()) é problema? ou seja, cabeca estatico e cauda dinamico
     - id()
         func f: () -> Nat {
             val x: Nat = ...
