@@ -292,8 +292,9 @@ int fe_0 (Expr* e) {
             // *_1 = __1;
             fprintf(ALL.out,
                 "%s* _%d = (%s*) pool_alloc(pool, sizeof(%s));\n"
+                "assert(_%d!=NULL && \"TODO\");\n"
                 "*_%d = __%d;\n",
-                    sup, e->N, sup, sup, e->N, e->N);
+                    sup, e->N, sup, sup, e->N, e->N, e->N);
         } else if (user->User.isrec) {
             // Bool* _1 = &__1;
             fprintf(ALL.out, "%s* _%d = &__%d;\n", sup, e->N, e->N);
@@ -356,6 +357,28 @@ void code_stmt (Stmt* s) {
                 );
             }
             out("\n");
+
+            // CLEAN
+            if (s->User.isrec) {
+                fprintf (ALL.out,
+                    "void %s_free (struct %s** p) {\n"
+                    "    if (*p == NULL) { return; }\n",
+                    sup, sup
+                );
+
+                for (int i=0; i<s->User.size; i++) {
+                    Sub sub = s->User.vec[i];
+                    if (sub.type.sub==TYPE_USER && (!strcmp(sup,sub.type.tk.val.s))) {
+                        fprintf (ALL.out,
+                            "    %s_free(&(*p)->_%s);\n"
+                            "    free(*p);\n",
+                            sup, sub.id.val.s
+                        );
+                    }
+                }
+
+                out("}\n");
+            }
 
             // OUTPUT
             {
@@ -420,8 +443,11 @@ void code_stmt (Stmt* s) {
             }
             break;
 
-        case STMT_VAR:
+        case STMT_VAR: {
             visit_type(&s->Var.type, ft);
+
+            char sup[256];
+            strcpy(sup, to_ce(&s->Var.type));
 
             if (s->Var.pool == 0) {
                 // no pool
@@ -429,9 +455,10 @@ void code_stmt (Stmt* s) {
                 out("Pool* _pool = NULL;\n");
             } else {
                 fprintf (ALL.out,
-                    "Pool _%d;\n"
+                    "%s _buf[%d*sizeof(%s)];\n"
+                    "Pool _%d = { _buf,sizeof(_buf),0 };\n"
                     "Pool* _pool = &_%d;\n",
-                    s->N, s->N
+                    sup, s->Var.pool, sup, s->N, s->N
                 );
             }
 
@@ -440,11 +467,18 @@ void code_stmt (Stmt* s) {
             code_to_c(&s->Var.type);
             fputs(" ", ALL.out);
             fputs(s->Var.id.val.s, ALL.out);
+            if (s->Var.pool == -1) {
+                fprintf (ALL.out,
+                    " __attribute__ ((__cleanup__(%s_free))) ",
+                    sup
+                );
+            }
             fputs(" = ", ALL.out);
 
             visit_expr(&s->Var.init, fe_1);
             out(";\n");
             break;
+        }
 
         case STMT_CALL:
             visit_expr(&s->ret, fe_0);

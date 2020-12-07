@@ -1,8 +1,11 @@
 - POOLS
-    - ger ar codigo dinamico para cons em return
-    - comecei pelo EXPR_CONS dentro de STMT_RETURN
-        - depois tenho que ir atras dos EXPR_VAR
     - como fazer track em code?
+        - comecei pelo EXPR_CONS dentro de STMT_RETURN
+            - depois tenho que ir atras dos EXPR_VAR
+    - testar nao caber no pool
+    - clean/free para tirar mleak do penultimo teste
+        - fazer um com stack addr pra dar problema
+    - gerar codigo dinamico para cons em return
     - Succ(f()) é problema? ou seja, cabeca estatico e cauda dinamico
     - id()
         func f: () -> Nat {
@@ -18,6 +21,11 @@
         - mas o retorno tem que ser uma variavel só que em teoria teria que guardar os dois recs no mesmo pool?
 
 - MINOR
+    - type Expr: (n:Int,env:Env) {
+        Tuple: (size:Int, vec:[Expr])
+        Stmt: (...)
+      }
+    - named tuples (struct/record) (Int,Int) --> (x:Int,y:Int)
     - input function polymorphic
     - -Wno-format-zero-length
     - types.c
@@ -39,6 +47,9 @@
         - prevent side effect of expr to be lost:
             - _1 = exp ; output(_1);
         - >>> if not finished
+    - Exceptions:
+        - https://www.programmersought.com/article/404520682/
+        - https://www.usenix.org/legacy/publications/library/proceedings/sa92/moen.pdf
 
 - Ce0
     - implemented in C

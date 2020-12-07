@@ -882,6 +882,17 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "func f: () -> Nat {\n"
+        "    return Succ(Succ(Nil))\n"
+        "}\n"
+        "val y[5]: Nat = f()\n"
+        "call output(y)\n"
+    ));
+    assert(all(
+        "Succ (Succ (Nil))\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "func f: () -> Nat {\n"
         "    val x: Nat = Succ(Succ(Nil))\n"
         "    return x\n"
         "}\n"
