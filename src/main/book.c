@@ -86,6 +86,16 @@ const char _nat[] =
     "        return Succ(add(x,y.Succ!))\n"
     "    }\n"
     "}\n"
+    "\n"
+    "func sub: (Nat,Nat) -> Nat {\n"
+    "    val x: Nat = arg.1\n"
+    "    val y: Nat = arg.2\n"
+    "    if y.Nil? {\n"
+    "        return x\n"
+    "    } else {\n"
+    "        return sub(x.Succ!,y.Succ!)\n"
+    "    }\n"
+    "}\n"
 ;
 
 void chap_01 (void) {
@@ -113,6 +123,14 @@ void chap_01 (void) {
         "call output(n)\n"
     );
     assert(all("Succ (Succ (Nil))\n", INP));
+
+    strcpy(INP, _bool);
+    strcat(INP, _nat);
+    strcat (INP,
+        "val n[]: Nat = sub(Succ(Nil), Nil)\n"
+        "call output(n)\n"
+    );
+    assert(all("Succ (Nil)\n", INP));
 }
 
 int main (void) {

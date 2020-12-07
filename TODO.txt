@@ -1,7 +1,5 @@
 - POOLS
     - testar nao caber no pool
-    - clean/free, fazer um com stack addr pra dar problema
-    - Succ(f()) é problema? ou seja, cabeca estatico e cauda dinamico
     - id()
         func f: () -> Nat {
             val x: Nat = ...
@@ -35,10 +33,6 @@
     - type names must contain lowercase (error in C generation upper/lower)
     - output/input for strings, output_type/input_type for users
     - #define UNIT 1 // #define Unit int
-    - Heap vs Stack:
-        - https://stackoverflow.com/questions/16360620/find-out-whether-a-pointer-is-pointing-at-the-stack-heap-or-program-text
-    - Cleanup
-        - http://echorand.me/site/notes/articles/c_cleanup/cleanup_attribute_c.html
     - repl
         - prevent side effect of expr to be lost:
             - _1 = exp ; output(_1);

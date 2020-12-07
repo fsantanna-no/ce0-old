@@ -402,7 +402,7 @@ void code_stmt (Stmt* s) {
                     if (sub.type.sub==TYPE_USER && (!strcmp(sup,sub.type.tk.val.s))) {
                         fprintf (ALL.out,
                             "    %s_free(&(*p)->_%s);\n"
-                            "    if (BET((long)_STACK,(long)*p,(long)&p)) {\n"
+                            "    if (!BET((long)_STACK,(long)*p,(long)&p)) {\n"
                             "       free(*p);\n"
                             "    }\n",
                             sup, sub.id.val.s
