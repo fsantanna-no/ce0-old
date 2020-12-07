@@ -21,7 +21,7 @@ int all (const char* xp, char* src) {
     }
     code(&s);
     fclose(ALL.out);
-#if 0
+#if 1
 puts(">>>");
 puts(out);
 puts("<<<");
@@ -591,6 +591,8 @@ void t_code (void) {
             "#include <stdlib.h>\n"
             "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
             "#define output_Unit(x)  (output_Unit_(x), puts(\"\"))\n"
+            "#define output_Nil_(x)  assert(0 && \"bug found\")\n"
+            "#define output_Nil(x)   assert(0 && \"bug found\")\n"
             "typedef struct {\n"
             "    void* buf;\n"
             "    int max;\n"
@@ -634,6 +636,8 @@ void t_code (void) {
             "#include <stdlib.h>\n"
             "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
             "#define output_Unit(x)  (output_Unit_(x), puts(\"\"))\n"
+            "#define output_Nil_(x)  assert(0 && \"bug found\")\n"
+            "#define output_Nil(x)   assert(0 && \"bug found\")\n"
             "typedef struct {\n"
             "    void* buf;\n"
             "    int max;\n"
@@ -829,6 +833,14 @@ void t_all (void) {
         "val x: Xx = Xx1\n"
     ));
     // TYPE REC
+    assert(all(
+        "Nil\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "val n: Nat = (Nil,(Nil,Nil)).1\n"
+        "call output(n)\n"
+    ));
     assert(all(
         "True\n",
         "type Bool {\n"

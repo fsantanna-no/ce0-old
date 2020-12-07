@@ -17,7 +17,23 @@ A comment starts with `--` and runs until the end of the line:
 -- this is a single line comment
 ```
 
-## Symbols and Keywords
+## Keywords and Symbols
+
+The following keywords are reserved:
+
+```
+    arg         -- function argument
+    call        -- function call
+    else        -- conditional statement
+    func        -- function declaration
+    if          -- conditional statement
+    Nil         -- null subtype
+    output      -- output function
+    rec         -- type, function recursive declaration
+    return      -- function return
+    type        -- new type declaration
+    val         -- immutable variable declaration
+```
 
 The following symbols are valid:
 
@@ -33,22 +49,6 @@ The following symbols are valid:
     .           -- tuple index, type predicate & discriminator
     !           -- type discriminator
     ?           -- type predicate
-```
-
-The following keywords are reserved and cannot be used as identifiers:
-
-```
-    arg         -- function argument
-    call        -- function call
-    else        -- conditional statement
-    func        -- function declaration
-    if          -- conditional statement
-    Nil         -- null subtype
-    output      -- output function
-    rec         -- type, function recursive declaration
-    return      -- function return
-    type        -- new type declaration
-    val         -- immutable variable declaration
 ```
 
 ## Identifiers

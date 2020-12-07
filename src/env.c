@@ -55,7 +55,8 @@ Type* env_expr_type (Expr* e) {
             return &ret;
 
         case EXPR_NIL:
-            assert(0 && "TODO");
+            ret = (Type) { TYPE_NIL, e->env };
+            return &ret;
 
         case EXPR_ARG: {
             Stmt* s = env_find_decl(e->env, "arg");

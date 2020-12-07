@@ -11,11 +11,17 @@ int all (const char* xp, char* src) {
         stropen("r", 0, src)
     );
     Stmt s;
-    assert(parser(&s));
-    assert(env(&s));
+    if (!parser(&s)) {
+        puts(ALL.err);
+        return 0;
+    }
+    if (!env(&s)) {
+        puts(ALL.err);
+        return 0;
+    }
     code(&s);
     fclose(ALL.out);
-#if 0
+#if 1
 puts(">>>");
 puts(out);
 puts("<<<");
@@ -35,6 +41,7 @@ puts("<<<");
         FILE* f = popen("./a.out", "r");
         assert(f != NULL);
         char* cur = out;
+        out[0] = '\0';
         int n = sizeof(out) - 1;
         while (1) {
             char* ret = fgets(cur,n,f);
@@ -45,6 +52,7 @@ puts("<<<");
             cur += strlen(ret);
         }
     }
+puts(out);
 #if 0
 puts(">>>");
 puts(out);
@@ -81,12 +89,22 @@ const char _nat[] =
 ;
 
 void chap_01 (void) {
+    strcpy (INP,
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "val n: (Nat,Nat) = (Nil, Succ(Nil))\n"
+        "call output(n)\n"
+    );
+    assert(all("(Nil, Succ (Nil))\n", INP));
+
     strcpy(INP, _bool);
     strcat(INP, _nat);
     strcat (INP,
-        "call output()"
+        "val n[]: Nat = add (Nil, Succ(Nil))\n"
+        "call output(n)\n"
     );
-    assert(all("()\n", INP));
+    assert(all("Succ (Nil)\n", INP));
 }
 
 int main (void) {

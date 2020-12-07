@@ -29,6 +29,9 @@ void to_ce_ (char* out, Type* tp) {
         case TYPE_NATIVE:
             strcat(out, &tp->tk.val.s[1]);
             break;
+        case TYPE_NIL:
+            strcat(out, "Nil");
+            break;
         case TYPE_USER: {
             strcat(out, tp->tk.val.s);
             break;
@@ -40,7 +43,7 @@ void to_ce_ (char* out, Type* tp) {
                 to_ce_(out, &tp->Tuple.vec[i]);
             }
             break;
-        default:
+        case TYPE_FUNC:
             assert(0 && "TODO");
     }
 }
@@ -66,6 +69,9 @@ void to_c_ (char* out, Type* tp) {
         case TYPE_NATIVE:
             strcat(out, &tp->tk.val.s[1]);
             break;
+        case TYPE_NIL:
+            strcat(out, "void*");
+            break;
         case TYPE_USER: {
             Stmt* s = env_find_decl(tp->env, tp->tk.val.s);
             if (s!=NULL && s->User.isrec) strcat(out, "struct ");
@@ -80,7 +86,7 @@ void to_c_ (char* out, Type* tp) {
                 to_ce_(out, &tp->Tuple.vec[i]);
             }
             break;
-        default:
+        case TYPE_FUNC:
             assert(0 && "TODO");
     }
 }
@@ -90,10 +96,6 @@ char* to_c (Type* tp) {
     out[0] = '\0';
     to_c_(out, tp);
     return out;
-}
-
-void code_to_c (Type* tp) {
-    out(to_c(tp));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -116,7 +118,7 @@ int ft (Type* tp) {
         // STRUCT
         out("typedef struct {\n");
         for (int i=0; i<tp->Tuple.size; i++) {
-            code_to_c(&tp->Tuple.vec[i]);
+            out(to_c(&tp->Tuple.vec[i]));
             fprintf(ALL.out, " _%d;\n", i+1);
         }
         out("} ");
@@ -144,6 +146,30 @@ int ft (Type* tp) {
             "}\n",
             tp_ce, tp_c, tp_ce
         );
+
+        // create mock types TUPLE__NIL__*
+        // TUPLE_NAT_NAT
+        // TUPLE_NIL_NAT
+        // TUPLE_NAT_NIL
+        for (int i=0; i<tp->Tuple.size; i++) {
+            Type* it = &tp->Tuple.vec[i];
+            if (it->sub == TYPE_USER) {
+                Stmt* s = env_find_decl(it->env, it->tk.val.s);
+                assert(s!=NULL && s->sub==STMT_USER);
+                if (s->User.isrec) {
+                    Type tmp = *tp;
+                    Type vec[tp->Tuple.size];
+                    memcpy(vec, tp->Tuple.vec, sizeof(vec));
+                    vec[i] = (Type) { TYPE_NIL, tmp.env };
+                    tmp.Tuple.vec = vec;
+                    //ft(&tmp);
+                    fprintf(ALL.out, "#ifndef __%s\n", to_ce(&tmp));
+                    fprintf(ALL.out, "#define __%s\n", to_ce(&tmp));
+                    fprintf(ALL.out, "typedef %s %s;\n", tp_ce, to_ce(&tmp));
+                    fprintf(ALL.out, "#endif\n");
+                }
+            }
+        }
 
         // IFDEF
         out("#endif\n");
@@ -218,7 +244,7 @@ int fe_1 (Expr* e) {
 
         case EXPR_TUPLE:
             out("((");
-            code_to_c(env_expr_type(e));
+            out(to_c(env_expr_type(e)));
             out(") { ");
             for (int i=0; i<e->Tuple.size; i++) {
                 //fprintf (ALL.out[OGLOB], "%c _%d=", ((i==0) ? ' ' : ','), i);
@@ -350,7 +376,7 @@ void code_stmt (Stmt* s) {
                 for (int i=0; i<s->User.size; i++) {
                     Sub sub = s->User.vec[i];
                     out("        ");
-                    code_to_c(&sub.type);
+                    out(to_c(&sub.type));
                     out(" _");
                     out(sub.id.val.s);      // int _True
                     out(";\n");
@@ -469,7 +495,7 @@ void code_stmt (Stmt* s) {
 
             visit_expr(&s->Var.init, fe_0);
 
-            code_to_c(&s->Var.type);
+            out(to_c(&s->Var.type));
             fputs(" ", ALL.out);
             fputs(s->Var.id.val.s, ALL.out);
             if (s->Var.pool == -1) {
@@ -562,6 +588,8 @@ void code (Stmt* s) {
         "#include <stdlib.h>\n"
         "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
         "#define output_Unit(x)  (output_Unit_(x), puts(\"\"))\n"
+        "#define output_Nil_(x)  assert(0 && \"bug found\")\n"
+        "#define output_Nil(x)   assert(0 && \"bug found\")\n"
         "typedef struct {\n"
         "    void* buf;\n"      // stack-allocated buffer
         "    int max;\n"        // maximum size
