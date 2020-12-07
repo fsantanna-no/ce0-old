@@ -21,7 +21,7 @@ int all (const char* xp, char* src) {
     }
     code(&s);
     fclose(ALL.out);
-#if 0
+#if 1
 puts(">>>");
 puts(out);
 puts("<<<");
@@ -657,7 +657,6 @@ void t_code (void) {
             "    output_Bool_(v);\n"
             "    puts(\"\");\n"
             "}\n"
-            ";\n"
             "\n"
             "}\n";
         assert(!strcmp(out,ret));
@@ -838,6 +837,17 @@ void t_all (void) {
         "call _output_Nat(Succ(Succ(Nil)))\n"
     ));
     // POOL
+    assert(all(
+        "Succ (Succ (Nil))\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "func f: () -> Nat {\n"
+        "    return Succ(Succ(Nil))\n"
+        "}\n"
+        "val y[]: Nat = f()\n"
+        "call output(y)\n"
+    ));
     assert(all(
         "Succ (Succ (Nil))\n",
         "type rec Nat {\n"

@@ -144,7 +144,9 @@ void set_pool_cons (Stmt* s) {
         if (s->sub == STMT_RETURN) {
             int fe (Expr* e) {
                 if (e->sub == EXPR_CONS) {
-                    e->Cons.ispool = 1;
+                    Stmt* user = env_find_super(e->env, e->Cons.sub.val.s);
+                    assert(user != NULL);
+                    e->Cons.ispool = user->User.isrec;  // ispool only if is also rec
                 }
                 return 1;
             }
