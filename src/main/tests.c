@@ -562,7 +562,7 @@ void t_code (void) {
         Expr e = { _N_++, EXPR_TUPLE, NULL, {.Tuple={2,es}} };
         code_expr_1(&e);
         fclose(ALL.out);
-        assert(!strcmp(out,"((TUPLE__int__int) { 1,1 })"));
+        assert(!strcmp(out,"((TUPLE__Unit__Unit) { 1,1 })"));
     }
     // EXPR_INDEX
     {
@@ -573,7 +573,7 @@ void t_code (void) {
         Expr e = { _N_++, EXPR_INDEX, NULL, { .Index={.tuple=&tuple,.index=2} } };
         code_expr_1(&e);
         fclose(ALL.out);
-        assert(!strcmp(out,"((TUPLE__int__int) { 1,1 })._2"));
+        assert(!strcmp(out,"((TUPLE__Unit__Unit) { 1,1 })._2"));
     }
     {
         char out[8192] = "";

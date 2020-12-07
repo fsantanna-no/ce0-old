@@ -21,6 +21,43 @@ void out (const char* v) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+void to_ce_ (char* out, Type* tp) {
+    switch (tp->sub) {
+        case TYPE_UNIT:
+            strcat(out, "Unit");
+            break;
+        case TYPE_NATIVE:
+            strcat(out, &tp->tk.val.s[1]);
+            break;
+        case TYPE_USER: {
+            strcat(out, tp->tk.val.s);
+            break;
+        }
+        case TYPE_TUPLE:
+            strcat(out, "TUPLE");
+            for (int i=0; i<tp->Tuple.size; i++) {
+                strcat(out, "__");
+                to_ce_(out, &tp->Tuple.vec[i]);
+            }
+            break;
+        default:
+            assert(0 && "TODO");
+    }
+}
+
+char* to_ce (Type* tp) {
+    static char out[256];
+    out[0] = '\0';
+    to_ce_(out, tp);
+    return out;
+}
+
+void code_to_ce (Type* tp) {
+    out(to_ce(tp));
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 void to_c_ (char* out, Type* tp) {
     switch (tp->sub) {
         case TYPE_UNIT:
@@ -40,7 +77,7 @@ void to_c_ (char* out, Type* tp) {
             strcat(out, "TUPLE");
             for (int i=0; i<tp->Tuple.size; i++) {
                 strcat(out, "__");
-                to_c_(out, &tp->Tuple.vec[i]);
+                to_ce_(out, &tp->Tuple.vec[i]);
             }
             break;
         default:
@@ -57,43 +94,6 @@ char* to_c (Type* tp) {
 
 void code_to_c (Type* tp) {
     out(to_c(tp));
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
-void to_ce_ (char* out, Type* tp) {
-    switch (tp->sub) {
-        case TYPE_UNIT:
-            strcat(out, "Unit");
-            break;
-        case TYPE_NATIVE:
-            strcat(out, &tp->tk.val.s[1]);
-            break;
-        case TYPE_USER: {
-            strcat(out, tp->tk.val.s);
-            break;
-        }
-        case TYPE_TUPLE:
-            strcat(out, "TUPLE");
-            for (int i=0; i<tp->Tuple.size; i++) {
-                strcat(out, "__");
-                to_c_(out, &tp->Tuple.vec[i]);
-            }
-            break;
-        default:
-            assert(0 && "TODO");
-    }
-}
-
-char* to_ce (Type* tp) {
-    static char out[256];
-    out[0] = '\0';
-    to_ce_(out, tp);
-    return out;
-}
-
-void code_to_ce (Type* tp) {
-    out(to_ce(tp));
 }
 
 ///////////////////////////////////////////////////////////////////////////////

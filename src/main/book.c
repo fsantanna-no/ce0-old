@@ -15,7 +15,7 @@ int all (const char* xp, char* src) {
     assert(env(&s));
     code(&s);
     fclose(ALL.out);
-#if 1
+#if 0
 puts(">>>");
 puts(out);
 puts("<<<");
@@ -57,8 +57,15 @@ puts("<<<");
 
 static char INP[8192];
 
+const char _bool[] =
+    "type Bool {\n"
+    "    False: ()\n"
+    "    True:  ()\n"
+    "}\n"
+;
+
 const char _nat[] =
-    "type Nat {\n"
+    "type rec Nat {\n"
     "   Succ: Nat\n"
     "}\n"
     "\n"
@@ -74,9 +81,10 @@ const char _nat[] =
 ;
 
 void chap_01 (void) {
-    strcpy(INP, _nat);
+    strcpy(INP, _bool);
+    strcat(INP, _nat);
     strcat (INP,
-        "call _show_Unit()"
+        "call output()"
     );
     assert(all("()\n", INP));
 }
