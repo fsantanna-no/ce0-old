@@ -97,7 +97,7 @@ Type* env_expr_type (Expr* e) {
             return &env_expr_type(e->Index.tuple)->Tuple.vec[e->Index.index];
 
         case EXPR_DISC: {   // x.True
-            Type* tp = env_expr_type(e->Disc.cons);         // Bool
+            Type* tp = env_expr_type(e->Disc.val);         // Bool
             Stmt* s  = env_find_decl(e->env, tp->tk.val.s); // type Bool { ... }
             assert(s != NULL);
             for (int i=0; i<s->User.size; i++) {

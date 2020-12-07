@@ -236,19 +236,19 @@ int fe_1 (Expr* e) {
             return 0;
 
         case EXPR_DISC: {
-            Type* tp = env_expr_type(e->Disc.cons);         // Bool
+            Type* tp = env_expr_type(e->Disc.val);          // Bool
             Stmt* s  = env_find_decl(e->env, tp->tk.val.s); // type Bool { ... }
-            visit_expr(e->Disc.cons, fe_1);
+            visit_expr(e->Disc.val, fe_1);
             fprintf(ALL.out, "%s_%s", (s->User.isrec ? "->" : "."), e->Disc.sub.val.s);
             return 0;
         }
 
         case EXPR_PRED: {
-            Type* tp = env_expr_type(e->Disc.cons);         // Bool
+            Type* tp = env_expr_type(e->Pred.val);          // Bool
             Stmt* s  = env_find_decl(e->env, tp->tk.val.s); // type Bool { ... }
             int isnil = (e->Pred.sub.enu == TK_NIL);
             out("((");
-            visit_expr(e->Pred.cons, fe_1);
+            visit_expr(e->Pred.val, fe_1);
             fprintf(ALL.out, "%s == %s) ? (Bool){True,{._True=1}} : (Bool){False,{._False=1}})",
                 (isnil ? "" : (s->User.isrec ? "->sub" : ".sub")),
                 (isnil ? "NULL" : e->Pred.sub.val.s)

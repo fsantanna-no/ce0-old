@@ -202,16 +202,16 @@ int parser_expr (Expr* ret) {
             } else if (accept(TX_USER) || accept(TK_NIL)) {
                 int isnil = (ALL.tk0.enu == TK_NIL);
                 Tk tk = ALL.tk0;
-                Expr* cons = malloc(sizeof(Expr));
-                assert(cons != NULL);
-                *cons = *ret;
+                Expr* val = malloc(sizeof(Expr));
+                assert(val != NULL);
+                *val = *ret;
                 if (accept('?')) {
-                    *ret = (Expr) { _N_++, EXPR_PRED, NULL, .Pred={cons,tk} };
+                    *ret = (Expr) { _N_++, EXPR_PRED, NULL, .Pred={val,tk} };
                 } else if (accept('!')) {
                     if (isnil) {
                         return 0;
                     }
-                    *ret = (Expr) { _N_++, EXPR_DISC, NULL, .Disc={cons,tk} };
+                    *ret = (Expr) { _N_++, EXPR_DISC, NULL, .Disc={val,tk} };
                 } else {
                     return err_expected("`?´ or `!´");
                 }

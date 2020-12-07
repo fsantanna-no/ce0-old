@@ -50,10 +50,10 @@ void visit_expr (Expr* e, f_expr fe) {
             visit_expr(e->Cons.arg, fe);
             break;
         case EXPR_DISC:
-            visit_expr(e->Disc.cons, fe);
+            visit_expr(e->Disc.val, fe);
             break;
         case EXPR_PRED:
-            visit_expr(e->Disc.cons, fe);
+            visit_expr(e->Disc.val, fe);
             break;
     }
 }

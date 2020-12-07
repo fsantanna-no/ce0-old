@@ -76,11 +76,11 @@ typedef struct Expr {
             int ispool;
         } Cons;
         struct {        // EXPR_DISC
-            struct Expr* cons;          // Bool
+            struct Expr* val;           // Bool.True
             Tk sub;                     // .True!
         } Disc;
         struct {        // EXPR_PRED
-            struct Expr* cons;          // Bool
+            struct Expr* val;           // Bool.True
             Tk sub;                     // .True?
         } Pred;
     };
