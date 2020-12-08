@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define DEBUG
+
 #include "../all.h"
 
 int all (const char* xp, char* src) {
@@ -12,26 +14,32 @@ int all (const char* xp, char* src) {
         stropen("w", sizeof(out), out),
         stropen("r", 0, src)
     )) {
-        //puts(ALL.err);
+#ifdef DEBUG
+        puts(ALL.err);
+#endif
         return !strcmp(ALL.err, xp);
     }
 
     if (!parser(&s)) {
-        //puts(ALL.err);
+#ifdef DEBUG
+        puts(ALL.err);
+#endif
         return !strcmp(ALL.err, xp);
     }
 
     if (!env(&s)) {
-        //puts(ALL.err);
+        puts(ALL.err);
         return !strcmp(ALL.err, xp);
     }
     code(&s);
     fclose(ALL.out);
-#if 0
-puts(">>>");
-puts(out);
-puts("<<<");
+
+#ifdef DEBUG
+    puts(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    puts(out);
+    puts("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
 #endif
+
     remove("a.out");
 
     // compile
@@ -57,13 +65,15 @@ puts("<<<");
             cur += strlen(ret);
         }
     }
-#if 0
-puts(">>>");
-puts(out);
-puts("---");
-puts(xp);
-puts("<<<");
+
+#ifdef DEBUG
+    puts(">>>");
+    puts(out);
+    puts("---");
+    puts(xp);
+    puts("<<<");
 #endif
+
     return !strcmp(out,xp);
 }
 
@@ -607,8 +617,8 @@ void t_code (void) {
             "#define BET(x,y,z) (MIN(x,z)<y && y<MAX(x,z))\n"
             "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
             "#define output_Unit(x)  (output_Unit_(x), puts(\"\"))\n"
-            "#define output_Nil_(x)  assert(0 && \"bug found\")\n"
-            "#define output_Nil(x)   assert(0 && \"bug found\")\n"
+            "#define output_Nil_(x)  (assert((x)==NULL), printf(\"Nil\"))\n"
+            "#define output_Nil(x)   (output_Nil_(x), puts(\"\"))\n"
             "typedef struct {\n"
             "    void* buf;\n"
             "    int max;\n"
@@ -656,8 +666,8 @@ void t_code (void) {
             "#define BET(x,y,z) (MIN(x,z)<y && y<MAX(x,z))\n"
             "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
             "#define output_Unit(x)  (output_Unit_(x), puts(\"\"))\n"
-            "#define output_Nil_(x)  assert(0 && \"bug found\")\n"
-            "#define output_Nil(x)   assert(0 && \"bug found\")\n"
+            "#define output_Nil_(x)  (assert((x)==NULL), printf(\"Nil\"))\n"
+            "#define output_Nil(x)   (output_Nil_(x), puts(\"\"))\n"
             "typedef struct {\n"
             "    void* buf;\n"
             "    int max;\n"
@@ -913,6 +923,36 @@ void t_all (void) {
     ));
     // POOL
     assert(all(
+        "Nil\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "call output(Nil)\n"
+    ));
+    assert(all(
+        "Succ (Nil)\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "call output(Succ(Nil))\n"
+    ));
+    assert(all(
+        "(ln 5, col 13): missing pool for return of \"f\"",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "func f: () -> Nat {}\n"
+        "call output(f())\n"
+    ));
+    assert(all(
+        "(ln 5, col 6): missing pool for return of \"f\"",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "func f: () -> Nat {}\n"
+        "call f()\n"
+    ));
+    assert(all(
         "Succ (Succ (Nil))\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
@@ -967,6 +1007,7 @@ void t_all (void) {
         "call output(y)\n"
     ));
 assert(0 && "OK");
+    // TODO: bounded allocation fail
     assert(all(
         "Nil\n",
         "type rec Nat {\n"

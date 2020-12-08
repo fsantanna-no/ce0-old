@@ -1,12 +1,3 @@
-- main testar progs com erros
-    - mover p/ tests.
-- erro tree -> three
-- erro output(fthree()) em vez de x=fthree() ; output(x)
-
-- verificar ultimo exemplo do fthree
-    - nao tem pool
-    - o three retornado fica como?
-        - o escopo é maior
 - verificar alocacoes em todos os exemplos
 - estudar sobre avaliacao, tail call
 
@@ -18,6 +9,7 @@
             return id(x)    -- does not return x, but pass x to id which might return it
         }                   -- solution is to make x also go to the pool
         val x[] = f()
+    - can't return tuples w/ multiple rec types
 
 - RECS
     - remover keyword rec?

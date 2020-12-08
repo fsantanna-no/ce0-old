@@ -593,8 +593,8 @@ void code (Stmt* s) {
         "#define BET(x,y,z) (MIN(x,z)<y && y<MAX(x,z))\n"
         "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
         "#define output_Unit(x)  (output_Unit_(x), puts(\"\"))\n"
-        "#define output_Nil_(x)  assert(0 && \"bug found\")\n"
-        "#define output_Nil(x)   assert(0 && \"bug found\")\n"
+        "#define output_Nil_(x)  (assert((x)==NULL), printf(\"Nil\"))\n"
+        "#define output_Nil(x)   (output_Nil_(x), puts(\"\"))\n"
         "typedef struct {\n"
         "    void* buf;\n"      // stack-allocated buffer
         "    int max;\n"        // maximum size
