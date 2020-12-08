@@ -44,8 +44,10 @@ int main (int argc, char* argv[]) {
     Stmt s;
     if (!parser(&s)) {
         fprintf(stderr, "%s\n", ALL.err);
-        fclose(finp);
-        fclose(fout);
+        exit(EXIT_FAILURE);
+    }
+    if (!env(&s)) {
+        fprintf(stderr, "%s\n", ALL.err);
         exit(EXIT_FAILURE);
     }
     code(&s);

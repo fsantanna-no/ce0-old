@@ -3,6 +3,8 @@
 
 #include "all.h"
 
+int parser_stmts_opt (TK opt, Stmt* ret);
+
 int _N_ = 1;    // TODO: see env.c _N_=0
 
 int err_expected (const char* v) {
@@ -343,7 +345,7 @@ int parser_stmt (Stmt* ret) {
 
         Stmt* t = malloc(sizeof(Stmt));
         assert(t != NULL);
-        if (!parser_stmts(t)) {         // true()
+        if (!parser_stmts_opt('}',t)) {         // true()
             return 0;
         }
 
@@ -353,7 +355,7 @@ int parser_stmt (Stmt* ret) {
         assert(f != NULL);
         if (accept(TK_ELSE)) {
             if (!accept_err('{')) { return 0; }
-            if (!parser_stmts(f)) {     // false()
+            if (!parser_stmts_opt('}',f)) {     // false()
                 return 0;
             }
             if (!accept_err('}')) { return 0; }
@@ -380,7 +382,7 @@ int parser_stmt (Stmt* ret) {
 
         Stmt* s = malloc(sizeof(Stmt)); // return ()
         assert(s != NULL);
-        if (!parser_stmts(s)) {
+        if (!parser_stmts_opt('}',s)) {
             return 0;
         }
         *ret = (Stmt) { _N_++, STMT_FUNC, NULL, .Func={id,tp,s} };
@@ -396,7 +398,7 @@ int parser_stmt (Stmt* ret) {
         *ret = (Stmt) { _N_++, STMT_RETURN, NULL, .ret=e };
 
     } else {
-        return 0;
+        return err_expected("statement (maybe `call´?)");
     }
 
     return 1;
@@ -410,7 +412,11 @@ int parser_stmts (Stmt* ret) {
         accept(';');    // optional
         Stmt q;
         if (!parser_stmt(&q)) {
-            break;
+            if (n == 0) {
+                return 0;
+            } else {
+                break;
+            }
         }
         n++;
         vec = realloc(vec, n*sizeof(Stmt));
@@ -422,8 +428,16 @@ int parser_stmts (Stmt* ret) {
     return 1;
 }
 
+int parser_stmts_opt (TK opt, Stmt* ret) {
+    if (check(opt)) {
+        *ret = (Stmt) { _N_++, STMT_SEQ, NULL, { .Seq={0,NULL} } };
+        return 1;
+    }
+    return parser_stmts(ret);
+}
+
 int parser (Stmt* ret) {
-    if (!parser_stmts(ret)) {
+    if (!parser_stmts_opt(TK_EOF,ret)) {
         return 0;
     }
     if (!accept_err(TK_EOF)) {

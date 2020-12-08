@@ -461,6 +461,13 @@ void t_parser_stmt (void) {
     }
     // STMT_CALL
     {
+        all_init(NULL, stropen("r", 0, "output()"));
+        Stmt s;
+        assert(!parser_stmt(&s));
+        assert(!strcmp(ALL.err, "(ln 1, col 1): expected statement (maybe `call´?) : have `output`"));
+        fclose(ALL.inp);
+    }
+    {
         all_init(NULL, stropen("r", 0, "call f()"));
         Stmt s;
         assert(parser_stmt(&s));
@@ -819,7 +826,7 @@ void t_all (void) {
     ));
     // ENV
     assert(all(
-        "(ln 1, col 1): expected end of file : have \"_output_Unit\"",
+        "(ln 1, col 1): expected statement (maybe `call´?) : have \"_output_Unit\"",
         "_output_Unit(x)\n"
     ));
     assert(all(

@@ -319,7 +319,7 @@ void chap_01 (void) {           // pg 1
     strcat(INP, _nat);
     strcat (INP,
         "func fthree: () -> Nat {\n"
-        "    return tree\n"
+        "    return three\n"
         "}\n"
         "call output(fthree())\n"
     );
