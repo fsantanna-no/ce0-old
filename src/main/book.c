@@ -70,11 +70,59 @@ const char _bool[] =
     "    False: ()\n"
     "    True:  ()\n"
     "}\n"
+    "\n"
+#if 0
+    "func not: Bool -> Bool {\n"
+    "    if arg.1.True? {\n"
+    "        return False\n"
+    "    } else {\n"
+    "        return True\n"
+    "    }\n"
+    "}\n"
+    "\n"
+    "func and: (Bool,Bool) -> Bool {\n"
+    "    if arg.1.False? {\n"
+    "        return False\n"
+    "    } else {\n"
+    "        if arg.2.False? {\n"
+    "            return False\n"
+    "        } else {\n"
+    "            return True\n"
+    "        }\n"
+    "    }\n"
+    "}\n"
+    "\n"
+    "func or: (Bool,Bool) -> Bool {\n"
+    "    if arg.1.True? {\n"
+    "        return True\n"
+    "    } else { if arg.2.True? {\n"
+    "        if arg.2.True? {\n"
+    "            return True\n"
+    "        } else {\n"
+    "            return False\n"
+    "        }\n"
+    "    }\n"
+    "}\n"
+#endif
 ;
 
 const char _nat[] =
     "type rec Nat {\n"
     "   Succ: Nat\n"
+    "}\n"
+    "\n"
+    "func lt: (Nat,Nat) -> Bool {\n"
+    "    val x: Nat = arg.1\n"
+    "    val y: Nat = arg.2\n"
+    "    if y.Nil? {\n"
+    "        return False\n"
+    "    } else {\n"
+    "        if x.Nil? {\n"
+    "            return True\n"
+    "        } else {\n"
+    "            return lt(x.Succ!, y.Succ!)\n"
+    "        }\n"
+    "    }\n"
     "}\n"
     "\n"
     "func add: (Nat,Nat) -> Nat {\n"
@@ -107,6 +155,16 @@ const char _nat[] =
     "    }\n"
     "}\n"
     "\n"
+    "func rem: (Nat,Nat) -> Nat {\n"
+    "    val x: Nat = arg.1\n"
+    "    val y: Nat = arg.2\n"
+    "    if lt(x,y) {\n"
+    "        return x\n"
+    "    } else {\n"
+    "        return rem(sub(x,y),y)\n"
+    "    }\n"
+    "}\n"
+    "\n"
     "val one:   Nat = Succ(Nil)\n"
     "val two:   Nat = Succ(one)\n"
     "val three: Nat = Succ(two)\n"
@@ -115,7 +173,7 @@ const char _nat[] =
     "val six:   Nat = Succ(five)\n"
 ;
 
-void chap_01 (void) {
+void chap_pre (void) {
     strcpy (INP,
         "type rec Nat {\n"
         "   Succ: Nat\n"
@@ -124,6 +182,13 @@ void chap_01 (void) {
         "call output(n)\n"
     );
     assert(all("(Nil,Succ (Nil))\n", INP));
+
+    strcpy(INP, _bool);
+    strcat(INP, _nat);
+    strcat (INP,
+        "call output(lt(Nil, Succ(Nil)))\n"
+    );
+    assert(all("True\n", INP));
 
     strcpy(INP, _bool);
     strcat(INP, _nat);
@@ -156,9 +221,21 @@ void chap_01 (void) {
         "call output(n)\n"
     );
     assert(all("Succ (Succ (Succ (Succ (Succ (Succ (Nil))))))\n", INP));
+
+    strcpy(INP, _bool);
+    strcat(INP, _nat);
+    strcat (INP,
+        "val n[]: Nat = rem(two,three)\n"
+        "call output(n)\n"
+    );
+    assert(all("Succ (Succ (Nil))\n", INP));
+}
+
+void chap_01 (void) {
 }
 
 int main (void) {
+    chap_pre();
     chap_01();
     puts("OK");
 }
