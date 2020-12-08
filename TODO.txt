@@ -1,3 +1,15 @@
+- main testar progs com erros
+    - mover p/ tests.
+- erro tree -> three
+- erro output(fthree()) em vez de x=fthree() ; output(x)
+
+- verificar ultimo exemplo do fthree
+    - nao tem pool
+    - o three retornado fica como?
+        - o escopo é maior
+- verificar alocacoes em todos os exemplos
+- estudar sobre avaliacao, tail call
+
 - POOLS
     - testar nao caber no pool
     - id()
@@ -15,6 +27,10 @@
         - mas o retorno tem que ser uma variavel só que em teoria teria que guardar os dois recs no mesmo pool?
 
 - MINOR
+    - subtypes
+        - val x: True = True
+    - https://www.google.com/search?q=same-fringe+problem
+        - https://www.lua.org/doc/jai2009.pdf
     - type Expr: (n:Int,env:Env) {
         Tuple: (size:Int, vec:[Expr])
         Stmt: (...)

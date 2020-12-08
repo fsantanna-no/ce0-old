@@ -39,13 +39,18 @@ int main (int argc, char* argv[]) {
     }
     assert(finp!=NULL && fout!=NULL);
 
-    all_init(fout, finp);
-
     Stmt s;
+
+    if (!all_init(fout, finp)) {
+        fprintf(stderr, "%s\n", ALL.err);
+        exit(EXIT_FAILURE);
+    }
+
     if (!parser(&s)) {
         fprintf(stderr, "%s\n", ALL.err);
         exit(EXIT_FAILURE);
     }
+
     if (!env(&s)) {
         fprintf(stderr, "%s\n", ALL.err);
         exit(EXIT_FAILURE);

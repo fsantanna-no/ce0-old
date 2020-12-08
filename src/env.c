@@ -187,7 +187,7 @@ int check_undeclared (Stmt* s) {
             if (env_find_decl(tp->env, tp->tk.val.s) == NULL) {
                 char err[512];
                 sprintf(err, "undeclared type \"%s\"", tp->tk.val.s);
-                OK = err_message(tp->tk, err);
+                OK = OK && err_message(tp->tk, err);
             }
         }
         return 1;
@@ -198,7 +198,7 @@ int check_undeclared (Stmt* s) {
             if (env_find_decl(e->env, e->tk.val.s) == NULL) {
                 char err[512];
                 sprintf(err, "undeclared variable \"%s\"", e->tk.val.s);
-                OK = err_message(e->tk, err);
+                OK = OK && err_message(e->tk, err);
             }
         }
         return 1;
@@ -291,16 +291,6 @@ void set_env_stmt_expr_type (Stmt* s) {
 
                 env = save;
 
-                // set all EXPR_CONS that should be allocated in the pool
-                if (s->Func.type.Func.out->sub == TYPE_USER) {
-                    Stmt* decl = env_find_decl(s->env, s->Func.type.Func.out->tk.val.s);
-                    assert(decl!=NULL && decl->sub==STMT_USER);
-                    if (decl->User.isrec) {
-                        //assert(0 && "ok");
-                        //env_pool_cons(s->Func.body);
-                    }
-                }
-
                 return 0;       // do not visit children, I just did that
             }
         }
@@ -313,6 +303,9 @@ void set_env_stmt_expr_type (Stmt* s) {
 
 int env (Stmt* s) {
     set_env_stmt_expr_type(s);
+    if (!check_undeclared(s)) {
+        return 0;
+    }
     set_pool_cons(s);
-    return check_undeclared(s);
+    return 1;
 }

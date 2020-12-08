@@ -74,7 +74,7 @@ const char* lexer_tk2str (Tk* tk) {
             if (tk->enu>0 && tk->enu<TK_SINGLE) {
                 sprintf(str, "`%c´", tk->enu);
            } else if (tk->enu > TK_RESERVED) {
-                sprintf(str, "`%s`", reserved[tk->enu-TK_RESERVED-1]);
+                sprintf(str, "`%s´", reserved[tk->enu-TK_RESERVED-1]);
             } else {
 //printf("%d\n", tk->enu);
                 assert(0 && "TODO");
@@ -113,6 +113,8 @@ static TK lx_token (TK_val* val) {
                 return TK_ARROW;
             } else {
                 ungetc(c, ALL.inp);
+                val->s[0] = '-';
+                val->s[1] = '\0';
                 return TK_ERR;
             }
 
@@ -124,6 +126,7 @@ static TK lx_token (TK_val* val) {
                     if (isdigit(c)) {
                         val->s[i++] = c;
                     } else {
+                        val->s[i] = '\0';
                         return TK_ERR;
                     }
                     c = fgetc(ALL.inp);
@@ -134,6 +137,8 @@ static TK lx_token (TK_val* val) {
             } else if (isalpha(c) || c=='_') {
                 // var,user,native
             } else {
+                val->s[0] = c;
+                val->s[1] = '\0';
                 return TK_ERR;
             }
 
@@ -205,15 +210,18 @@ static void lx_blanks (void) {
     }
 }
 
-void lexer (void) {
+int lexer (void) {
     ALL.tk0 = ALL.tk1;
     lx_blanks();
     ALL.tk1.lin = ALL.lin;
     ALL.tk1.col = ALL.col;
     long bef = ftell(ALL.inp);
     ALL.tk1.enu = lx_token(&ALL.tk1.val);
+    if (ALL.tk1.enu == TK_ERR) {
+        sprintf(ALL.err, "(ln %ld, col %ld): invalid token `%s´", ALL.tk1.lin, ALL.tk1.col, ALL.tk1.val.s);
+        return 0;
+    }
     ALL.col += ftell(ALL.inp) - bef;
     lx_blanks();
-    //printf("? %d %c\n", ret.enu, ret.enu);
-    //printf(": n=%d %d %c\n", ret.val.n, ret.sym, ret.sym);
+    return 1;
 }

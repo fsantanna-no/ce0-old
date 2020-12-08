@@ -6,22 +6,28 @@
 
 int all (const char* xp, char* src) {
     static char out[65000];
-    all_init (
+    Stmt s;
+
+    if (!all_init (
         stropen("w", sizeof(out), out),
         stropen("r", 0, src)
-    );
-    Stmt s;
+    )) {
+        //puts(ALL.err);
+        return !strcmp(ALL.err, xp);
+    }
+
     if (!parser(&s)) {
         //puts(ALL.err);
         return !strcmp(ALL.err, xp);
     }
+
     if (!env(&s)) {
         //puts(ALL.err);
         return !strcmp(ALL.err, xp);
     }
     code(&s);
     fclose(ALL.out);
-#if 1
+#if 0
 puts(">>>");
 puts(out);
 puts("<<<");
@@ -464,7 +470,7 @@ void t_parser_stmt (void) {
         all_init(NULL, stropen("r", 0, "output()"));
         Stmt s;
         assert(!parser_stmt(&s));
-        assert(!strcmp(ALL.err, "(ln 1, col 1): expected statement (maybe `call´?) : have `output`"));
+        assert(!strcmp(ALL.err, "(ln 1, col 1): expected statement (maybe `call´?) : have `output´"));
         fclose(ALL.inp);
     }
     {
@@ -711,6 +717,19 @@ void t_code (void) {
 }
 
 void t_all (void) {
+    // ERROR
+    assert(all(
+        "(ln 1, col 1): invalid token `/´",
+        "//call output()\n"
+    ));
+    assert(all(
+        "(ln 1, col 27): undeclared variable \"x\"",
+        "func f: () -> () { return x }\n"
+    ));
+    assert(all(
+        "(ln 1, col 15): undeclared type \"Nat\"",
+        "func f: () -> Nat { return () }\n"
+    ));
     // UNIT
     assert(all(
         "()\n",
@@ -766,17 +785,18 @@ void t_all (void) {
         "val x : Zz = Zz1 ((),())\n"
         "call output(x)\n"
     ));
-#if 0
-    // TODO: tuples
     assert(all(
-        "Zz1 ()\n",
+        "(ln 1, col 8): undeclared type \"Bool\"",
+        "val x: Bool = ()\n"
+    ));
+    assert(all(
+        "Xx1 (Yy1,Zz1)\n",
         "type Zz { Zz1:() }\n"
         "type Yy { Yy1:() }\n"
         "type Xx { Xx1:(Yy,Zz) }\n"
-        "val x : Xx = Xx.Xx1(Yy.Yy1(),Zz.Zz1())\n"
-        "call _output_Xx(x)\n"
+        "val x : Xx = Xx1(Yy1,Zz1)\n"
+        "call output(x)\n"
     ));
-#endif
     // IF
     assert(all(
         "()\n",

@@ -10,7 +10,7 @@ FILE* stropen (const char* mode, size_t size, char* str) {
     return fmemopen(str, size, mode);
 }
 
-void all_init (FILE* out, FILE* inp) {
+int all_init (FILE* out, FILE* inp) {
     ALL = (All) {
         out, inp,
         {},                         // err
@@ -18,6 +18,7 @@ void all_init (FILE* out, FILE* inp) {
         {}, { TK_ERR, {}, 1, 1 }    // tk0, tk1
     };
     if (inp != NULL) {
-        lexer();
+        return lexer();
     }
+    return 1;
 }

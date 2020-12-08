@@ -6,11 +6,14 @@
 
 int all (const char* xp, char* src) {
     static char out[65000];
-    all_init (
+    Stmt s;
+    if (!all_init (
         stropen("w", sizeof(out), out),
         stropen("r", 0, src)
-    );
-    Stmt s;
+    )) {
+        puts(ALL.err);
+        return 0;
+    };
     if (!parser(&s)) {
         puts(ALL.err);
         return 0;

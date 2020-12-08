@@ -19,4 +19,4 @@ typedef struct {
 
 extern All ALL;
 
-void all_init (FILE* out, FILE* inp);
+int all_init (FILE* out, FILE* inp);
