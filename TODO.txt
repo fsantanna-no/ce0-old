@@ -1,7 +1,4 @@
-- como implementar cruzamento de escopo?
-    - cruzou o "arg": retorna qtd de vezes que cruzou
-- three crosses scope. fthree is setting it to pool
-
+-- TODO-1
 - verificar alocacoes em todos os exemplos
 - estudar sobre avaliacao, tail call
 

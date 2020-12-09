@@ -196,11 +196,15 @@ int check_calls_with_call_rec (Stmt* s) {
 ///////////////////////////////////////////////////////////////////////////////
 
 // Identify all EXPR_CONS that need to be allocated in the surrounding pool.
+// Also check if none of these allocations have a unnecessary local pool.
 //  - identify all STMT_RETURN
 //      - mark all EXPR_CONS in it
 //      - recurse into EXPR_VAR in it
+//          - check if EXPR_VAR is *not* a pool b/c allocation must be outside
 
-void set_pool_cons (Stmt* s) {
+int set_cons__check_decl__pool (Stmt* s) {
+    int OK = 1;
+
     // find all STMT_RETURN
     int f_rets (Stmt* x) {
         if (x->sub != STMT_RETURN) {
@@ -221,6 +225,10 @@ void set_pool_cons (Stmt* s) {
                 Stmt* y = env_find_decl(e->env, e->tk.val.s, &scope);
                 assert(y != NULL);
                 if (y->sub == STMT_VAR) {
+                    if (y->Var.pool) {
+                        OK = err_message(y->Var.id, "invalid pool : data returns");
+                    }
+
                     // find all EXPR_CONS/EXPR_VAR inside STMT_VAR init
                     if (scope == 0) {
                         visit_expr(&y->Var.init, fe);
@@ -240,6 +248,7 @@ void set_pool_cons (Stmt* s) {
         return 1;
     }
     visit_stmt(s, f_rets, NULL, NULL);
+    return OK;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -381,6 +390,8 @@ int env (Stmt* s) {
     if (!check_calls_with_call_rec(s)) {
         return 0;
     }
-    set_pool_cons(s);
+    if (!set_cons__check_decl__pool(s)) {
+        return 0;
+    }
     return 1;
 }

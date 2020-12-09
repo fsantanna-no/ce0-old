@@ -953,6 +953,16 @@ void t_all (void) {
         "call f()\n"
     ));
     assert(all(
+        "(ln 5, col 9): invalid pool : data returns",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "func f: () -> Nat {\n"
+        "    val x[]: Nat = Nil\n"
+        "    return x\n"
+        "}\n"
+    ));
+    assert(all(
         "Succ (Succ (Nil))\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
