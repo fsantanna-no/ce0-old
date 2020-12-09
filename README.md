@@ -507,35 +507,4 @@ val three: Nat = ...
 func fthree: () -> Nat {
     return three            -- should not use pool b/c defined outside
 }
-
--- DINAMICO detectar quando ponteiros nao sao retornados e assim desalocar sua arvore na saida
-
-x = max(2,3)    -- 2 e 3 ficam temporariamente, um dos dois nao vai ter refcount
-    -- guardar ponteiros locais como gordos com refcounts, na hora de sair do escopo, apaga o que for necessario
-
-func max: (Nat,Nat) -> Nat {
-    -- arg e x e y sao gordos, todos com bit desligado
-    val x: Nat = arg.1
-    val y: Nat = arg.2
-    if x > y {
-        return x    -- x+1 (liga bit)
-    } else {
-        return y    -- y+1 (liga bit)
-    }
-}
-
--- uma outra alternativa seria GC na saida de cada funcao:
-    - percorrer a arvore inteira a partir da raiz
-
--- TODO-1
--- ESTATICO: detectar qd pool é declarado mas valores nao vao pra ele:
-val x[]: Nat = three    -- aqui é uma global declarada em escopo maior
-                        -- na verdade isso nao é um erro, a alocacao nao vai acontecer
-                        -- poderia ser um warning pois *so* temos coisas desnecessarias
-
--- ERR
-func f: () -> Nat {
-    val x[]: Nat = Nil  -- (ln 5, col 9): invalid pool : data returns
-    return x
-}
 ```

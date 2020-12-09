@@ -482,17 +482,17 @@ void code_stmt (Stmt* s) {
             char sup[256];
             strcpy(sup, to_ce(&s->Var.type));
 
-            if (s->Var.pool == 0) {
-                // no pool
-            } else if (s->Var.pool == -1) {
-                out("Pool* _pool = NULL;\n");
-            } else {
-                fprintf (ALL.out,
-                    "%s _buf[%d];\n"
-                    "Pool _%d = { _buf,sizeof(_buf),0 };\n"
-                    "Pool* _pool = &_%d;\n",
-                    sup, s->Var.pool, s->N, s->N
-                );
+            if (s->Var.ref.sub == REF_POOL) {
+                if (s->Var.ref.pool == -1) {
+                    out("Pool* _pool = NULL;\n");
+                } else {
+                    fprintf (ALL.out,
+                        "%s _buf[%d];\n"
+                        "Pool _%d = { _buf,sizeof(_buf),0 };\n"
+                        "Pool* _pool = &_%d;\n",
+                        sup, s->Var.ref.pool, s->N, s->N
+                    );
+                }
             }
 
             visit_expr(&s->Var.init, fe_0);
@@ -500,7 +500,7 @@ void code_stmt (Stmt* s) {
             out(to_c(&s->Var.type));
             fputs(" ", ALL.out);
             fputs(s->Var.id.val.s, ALL.out);
-            if (s->Var.pool == -1) {
+            if (s->Var.ref.sub==REF_POOL && s->Var.ref.pool==-1) {
                 fprintf (ALL.out,
                     " __attribute__ ((__cleanup__(%s_free))) ",
                     sup

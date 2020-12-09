@@ -92,6 +92,20 @@ typedef struct {
     Type type;                          // ()
 } Sub;
 
+typedef enum {
+    REF_NONE,       // not recursive type
+    REF_POOL,       // val x[]: Nat
+    REF_STRONG,     // val x: Nat = Succ(...)
+    REF_WEAK        // val x: Nat = y
+} REF;
+
+typedef struct {
+    REF sub;
+    union {
+        int pool;   // REF_POOL: {[],[n]} <- (-1,n)
+    };
+} Ref;
+
 typedef struct Stmt {
     int N;
     STMT sub;
@@ -101,7 +115,7 @@ typedef struct Stmt {
         Expr ret;       // STMT_RETURN
         struct {
             Tk   id;                    // x
-            int  pool;                  // -, [], [n], (0,-1,n)
+            Ref  ref;
             Type type;                  // : Bool
             Expr init;                  // = y
         } Var;          // STMT_VAR

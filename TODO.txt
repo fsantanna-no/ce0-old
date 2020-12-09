@@ -1,4 +1,5 @@
--- TODO-1
+-- DINAMICO detectar quando ponteiros nao sao retornados e assim desalocar sua arvore na saida
+
 - verificar alocacoes em todos os exemplos
 - estudar sobre avaliacao, tail call
 
@@ -11,6 +12,7 @@
         }                   -- solution is to make x also go to the pool
         val x[] = f()
     - can't return tuples w/ multiple rec types
+    -- TODO-1: warning minor issue
 
 - RECS
     - remover keyword rec?
@@ -104,3 +106,86 @@ func f: () -> Nat {
 val y[]: Nat = add(two,f())
 ```
 -->
+
+-- DINAMICO detectar quando ponteiros nao sao retornados e assim desalocar sua arvore na saida
+
+func max: (Nat,Nat) -> Nat {
+    -- arg e x e y sao gordos, todos com bit desligado
+    val x: Nat = arg.1  -- no cleanup eu testo o bit e desaloco geral se tiver desligado
+    val y: Nat = arg.2
+    if x > y {
+        return x        -- x+1 (liga bit)
+    } else {
+        return y        -- y+1 (liga bit)
+    }
+}
+
+x = max(2,3)    -- 2 e 3 ficam temporariamente, um dos dois nao vai ter refcount
+    -- guardar ponteiros locais como gordos com refcounts, na hora de sair do escopo, apaga o que for necessario
+
+-- o cleanpup tem que ser só na referencia com o escopo mais externo que contem o valor
+-- no caso acima, o 2/3 estariam guardados no arg
+
+a = 2
+b = 3
+x = max(a,b)    -- nesse caso seria a/b
+ou seja, as referencias gordas fortes sao aquelas que tem pelo menos 1 construtor!!!
+
+se é uma atribuicao, entao a ref forte é a variável
+se não é uma atribuicao, entao a ref forte é "arg"
+
+type Pointer:
+    Strong: (bit,void*)     -- no cleanup testa se é strong e se bit=0
+    Weak:   (Strong,void*)  -- no return, liga o strong
+
+c = Succ(b)     -- agora C e B tem que ser testados ao sair, se ambos = 0, entao pode desalocar o B
+                -- ou seja vu precisar de uma lista p/ cada ref strong com outras strongs que ela aponta
+
+vou precisar de refcount
+
+1. detectar todos EXPR_VAR atingíveis por STMT_RET
+    - os outros não precisa se preocupar, pois vão ser desalocados com os pools locais saindo de escopo
+        - TODO: como nao desalocar mallocs mais externos em um pool local?
+            - val x[]: Nat = Succ(a)    -- a é uma local retornada
+            - return a
+            - esse codigo tem que ser recusado
+                - se "a" é alocado com malloc (com pool_alloc nao tem problema pq consigo detectar o pool original)
+                - sao dois mallocs para raizes diferentes
+                    - a partir das raizes, nao teria como diferenciar se estao ou nao em outra raiz
+                    - entao tenho que recusar
+                    - nao posso nunca compartilhar referencias que moram em pools de malloc
+                        - precisa copiar
+                        - funcao copy especial
+2. para cada um deles X
+    - verificar se tem um construtor em INIT
+        - se nao tem, ignora esse
+    - se tem, ele é STRONG
+        1. antes do return tem que setar bit=1
+        - olhar o INIT e pegar todos os EXPR_VAR Y recursivamente com passo 2
+        2. esse X tem que ir pra lista do Y
+3. detectar todos os STMT_VAR que tem construtor em INIT
+    - para cada um deles Y
+        - fazer um cleanup que percorre a sua lista de Xs que me acessam Y
+            - se todos estao com bit=0, entao posso desalocar a minha arvore
+
+val x[]         -- POOL     esse nao precisa ser testado, nao se mistura
+val y = p       -- WEAK     esses dois preciso testar dinamicamente
+val z = Cons    -- STRONG   eles se misturam na situacao acima
+
+
+-- uma outra alternativa seria GC na saida de cada funcao:
+    - percorrer a arvore inteira a partir da raiz
+
+-- TODO-1
+-- ESTATICO: detectar qd pool é declarado mas valores nao vao pra ele:
+val x[]: Nat = three    -- aqui é uma global declarada em escopo maior
+                        -- na verdade isso nao é um erro, a alocacao nao vai acontecer
+                        -- poderia ser um warning pois *so* temos coisas desnecessarias
+
+-- ERR
+func f: () -> Nat {
+    val x[]: Nat = Nil  -- (ln 5, col 9): invalid pool : data returns
+    return x
+}
+
+

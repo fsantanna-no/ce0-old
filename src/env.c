@@ -195,14 +195,19 @@ int check_calls_with_call_rec (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// Identify all EXPR_CONS that need to be allocated in the surrounding pool.
+// Mark all EXPR_CONS that need to be allocated in the surrounding pool.
+//  - return Succ(...)              -- allocate Succ on received pool
+//  - return x where x=Succ(...)    -- allocate Succ on received pool
 // Also check if none of these allocations have a unnecessary local pool.
-//  - identify all STMT_RETURN
+//  - return x where x[] = Succ(...) -- x is not pool b/c Succ will be allocd on recvd pool
+// Also mark all strong references, which are those with EXPR_CONS
+//
+// - identify all STMT_RETURN
 //      - mark all EXPR_CONS in it
 //      - recurse into EXPR_VAR in it
 //          - check if EXPR_VAR is *not* a pool b/c allocation must be outside
 
-int set_cons__check_decl__pool (Stmt* s) {
+int mark_cons__check_decl__mark_strong (Stmt* s) {
     int OK = 1;
 
     // find all STMT_RETURN
@@ -211,22 +216,24 @@ int set_cons__check_decl__pool (Stmt* s) {
             return 1;
         }
         int fe (Expr* e) {
-            // find all EXPR_CONS inside STMT_RETURN expr/STMT_VAR init
+            // find all EXPR_CONS inside STMT_RETURN.expr/STMT_VAR.init
             if (e->sub == EXPR_CONS) {
                 // set EXPR_CONS to "ispool"
                 Stmt* user = env_find_super(e->env, e->Cons.sub.val.s);
                 assert(user != NULL);
                 e->Cons.ispool = user->User.isrec;  // ispool only if is also rec
 
-            // find all EXPR_VAR inside STMT_RETURN expr/STMT_VAR init
+            // find all EXPR_VAR inside STMT_RETURN.expr/STMT_VAR.init
             } else if (e->sub == EXPR_VAR) {
                 // find respective STMT_VAR
                 int scope;
                 Stmt* y = env_find_decl(e->env, e->tk.val.s, &scope);
                 assert(y != NULL);
                 if (y->sub == STMT_VAR) {
-                    if (y->Var.pool) {
+                    if (y->Var.ref.sub == REF_POOL) {
                         OK = err_message(y->Var.id, "invalid pool : data returns");
+                    } else {
+                        y->Var.ref.sub = REF_STRONG;
                     }
 
                     // find all EXPR_CONS/EXPR_VAR inside STMT_VAR init
@@ -253,7 +260,7 @@ int set_cons__check_decl__pool (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int check_undeclared (Stmt* s) {
+int check_undeclared__set_ref (Stmt* s) {
     int OK = 1;
 
     int check_type (Type* tp) {
@@ -269,10 +276,15 @@ int check_undeclared (Stmt* s) {
 
     int check_expr (Expr* e) {
         if (e->sub == EXPR_VAR) {
-            if (env_find_decl(e->env, e->tk.val.s, NULL) == NULL) {
+            Stmt* decl = env_find_decl(e->env, e->tk.val.s, NULL);
+            if (decl == NULL) {
                 char err[512];
                 sprintf(err, "undeclared variable \"%s\"", e->tk.val.s);
                 OK = err_message(e->tk, err);
+            } else {
+                if (decl->sub==STMT_USER && s->User.isrec) {
+                    decl->Var.ref.sub = REF_WEAK;
+                }
             }
         }
         return 1;
@@ -292,7 +304,7 @@ void set_env_stmt_expr_type (Stmt* s) {
         static Type nil = {TYPE_NIL};
         static Stmt s = {
             0, STMT_VAR, NULL,
-            .Var={ {TX_VAR,{.s="output"},0,0},0,
+            .Var={ {TX_VAR,{.s="output"},0,0},{REF_NONE},
                    {TYPE_FUNC,NULL,.Func={&nil,&nil}},{EXPR_UNIT} }
         };
         env_ = (Env) { &s, NULL };
@@ -361,7 +373,7 @@ void set_env_stmt_expr_type (Stmt* s) {
                     Stmt* arg = malloc(sizeof(Stmt));
                     *arg = (Stmt) {
                         0, STMT_VAR, NULL,
-                        .Var={ {TX_VAR,{.s="arg"},0,0},0,*s->Func.type.Func.out,{EXPR_UNIT} }
+                        .Var={ {TX_VAR,{.s="arg"},0,0},{REF_NONE},*s->Func.type.Func.out,{EXPR_UNIT} }
                     };
                     Env* new = malloc(sizeof(Env));
                     *new = (Env) { arg, env };
@@ -384,13 +396,13 @@ void set_env_stmt_expr_type (Stmt* s) {
 
 int env (Stmt* s) {
     set_env_stmt_expr_type(s);
-    if (!check_undeclared(s)) {
+    if (!check_undeclared__set_ref(s)) {
         return 0;
     }
     if (!check_calls_with_call_rec(s)) {
         return 0;
     }
-    if (!set_cons__check_decl__pool(s)) {
+    if (!mark_cons__check_decl__mark_strong(s)) {
         return 0;
     }
     return 1;
