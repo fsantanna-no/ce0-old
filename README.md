@@ -494,15 +494,13 @@ val x: Nat = Succ(Succ(Nil))    -- constructor must be allocated in the received
 
 ```
 call output(Succ(Nil))      -- ok stack
-call output(nat()))         -- needs a pool to pass collect `Nat`s in `nat`
-    -- queremos tudo explicito (podeia ser um pool implicito no escopo atual)
-    -- temos que reclamar que a fc `nat` retorna `Nat` mas nao tem onde guarda-lo
-    -- ou seja, se é uma chamada que retorna isrec, ela tem que estar em um assignment
-    -- a nao ser que seja um return
-    -- STMT_CALL com out=isrec
-        - ou STMT_VAR: nesse caso vai determinar um pool
-        - ou STMT_RET: nesse caso vai usar o pool recebido
-        - so sobra STMT_CALL problematico
-            - os outros nao tem como ter STMT_CALL (user/seq/if/func)
 
+-- `nat` returns `Nat` but have no pool to allocated it
+-- if call returns isrec, it must be in an assignment or in a return (to use pool from outside)
+call output(nat()))         -- "missing pool for return of 'nat'"
+
+val three: Nat = ...
+func fthree: () -> Nat {
+    return three            -- should not use pool b/c defined outside
+}
 ```

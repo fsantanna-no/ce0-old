@@ -73,7 +73,7 @@ void to_c_ (char* out, Type* tp) {
             strcat(out, "void*");
             break;
         case TYPE_USER: {
-            Stmt* s = env_find_decl(tp->env, tp->tk.val.s);
+            Stmt* s = env_find_decl(tp->env, tp->tk.val.s, NULL);
             if (s!=NULL && s->User.isrec) strcat(out, "struct ");
             strcat(out, tp->tk.val.s);
             if (s!=NULL && s->User.isrec) strcat(out, "*");
@@ -154,7 +154,7 @@ int ft (Type* tp) {
         for (int i=0; i<tp->Tuple.size; i++) {
             Type* it = &tp->Tuple.vec[i];
             if (it->sub == TYPE_USER) {
-                Stmt* s = env_find_decl(it->env, it->tk.val.s);
+                Stmt* s = env_find_decl(it->env, it->tk.val.s, NULL);
                 assert(s!=NULL && s->sub==STMT_USER);
                 if (s->User.isrec) {
                     Type tmp = *tp;
@@ -226,7 +226,7 @@ int fe_1 (Expr* e) {
                     assert(tp->sub == TYPE_FUNC);
                     if (tp->Func.out->sub == TYPE_USER) {
                         // (x -> User) -> User
-                        Stmt* s = env_find_decl(e->env, tp->Func.out->tk.val.s);
+                        Stmt* s = env_find_decl(e->env, tp->Func.out->tk.val.s, NULL);
                         assert(s!=NULL && s->sub==STMT_USER);
                         isrec = s->User.isrec;
                     }
@@ -263,7 +263,7 @@ int fe_1 (Expr* e) {
 
         case EXPR_DISC: {
             Type* tp = env_expr_type(e->Disc.val);          // Bool
-            Stmt* s  = env_find_decl(e->env, tp->tk.val.s); // type Bool { ... }
+            Stmt* s  = env_find_decl(e->env, tp->tk.val.s, NULL); // type Bool { ... }
             visit_expr(e->Disc.val, fe_1);
             fprintf(ALL.out, "%s_%s", (s->User.isrec ? "->" : "."), e->Disc.sub.val.s);
             return 0;
@@ -271,7 +271,7 @@ int fe_1 (Expr* e) {
 
         case EXPR_PRED: {
             Type* tp = env_expr_type(e->Pred.val);          // Bool
-            Stmt* s  = env_find_decl(e->env, tp->tk.val.s); // type Bool { ... }
+            Stmt* s  = env_find_decl(e->env, tp->tk.val.s, NULL); // type Bool { ... }
             int isnil = (e->Pred.sub.enu == TK_NIL);
             out("((");
             visit_expr(e->Pred.val, fe_1);
@@ -551,7 +551,7 @@ void code_stmt (Stmt* s) {
             // f: (Pool,a) -> User
             int isrec = 0; {
                 if (s->Func.type.Func.out->sub == TYPE_USER) {
-                    Stmt* decl = env_find_decl(s->env, s->Func.type.Func.out->tk.val.s);
+                    Stmt* decl = env_find_decl(s->env, s->Func.type.Func.out->tk.val.s, NULL);
                     assert(decl!=NULL && decl->sub==STMT_USER);
                     isrec = decl->User.isrec;
                 }

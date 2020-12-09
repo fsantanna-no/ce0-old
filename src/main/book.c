@@ -322,9 +322,10 @@ void chap_01 (void) {           // pg 1
     strcat(INP, _nat);
     strcat (INP,
         "func fthree: () -> Nat {\n"
-        "    return three\n"
-        "}\n"
-        "call output(fthree())\n"
+        "    return three\n" // should not allocate since comes from outside
+        "}\n"                // but what if callee returns again?
+        "val x[]: Nat = fthree()\n" // no problem b/c outside will detect and allocate three in received pool
+        "call output(x)\n"
     );
     assert(all("Succ (Succ (Succ (Nil)))\n", INP));
 

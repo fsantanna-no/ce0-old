@@ -9,7 +9,10 @@ int err_message (Tk tk, const char* v) {
     return 0;
 }
 
-Stmt* env_find_decl (Env* env, const char* id) {
+Stmt* env_find_decl (Env* env, const char* id, int* scope) {    // scope=# of times crossed "arg"
+    if (scope != NULL) {
+        *scope = 0;
+    }
     while (env != NULL) {
         const char* cur = NULL;
         switch (env->stmt->sub) {
@@ -24,6 +27,9 @@ Stmt* env_find_decl (Env* env, const char* id) {
                 break;
             default:
                 assert(0 && "bug found");
+        }
+        if (scope!=NULL && !strcmp("arg",cur)) {
+            *scope = *scope + 1;
         }
         if (cur!=NULL && !strcmp(id,cur)) {
             return env->stmt;
@@ -60,7 +66,7 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
         }
 
         case EXPR_ARG: {
-            Stmt* s = env_find_decl(e->env, "arg");
+            Stmt* s = env_find_decl(e->env, "arg", NULL);
             assert(s->sub == STMT_VAR);
             return &s->Var.type;
         }
@@ -71,7 +77,7 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
         }
 
         case EXPR_VAR: {
-            Stmt* s = env_find_decl(e->env, e->tk.val.s);
+            Stmt* s = env_find_decl(e->env, e->tk.val.s, NULL);
             assert(s != NULL);
             return (s->sub == STMT_VAR) ? &s->Var.type : &s->Func.type;
         }
@@ -115,7 +121,7 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
 
         case EXPR_DISC: {   // x.True
             Type* tp = env_expr_type(e->Disc.val);         // Bool
-            Stmt* s  = env_find_decl(e->env, tp->tk.val.s); // type Bool { ... }
+            Stmt* s  = env_find_decl(e->env, tp->tk.val.s, NULL); // type Bool { ... }
             assert(s != NULL);
             for (int i=0; i<s->User.size; i++) {
                 if (!strcmp(s->User.vec[i].id.val.s, e->Disc.sub.val.s)) {
@@ -169,9 +175,9 @@ int check_calls_with_call_rec (Stmt* s) {
             if (e->sub!=EXPR_CALL || (tp->sub!=TYPE_USER)) {
                 return 1;
             }
-            Stmt* s = env_find_decl(e->env, tp->tk.val.s);
+            Stmt* s = env_find_decl(e->env, tp->tk.val.s, NULL);
             assert(s != NULL);
-            if (s->User.isrec) {
+            if (s->User.isrec) {    // recursive type created inside function
                 char err[512];
                 assert(e->Call.func->sub == EXPR_VAR);
                 sprintf(err, "missing pool for return of \"%s\"", e->Call.func->tk.val.s);
@@ -211,13 +217,19 @@ void set_pool_cons (Stmt* s) {
             // find all EXPR_VAR inside STMT_RETURN expr/STMT_VAR init
             } else if (e->sub == EXPR_VAR) {
                 // find respective STMT_VAR
-                Stmt* y = env_find_decl(e->env, e->tk.val.s);
+                int scope;
+                Stmt* y = env_find_decl(e->env, e->tk.val.s, &scope);
                 assert(y != NULL);
                 if (y->sub == STMT_VAR) {
                     // find all EXPR_CONS/EXPR_VAR inside STMT_VAR init
-                    visit_expr(&y->Var.init, fe);
+                    if (scope == 0) {
+                        visit_expr(&y->Var.init, fe);
+                    } else {
+                        // ignore "return CONST/GLOBAL/SURVIVOR"
+                    }
                 } else {
                     assert(y->sub == STMT_FUNC);
+                    // do nothing: funcs are always static/global
                 }
             }
             return 1;
@@ -237,7 +249,7 @@ int check_undeclared (Stmt* s) {
 
     int check_type (Type* tp) {
         if (tp->sub == TYPE_USER) {
-            if (env_find_decl(tp->env, tp->tk.val.s) == NULL) {
+            if (env_find_decl(tp->env, tp->tk.val.s, NULL) == NULL) {
                 char err[512];
                 sprintf(err, "undeclared type \"%s\"", tp->tk.val.s);
                 OK = err_message(tp->tk, err);
@@ -248,7 +260,7 @@ int check_undeclared (Stmt* s) {
 
     int check_expr (Expr* e) {
         if (e->sub == EXPR_VAR) {
-            if (env_find_decl(e->env, e->tk.val.s) == NULL) {
+            if (env_find_decl(e->env, e->tk.val.s, NULL) == NULL) {
                 char err[512];
                 sprintf(err, "undeclared variable \"%s\"", e->tk.val.s);
                 OK = err_message(e->tk, err);
