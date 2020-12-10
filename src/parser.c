@@ -256,14 +256,14 @@ int parser_stmt (Stmt* ret) {
         }
         Tk id = ALL.tk0;
 
-        REF ref = REF_NONE;
+        REC ref = REC_NONE;
         int pool = 0;                   // no pool
         if (accept('[')) {
             if (accept(TX_NUM)) {
-                ref = REF_POOL;
+                ref = REC_POOL;
                 pool = ALL.tk0.val.n;   // bounded
             } else {
-                ref = REF_POOL;
+                ref = REC_POOL;
                 pool = -1;              // unbounded
             }
             if (!accept_err(']')) {

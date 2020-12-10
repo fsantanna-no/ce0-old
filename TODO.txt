@@ -1,5 +1,31 @@
--- DINAMICO detectar quando ponteiros nao sao retornados e assim desalocar sua arvore na saida
+- numero de vezes usado
+    - estaticamente: tree/dag detection
+        - diferenciar usos que guardam "x" e que somente usam "output(x)"
+    - dinamicamente: guardado ou nao
+        - inicialmente held=0
+        - quando é passado pra func held=0
+        - quando é retornado held=0
+    - max(max(x=2,y=1),z=3)
+        - x declarado
+            - x.held = 0
+        - x passado pra max como arg.1
+            - x.held = 0
+        - x retornado de max como arg.1
+            - x.held = 1
+        - x passado pra max como arg.1
+            - x.held = 0
+        - x não retornado de max como arg.1
+            - x.held = 0
+- no ou é guardado uma vez ou nenhuma
+    - no caso de nenhuma, o held=0 e iremos limpar a sua subtree quando sair de escopo
 
+
+- ./ce.out double free
+    - quando REC_CONS é passado pra arg, zero bit, quando retorno, seto o bit
+- agora declarar todas as refs como struct ref e initializar como REC_ALIAS/REC_CONS.
+    - no caso de REC_CONS setar bit e apontar, no case de REC_ALIAS apontar pra REC_CONS
+- erro ao compartilhar refs de malloc pools diferentes
+- DINAMICO detectar quando ponteiros nao sao retornados e assim desalocar sua arvore na saida
 - verificar alocacoes em todos os exemplos
 - estudar sobre avaliacao, tail call
 
@@ -134,12 +160,15 @@ ou seja, as referencias gordas fortes sao aquelas que tem pelo menos 1 construto
 se é uma atribuicao, entao a ref forte é a variável
 se não é uma atribuicao, entao a ref forte é "arg"
 
-type Pointer:
-    Strong: (bit,void*)     -- no cleanup testa se é strong e se bit=0
-    Weak:   (Strong,void*)  -- no return, liga o strong
+struct REC_Cons {
+    bool returned = 0;  // did not return ultimately // 1 when actually returned (return sets all)
+    void* val;          // pointer to actual value
+}
+REC_ALIAS is pointer to REC_CONS
+    - I know it is weak so I deref
 
 c = Succ(b)     -- agora C e B tem que ser testados ao sair, se ambos = 0, entao pode desalocar o B
-                -- ou seja vu precisar de uma lista p/ cada ref strong com outras strongs que ela aponta
+                -- ou seja vu precisar de uma lista p/ cada REC_CONS com outras REC_CONSs que ela aponta
 
 vou precisar de refcount
 
@@ -159,7 +188,7 @@ vou precisar de refcount
 2. para cada um deles X
     - verificar se tem um construtor em INIT
         - se nao tem, ignora esse
-    - se tem, ele é STRONG
+    - se tem, ele é REC_CONS
         1. antes do return tem que setar bit=1
         - olhar o INIT e pegar todos os EXPR_VAR Y recursivamente com passo 2
         2. esse X tem que ir pra lista do Y
@@ -168,9 +197,9 @@ vou precisar de refcount
         - fazer um cleanup que percorre a sua lista de Xs que me acessam Y
             - se todos estao com bit=0, entao posso desalocar a minha arvore
 
-val x[]         -- POOL     esse nao precisa ser testado, nao se mistura
-val y = p       -- WEAK     esses dois preciso testar dinamicamente
-val z = Cons    -- STRONG   eles se misturam na situacao acima
+val x[]         -- REC_POOL  esse nao precisa ser testado, nao se mistura
+val y = p       -- REC_ALIAS esses dois preciso testar dinamicamente
+val z = Cons    -- REC_CONS  eles se misturam na situacao acima
 
 
 -- uma outra alternativa seria GC na saida de cada funcao:

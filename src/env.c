@@ -200,14 +200,16 @@ int check_calls_with_call_rec (Stmt* s) {
 //  - return x where x=Succ(...)    -- allocate Succ on received pool
 // Also check if none of these allocations have a unnecessary local pool.
 //  - return x where x[] = Succ(...) -- x is not pool b/c Succ will be allocd on recvd pool
-// Also mark all strong references, which are those with EXPR_CONS
+// Also mark all REC_CONS references, which are those with EXPR_CONS.
+//  - REC_CONS  escape and are root of some constructor
+//  - REC_ALIAS escape but are not root of some constructor, instead they point to REC_CONS
 //
 // - identify all STMT_RETURN
 //      - mark all EXPR_CONS in it
 //      - recurse into EXPR_VAR in it
 //          - check if EXPR_VAR is *not* a pool b/c allocation must be outside
 
-int mark_cons__check_decl__mark_strong (Stmt* s) {
+int mark_cons__check_decl__mark_rec_cons (Stmt* s) {
     int OK = 1;
 
     // find all STMT_RETURN
@@ -230,10 +232,13 @@ int mark_cons__check_decl__mark_strong (Stmt* s) {
                 Stmt* y = env_find_decl(e->env, e->tk.val.s, &scope);
                 assert(y != NULL);
                 if (y->sub == STMT_VAR) {
-                    if (y->Var.ref.sub == REF_POOL) {
+                    if (y->Var.ref.sub == REC_POOL) {
                         OK = err_message(y->Var.id, "invalid pool : data returns");
                     } else {
-                        y->Var.ref.sub = REF_STRONG;
+                        y->Var.ref.sub = REC_CONS; // var declaration of recursive type w/ constructor that appears on return
+//aqui realmente tem construtor?
+//arg tb é REC_CONS se for retornado
+//strong
                     }
 
                     // find all EXPR_CONS/EXPR_VAR inside STMT_VAR init
@@ -283,7 +288,7 @@ int check_undeclared__set_ref (Stmt* s) {
                 OK = err_message(e->tk, err);
             } else {
                 if (decl->sub==STMT_USER && s->User.isrec) {
-                    decl->Var.ref.sub = REF_WEAK;
+                    decl->Var.ref.sub = REC_ALIAS;
                 }
             }
         }
@@ -304,7 +309,7 @@ void set_env_stmt_expr_type (Stmt* s) {
         static Type nil = {TYPE_NIL};
         static Stmt s = {
             0, STMT_VAR, NULL,
-            .Var={ {TX_VAR,{.s="output"},0,0},{REF_NONE},
+            .Var={ {TX_VAR,{.s="output"},0,0},{REC_NONE},
                    {TYPE_FUNC,NULL,.Func={&nil,&nil}},{EXPR_UNIT} }
         };
         env_ = (Env) { &s, NULL };
@@ -373,7 +378,7 @@ void set_env_stmt_expr_type (Stmt* s) {
                     Stmt* arg = malloc(sizeof(Stmt));
                     *arg = (Stmt) {
                         0, STMT_VAR, NULL,
-                        .Var={ {TX_VAR,{.s="arg"},0,0},{REF_NONE},*s->Func.type.Func.out,{EXPR_UNIT} }
+                        .Var={ {TX_VAR,{.s="arg"},0,0},{REC_NONE},*s->Func.type.Func.out,{EXPR_UNIT} }
                     };
                     Env* new = malloc(sizeof(Env));
                     *new = (Env) { arg, env };
@@ -402,7 +407,7 @@ int env (Stmt* s) {
     if (!check_calls_with_call_rec(s)) {
         return 0;
     }
-    if (!mark_cons__check_decl__mark_strong(s)) {
+    if (!mark_cons__check_decl__mark_rec_cons(s)) {
         return 0;
     }
     return 1;

@@ -475,6 +475,7 @@ void code_stmt (Stmt* s) {
                 );
             }
             break;
+        }
 
         case STMT_VAR: {
             visit_type(&s->Var.type, ft);
@@ -482,7 +483,7 @@ void code_stmt (Stmt* s) {
             char sup[256];
             strcpy(sup, to_ce(&s->Var.type));
 
-            if (s->Var.ref.sub == REF_POOL) {
+            if (s->Var.ref.sub == REC_POOL) {
                 if (s->Var.ref.pool == -1) {
                     out("Pool* _pool = NULL;\n");
                 } else {
@@ -500,9 +501,14 @@ void code_stmt (Stmt* s) {
             out(to_c(&s->Var.type));
             fputs(" ", ALL.out);
             fputs(s->Var.id.val.s, ALL.out);
-            if (s->Var.ref.sub==REF_POOL && s->Var.ref.pool==-1) {
+            if (s->Var.ref.sub==REC_POOL && s->Var.ref.pool==-1) {
                 fprintf (ALL.out,
                     " __attribute__ ((__cleanup__(%s_free))) ",
+                    sup
+                );
+            } else if (s->Var.ref.sub == REC_CONS) {
+                fprintf (ALL.out,
+                    " __attribute__ ((__cleanup__(%s_strong))) ",
                     sup
                 );
             }
