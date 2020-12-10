@@ -638,7 +638,8 @@ void t_code (void) {
             "int main (void) {\n"
             "    void* _STACK = &_STACK;\n"
             "\n"
-            "int a = 1;\n"
+            "int a;\n"
+            "a = 1;\n"
             "output_Unit(a);\n"
             "\n"
             "}\n";
@@ -968,7 +969,14 @@ void t_all (void) {
         "call f()\n"
     ));
     assert(all(
-        "(ln 5, col 9): invalid pool : data returns",
+        "(ln 4, col 5): invalid pool : no data allocation",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "val x[]: Nat = ()\n" // error: does not allocate anything
+    ));
+    assert(all(
+        "(ln 6, col 12): invalid access to \"x\" : pool escapes",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"

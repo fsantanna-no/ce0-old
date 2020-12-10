@@ -1,3 +1,4 @@
+- struct Cons
 - numero de vezes usado
     - estaticamente: tree/dag detection
         - diferenciar usos que guardam "x" e que somente usam "output(x)"

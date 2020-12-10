@@ -503,31 +503,45 @@ void code_stmt (Stmt* s) {
             if (s->Var.pool == 0) {
                 // no pool
             } else if (s->Var.pool == -1) {
-                out("Pool* _pool = NULL;\n");
+                fprintf(ALL.out, "Pool* _pool_%d = NULL;\n", s->N);
             } else {
                 fprintf (ALL.out,
                     "%s _buf[%d];\n"
                     "Pool _%d = { _buf,sizeof(_buf),0 };\n"
-                    "Pool* _pool = &_%d;\n",
-                    sup, s->Var.pool, s->N, s->N
+                    "Pool* _pool_%d = &_%d;\n",
+                    sup, s->Var.pool, s->N, s->N, s->N
                 );
             }
 
             visit_expr(&s->Var.init, fe_0);
 
             out(to_c(&s->Var.type));
-            fputs(" ", ALL.out);
-            fputs(s->Var.id.val.s, ALL.out);
+            out(" ");
+            out(s->Var.id.val.s);
             if (s->Var.pool == -1) {
                 fprintf (ALL.out,
-                    " __attribute__ ((__cleanup__(%s_free))) ",
+                    " __attribute__ ((__cleanup__(%s_free)))",
                     sup
                 );
             }
-            fputs(" = ", ALL.out);
+            out(";\n");
 
+            if (s->Var.pool) {
+                fprintf (ALL.out,
+                    "{\n"
+                    "    Pool* _pool = _pool_%d;\n", // create new _pool context for initialization
+                    s->N
+                );
+            }
+
+            out(s->Var.id.val.s);
+            fputs(" = ", ALL.out);
             visit_expr(&s->Var.init, fe_1);
             out(";\n");
+
+            if (s->Var.pool) {
+                out("}\n");
+            }
             break;
         }
 
