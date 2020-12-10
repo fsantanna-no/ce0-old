@@ -644,7 +644,6 @@ void t_code (void) {
             "}\n";
         assert(!strcmp(out,ret));
     }
-#if 0
     // STMT_TYPE
     {
         char out[8192] = "";
@@ -686,18 +685,21 @@ void t_code (void) {
             "int main (void) {\n"
             "    void* _STACK = &_STACK;\n"
             "\n"
+            "struct Bool;\n"
+            "typedef struct Bool Bool;\n"
+            "auto void output_Bool_ (Bool v);\n"
             "typedef enum {\n"
             "    False,\n"
             "    True\n"
             "} BOOL;\n"
             "\n"
-            "typedef struct Bool {\n"
+            "struct Bool {\n"
             "    BOOL sub;\n"
             "    union {\n"
             "        int _False;\n"
             "        int _True;\n"
             "    };\n"
-            "} Bool;\n"
+            "};\n"
             "\n"
             "void output_Bool_ (Bool v) {\n"
             "    switch (v.sub) {\n"
@@ -721,7 +723,6 @@ void t_code (void) {
             "}\n";
         assert(!strcmp(out,ret));
     }
-#endif
 }
 
 void t_all (void) {
