@@ -874,9 +874,17 @@ void t_all (void) {
     ));
     assert(all(
         "(ln 1, col 8): undeclared type \"Xx\"",
-        "val x: Xx = Xx1\n"
+        "val x: Xx = ()\n"
     ));
     // TYPE REC
+    assert(all(
+        "(ln 1, col 13): undeclared subtype \"List\"",
+        "call output(List)\n"
+    ));
+    assert(all(
+        "(ln 1, col 14): undeclared type \"List\"",
+        "call output($List)\n"
+    ));
     assert(all(
         "$\n",
         "type rec Nat {\n"

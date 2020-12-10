@@ -283,17 +283,43 @@ int check_undeclared__set_ref (Stmt* s) {
     }
 
     int check_expr (Expr* e) {
-        if (e->sub == EXPR_VAR) {
-            Stmt* decl = env_find_decl(e->env, e->tk.val.s, NULL);
-            if (decl == NULL) {
-                char err[512];
-                sprintf(err, "undeclared variable \"%s\"", e->tk.val.s);
-                OK = err_message(e->tk, err);
-            } else {
-                if (decl->sub==STMT_USER && s->User.isrec) {
-                    decl->Var.ref.sub = REC_ALIAS;
+        switch (e->sub) {
+            case EXPR_VAR: {
+                Stmt* decl = env_find_decl(e->env, e->tk.val.s, NULL);
+                if (decl == NULL) {
+                    char err[512];
+                    sprintf(err, "undeclared variable \"%s\"", e->tk.val.s);
+                    OK = err_message(e->tk, err);
+                } else {
+                    if (decl->sub==STMT_USER && s->User.isrec) {
+                        decl->Var.ref.sub = REC_ALIAS;
+                    }
                 }
+                break;
             }
+            case EXPR_DISC:
+            case EXPR_PRED:
+            case EXPR_CONS: {
+                Tk* sub = (e->sub==EXPR_DISC ? &e->Disc.sub : (e->sub==EXPR_PRED ? &e->Pred.sub : &e->Cons.sub));
+                if (sub->enu == TX_NIL) {
+                    Stmt* decl = env_find_decl(e->env, sub->val.s, NULL);
+                    if (decl == NULL) {
+                        char err[512];
+                        sprintf(err, "undeclared type \"%s\"", sub->val.s);
+                        OK = err_message(e->tk, err);
+                    }
+                } else {
+                    Stmt* user = env_find_super(e->env, sub->val.s);
+                    if (user == NULL) {
+                        char err[512];
+                        sprintf(err, "undeclared subtype \"%s\"", sub->val.s);
+                        OK = err_message(e->tk, err);
+                    }
+                }
+                break;
+            }
+            default:
+                break;
         }
         return 1;
     }
