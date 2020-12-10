@@ -27,7 +27,6 @@ The following keywords are reserved:
     else        -- conditional statement
     func        -- function declaration
     if          -- conditional statement
-    Nil         -- null subtype
     output      -- output function
     rec         -- type, function recursive declaration
     return      -- function return
@@ -47,6 +46,7 @@ The following symbols are valid:
     =           -- variable assignment
     ,           -- tuple separator
     .           -- tuple index, type predicate & discriminator
+    $           -- null subtype
     !           -- type discriminator
     ?           -- type predicate
 ```
@@ -149,20 +149,21 @@ Car (True,())           -- subtype Car holds a tuple
 ```
 
 A discriminator accesses the value of a type as one of its subtypes.
-It sufixes the value with a dot `.`, a subtype identifier, and an exclamation
+It suffixes the value with a dot `.`, a subtype identifier, and an exclamation
 mark `!`:
 
 ```
 (True ()).True!         -- yields ()
 
-x = Node (Nil,(),Nil)
+x = Node ($Node,(),$Node)
 x.Node!.2               -- yields ()
 ```
 
-The value `Nil` corresponds to the null subtype of all recursive types.
+The prefix `$` yield the null subtype of all recursive types, e.g., $Node is
+the null subtype of `Node`.
 
 A predicate checks if the value of a type is of its given subtype.
-It sufixes the value with a dot `.`, a subtype identifier, and a question mark
+It suffixes the value with a dot `.`, a subtype identifier, and a question mark
 `?`:
 
 ```
@@ -189,11 +190,11 @@ type Bool {
 ```
 
 A recursive type uses a `rec` declaration and always contains the implicit base
-null subtype `Nil´:
+null subtype with the prefix `$´:
 
 ```
 type rec Tree {
-    -- Nil: ()              -- implicit null subtype always present
+    -- $Tree: ()            -- implicit null subtype always present
     Node: (Tree,(),Tree)    -- subtype Node holds left subtree, unit value, and right subtree
 }
 ```
@@ -206,7 +207,7 @@ A variable declaration binds a value to a name with a specified type:
 val x : () = ()                 -- assigns `()` to variable `x` of type `()`
 val y : Bool = True             -- assigns `True` to variable `y` of type `Bool`
 val z : (Bool,()) = (False,())  -- assigns a tuple to variable `z`
-val t : Tree = Node(Nil,(),Node(Nil,(),Nil))
+val t : Tree = Node($Tree,(),Node($Tree,(),$Tree))
 ```
 
 If the type is recursive and the assignment requires dynamic allocation, the
@@ -283,13 +284,13 @@ Expr ::= `(´ `)´                        -- unit value               ()
       |  NATIVE                         -- native identifier        _printf
       |  VAR                            -- variable identifier      i
       |  `arg´                          -- function argument        arg
-      |  `Nil´                          -- null recursive subtype   Nil
       |  `(´ Expr {`,´ Expr} `)´        -- tuple                    (x,())
       |  Expr `.´ NUM                   -- tuple index              x.1
       |  Expr `(´ Expr `)´              -- call                     f(x)
+      |  `$´ USER                       -- null constructor         $List
       |  USER [`(´ Expr `)´]            -- constructor              True ()
-      |  Expr `.´ USER `!´              -- discriminator            x.True!
-      |  Expr `.´ USER `?´              -- predicate                x.False?
+      |  Expr `.´ [`$´] USER `!´        -- discriminator            x.True!
+      |  Expr `.´ [`$´] USER `?´        -- predicate                x.False?
       |  `(´ Expr `)´                   -- group                    (x)
 
 Type ::= `(´ `)´                        -- unit                     ()
@@ -322,18 +323,18 @@ Pools enable to the following properties for recursive types:
 A recursive type declaration uses itself in one of its subtypes:
 
 ```
-type rec Nat {  -- a natural number is either zero (`Nil`) or
+type rec Nat {  -- a natural number is either zero (`$Nat`) or
     Succ: Nat   -- a successor of a natural number (`Succ(Nat)`)
 }
 
-val two: Nat = Succ(Succ(Nil))  -- `two` is the successor of the successor of zero
-                                --       (represented as `Nil`)
+val two: Nat = Succ(Succ($Nat)) -- `two` is the successor of the successor of zero
+                                --       (represented as `$Nat`)
 ```
 
 Values of recursive types are always references:
 
 ```
-val x: Nat = Succ(Succ(Nil))
+val x: Nat = Succ(Succ($Nat))
 val y: Nat = x  -- x,y share the same reference, no copy is made
 ```
 
@@ -342,8 +343,8 @@ allocation is required.
 Internally, the constructors can be references allocated in the stack:
 
 ```
--- x = y = Succ(Succ(Nil))
-Nat _2 = (Nat) { Succ, {._Succ=NULL} };   -- declares last value first (Succ(Nil)
+-- x = y = Succ(Succ($Nat))
+Nat _2 = (Nat) { Succ, {._Succ=NULL} };   -- declares last value first (Succ($Nat)
 Nat _1 = (Nat) { Succ, {._Succ=&_2} };    -- points to previous value  (Succ(...))
 Nat* x = &_1;                             -- points to last reference
 Nat* y = x;                               -- copies reference
@@ -354,7 +355,7 @@ allocated in a memory pool declared with brackets in the assignee:
 
 ```
 func f: () -> Nat {
-    val x: Nat = Succ(Succ(Nil))    -- constructor inside a function
+    val x: Nat = Succ(Succ($Nat))   -- constructor inside a function
     return x                        -- `x` does not survive the scope
 }
 val y[]: Nat = f()                  -- `y` is a memory pool for a Nat tree
@@ -435,7 +436,7 @@ Illustrative example:
 
 ```
 func f: () -> Nat {
-    val x: Nat = Succ(Succ(Nil))
+    val x: Nat = Succ(Succ($Nat))
     return x
 }
 val y[]: Nat = f()    -- y[] or y[N]
@@ -473,7 +474,7 @@ void f (Pool* pool) {
 1. Check the root assignment for dependencies in nested scopes:
 
 ```
-val y: Nat = Succ(Succ(Nil))    -- same scope: static allocation
+val y: Nat = Succ(Succ($Nat))   -- same scope: static allocation
 ```
 
 ```
@@ -487,20 +488,20 @@ return x                        -- check `x`
 ```
 
 ```
-val x: Nat = Succ(Succ(Nil))    -- constructor must be allocated in the received pool
+val x: Nat = Succ(Succ($Nat))   -- constructor must be allocated in the received pool
 ```
 
 ### TODO
 
 ```
 -- OK
-call output(Succ(Nil))      -- ok stack
+call output(Succ($Nat))     -- ok stack
 
 -- ERR
 -- `f` returns `Nat` but have no pool to allocated it
 -- if call returns isrec, it must be in an assignment or in a return (to use pool from outside)
 func f: () -> Nat {}
-call f()                -- (ln 5, col 6): missing pool for return of "f"
+call f()                    -- (ln 5, col 6): missing pool for return of "f"
 
 -- OK
 val three: Nat = ...

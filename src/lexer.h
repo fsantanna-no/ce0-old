@@ -8,6 +8,7 @@ typedef enum {
 
     TX_NATIVE,
     TX_VAR,
+    TX_NIL,
     TX_USER,
     TX_NUM,
 
@@ -17,7 +18,6 @@ typedef enum {
     TK_ELSE,
     TK_FUNC,
     TK_IF,
-    TK_NIL,
     TK_OUTPUT,
     TK_REC,
     TK_RETURN,

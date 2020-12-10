@@ -1,7 +1,6 @@
 typedef enum {
     TYPE_UNIT = 1,
     TYPE_NATIVE,
-    TYPE_NIL,
     TYPE_USER,
     TYPE_TUPLE,
     TYPE_FUNC
@@ -9,7 +8,6 @@ typedef enum {
 
 typedef enum {
     EXPR_UNIT = 1,
-    EXPR_NIL,
     EXPR_ARG,
     EXPR_NATIVE,
     EXPR_VAR,

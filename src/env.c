@@ -60,11 +60,6 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
             return &tp;
         }
 
-        case EXPR_NIL: {
-            static Type tp = { TYPE_NIL, NULL };
-            return &tp;
-        }
-
         case EXPR_ARG: {
             Stmt* s = env_find_decl(e->env, "arg", NULL);
             assert(s->sub == STMT_VAR);
@@ -96,11 +91,19 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
         }
 
         case EXPR_CONS: {
-            Stmt* user = env_find_super(e->env, e->Cons.sub.val.s);
-            assert(user != NULL);
+            Tk tk;
+            if (e->Cons.sub.enu == TX_NIL) {
+                Stmt* user = env_find_decl(e->env, e->Cons.sub.val.s, NULL);
+                assert(user != NULL);
+                tk = user->User.id;
+            } else {
+                Stmt* user = env_find_super(e->env, e->Cons.sub.val.s);
+                assert(user != NULL);
+                tk = user->User.id;
+            }
             Type* tp = malloc(sizeof(Type));
             assert(tp != NULL);
-            *tp = (Type){ TYPE_USER, e->env, {.tk=user->User.id} };
+            *tp = (Type){ TYPE_USER, e->env, {.tk=tk} };
             return tp;
         }
 
@@ -219,7 +222,7 @@ int mark_cons__check_decl__mark_rec_cons (Stmt* s) {
         }
         int fe (Expr* e) {
             // find all EXPR_CONS inside STMT_RETURN.expr/STMT_VAR.init
-            if (e->sub == EXPR_CONS) {
+            if (e->sub==EXPR_CONS && e->Cons.sub.enu!=TX_NIL) {
                 // set EXPR_CONS to "ispool"
                 Stmt* user = env_find_super(e->env, e->Cons.sub.val.s);
                 assert(user != NULL);
@@ -306,11 +309,11 @@ void set_env_stmt_expr_type (Stmt* s) {
     // predeclare function `output`
     static Env env_;
     {
-        static Type nil = {TYPE_NIL};
+        static Type unit = {TYPE_UNIT};
         static Stmt s = {
             0, STMT_VAR, NULL,
             .Var={ {TX_VAR,{.s="output"},0,0},{REC_NONE},
-                   {TYPE_FUNC,NULL,.Func={&nil,&nil}},{EXPR_UNIT} }
+                   {TYPE_FUNC,NULL,.Func={&unit,&unit}},{EXPR_UNIT} }
         };
         env_ = (Env) { &s, NULL };
     }

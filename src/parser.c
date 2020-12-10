@@ -140,10 +140,6 @@ int parser_expr_one (Expr* ret) {
             }
         }
 
-    // EXPR_NIL
-    } else if (accept(TK_NIL)) {
-        *ret = (Expr) { _N_++, EXPR_NIL, NULL };
-
     // EXPR_ARG
     } else if (accept(TK_ARG)) {
         *ret = (Expr) { _N_++, EXPR_ARG, NULL };
@@ -157,12 +153,18 @@ int parser_expr_one (Expr* ret) {
         *ret = (Expr) { _N_++, EXPR_VAR, NULL, .tk=ALL.tk0 };
 
     // EXPR_CONS
-    } else if (accept(TX_USER)) {       // True
+    } else if (accept(TX_USER) || accept('$')) {  // True, $Nat
+        if (ALL.tk0.enu == '$') {
+            if (!accept_err(TX_USER)) {
+                return 0;
+            }
+            ALL.tk0.enu = TX_NIL;   // TODO: move to lexer
+        }
         Tk sub = ALL.tk0;
 
         Expr* arg = malloc(sizeof(Expr));
         assert(arg != NULL);
-        if (!parser_expr_one(arg)) {   // ()
+        if (sub.enu==TX_NIL || !parser_expr_one(arg)) {   // ()
             *arg = (Expr) { _N_++, EXPR_UNIT, NULL };
         }
 
@@ -199,19 +201,22 @@ int parser_expr (Expr* ret) {
                 assert(tup != NULL);
                 *tup = *ret;
                 *ret = (Expr) { _N_++, EXPR_INDEX, NULL, .Index={tup,ALL.tk0.val.n} };
-    // EXPR_DISC
-            } else if (accept(TX_USER) || accept(TK_NIL)) {
-                int isnil = (ALL.tk0.enu == TK_NIL);
+    // EXPR_DISC / EXPR_PRED
+            } else if (accept(TX_USER) || accept('$')) {
+                if (ALL.tk0.enu == '$') {
+                    if (!accept_err(TX_USER)) {
+                        return 0;
+                    }
+                    ALL.tk0.enu = TX_NIL;   // TODO: move to lexer
+                }
                 Tk tk = ALL.tk0;
+
                 Expr* val = malloc(sizeof(Expr));
                 assert(val != NULL);
                 *val = *ret;
                 if (accept('?')) {
                     *ret = (Expr) { _N_++, EXPR_PRED, NULL, .Pred={val,tk} };
                 } else if (accept('!')) {
-                    if (isnil) {
-                        return 0;
-                    }
                     *ret = (Expr) { _N_++, EXPR_DISC, NULL, .Disc={val,tk} };
                 } else {
                     return err_expected("`?´ or `!´");

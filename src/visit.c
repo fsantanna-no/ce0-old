@@ -9,7 +9,6 @@ void visit_type (Type* tp, f_type ft) {
     switch (tp->sub) {
         case TYPE_UNIT:
         case TYPE_NATIVE:
-        case TYPE_NIL:
         case TYPE_USER:
             break;
         case TYPE_TUPLE:
@@ -30,7 +29,6 @@ void visit_expr (Expr* e, f_expr fe) {
     }
     switch (e->sub) {
         case EXPR_UNIT:
-        case EXPR_NIL:
         case EXPR_ARG:
         case EXPR_NATIVE:
         case EXPR_VAR:

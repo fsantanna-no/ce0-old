@@ -617,8 +617,6 @@ void t_code (void) {
             "#define BET(x,y,z) (MIN(x,z)<y && y<MAX(x,z))\n"
             "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
             "#define output_Unit(x)  (output_Unit_(x), puts(\"\"))\n"
-            "#define output_Nil_(x)  (assert((x)==NULL), printf(\"Nil\"))\n"
-            "#define output_Nil(x)   (output_Nil_(x), puts(\"\"))\n"
             "typedef struct {\n"
             "    void* buf;\n"
             "    int max;\n"
@@ -646,6 +644,7 @@ void t_code (void) {
             "}\n";
         assert(!strcmp(out,ret));
     }
+#if 0
     // STMT_TYPE
     {
         char out[8192] = "";
@@ -666,8 +665,6 @@ void t_code (void) {
             "#define BET(x,y,z) (MIN(x,z)<y && y<MAX(x,z))\n"
             "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
             "#define output_Unit(x)  (output_Unit_(x), puts(\"\"))\n"
-            "#define output_Nil_(x)  (assert((x)==NULL), printf(\"Nil\"))\n"
-            "#define output_Nil(x)   (output_Nil_(x), puts(\"\"))\n"
             "typedef struct {\n"
             "    void* buf;\n"
             "    int max;\n"
@@ -724,6 +721,7 @@ void t_code (void) {
             "}\n";
         assert(!strcmp(out,ret));
     }
+#endif
 }
 
 void t_all (void) {
@@ -879,11 +877,19 @@ void t_all (void) {
     ));
     // TYPE REC
     assert(all(
-        "Nil\n",
+        "$\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "val n: Nat = (Nil,(Nil,Nil)).1\n"
+        "val n: Nat = $Nat\n"
+        "call output(n)\n"
+    ));
+    assert(all(
+        "$\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "val n: Nat = ($Nat,($Nat,$Nat)).1\n"
         "call output(n)\n"
     ));
     assert(all(
@@ -895,46 +901,46 @@ void t_all (void) {
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "val n: Nat = Nil\n"
-        "call _output_Bool(n.Nil?)\n"
+        "val n: Nat = $Nat\n"
+        "call _output_Bool(n.$Nat?)\n"
     ));
     assert(all(
-        "Succ (Succ (Nil))\n",
+        "Succ (Succ ($))\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "val n: Nat = Succ(Succ(Nil))\n"
+        "val n: Nat = Succ(Succ($Nat))\n"
         "call output(n)\n"
     ));
     assert(all(
-        "Succ (Succ (Nil))\n",
+        "Succ (Succ ($))\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "val n: Nat = Succ(Succ(Nil))\n"
+        "val n: Nat = Succ(Succ($Nat))\n"
         "call _output_Nat(n)\n"
     ));
     assert(all(
-        "Succ (Succ (Nil))\n",
+        "Succ (Succ ($))\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "call _output_Nat(Succ(Succ(Nil)))\n"
+        "call _output_Nat(Succ(Succ($Nat)))\n"
     ));
     // POOL
     assert(all(
-        "Nil\n",
+        "$\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "call output(Nil)\n"
+        "call output($Nat)\n"
     ));
     assert(all(
-        "Succ (Nil)\n",
+        "Succ ($)\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "call output(Succ(Nil))\n"
+        "call output(Succ($Nat))\n"
     ));
     assert(all(
         "(ln 5, col 13): missing pool for return of \"f\"",
@@ -958,46 +964,46 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "func f: () -> Nat {\n"
-        "    val x[]: Nat = Nil\n"
+        "    val x[]: Nat = $Nat\n"
         "    return x\n"
         "}\n"
     ));
     assert(all(
-        "Succ (Succ (Nil))\n",
+        "Succ (Succ ($))\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "func f: () -> Nat {\n"
-        "    return Succ(Succ(Nil))\n"
+        "    return Succ(Succ($Nat))\n"
         "}\n"
         "val y[]: Nat = f()\n"
         "call output(y)\n"
     ));
     assert(all(
-        "Succ (Succ (Nil))\n",
+        "Succ (Succ ($))\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "func f: () -> Nat {\n"
-        "    return Succ(Succ(Nil))\n"
+        "    return Succ(Succ($Nat))\n"
         "}\n"
         "val y[5]: Nat = f()\n"
         "call output(y)\n"
     ));
     assert(all(
-        "Succ (Succ (Nil))\n",
+        "Succ (Succ ($))\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "func f: () -> Nat {\n"
-        "    val x: Nat = Succ(Succ(Nil))\n"
+        "    val x: Nat = Succ(Succ($Nat))\n"
         "    return x\n"
         "}\n"
         "val y[]: Nat = f()\n"
         "call output(y)\n"
     ));
     assert(all(
-        "Succ (Succ (Succ (Nil)))\n",
+        "Succ (Succ (Succ ($)))\n",
         "type Bool {\n"
         "    False: ()\n"
         "    True:  ()\n"
@@ -1006,25 +1012,27 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "func len: Nat -> Nat {\n"
-        "    if arg.Nil? {\n"
-        "        return Nil\n"
+        "    if arg.$Nat? {\n"
+        "        return $Nat\n"
         "    } else {\n"
         "        return Succ(len(arg.Succ!))\n"
         "    }\n"
         "}\n"
-        "val x: Nat = Succ(Succ(Succ(Nil)))\n"
+        "val x: Nat = Succ(Succ(Succ($Nat)))\n"
         "val y[]: Nat = len(x)\n"
         "call output(y)\n"
     ));
+//puts("===============================================================================");
+//assert(0);
 assert(0 && "OK");
     // TODO: bounded allocation fail
     assert(all(
-        "Nil\n",
+        "$\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "func f: () -> Nat {\n"
-        "    return Succ(Succ(Nil))\n"
+        "    return Succ(Succ($Nat))\n"
         "}\n"
         "val y[1]: Nat = f()\n"
         "call output(y)\n"

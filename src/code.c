@@ -29,9 +29,6 @@ void to_ce_ (char* out, Type* tp) {
         case TYPE_NATIVE:
             strcat(out, &tp->tk.val.s[1]);
             break;
-        case TYPE_NIL:
-            strcat(out, "Nil");
-            break;
         case TYPE_USER: {
             strcat(out, tp->tk.val.s);
             break;
@@ -68,9 +65,6 @@ void to_c_ (char* out, Type* tp) {
             break;
         case TYPE_NATIVE:
             strcat(out, &tp->tk.val.s[1]);
-            break;
-        case TYPE_NIL:
-            strcat(out, "void*");
             break;
         case TYPE_USER: {
             Stmt* s = env_find_decl(tp->env, tp->tk.val.s, NULL);
@@ -147,30 +141,6 @@ int ft (Type* tp) {
             tp_ce, tp_c, tp_ce
         );
 
-        // create mock types TUPLE__NIL__*
-        // TUPLE_NAT_NAT
-        // TUPLE_NIL_NAT
-        // TUPLE_NAT_NIL
-        for (int i=0; i<tp->Tuple.size; i++) {
-            Type* it = &tp->Tuple.vec[i];
-            if (it->sub == TYPE_USER) {
-                Stmt* s = env_find_decl(it->env, it->tk.val.s, NULL);
-                assert(s!=NULL && s->sub==STMT_USER);
-                if (s->User.isrec) {
-                    Type tmp = *tp;
-                    Type vec[tp->Tuple.size];
-                    memcpy(vec, tp->Tuple.vec, sizeof(vec));
-                    vec[i] = (Type) { TYPE_NIL, tmp.env };
-                    tmp.Tuple.vec = vec;
-                    //ft(&tmp);
-                    fprintf(ALL.out, "#ifndef __%s__\n", to_ce(&tmp));
-                    fprintf(ALL.out, "#define __%s__\n", to_ce(&tmp));
-                    fprintf(ALL.out, "typedef %s %s;\n", tp_ce, to_ce(&tmp));
-                    fprintf(ALL.out, "#endif\n");
-                }
-            }
-        }
-
         // IFDEF
         out("#endif\n");
     }
@@ -184,9 +154,6 @@ int fe_1 (Expr* e) {
         case EXPR_UNIT:
             out("1");
             break;
-        case EXPR_NIL:
-            out("NULL");
-            break;
         case EXPR_ARG:
             out("arg");
             break;
@@ -197,9 +164,11 @@ int fe_1 (Expr* e) {
             out(e->tk.val.s);
             break;
         case EXPR_CONS: {
-            Stmt* user = env_find_super(e->env, e->Cons.sub.val.s);
-            assert(user != NULL);
-            fprintf(ALL.out, "_%d", e->N);
+            if (e->Cons.sub.enu == TX_NIL) {
+                out("NULL");
+            } else {
+                fprintf(ALL.out, "_%d", e->N);
+            }
             return 0;   // do not generate arg (already generated at fe_0)
         }
 
@@ -272,7 +241,7 @@ int fe_1 (Expr* e) {
         case EXPR_PRED: {
             Type* tp = env_expr_type(e->Pred.val);          // Bool
             Stmt* s  = env_find_decl(e->env, tp->tk.val.s, NULL); // type Bool { ... }
-            int isnil = (e->Pred.sub.enu == TK_NIL);
+            int isnil = (e->Pred.sub.enu == TX_NIL);
             out("((");
             visit_expr(e->Pred.val, fe_1);
             fprintf(ALL.out, "%s == %s) ? (Bool){True,{._True=1}} : (Bool){False,{._False=1}})",
@@ -301,6 +270,10 @@ int fe_0 (Expr* e) {
 
     } else if (e->sub == EXPR_CONS) {
         visit_expr(e->Cons.arg, fe_0);          // first visit child
+
+        if (e->Cons.sub.enu == TX_NIL) {
+            return 0;                           // out(NULL) in fe_1
+        }
 
         Stmt* user = env_find_super(e->env, e->Cons.sub.val.s);
         assert(user != NULL);
@@ -426,7 +399,7 @@ void code_stmt (Stmt* s) {
                 if (isrec) {
                     out (
                         "if (v == NULL) {\n"
-                        "    printf(\"Nil\");\n"
+                        "    printf(\"$\");\n"
                         "    return;\n"
                         "}\n"
                     );
@@ -599,8 +572,6 @@ void code (Stmt* s) {
         "#define BET(x,y,z) (MIN(x,z)<y && y<MAX(x,z))\n"
         "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
         "#define output_Unit(x)  (output_Unit_(x), puts(\"\"))\n"
-        "#define output_Nil_(x)  (assert((x)==NULL), printf(\"Nil\"))\n"
-        "#define output_Nil(x)   (output_Nil_(x), puts(\"\"))\n"
         "typedef struct {\n"
         "    void* buf;\n"      // stack-allocated buffer
         "    int max;\n"        // maximum size
