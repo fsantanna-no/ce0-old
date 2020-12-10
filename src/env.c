@@ -268,10 +268,10 @@ int mark_cons__check_decl__mark_rec_cons (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int check_undeclared__set_ref (Stmt* s) {
+int check_undeclared (Stmt* s) {
     int OK = 1;
 
-    int check_type (Type* tp) {
+    int ft (Type* tp) {
         if (tp->sub == TYPE_USER) {
             if (env_find_decl(tp->env, tp->tk.val.s, NULL) == NULL) {
                 char err[512];
@@ -282,7 +282,7 @@ int check_undeclared__set_ref (Stmt* s) {
         return 1;
     }
 
-    int check_expr (Expr* e) {
+    int fe (Expr* e) {
         switch (e->sub) {
             case EXPR_VAR: {
                 Stmt* decl = env_find_decl(e->env, e->tk.val.s, NULL);
@@ -290,10 +290,6 @@ int check_undeclared__set_ref (Stmt* s) {
                     char err[512];
                     sprintf(err, "undeclared variable \"%s\"", e->tk.val.s);
                     OK = err_message(e->tk, err);
-                } else {
-                    if (decl->sub==STMT_USER && s->User.isrec) {
-                        decl->Var.ref.sub = REC_ALIAS;
-                    }
                 }
                 break;
             }
@@ -324,13 +320,29 @@ int check_undeclared__set_ref (Stmt* s) {
         return 1;
     }
 
-    visit_stmt(s, NULL, check_expr, check_type);
+    visit_stmt(s, NULL, fe, ft);
     return OK;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void set_env_stmt_expr_type (Stmt* s) {
+void set_ref (Stmt* s) {
+    int fe (Expr* e) {
+        if (e->sub == EXPR_VAR) {
+            Stmt* decl = env_find_decl(e->env, e->tk.val.s, NULL);
+            assert(decl != NULL);
+            if (decl->sub==STMT_USER && s->User.isrec) {
+                decl->Var.ref.sub = REC_ALIAS;
+            }
+        }
+        return 1;
+    }
+    visit_stmt(s, NULL, fe, NULL);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+void set_env (Stmt* s) {
     // TODO: _N_=0
     // predeclare function `output`
     static Env env_;
@@ -429,10 +441,11 @@ void set_env_stmt_expr_type (Stmt* s) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int env (Stmt* s) {
-    set_env_stmt_expr_type(s);
-    if (!check_undeclared__set_ref(s)) {
+    set_env(s);
+    if (!check_undeclared(s)) {
         return 0;
     }
+    set_ref(s);
     if (!check_calls_with_call_rec(s)) {
         return 0;
     }
