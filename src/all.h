@@ -6,7 +6,7 @@
 #include "env.h"
 #include "code.h"
 
-#define GCC "gcc -Wall -Wno-unused-variable -Wno-unused-local-typedefs -Wno-unused-function -Wno-format-zero-length"
+#define GCC "gcc -Wall -Wno-unused-but-set-variable -Wno-unused-local-typedefs -Wno-unused-function -Wno-format-zero-length"
 
 FILE* stropen  (const char* mode, size_t size, char* str);
 

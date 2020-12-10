@@ -525,10 +525,13 @@ int set_conss_dynamic (Stmt* S) {
             // recurse into EXPR_VAR
             } else if (e->sub == EXPR_VAR) {
                 // find respective STMT_VAR
-                Stmt* decl = env_find_decl(e->env, e->tk.val.s, NULL);
+                int scope;
+                Stmt* decl = env_find_decl(e->env, e->tk.val.s, &scope);
                 assert(decl != NULL);
                 if (decl->sub == STMT_VAR) {
-                    visit_expr(&decl->Var.init, fe);
+                    if (scope == 0) {
+                        visit_expr(&decl->Var.init, fe);    // do not visit STMT_VAR in outer scopes
+                    }
                 } else {
                     assert(decl->sub == STMT_FUNC);
                     // do nothing: funcs are always static/global

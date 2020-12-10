@@ -513,8 +513,6 @@ void code_stmt (Stmt* s) {
                 );
             }
 
-            visit_expr(&s->Var.init, fe_0);
-
             out(to_c(&s->Var.type));
             out(" ");
             out(s->Var.id.val.s);
@@ -533,6 +531,8 @@ void code_stmt (Stmt* s) {
                     s->N
                 );
             }
+
+            visit_expr(&s->Var.init, fe_0);
 
             out(s->Var.id.val.s);
             fputs(" = ", ALL.out);

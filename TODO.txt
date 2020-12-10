@@ -1,3 +1,4 @@
+- remover Nil?
 - struct Cons
 - numero de vezes usado
     - estaticamente: tree/dag detection
