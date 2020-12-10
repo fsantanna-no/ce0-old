@@ -261,14 +261,11 @@ int parser_stmt (Stmt* ret) {
         }
         Tk id = ALL.tk0;
 
-        REC ref = REC_NONE;
         int pool = 0;                   // no pool
         if (accept('[')) {
             if (accept(TX_NUM)) {
-                ref = REC_POOL;
                 pool = ALL.tk0.val.n;   // bounded
             } else {
-                ref = REC_POOL;
                 pool = -1;              // unbounded
             }
             if (!accept_err(']')) {
@@ -290,7 +287,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_expr(&e)) {
             return 0;
         }
-        *ret = (Stmt) { _N_++, STMT_VAR, NULL, .Var={id,{ref,{pool}},tp,e} };
+        *ret = (Stmt) { _N_++, STMT_VAR, NULL, .Var={id,pool,tp,e} };
 
     // STMT_USER
     } else if (accept(TK_TYPE)) {       // type

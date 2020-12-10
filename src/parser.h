@@ -90,20 +90,6 @@ typedef struct {
     Type type;                          // ()
 } Sub;
 
-typedef enum {
-    REC_NONE,       // not recursive type
-    REC_POOL,       // val x[]: Nat             // [] // allocator + cleanup
-    REC_CONS,       // val x: Nat = Succ(...)   // rec + cons_init + in_return // cleanup + bit_set
-    REC_ALIAS       // val x: Nat = y           // rec - cons_init // bit_set
-} REC;
-
-typedef struct {
-    REC sub;
-    union {
-        int pool;   // REC_POOL: {[],[n]} <- (-1,n)
-    };
-} Ref;
-
 typedef struct Stmt {
     int N;
     STMT sub;
@@ -113,7 +99,7 @@ typedef struct Stmt {
         Expr ret;       // STMT_RETURN
         struct {
             Tk   id;                    // x
-            Ref  ref;
+            int  pool;                  // -, [], [n], (0,-1,n)
             Type type;                  // : Bool
             Expr init;                  // = y
         } Var;          // STMT_VAR

@@ -159,10 +159,12 @@ void env_dump (Env* env) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// Identify all STMT_CALL with EXPR_CALLs for with recursive returns.
-// These are problematic because they have no explicit pool to hold the returns.
+// Identify all STMT_CALL with EXPR_CALLs with recursive returns.
+// Error because they have no explicit pool to hold the returns:
+//      func f: () -> Nat {}    -- "f" returns Nat
+//      call f()                -- ERR: missing pool for return of "f"
 
-int check_calls_with_call_rec (Stmt* s) {
+int check_calls_without_pool (Stmt* s) {
     int OK = 1;
 
     // find all STMT_CALL
@@ -203,14 +205,6 @@ int check_calls_with_call_rec (Stmt* s) {
 //  - return x where x=Succ(...)    -- allocate Succ on received pool
 // Also check if none of these allocations have a unnecessary local pool.
 //  - return x where x[] = Succ(...) -- x is not pool b/c Succ will be allocd on recvd pool
-// Also mark all REC_CONS references, which are those with EXPR_CONS.
-//  - REC_CONS  escape and are root of some constructor
-//  - REC_ALIAS escape but are not root of some constructor, instead they point to REC_CONS
-//
-// - identify all STMT_RETURN
-//      - mark all EXPR_CONS in it
-//      - recurse into EXPR_VAR in it
-//          - check if EXPR_VAR is *not* a pool b/c allocation must be outside
 
 int mark_cons__check_decl__mark_rec_cons (Stmt* s) {
     int OK = 1;
@@ -235,13 +229,8 @@ int mark_cons__check_decl__mark_rec_cons (Stmt* s) {
                 Stmt* y = env_find_decl(e->env, e->tk.val.s, &scope);
                 assert(y != NULL);
                 if (y->sub == STMT_VAR) {
-                    if (y->Var.ref.sub == REC_POOL) {
+                    if (y->Var.pool) {
                         OK = err_message(y->Var.id, "invalid pool : data returns");
-                    } else {
-                        y->Var.ref.sub = REC_CONS; // var declaration of recursive type w/ constructor that appears on return
-//aqui realmente tem construtor?
-//arg tb é REC_CONS se for retornado
-//strong
                     }
 
                     // find all EXPR_CONS/EXPR_VAR inside STMT_VAR init
@@ -268,7 +257,7 @@ int mark_cons__check_decl__mark_rec_cons (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int check_undeclared (Stmt* s) {
+int check_undeclareds (Stmt* s) {
     int OK = 1;
 
     int ft (Type* tp) {
@@ -326,23 +315,7 @@ int check_undeclared (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void set_ref (Stmt* s) {
-    int fe (Expr* e) {
-        if (e->sub == EXPR_VAR) {
-            Stmt* decl = env_find_decl(e->env, e->tk.val.s, NULL);
-            assert(decl != NULL);
-            if (decl->sub==STMT_USER && s->User.isrec) {
-                decl->Var.ref.sub = REC_ALIAS;
-            }
-        }
-        return 1;
-    }
-    visit_stmt(s, NULL, fe, NULL);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
-void set_env (Stmt* s) {
+void set_envs (Stmt* s) {
     // TODO: _N_=0
     // predeclare function `output`
     static Env env_;
@@ -350,7 +323,7 @@ void set_env (Stmt* s) {
         static Type unit = {TYPE_UNIT};
         static Stmt s = {
             0, STMT_VAR, NULL,
-            .Var={ {TX_VAR,{.s="output"},0,0},{REC_NONE},
+            .Var={ {TX_VAR,{.s="output"},0,0},0,
                    {TYPE_FUNC,NULL,.Func={&unit,&unit}},{EXPR_UNIT} }
         };
         env_ = (Env) { &s, NULL };
@@ -419,7 +392,7 @@ void set_env (Stmt* s) {
                     Stmt* arg = malloc(sizeof(Stmt));
                     *arg = (Stmt) {
                         0, STMT_VAR, NULL,
-                        .Var={ {TX_VAR,{.s="arg"},0,0},{REC_NONE},*s->Func.type.Func.out,{EXPR_UNIT} }
+                        .Var={ {TX_VAR,{.s="arg"},0,0},0,*s->Func.type.Func.out,{EXPR_UNIT} }
                     };
                     Env* new = malloc(sizeof(Env));
                     *new = (Env) { arg, env };
@@ -441,12 +414,11 @@ void set_env (Stmt* s) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int env (Stmt* s) {
-    set_env(s);
-    if (!check_undeclared(s)) {
+    set_envs(s);
+    if (!check_undeclareds(s)) {
         return 0;
     }
-    set_ref(s);
-    if (!check_calls_with_call_rec(s)) {
+    if (!check_calls_without_pool(s)) {
         return 0;
     }
     if (!mark_cons__check_decl__mark_rec_cons(s)) {

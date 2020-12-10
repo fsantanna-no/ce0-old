@@ -299,6 +299,14 @@ int fe_0 (Expr* e) {
                 "assert(_%d!=NULL && \"TODO\");\n"
                 "*_%d = __%d;\n",
                     sup, e->N, sup, sup, e->N, e->N, e->N);
+
+#if 0
+                fprintf (ALL.out,
+                    " __attribute__ ((__cleanup__(%s_clean_cons))) ",
+                    sup
+                );
+#endif
+
         } else if (user->User.isrec) {
             // Bool* _1 = &__1;
             fprintf(ALL.out, "%s* _%d = &__%d;\n", sup, e->N, e->N);
@@ -315,13 +323,32 @@ int fe_0 (Expr* e) {
 
 void code_stmt (Stmt* s) {
     switch (s->sub) {
-        case STMT_USER:
-            for (int i=0; i<s->User.size; i++) {        // first generate tuples
-                visit_type(&s->User.vec[i].type, ft);
-            }
-
+        case STMT_USER: {
             const char* sup = s->User.id.val.s;
             const char* SUP = strupper(s->User.id.val.s);
+            int isrec = s->User.isrec;
+
+            // struct Bool;
+            // typedef struct Bool Bool;
+            // void output_Bool_ (Bool v);
+            {
+                // struct { BOOL sub; union { ... } } Bool;
+                fprintf(ALL.out,
+                    "struct %s;\n"
+                    "typedef struct %s %s;\n",
+                    sup, sup, sup
+                );
+
+                fprintf(ALL.out,
+                    "auto void output_%s_ (%s%s v);\n", // auto: https://stackoverflow.com/a/7319417
+                    sup, sup, (isrec ? "*" : "")
+                );
+            }
+
+            // first generate tuples
+            for (int i=0; i<s->User.size; i++) {
+                visit_type(&s->User.vec[i].type, ft);
+            }
 
             // ENUM + STRUCT + UNION
             {
@@ -341,7 +368,7 @@ void code_stmt (Stmt* s) {
 
                 // struct { BOOL sub; union { ... } } Bool;
                 fprintf(ALL.out,
-                    "typedef struct %s {\n"
+                    "struct %s {\n"
                     "    %s sub;\n"
                     "    union {\n",
                     sup, SUP
@@ -356,20 +383,19 @@ void code_stmt (Stmt* s) {
                 }
                 fprintf(ALL.out,
                     "    };\n"
-                    "} %s;\n",
-                    sup
+                    "};\n"
                 );
             }
             out("\n");
 
             // CLEAN
-            if (s->User.isrec) {
+            if (isrec) {
+                // Nat_free
                 fprintf (ALL.out,
                     "void %s_free (struct %s** p) {\n"
                     "    if (*p == NULL) { return; }\n",
                     sup, sup
                 );
-
                 for (int i=0; i<s->User.size; i++) {
                     Sub sub = s->User.vec[i];
                     if (sub.type.sub==TYPE_USER && (!strcmp(sup,sub.type.tk.val.s))) {
@@ -382,13 +408,31 @@ void code_stmt (Stmt* s) {
                         );
                     }
                 }
+                out("}\n");
 
+                // Nat_clean_cons
+                fprintf (ALL.out,
+                    "void %s_clean_cons (struct %s** p) {\n"
+                    "    if (*p == NULL) { return; }\n",
+                    sup, sup
+                );
+                for (int i=0; i<s->User.size; i++) {
+                    Sub sub = s->User.vec[i];
+                    if (sub.type.sub==TYPE_USER && (!strcmp(sup,sub.type.tk.val.s))) {
+                        fprintf (ALL.out,
+                            "    %s_free(&(*p)->_%s);\n"
+                            "    if (!BET((long)_STACK,(long)*p,(long)&p)) {\n"
+                            "       free(*p);\n"
+                            "    }\n",
+                            sup, sub.id.val.s
+                        );
+                    }
+                }
                 out("}\n");
             }
 
             // OUTPUT
             {
-                int isrec = s->User.isrec;
                 char* op = (isrec ? "->" : ".");
 
                 // _output_Bool (Bool v)
@@ -456,17 +500,17 @@ void code_stmt (Stmt* s) {
             char sup[256];
             strcpy(sup, to_ce(&s->Var.type));
 
-            if (s->Var.ref.sub == REC_POOL) {
-                if (s->Var.ref.pool == -1) {
-                    out("Pool* _pool = NULL;\n");
-                } else {
-                    fprintf (ALL.out,
-                        "%s _buf[%d];\n"
-                        "Pool _%d = { _buf,sizeof(_buf),0 };\n"
-                        "Pool* _pool = &_%d;\n",
-                        sup, s->Var.ref.pool, s->N, s->N
-                    );
-                }
+            if (s->Var.pool == 0) {
+                // no pool
+            } else if (s->Var.pool == -1) {
+                out("Pool* _pool = NULL;\n");
+            } else {
+                fprintf (ALL.out,
+                    "%s _buf[%d];\n"
+                    "Pool _%d = { _buf,sizeof(_buf),0 };\n"
+                    "Pool* _pool = &_%d;\n",
+                    sup, s->Var.pool, s->N, s->N
+                );
             }
 
             visit_expr(&s->Var.init, fe_0);
@@ -474,14 +518,9 @@ void code_stmt (Stmt* s) {
             out(to_c(&s->Var.type));
             fputs(" ", ALL.out);
             fputs(s->Var.id.val.s, ALL.out);
-            if (s->Var.ref.sub==REC_POOL && s->Var.ref.pool==-1) {
+            if (s->Var.pool == -1) {
                 fprintf (ALL.out,
                     " __attribute__ ((__cleanup__(%s_free))) ",
-                    sup
-                );
-            } else if (s->Var.ref.sub == REC_CONS) {
-                fprintf (ALL.out,
-                    " __attribute__ ((__cleanup__(%s_strong))) ",
                     sup
                 );
             }

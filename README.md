@@ -501,7 +501,7 @@ call output(Succ($Nat))     -- ok stack
 -- `f` returns `Nat` but have no pool to allocated it
 -- if call returns isrec, it must be in an assignment or in a return (to use pool from outside)
 func f: () -> Nat {}
-call f()                    -- (ln 5, col 6): missing pool for return of "f"
+call f()                    -- missing pool for return of "f"
 
 -- OK
 val three: Nat = ...

@@ -170,6 +170,10 @@ REC_ALIAS is pointer to REC_CONS
 c = Succ(b)     -- agora C e B tem que ser testados ao sair, se ambos = 0, entao pode desalocar o B
                 -- ou seja vu precisar de uma lista p/ cada REC_CONS com outras REC_CONSs que ela aponta
 
+// Also mark all REC_CONS references, which are those with EXPR_CONS.
+//  - REC_CONS  escape and is root of some constructor
+//  - REC_ALIAS escape but is not root of some constructor, instead they point to REC_CONS
+
 vou precisar de refcount
 
 1. detectar todos EXPR_VAR atingíveis por STMT_RET
