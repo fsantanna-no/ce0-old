@@ -345,7 +345,7 @@ void t_parser_expr (void) {
         Expr e;
         assert(parser_expr(&e));
         assert(e.sub == EXPR_CONS);
-        assert(!strcmp(e.Cons.sub.val.s,"True"));
+        assert(!strcmp(e.Cons.subtype.val.s,"True"));
         assert(e.Cons.arg->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
@@ -354,7 +354,7 @@ void t_parser_expr (void) {
         Expr e;
         assert(parser_expr(&e));
         assert(e.sub == EXPR_CONS);
-        assert(!strcmp(e.Cons.sub.val.s,"Zz1"));
+        assert(!strcmp(e.Cons.subtype.val.s,"Zz1"));
         assert(e.Cons.arg->sub == EXPR_TUPLE);
         fclose(ALL.inp);
     }
@@ -919,6 +919,14 @@ void t_all (void) {
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
+        "var n[]: Nat = Succ(Succ($Nat))\n"
+        "call output(n)\n"
+    ));
+    assert(all(
+        "(ln 4, col 19): missing pool for constructor",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
         "var n: Nat = Succ(Succ($Nat))\n"
         "call output(n)\n"
     ));
@@ -927,11 +935,11 @@ void t_all (void) {
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "var n: Nat = Succ(Succ($Nat))\n"
+        "var n[]: Nat = Succ(Succ($Nat))\n"
         "call _output_Nat(n)\n"
     ));
     assert(all(
-        "Succ (Succ ($))\n",
+        "(ln 4, col 23): missing pool for constructor",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -950,8 +958,10 @@ void t_all (void) {
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "call output(Succ($Nat))\n"
+        "var n[]: Nat = Succ($Nat)\n"
+        "call output(n)\n"
     ));
+#if 1
     assert(all(
         "(ln 5, col 13): missing pool for return of \"f\"",
         "type rec Nat {\n"
@@ -985,6 +995,7 @@ void t_all (void) {
         "    return x\n"
         "}\n"
     ));
+#endif
     assert(all(
         "Succ (Succ ($))\n",
         "type rec Nat {\n"
@@ -1008,12 +1019,24 @@ void t_all (void) {
         "call output(y)\n"
     ));
     assert(all(
-        "Succ (Succ ($))\n",
+        "(ln 5, col 23): missing pool for constructor",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "func f: () -> Nat {\n"
         "    var x: Nat = Succ(Succ($Nat))\n"
+        "    return x\n"
+        "}\n"
+        "var y[]: Nat = f()\n"
+        "call output(y)\n"
+    ));
+    assert(all(
+        "Succ (Succ ($))\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "func f: () -> Nat {\n"
+        "    var x: Nat = Succ(Succ($Nat)) in return\n"
         "    return x\n"
         "}\n"
         "var y[]: Nat = f()\n"
@@ -1035,8 +1058,8 @@ void t_all (void) {
         "        return Succ(len(arg.Succ!))\n"
         "    }\n"
         "}\n"
-        "var x: Nat = Succ(Succ(Succ($Nat)))\n"
-        "var y[]: Nat = len(x)\n"
+        "var x[]: Nat = Succ(Succ(Succ($Nat)))\n"
+        "var y: Nat = len(x) in x\n"
         "call output(y)\n"
     ));
 //puts("===============================================================================");

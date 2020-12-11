@@ -275,7 +275,7 @@ func f : () -> () {
 ```
 Stmt ::= `var´ VAR [`[´[NUM]`]´] `:´    -- variable declaration     var x: () = ()
             Type `=´ Expr
-               `in´ VAR                 -- allocation               var i: Nat = f_nat() in n
+               `in´ (VAR|`return`)      -- allocation               var i: Nat = f_nat() in n
       |  `type´ [`rec´] USER `{`        -- user type declaration
             { USER `:´ Type [`;´] }     -- subtypes
          `}´
