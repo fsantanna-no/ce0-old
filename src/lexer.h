@@ -18,6 +18,7 @@ typedef enum {
     TK_ELSE,
     TK_FUNC,
     TK_IF,
+    TK_IN,
     TK_OUTPUT,
     TK_REC,
     TK_RETURN,

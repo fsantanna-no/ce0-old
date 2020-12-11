@@ -27,11 +27,12 @@ The following keywords are reserved:
     else        -- conditional statement
     func        -- function declaration
     if          -- conditional statement
+    in          -- allocation destination
     output      -- output function
     rec         -- type, function recursive declaration
     return      -- function return
     type        -- new type declaration
-    var         -- immutable variable declaration
+    var         -- variable declaration
 ```
 
 The following symbols are valid:
@@ -207,15 +208,21 @@ A variable declaration assigns a value to a name of a given type:
 var x : () = ()                 -- assigns `()` to variable `x` of type `()`
 var y : Bool = True             -- assigns `True` to variable `y` of type `Bool`
 var z : (Bool,()) = (False,())  -- assigns a tuple to variable `z`
-var t : Tree = Node($Tree,(),Node($Tree,(),$Tree))
 ```
 
-If the type is recursive and the assignment requires dynamic allocation, the
-declaration must also include a [pool](TODO) with brackets:
+A pool declaration, which includes a size between brackets, holds multi-part
+values of recursive types:
 
 ```
-var x[]: Nat = f()      -- the constructors in `f` are allocated in a pool
-var y[64]: Nat = f()    -- the pool can be bounded to limit the number of nodes
+var n[4] : Nat = Succ(Succ($Nat))       -- bounded size limits the number of nodes
+var t[] : Tree = Node($Tree,(),$Tree)   -- unbounded size
+```
+
+A recursive value can also be declared using the keyword `in` for an existing
+pool:
+
+```
+var m : Nat = Succ($Nat) in n   -- `m` resides in `n`
 ```
 
 ## Call
@@ -268,6 +275,7 @@ func f : () -> () {
 ```
 Stmt ::= `var´ VAR [`[´[NUM]`]´] `:´    -- variable declaration     var x: () = ()
             Type `=´ Expr
+               `in´ VAR                 -- allocation               var i: Nat = f_nat() in n
       |  `type´ [`rec´] USER `{`        -- user type declaration
             { USER `:´ Type [`;´] }     -- subtypes
          `}´

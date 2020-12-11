@@ -17,3 +17,7 @@ return Cons(h,t)
 tail = ps.Cons!.2
 
 
+var x[10]: Nat =
+var y: Nat = Succ($Nat) in x
+
+var z = add(i,j) in x

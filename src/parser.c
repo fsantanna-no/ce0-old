@@ -261,12 +261,12 @@ int parser_stmt (Stmt* ret) {
         }
         Tk id = ALL.tk0;
 
-        int pool = 0;                   // no pool
+        int sz_pool = 0;                    // no pool
         if (accept('[')) {
             if (accept(TX_NUM)) {
-                pool = ALL.tk0.val.n;   // bounded
+                sz_pool = ALL.tk0.val.n;    // bounded
             } else {
-                pool = -1;              // unbounded
+                sz_pool = -1;               // unbounded
             }
             if (!accept_err(']')) {
                 return 0;
@@ -287,7 +287,16 @@ int parser_stmt (Stmt* ret) {
         if (!parser_expr(&e)) {
             return 0;
         }
-        *ret = (Stmt) { _N_++, STMT_VAR, NULL, .Var={id,pool,tp,e} };
+        Tk in_pool;
+        if (accept(TK_IN)) {
+            if (!accept_err(TX_VAR)) {
+                return 0;
+            }
+            in_pool = ALL.tk0;
+        } else {
+            in_pool.enu = TK_ERR;       // no pool
+        }
+        *ret = (Stmt) { _N_++, STMT_VAR, NULL, .Var={id,sz_pool,tp,e,in_pool} };
 
     // STMT_USER
     } else if (accept(TK_TYPE)) {       // type

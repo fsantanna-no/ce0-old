@@ -288,6 +288,14 @@ int check_undeclareds (Stmt* s) {
                     sprintf(err, "undeclared variable \"%s\"", e->tk.val.s);
                     OK = err_message(e->tk, err);
                 }
+                if (decl->sub==STMT_VAR && decl->Var.in_pool.enu!=TK_ERR) {
+                    Stmt* pool = env_find_decl(decl->env, decl->Var.in_pool.val.s, NULL);
+                    if (pool==NULL || pool->sub!=STMT_VAR || !pool->Var.sz_pool) {
+                        char err[512];
+                        sprintf(err, "undeclared pool \"%s\"", decl->Var.in_pool.val.s);
+                        OK = err_message(e->tk, err);
+                    }
+                }
                 break;
             }
             case EXPR_DISC:
@@ -322,227 +330,15 @@ int check_undeclareds (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// Identify all STMT_CALL with EXPR_CALLs with recursive returns.
-// Error because they have no explicit pool to hold the returns:
-//      func f: () -> Nat {}    -- "f" returns Nat
-//      call f()                -- ERR: missing pool for return of "f"
-
-int check_calls_without_return_pool (Stmt* S) {
-    int OK = 1;
-
-    auto int fs (Stmt* s);
-    visit_stmt(S, fs, NULL, NULL);
-
-    // find all STMT_CALL
-
-    int fs (Stmt* s) {
-        if (s->sub != STMT_CALL) {
-            return 1;
-        }
-
-        auto int fe (Expr* e);
-        visit_expr(&s->call, fe);
-
-        // find all EXPR_CALL inside STMT_CALL w/ output type TYPE_USER.isrec
-        int fe (Expr* e) {
-            Type* tp = env_expr_type(e);
-            assert(tp != NULL);
-            if (e->sub!=EXPR_CALL || (tp->sub!=TYPE_USER)) {
-                return 1;
-            }
-            Stmt* decl = env_find_decl(e->env, tp->tk.val.s, NULL);
-            assert(decl != NULL);
-            if (decl->User.isrec) {    // recursive type created inside function
-                char err[512];
-                assert(e->Call.func->sub == EXPR_VAR);
-                sprintf(err, "missing pool for return of \"%s\"", e->Call.func->tk.val.s);
-                OK = err_message(e->Call.func->tk, err);
-            }
-            return 1;
-        }
-
-        return 1;
-    }
-    return OK;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
-// Check if initialization of STMT_VAR with pool really allocates memory:
-//      x[] = Succ(...)     -- ok: EXPR_CONS
-//      x[] = f_nat()       -- ok: EXPR_CALL (only if return isrec)
-//      x[] = ...           -- no: does not allocate anything
-
-int check_pools_init (Stmt* S) {
-    int OK = 1;
-
-    auto int fs (Stmt* S);
-    visit_stmt(S, fs, NULL, NULL);
-
-    // find all STMT_VAR with pool
-
-    int fs (Stmt* s) {
-        if (s->sub!=STMT_VAR || !s->Var.pool) {
-                return 1;
-        }
-
-        // check if it's an EXPR_CONS or EXPR_CALL to isrec
-
-        if (s->Var.init.sub == EXPR_CONS) {
-            // ok: x[] = Succ(...)
-        } else if (s->Var.init.sub == EXPR_CALL) {
-            // maybe
-            Type* tp = env_expr_type(s->Var.init.Call.func);
-            if (tp->sub == TYPE_USER) {
-                Stmt* decl = env_find_decl(s->Var.init.env, tp->tk.val.s, NULL);
-                assert(decl != NULL);
-                if (decl->User.isrec) {
-                    // ok: x[] = f_nat()
-                } else {
-                    // no: x[] = f_bool()
-                    OK = 0;
-                }
-            }
-        } else {
-            // no: x[] = ...
-            OK = 0;
-        }
-        if (!OK) {
-            err_message(s->Var.id, "invalid pool : no data allocation");
-        }
-        return 1;
-    }
-
-    return OK;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
-// Check if accesses of EXPR_VAR with pool hits another pool or returns.
+// Check if interacting EXPR_VAR all share the same pool.
 //      val x[]: Nat = ...  -- x is a pool
-//      val y[]: Nat = x    -- no: hits pool
-//      return x            -- no: returns
+//      val y[]: Nat = x    -- no: x vs y
+//      return x            -- no: x vs outer
 //      call output(y)      -- ok
+// TODO: require `copy`?
 
-int check_pools_escapes (Stmt* S) {
-    int OK = 1;
-
-    auto int fs (Stmt* S);
-    visit_stmt(S, fs, NULL, NULL);
-
-    // find all STMT_VAR and STMT_RETURN
-
-    int fs (Stmt* s) {
-        if (s->sub!=STMT_VAR && s->sub!=STMT_RETURN) {
-            return 1;
-        }
-
-        // check if pool initialization or return expression uses other pools
-        //  - needs to recurse on every other EXPR_VAR found
-
-        Expr* e = (s->sub == STMT_VAR ? &s->Var.init : &s->ret);
-
-        auto int fe (Expr* e);
-        visit_expr(e, fe);
-
-        // find all EXPR_VAR uses
-
-        int fe (Expr* e) {
-            if (e->sub != EXPR_VAR) {
-                return 1;
-            }
-
-            // check if EXPR_VAR is a declared pool
-
-            Stmt* decl = env_find_decl(e->env, e->tk.val.s, NULL);
-            assert(decl != NULL);
-            if (decl->sub == STMT_VAR) {
-                if (decl->Var.pool) {
-                    char err[512];
-                    sprintf(err, "invalid access to \"%s\" : pool escapes", e->tk.val.s);
-                    OK = err_message(e->tk, err);
-                }
-
-                // recursively check all EXPR_VAR subexpressions found on STMT_VAR init
-                visit_expr(&decl->Var.init, fe);
-            } else {
-                assert(decl->sub == STMT_FUNC);
-            }
-
-            return 1;
-        }
-
-        return 1;
-    }
-
-    return OK;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
-// Mark all EXPR_CONS that need to be allocated in the context pool.
-//      val x[]: Nat = Succ(...)    -- _pool_x
-//      val y: Nat = Succ(...)      -- static
-//      return Succ(...)            -- _pool_outer
-//      return x where x=Succ(...)  -- _pool_outer
-
-int set_conss_dynamic (Stmt* S) {
-    int OK = 1;
-
-    auto int fs (Stmt* s);
-    visit_stmt(S, fs, NULL, NULL);
-
-    // find all STMT_VAR and STMT_RETURN
-
-    int fs (Stmt* s) {
-        if (s->sub!=STMT_VAR && s->sub!=STMT_RETURN) {
-            return 1;
-        }
-        if (s->sub==STMT_VAR && !s->Var.pool) {
-            return 1;   // skip non-pool declarations
-        }
-
-        auto int fe (Expr* e);
-        visit_expr(&s->ret, fe);
-
-        // find all EXPR_CONS and EXPR_VAR (to recurse for other EXPR_CONS inside respective STMT_VAR)
-
-        int fe (Expr* e) {
-            // check EXPR_CONS
-            if (e->sub == EXPR_CONS) {
-                if (e->Cons.sub.enu == TX_NIL) {
-                    // no allocation
-                } else {
-                    // set EXPR_CONS to "ispool"
-                    Stmt* user = env_find_super(e->env, e->Cons.sub.val.s);
-                    assert(user != NULL);
-                    if (user->User.isrec) {
-                        // TODO: check if type matches that of STMT_RETURN or STMT_VAR
-                        e->Cons.ispool = 1;
-                    }
-                }
-
-            // recurse into EXPR_VAR
-            } else if (e->sub == EXPR_VAR) {
-                // find respective STMT_VAR
-                int scope;
-                Stmt* decl = env_find_decl(e->env, e->tk.val.s, &scope);
-                assert(decl != NULL);
-                if (decl->sub == STMT_VAR) {
-                    if (scope == 0) {
-                        visit_expr(&decl->Var.init, fe);    // do not visit STMT_VAR in outer scopes
-                    }
-                } else {
-                    assert(decl->sub == STMT_FUNC);
-                    // do nothing: funcs are always static/global
-                }
-            }
-            return 1;
-        }
-
-        return 1;
-    }
-    return OK;
+int check_same_pools (Stmt* S) {
+    return 1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -550,13 +346,11 @@ int set_conss_dynamic (Stmt* S) {
 int env (Stmt* s) {
     set_envs(s);
     if (
-        ! check_undeclareds(s)                  ||
-        ! check_calls_without_return_pool(s)    ||
-        ! check_pools_init(s)                   ||
-        ! check_pools_escapes(s)
+        ! check_undeclareds(s)   ||
+        //! check_cons_in_pool(s)       <-- TODO
+        ! check_same_pools(s)
     ) {
         return 0;
     }
-    set_conss_dynamic(s);
     return 1;
 }

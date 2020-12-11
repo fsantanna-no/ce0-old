@@ -289,9 +289,7 @@ int fe_0 (Expr* e) {
         visit_expr(e->Cons.arg, fe_1);
         out(" } });\n");
 
-        if (e->Cons.ispool) {
-            assert(user->User.isrec && "bug found");
-
+        if (user->User.isrec) {
             // Nat* _1 = (Nat*) pool_alloc(pool, sizeof(Nat));
             // *_1 = __1;
             fprintf(ALL.out,
@@ -299,17 +297,6 @@ int fe_0 (Expr* e) {
                 "assert(_%d!=NULL && \"TODO\");\n"
                 "*_%d = __%d;\n",
                     sup, e->N, sup, sup, e->N, e->N, e->N);
-
-#if 0
-                fprintf (ALL.out,
-                    " __attribute__ ((__cleanup__(%s_clean_cons))) ",
-                    sup
-                );
-#endif
-
-        } else if (user->User.isrec) {
-            // Bool* _1 = &__1;
-            fprintf(ALL.out, "%s* _%d = &__%d;\n", sup, e->N, e->N);
         } else {
             // plain cons: nothing else to do
         }
@@ -500,31 +487,37 @@ void code_stmt (Stmt* s) {
             char sup[256];
             strcpy(sup, to_ce(&s->Var.type));
 
-            if (s->Var.pool == 0) {
+            if (s->Var.sz_pool == 0) {
                 // no pool
-            } else if (s->Var.pool == -1) {
+            } else if (s->Var.sz_pool == -1) {
                 fprintf(ALL.out, "Pool* _pool_%d = NULL;\n", s->N);
             } else {
                 fprintf (ALL.out,
                     "%s _buf[%d];\n"
                     "Pool _%d = { _buf,sizeof(_buf),0 };\n"
                     "Pool* _pool_%d = &_%d;\n",
-                    sup, s->Var.pool, s->N, s->N, s->N
+                    sup, s->Var.sz_pool, s->N, s->N, s->N
                 );
             }
 
             out(to_c(&s->Var.type));
             out(" ");
             out(s->Var.id.val.s);
-            if (s->Var.pool == -1) {
+            if (s->Var.sz_pool == -1) {
                 fprintf (ALL.out,
                     " __attribute__ ((__cleanup__(%s_free)))",
                     sup
                 );
             }
             out(";\n");
+#if 0
+                fprintf (ALL.out,
+                    " __attribute__ ((__cleanup__(%s_clean_cons))) ",
+                    sup
+                );
+#endif
 
-            if (s->Var.pool) {
+            if (s->Var.sz_pool) {
                 fprintf (ALL.out,
                     "{\n"
                     "    Pool* _pool = _pool_%d;\n", // create new _pool context for initialization
@@ -539,7 +532,7 @@ void code_stmt (Stmt* s) {
             visit_expr(&s->Var.init, fe_1);
             out(";\n");
 
-            if (s->Var.pool) {
+            if (s->Var.sz_pool) {
                 out("}\n");
             }
             break;

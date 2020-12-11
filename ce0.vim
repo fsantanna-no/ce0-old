@@ -12,7 +12,7 @@ set cpo&vim
 
 let s:ft = matchstr(&ft, '^\([^.]\)\+')
 
-syn keyword Statement   set call return
+syn keyword Statement   set call return in
 syn keyword Statement   if else
 syn keyword Statement   var type rec func
 syn keyword Statement   arg output

@@ -99,9 +99,10 @@ typedef struct Stmt {
         Expr ret;       // STMT_RETURN
         struct {
             Tk   id;                    // x
-            int  pool;                  // -, [], [n], (0,-1,n)
+            int  sz_pool;               // -, [], [n], (0,-1,n)
             Type type;                  // : Bool
             Expr init;                  // = y
+            Tk   in_pool;               // in p
         } Var;          // STMT_VAR
         struct {
             int  isrec;                 // rec

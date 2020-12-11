@@ -12,6 +12,7 @@ static char* reserved[] = {
     "else",
     "func",
     "if",
+    "in",
     "output",
     "rec",
     "return",

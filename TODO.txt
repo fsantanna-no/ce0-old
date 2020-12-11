@@ -1,9 +1,13 @@
+- var y: Nat = Succ($Nat) in x
+- remove set_conss_dynamic: all must be dynamic
+- pool keyword?
 - var, swap semantics, finalize que so testa NULL ou free, nao precisa de fat pointer
 - copy: nao precisa
     - func two: Nat { return Succ(one()) };
 - STMT_SET
 - ref x: Nat
     - lista na pilha que deve ser percorrida sempre que ha um free
+- var x: Nat = Succ(...)     -- onde eu aloco isso? (ou é estático só?)
 
 
 - ./ce.out double free
