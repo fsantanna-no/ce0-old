@@ -532,12 +532,29 @@ void code_stmt (Stmt* s) {
             out(";\n");
             break;
 
-        case STMT_RETURN:
+        case STMT_RETURN: {
             visit_expr(&s->ret, fe_0);
-            out("return ");
-            visit_expr(&s->ret, fe_1);
-            out(";\n");
+            int isrec = 0; {
+                if (s->ret.sub == EXPR_VAR) {
+                    Stmt* user = env_expr_type_find_user(&s->ret);
+                    isrec = (user!=NULL && user->User.isrec);
+                }
+            }
+            if (isrec) {
+                out("{\n"
+                    "void* ret = ");
+                visit_expr(&s->ret, fe_1);
+                out(";\n");
+                out("x = NULL;\n"
+                    "return ret;\n"
+                    "}\n");
+            } else {
+                out("return ");
+                visit_expr(&s->ret, fe_1);
+                out(";\n");
+            }
             break;
+        }
 
         case STMT_SEQ:
             for (int i=0; i<s->Seq.size; i++) {
