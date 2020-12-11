@@ -1,25 +1,9 @@
-- remover Nil?
-- struct Cons
-- numero de vezes usado
-    - estaticamente: tree/dag detection
-        - diferenciar usos que guardam "x" e que somente usam "output(x)"
-    - dinamicamente: guardado ou nao
-        - inicialmente held=0
-        - quando é passado pra func held=0
-        - quando é retornado held=0
-    - max(max(x=2,y=1),z=3)
-        - x declarado
-            - x.held = 0
-        - x passado pra max como arg.1
-            - x.held = 0
-        - x retornado de max como arg.1
-            - x.held = 1
-        - x passado pra max como arg.1
-            - x.held = 0
-        - x não retornado de max como arg.1
-            - x.held = 0
-- no ou é guardado uma vez ou nenhuma
-    - no caso de nenhuma, o held=0 e iremos limpar a sua subtree quando sair de escopo
+- var, swap semantics, finalize que so testa NULL ou free, nao precisa de fat pointer
+- copy: nao precisa
+    - func two: Nat { return Succ(one()) };
+- STMT_SET
+- ref x: Nat
+    - lista na pilha que deve ser percorrida sempre que ha um free
 
 
 - ./ce.out double free
