@@ -189,16 +189,8 @@ int fe_1 (Expr* e) {
                 } else {
                     visit_expr(e->Call.func, fe_1);
 
-                    // f(x) -> f(pool,x)
-                    // f(x) -> (x -> User)
-                    Type* tp = env_expr_type(e->Call.func);
-                    assert(tp->sub == TYPE_FUNC);
-                    if (tp->Func.out->sub == TYPE_USER) {
-                        // (x -> User) -> User
-                        Stmt* s = env_find_decl(e->env, tp->Func.out->tk.val.s, NULL);
-                        assert(s!=NULL && s->sub==STMT_USER);
-                        isrec = s->User.isrec;
-                    }
+                    Stmt* s = env_expr_type_find_user(e);
+                    isrec = (s!=NULL && s->User.isrec);
                 }
 
                 out("(");
@@ -231,16 +223,16 @@ int fe_1 (Expr* e) {
             return 0;
 
         case EXPR_DISC: {
-            Type* tp = env_expr_type(e->Disc.val);          // Bool
-            Stmt* s  = env_find_decl(e->env, tp->tk.val.s, NULL); // type Bool { ... }
+            Stmt* s = env_expr_type_find_user(e->Disc.val);
+            assert(s != NULL);
             visit_expr(e->Disc.val, fe_1);
             fprintf(ALL.out, "%s_%s", (s->User.isrec ? "->" : "."), e->Disc.subtype.val.s);
             return 0;
         }
 
         case EXPR_PRED: {
-            Type* tp = env_expr_type(e->Pred.val);          // Bool
-            Stmt* s  = env_find_decl(e->env, tp->tk.val.s, NULL); // type Bool { ... }
+            Stmt* s = env_expr_type_find_user(e->Pred.val);
+            assert(s != NULL);
             int isnil = (e->Pred.subtype.enu == TX_NIL);
             out("((");
             visit_expr(e->Pred.val, fe_1);
@@ -503,19 +495,15 @@ void code_stmt (Stmt* s) {
             out(to_c(&s->Var.type));
             out(" ");
             out(s->Var.id.val.s);
-            if (s->Var.sz_pool == -1) {
+
+            if (s->Var.sz_pool==-1 || s->Var.in_pool.enu!=TK_ERR) {
                 fprintf (ALL.out,
                     " __attribute__ ((__cleanup__(%s_free)))",
                     sup
                 );
             }
+
             out(";\n");
-#if 0
-                fprintf (ALL.out,
-                    " __attribute__ ((__cleanup__(%s_clean_cons))) ",
-                    sup
-                );
-#endif
 
             if (s->Var.sz_pool) {
                 fprintf (ALL.out,

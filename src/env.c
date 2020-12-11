@@ -123,8 +123,7 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
             return &env_expr_type(e->Index.tuple)->Tuple.vec[e->Index.index];
 
         case EXPR_DISC: {   // x.True
-            Type* tp = env_expr_type(e->Disc.val);         // Bool
-            Stmt* s  = env_find_decl(e->env, tp->tk.val.s, NULL); // type Bool { ... }
+            Stmt* s = env_expr_type_find_user(e->Disc.val); // type Bool { ... }
             assert(s != NULL);
             for (int i=0; i<s->User.size; i++) {
                 if (!strcmp(s->User.vec[i].id.val.s, e->Disc.subtype.val.s)) {
@@ -143,6 +142,21 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
         }
     }
     assert(0 && "bug found");
+}
+
+//  type Bool { ... }
+//  var x: Bool
+//  ... x ...           -- give "x" -> "var x" -> type Bool
+Stmt* env_expr_type_find_user (Expr* e) {
+    Type* tp = env_expr_type(e);
+    assert(tp != NULL);
+    if (tp->sub == TYPE_USER) {
+        Stmt* s = env_find_decl(e->env, tp->tk.val.s, NULL);
+        assert(s != NULL);
+        return s;
+    } else {
+        return NULL;
+    }
 }
 
 void env_dump (Env* env) {
@@ -354,17 +368,10 @@ int check_conss_pool (Stmt* S) {
                 }
             }
         } else if (e->sub == EXPR_CALL) {
-            Type* tp = env_expr_type(e->Call.func);
-            assert(tp->sub == TYPE_FUNC);
-            if (tp->Func.out->sub == TYPE_USER) {
-                Stmt* s = env_find_decl(e->env, tp->Func.out->tk.val.s, NULL);
-                assert(s!=NULL && s->sub==STMT_USER);
-                if (s->User.isrec) {
-                    assert(e->Call.func->sub == EXPR_VAR);
-                    OK = err_message(e->Call.func->tk, "missing pool for call");
-                }
+            Stmt* s = env_expr_type_find_user(e);
+            if (s!=NULL && s->User.isrec) {
+                OK = err_message(e->Call.func->tk, "missing pool for call");
             }
-            // depende se retorna rec
         }
         return 1;
     }

@@ -1,21 +1,7 @@
-- var y: Nat = Succ($Nat) in x
-- remove set_conss_dynamic: all must be dynamic
-- pool keyword?
 - var, swap semantics, finalize que so testa NULL ou free, nao precisa de fat pointer
-- copy: nao precisa
-    - func two: Nat { return Succ(one()) };
 - STMT_SET
-- ref x: Nat
-    - lista na pilha que deve ser percorrida sempre que ha um free
-- var x: Nat = Succ(...)     -- onde eu aloco isso? (ou é estático só?)
-
-
-- ./ce.out double free
-    - quando REC_CONS é passado pra arg, zero bit, quando retorno, seto o bit
-- agora declarar todas as refs como struct ref e initializar como REC_ALIAS/REC_CONS.
-    - no caso de REC_CONS setar bit e apontar, no case de REC_ALIAS apontar pra REC_CONS
 - erro ao compartilhar refs de malloc pools diferentes
-- DINAMICO detectar quando ponteiros nao sao retornados e assim desalocar sua arvore na saida
+    - EXPR_COPY
 - verificar alocacoes em todos os exemplos
 - estudar sobre avaliacao, tail call
 
@@ -38,6 +24,8 @@
         - mas o retorno tem que ser uma variavel só que em teoria teria que guardar os dois recs no mesmo pool?
 
 - MINOR
+    - ref x: Nat
+        - lista na pilha que deve ser percorrida sempre que ha um free
     - subtypes
         - var x: True = True
     - https://www.google.com/search?q=same-fringe+problem
