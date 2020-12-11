@@ -476,25 +476,26 @@ void code_stmt (Stmt* s) {
         case STMT_VAR: {
             visit_type(&s->Var.type, ft);
 
+            char* id = s->Var.id.val.s;
             char sup[256];
             strcpy(sup, to_ce(&s->Var.type));
 
             if (s->Var.sz_pool == 0) {
                 // no pool
             } else if (s->Var.sz_pool == -1) {
-                fprintf(ALL.out, "Pool* _pool_%d = NULL;\n", s->N);
+                fprintf(ALL.out, "Pool* _pool_%s = NULL;\n", id);
             } else {
                 fprintf (ALL.out,
                     "%s _buf[%d];\n"
-                    "Pool _%d = { _buf,sizeof(_buf),0 };\n"
-                    "Pool* _pool_%d = &_%d;\n",
-                    sup, s->Var.sz_pool, s->N, s->N, s->N
+                    "Pool _%s = { _buf,sizeof(_buf),0 };\n"
+                    "Pool* _pool_%s = &_%s;\n",
+                    sup, s->Var.sz_pool, id, id, id
                 );
             }
 
             out(to_c(&s->Var.type));
             out(" ");
-            out(s->Var.id.val.s);
+            out(id);
 
             if (s->Var.sz_pool==-1 || s->Var.in_pool.enu!=TK_ERR) {
                 fprintf (ALL.out,
@@ -505,11 +506,20 @@ void code_stmt (Stmt* s) {
 
             out(";\n");
 
-            if (s->Var.sz_pool) {
+            char* pool = NULL; {
+                if (s->Var.sz_pool) {
+                    pool = id;
+                } else if (s->Var.in_pool.enu == TK_RETURN) {
+                    pool = NULL;
+                } else if (s->Var.in_pool.enu == TX_VAR) {
+                    pool = s->Var.in_pool.val.s;
+                }
+            }
+            if (pool != NULL) {
                 fprintf (ALL.out,
                     "{\n"
-                    "    Pool* _pool = _pool_%d;\n", // create new _pool context for initialization
-                    s->N
+                    "    Pool* _pool = _pool_%s;\n", // create new _pool context for initialization
+                    pool
                 );
             }
 
@@ -520,7 +530,7 @@ void code_stmt (Stmt* s) {
             visit_expr(&s->Var.init, fe_1);
             out(";\n");
 
-            if (s->Var.sz_pool) {
+            if (pool != NULL) {
                 out("}\n");
             }
             break;

@@ -1,3 +1,11 @@
+- separar var/pool?
+    - sao conceitos diferentes
+    - agora var x[]
+        - x é o pool
+        - x é uma referencia
+- x=NULL quando f(x) retorna Nat
+    - agora tudo tem a ver com o pool
+    - cada ID esta associado a um pool entao fica facil diferenciar
 - var, swap semantics, finalize que so testa NULL ou free, nao precisa de fat pointer
 - STMT_SET
 - erro ao compartilhar refs de malloc pools diferentes

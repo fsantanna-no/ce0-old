@@ -961,15 +961,15 @@ void t_all (void) {
         "var n[]: Nat = Succ($Nat)\n"
         "call output(n)\n"
     ));
-#if 1
     assert(all(
-        "(ln 5, col 13): missing pool for return of \"f\"",
+        "(ln 5, col 13): missing pool for call",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "func f: () -> Nat {}\n"
         "call output(f())\n"
     ));
+#if TODO
     assert(all(
         "(ln 5, col 6): missing pool for return of \"f\"",
         "type rec Nat {\n"
@@ -977,13 +977,6 @@ void t_all (void) {
         "}\n"
         "func f: () -> Nat {}\n"
         "call f()\n"
-    ));
-    assert(all(
-        "(ln 4, col 5): invalid pool : no data allocation",
-        "type rec Nat {\n"
-        "   Succ: Nat\n"
-        "}\n"
-        "var x[]: Nat = ()\n" // error: does not allocate anything
     ));
     assert(all(
         "(ln 6, col 12): invalid access to \"x\" : pool escapes",
