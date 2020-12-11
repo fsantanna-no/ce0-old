@@ -164,7 +164,7 @@ int fe_1 (Expr* e) {
             out(e->tk.val.s);
             break;
         case EXPR_CONS: {
-            if (e->Cons.sub.enu == TX_NIL) {
+            if (e->Cons.subtype.enu == TX_NIL) {
                 out("NULL");
             } else {
                 fprintf(ALL.out, "_%d", e->N);
@@ -234,19 +234,19 @@ int fe_1 (Expr* e) {
             Type* tp = env_expr_type(e->Disc.val);          // Bool
             Stmt* s  = env_find_decl(e->env, tp->tk.val.s, NULL); // type Bool { ... }
             visit_expr(e->Disc.val, fe_1);
-            fprintf(ALL.out, "%s_%s", (s->User.isrec ? "->" : "."), e->Disc.sub.val.s);
+            fprintf(ALL.out, "%s_%s", (s->User.isrec ? "->" : "."), e->Disc.subtype.val.s);
             return 0;
         }
 
         case EXPR_PRED: {
             Type* tp = env_expr_type(e->Pred.val);          // Bool
             Stmt* s  = env_find_decl(e->env, tp->tk.val.s, NULL); // type Bool { ... }
-            int isnil = (e->Pred.sub.enu == TX_NIL);
+            int isnil = (e->Pred.subtype.enu == TX_NIL);
             out("((");
             visit_expr(e->Pred.val, fe_1);
             fprintf(ALL.out, "%s == %s) ? (Bool){True,{._True=1}} : (Bool){False,{._False=1}})",
                 (isnil ? "" : (s->User.isrec ? "->sub" : ".sub")),
-                (isnil ? "NULL" : e->Pred.sub.val.s)
+                (isnil ? "NULL" : e->Pred.subtype.val.s)
             );
             return 0;
         }
@@ -271,15 +271,15 @@ int fe_0 (Expr* e) {
     } else if (e->sub == EXPR_CONS) {
         visit_expr(e->Cons.arg, fe_0);          // first visit child
 
-        if (e->Cons.sub.enu == TX_NIL) {
+        if (e->Cons.subtype.enu == TX_NIL) {
             return 0;                           // out(NULL) in fe_1
         }
 
-        Stmt* user = env_find_super(e->env, e->Cons.sub.val.s);
+        Stmt* user = env_find_super(e->env, e->Cons.subtype.val.s);
         assert(user != NULL);
 
         char* sup = user->User.id.val.s;
-        char* sub = e->Cons.sub.val.s;
+        char* sub = e->Cons.subtype.val.s;
 
         // Bool __1 = (Bool) { False, {_False=1} };
         // Nat  __1 = (Nat)  { Succ,  {_Succ=&_2} };

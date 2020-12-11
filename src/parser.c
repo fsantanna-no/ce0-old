@@ -168,7 +168,7 @@ int parser_expr_one (Expr* ret) {
             *arg = (Expr) { _N_++, EXPR_UNIT, NULL };
         }
 
-        *ret = (Expr) { _N_++, EXPR_CONS, NULL, { .Cons={sub,arg,0} } };
+        *ret = (Expr) { _N_++, EXPR_CONS, NULL, { .Cons={sub,arg} } };
 
     } else {
         return err_expected("expression");
@@ -289,7 +289,7 @@ int parser_stmt (Stmt* ret) {
         }
         Tk in_pool;
         if (accept(TK_IN)) {
-            if (!accept_err(TX_VAR)) {
+            if (!accept(TK_RETURN) && !accept_err(TX_VAR)) {
                 return 0;
             }
             in_pool = ALL.tk0;

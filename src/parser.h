@@ -70,17 +70,16 @@ typedef struct Expr {
             struct Expr* arg;           // (x,y)
         } Call;
         struct {        // EXPR_CONS
-            Tk sub;                     // .True
+            Tk subtype;                 // .True
             struct Expr* arg;
-            int ispool;
         } Cons;
         struct {        // EXPR_DISC
             struct Expr* val;           // Bool.True
-            Tk sub;                     // .True!
+            Tk subtype;                 // .True!
         } Disc;
         struct {        // EXPR_PRED
             struct Expr* val;           // Bool.True
-            Tk sub;                     // .True?
+            Tk subtype;                 // .True?
         } Pred;
     };
 } Expr;
