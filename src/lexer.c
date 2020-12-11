@@ -16,7 +16,7 @@ static char* reserved[] = {
     "rec",
     "return",
     "type",
-    "val"
+    "var"
 };
 
 static int is_reserved (TK_val* val) {

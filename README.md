@@ -31,7 +31,7 @@ The following keywords are reserved:
     rec         -- type, function recursive declaration
     return      -- function return
     type        -- new type declaration
-    val         -- immutable variable declaration
+    var         -- immutable variable declaration
 ```
 
 The following symbols are valid:
@@ -201,21 +201,21 @@ type rec Tree {
 
 ## Variable declaration
 
-A variable declaration binds a value to a name with a specified type:
+A variable declaration assigns a value to a name of a given type:
 
 ```
-val x : () = ()                 -- assigns `()` to variable `x` of type `()`
-val y : Bool = True             -- assigns `True` to variable `y` of type `Bool`
-val z : (Bool,()) = (False,())  -- assigns a tuple to variable `z`
-val t : Tree = Node($Tree,(),Node($Tree,(),$Tree))
+var x : () = ()                 -- assigns `()` to variable `x` of type `()`
+var y : Bool = True             -- assigns `True` to variable `y` of type `Bool`
+var z : (Bool,()) = (False,())  -- assigns a tuple to variable `z`
+var t : Tree = Node($Tree,(),Node($Tree,(),$Tree))
 ```
 
 If the type is recursive and the assignment requires dynamic allocation, the
 declaration must also include a [pool](TODO) with brackets:
 
 ```
-val x[]: Nat = f()      -- the constructors in `f` are allocated in a pool
-val y[64]: Nat = f()    -- the pool can be bounded to limit the number of nodes
+var x[]: Nat = f()      -- the constructors in `f` are allocated in a pool
+var y[64]: Nat = f()    -- the pool can be bounded to limit the number of nodes
 ```
 
 ## Call
@@ -266,7 +266,7 @@ func f : () -> () {
 # 4. Syntax
 
 ```
-Stmt ::= `val´ VAR [`[´[NUM]`]´] `:´    -- variable declaration     val x: () = ()
+Stmt ::= `var´ VAR [`[´[NUM]`]´] `:´    -- variable declaration     var x: () = ()
             Type `=´ Expr
       |  `type´ [`rec´] USER `{`        -- user type declaration
             { USER `:´ Type [`;´] }     -- subtypes
@@ -327,15 +327,15 @@ type rec Nat {  -- a natural number is either zero (`$Nat`) or
     Succ: Nat   -- a successor of a natural number (`Succ(Nat)`)
 }
 
-val two: Nat = Succ(Succ($Nat)) -- `two` is the successor of the successor of zero
+var two: Nat = Succ(Succ($Nat)) -- `two` is the successor of the successor of zero
                                 --       (represented as `$Nat`)
 ```
 
 Values of recursive types are always references:
 
 ```
-val x: Nat = Succ(Succ($Nat))
-val y: Nat = x  -- x,y share the same reference, no copy is made
+var x: Nat = Succ(Succ($Nat))
+var y: Nat = x  -- x,y share the same reference, no copy is made
 ```
 
 If the constructors reside in the scope of the assignee, no dynamic memory
@@ -355,10 +355,10 @@ allocated in a memory pool declared with brackets in the assignee:
 
 ```
 func f: () -> Nat {
-    val x: Nat = Succ(Succ($Nat))   -- constructor inside a function
+    var x: Nat = Succ(Succ($Nat))   -- constructor inside a function
     return x                        -- `x` does not survive the scope
 }
-val y[]: Nat = f()                  -- `y` is a memory pool for a Nat tree
+var y[]: Nat = f()                  -- `y` is a memory pool for a Nat tree
                                     --     to be allocated inside `f`
 ```
 
@@ -436,10 +436,10 @@ Illustrative example:
 
 ```
 func f: () -> Nat {
-    val x: Nat = Succ(Succ($Nat))
+    var x: Nat = Succ(Succ($Nat))
     return x
 }
-val y[]: Nat = f()    -- y[] or y[N]
+var y[]: Nat = f()    -- y[] or y[N]
 ```
 
 Generated code:
@@ -474,11 +474,11 @@ void f (Pool* pool) {
 1. Check the root assignment for dependencies in nested scopes:
 
 ```
-val y: Nat = Succ(Succ($Nat))   -- same scope: static allocation
+var y: Nat = Succ(Succ($Nat))   -- same scope: static allocation
 ```
 
 ```
-val y[]: Nat = f()              -- body of `f` is nested: pool allocation
+var y[]: Nat = f()              -- body of `f` is nested: pool allocation
 ```
 
 2. Check `return` of body for dependencies:
@@ -488,7 +488,7 @@ return x                        -- check `x`
 ```
 
 ```
-val x: Nat = Succ(Succ($Nat))   -- constructor must be allocated in the received pool
+var x: Nat = Succ(Succ($Nat))   -- constructor must be allocated in the received pool
 ```
 
 ### TODO
@@ -504,7 +504,7 @@ func f: () -> Nat {}
 call f()                    -- missing pool for return of "f"
 
 -- OK
-val three: Nat = ...
+var three: Nat = ...
 func fthree: () -> Nat {
     return three            -- should not use pool b/c defined outside
 }

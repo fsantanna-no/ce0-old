@@ -1,0 +1,19 @@
+call output(List)
+
+var ps[]: List Person
+
+loop {
+    ps = traverse ps {
+    }
+}
+
+
+(h,t) = ps.Cons!   -- 
+
+return Cons(h,t)
+
+
+
+tail = ps.Cons!.2
+
+

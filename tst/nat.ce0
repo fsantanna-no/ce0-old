@@ -1,0 +1,128 @@
+data Nat:
+    Zero ()
+    Succ Nat
+
+x = ...
+y = x       -- x nao pode mais ser referenciado
+f(y)        -- y nao pode mais ser referenciado
+
+
+
+val[0] zero :: Nat
+
+val[1] one = new Succ (zero)
+val[2] two = new Succ (Succ (Zero))
+
+-- each subtree has a single alias -> single parent
+-- needed on max(x,Y)->Y   --> x will be freed entirely
+
+-- In Ce, recursive data types impose some restrictions:
+--  - Elements in different pools cannot be mixed without copying.
+--      - mutations would affect each other (maybe this is ok)
+--      - if one pool deallocs shared node, the backlink in the other pool
+--        would become dangling (this is never ok)
+--  Ceu only: Types may contain arbitrary weak pointers, but weak pointers to
+--  Céu structures must be observed via the watching construct, as they can be
+--  invalidated at any time (to be discussed in Section 2.2).
+-- We impose some restrictions on the data structures that can be represented.
+-- The requirement of tree hierarchies with move semantics demands care when
+-- designing algorithms that manipulate them. In trade, these restrictions
+-- enable static memory management with deterministic deallocation. Still, we
+-- do not feel that the restrictions are prohibitively limiting. For instance,
+-- persistent data structures in functional languages operate under similar
+-- constraints.
+--
+-- NIL
+-- - initial value (?) (really needed b/c of that?)
+-- - what to return on alloc fail
+-- - move semantics, what to assign on pointer in place of what was released
+--
+-- Traverse knows the maximum "stack" size
+
+-- No move semantics e Pool unbounded, eu posso retirar de um e jogar pro outro
+-- sem maiores problemas.
+
+val v :: Nat = ...
+    -- cannot change nodes
+    -- can mix pools
+    -- can hold pointers
+    -- copy semantics, can share within same pool as well
+    -- must respect scoping rules on *sharing*
+    -- only discards after scope
+    -- (maybe also use ref count here?)
+    -- can return b/c local refs will disappear and someone up will catch it
+
+mut x :: Nat = ...
+    -- can change nodes
+    -- cannot mix pools
+    -- cannot hold pointers (maybe can, see below)
+    -- MOVE semantics, prevents GC, only one ref to a node
+    -- need not to respect scoping rules on *copying*
+    -- discards on NIL
+    -- with Céu semantics allow to hold pointer via watching
+    --  (better, support frame linked list of refs)
+    --  (only (flat) locals, but not in nested structures?)
+    --  (diff to refcount is that 1-strong vs N-weak)
+
+-- In this paper, we explore the design space of dynamic recursive data
+-- structures (lists but not arrays)
+-- tabela comparativa: mut/val, rust regions/life/borrow, C pointers, functional
+-- no cycles (only C?)
+-- syntax noise
+
+-------------------------------------------------------------------------------
+
+-- If the function `c2Chars` returns Chars, the caller must pass a pool.
+-- local scope must keep list of pools to release on return
+
+-------------------------------------------------------------------------------
+
+mut add = func :: (ret::Nat,a::Nat,b::Nat) -> ():
+    case (a,b):
+        (=x, 
+
+
+pool {
+    size
+    buf
+    head
+}
+    
+
+val[5] l = new Cons((),Cons((),Cons((),Nil)))
+
+set List(l1,_) [:: ref List] = l
+set List(l1,_) = l
+
+set l1 [:: ref List] = case l:
+    List (=x,_) [:: ref List] -> x
+
+ref l1 :: ref List = 
+
+mut n = case l:
+    List(=x,_) -> x
+
+call show(n)
+
+-------------------------------------------------------------------------------
+
+data_rec Nat:
+    Succ Nat
+
+func add :: ((Nat,Nat) -> Nat):
+    match ...:
+        (x,$)        -> x
+        (x, Succ(y)) -> new Succ(add(x,y))
+
+val v1 :: Nat = $
+val v2 :: Nat = Succ($)
+val v3 :: Nat[] = add(v1,v2)
+val v3 :: Nat[] = add(Succ($),$)
+
+val v3 :: Nat[] = add (Succ($), add(Succ($),$))
+
+Expr e = {
+
+
+{show_String}(cpy)
+

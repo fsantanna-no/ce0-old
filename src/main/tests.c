@@ -112,9 +112,9 @@ void t_lexer (void) {
     }
     // KEYWORDS
     {
-        all_init(NULL, stropen("r", 0, "xval val else valx type"));
+        all_init(NULL, stropen("r", 0, "xvar var else varx type"));
         assert(ALL.tk1.enu == TX_VAR);
-        lexer(); assert(ALL.tk1.enu == TK_VAL);
+        lexer(); assert(ALL.tk1.enu == TK_VAR);
         lexer(); assert(ALL.tk1.enu == TK_ELSE);
         lexer(); assert(ALL.tk1.enu == TX_VAR);
         lexer(); assert(ALL.tk1.enu == TK_TYPE);
@@ -147,10 +147,10 @@ void t_lexer (void) {
         fclose(ALL.inp);
     }
     {
-        all_init(NULL, stropen("r", 0, "val xval valx"));
-        assert(ALL.tk1.enu == TK_VAL);
-        lexer(); assert(ALL.tk1.enu == TX_VAR); assert(!strcmp(ALL.tk1.val.s, "xval")); assert(ALL.tk1.col == 5);
-        lexer(); assert(ALL.tk1.enu == TX_VAR); assert(!strcmp(ALL.tk1.val.s, "valx"));
+        all_init(NULL, stropen("r", 0, "var xvar varx"));
+        assert(ALL.tk1.enu == TK_VAR);
+        lexer(); assert(ALL.tk1.enu == TX_VAR); assert(!strcmp(ALL.tk1.val.s, "xvar")); assert(ALL.tk1.col == 5);
+        lexer(); assert(ALL.tk1.enu == TX_VAR); assert(!strcmp(ALL.tk1.val.s, "varx"));
         lexer(); assert(ALL.tk1.enu == TK_EOF);
         fclose(ALL.inp);
     }
@@ -389,35 +389,35 @@ void t_parser_expr (void) {
 void t_parser_stmt (void) {
     // STMT_VAR
     {
-        all_init(NULL, stropen("r", 0, "val :"));
+        all_init(NULL, stropen("r", 0, "var :"));
         Stmt s;
         assert(!parser_stmt(&s));
         assert(!strcmp(ALL.err, "(ln 1, col 5): expected variable identifier : have `:´"));
         fclose(ALL.inp);
     }
     {
-        all_init(NULL, stropen("r", 0, "val x x"));
+        all_init(NULL, stropen("r", 0, "var x x"));
         Stmt s;
         assert(!parser_stmt(&s));
         assert(!strcmp(ALL.err, "(ln 1, col 7): expected `:´ : have \"x\""));
         fclose(ALL.inp);
     }
     {
-        all_init(NULL, stropen("r", 0, "val x: x"));
+        all_init(NULL, stropen("r", 0, "var x: x"));
         Stmt s;
         assert(!parser_stmt(&s));
         assert(!strcmp(ALL.err, "(ln 1, col 8): expected type : have \"x\""));
         fclose(ALL.inp);
     }
     {
-        all_init(NULL, stropen("r", 0, "val x: ()"));
+        all_init(NULL, stropen("r", 0, "var x: ()"));
         Stmt s;
         assert(!parser_stmt(&s));
         assert(!strcmp(ALL.err, "(ln 1, col 10): expected `=´ : have end of file"));
         fclose(ALL.inp);
     }
     {
-        all_init(NULL, stropen("r", 0, "val x: () = ()"));
+        all_init(NULL, stropen("r", 0, "var x: () = ()"));
         Stmt s;
         assert(parser_stmt(&s));
         assert(s.sub == STMT_VAR);
@@ -427,7 +427,7 @@ void t_parser_stmt (void) {
         fclose(ALL.inp);
     }
     {
-        all_init(NULL, stropen("r", 0, "val x: ((),((),())) = ()"));
+        all_init(NULL, stropen("r", 0, "var x: ((),((),())) = ()"));
         Stmt s;
         assert(parser_stmt(&s));
         assert(s.sub == STMT_VAR);
@@ -436,7 +436,7 @@ void t_parser_stmt (void) {
         fclose(ALL.inp);
     }
     {
-        all_init(NULL, stropen("r", 0, "val a : (_char) = ()"));
+        all_init(NULL, stropen("r", 0, "var a : (_char) = ()"));
         Stmt s;
         assert(parser_stmt(&s));
         assert(s.Var.type.sub == TYPE_NATIVE);
@@ -602,7 +602,7 @@ void t_code (void) {
         char out[8192] = "";
         all_init (
             stropen("w", sizeof(out), out),
-            stropen("r", 0, "val a : () = () ; call _output_Unit(a)")
+            stropen("r", 0, "var a : () = () ; call _output_Unit(a)")
         );
         Stmt s;
         assert(parser_stmts(&s));
@@ -747,13 +747,13 @@ void t_all (void) {
     ));
     assert(all(
         "()\n",
-        "val x: () = ()\n"
+        "var x: () = ()\n"
         "call _output_Unit(x)\n"
     ));
     // NATIVE
     assert(all(
         "A",
-        "val x: _char = _65\n"
+        "var x: _char = _65\n"
         "call _putchar(x)\n"
     ));
     assert(all(
@@ -767,7 +767,7 @@ void t_all (void) {
     // OUTPUT
     assert(all(
         "()\n",
-        "val x: () = ()\n"
+        "var x: () = ()\n"
         "call output(x)\n"
     ));
     assert(all(
@@ -778,7 +778,7 @@ void t_all (void) {
     assert(all(
         "False\n",
         "type Bool { False: () ; True: () }\n"
-        "val b : Bool = False()\n"
+        "var b : Bool = False()\n"
         "call _output_Bool(b)\n"
     ));
     assert(all(
@@ -786,51 +786,51 @@ void t_all (void) {
         "type Zz { Zz1:() }\n"
         "type Yy { Yy1:Zz }\n"
         "type Xx { Xx1:Yy }\n"
-        "val x : Xx = Xx1(Yy1(Zz1))\n"
+        "var x : Xx = Xx1(Yy1(Zz1))\n"
         "call _output_Zz(x.Xx1!.Yy1!)\n"
     ));
     assert(all(
         "Zz1 ((),())\n",
         "type Zz { Zz1:((),()) }\n"
-        "val x : Zz = Zz1 ((),())\n"
+        "var x : Zz = Zz1 ((),())\n"
         "call output(x)\n"
     ));
     assert(all(
         "(ln 1, col 8): undeclared type \"Bool\"",
-        "val x: Bool = ()\n"
+        "var x: Bool = ()\n"
     ));
     assert(all(
         "Xx1 (Yy1,Zz1)\n",
         "type Zz { Zz1:() }\n"
         "type Yy { Yy1:() }\n"
         "type Xx { Xx1:(Yy,Zz) }\n"
-        "val x : Xx = Xx1(Yy1,Zz1)\n"
+        "var x : Xx = Xx1(Yy1,Zz1)\n"
         "call output(x)\n"
     ));
     // IF
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
-        "val b : Bool = False()\n"
+        "var b : Bool = False()\n"
         "if b { } else { call output() }\n"
     ));
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
-        "val b : Bool = True\n"
+        "var b : Bool = True\n"
         "if b { call output() }\n"
     ));
     // PREDICATE
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
-        "val b : Bool = True()\n"
+        "var b : Bool = True()\n"
         "if b.True? { call output(()) }\n"
     ));
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
-        "val b : Bool = True()\n"
+        "var b : Bool = True()\n"
         "if b.False? { } else { call output(()) }\n"
     ));
     // FUNC
@@ -865,17 +865,17 @@ void t_all (void) {
     ));
     assert(all(
         "(ln 2, col 13): undeclared variable \"x\"",
-        "func f : ()->() { val x:()=(); return x }\n"
+        "func f : ()->() { var x:()=(); return x }\n"
         "call output(x)\n"
     ));
     assert(all(
         "(ln 2, col 13): undeclared variable \"x\"",
-        "if () { val x:()=() }\n"
+        "if () { var x:()=() }\n"
         "call output(x)\n"
     ));
     assert(all(
         "(ln 1, col 8): undeclared type \"Xx\"",
-        "val x: Xx = ()\n"
+        "var x: Xx = ()\n"
     ));
     // TYPE REC
     assert(all(
@@ -891,7 +891,7 @@ void t_all (void) {
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "val n: Nat = $Nat\n"
+        "var n: Nat = $Nat\n"
         "call output(n)\n"
     ));
     assert(all(
@@ -899,7 +899,7 @@ void t_all (void) {
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "val n: Nat = ($Nat,($Nat,$Nat)).1\n"
+        "var n: Nat = ($Nat,($Nat,$Nat)).1\n"
         "call output(n)\n"
     ));
     assert(all(
@@ -911,7 +911,7 @@ void t_all (void) {
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "val n: Nat = $Nat\n"
+        "var n: Nat = $Nat\n"
         "call _output_Bool(n.$Nat?)\n"
     ));
     assert(all(
@@ -919,7 +919,7 @@ void t_all (void) {
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "val n: Nat = Succ(Succ($Nat))\n"
+        "var n: Nat = Succ(Succ($Nat))\n"
         "call output(n)\n"
     ));
     assert(all(
@@ -927,7 +927,7 @@ void t_all (void) {
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "val n: Nat = Succ(Succ($Nat))\n"
+        "var n: Nat = Succ(Succ($Nat))\n"
         "call _output_Nat(n)\n"
     ));
     assert(all(
@@ -973,7 +973,7 @@ void t_all (void) {
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "val x[]: Nat = ()\n" // error: does not allocate anything
+        "var x[]: Nat = ()\n" // error: does not allocate anything
     ));
     assert(all(
         "(ln 6, col 12): invalid access to \"x\" : pool escapes",
@@ -981,7 +981,7 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "func f: () -> Nat {\n"
-        "    val x[]: Nat = $Nat\n"
+        "    var x[]: Nat = $Nat\n"
         "    return x\n"
         "}\n"
     ));
@@ -993,7 +993,7 @@ void t_all (void) {
         "func f: () -> Nat {\n"
         "    return Succ(Succ($Nat))\n"
         "}\n"
-        "val y[]: Nat = f()\n"
+        "var y[]: Nat = f()\n"
         "call output(y)\n"
     ));
     assert(all(
@@ -1004,7 +1004,7 @@ void t_all (void) {
         "func f: () -> Nat {\n"
         "    return Succ(Succ($Nat))\n"
         "}\n"
-        "val y[5]: Nat = f()\n"
+        "var y[5]: Nat = f()\n"
         "call output(y)\n"
     ));
     assert(all(
@@ -1013,10 +1013,10 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "func f: () -> Nat {\n"
-        "    val x: Nat = Succ(Succ($Nat))\n"
+        "    var x: Nat = Succ(Succ($Nat))\n"
         "    return x\n"
         "}\n"
-        "val y[]: Nat = f()\n"
+        "var y[]: Nat = f()\n"
         "call output(y)\n"
     ));
     assert(all(
@@ -1035,8 +1035,8 @@ void t_all (void) {
         "        return Succ(len(arg.Succ!))\n"
         "    }\n"
         "}\n"
-        "val x: Nat = Succ(Succ(Succ($Nat)))\n"
-        "val y[]: Nat = len(x)\n"
+        "var x: Nat = Succ(Succ(Succ($Nat)))\n"
+        "var y[]: Nat = len(x)\n"
         "call output(y)\n"
     ));
 //puts("===============================================================================");
@@ -1051,7 +1051,7 @@ assert(0 && "OK");
         "func f: () -> Nat {\n"
         "    return Succ(Succ($Nat))\n"
         "}\n"
-        "val y[1]: Nat = f()\n"
+        "var y[1]: Nat = f()\n"
         "call output(y)\n"
     ));
 }

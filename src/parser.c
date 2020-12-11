@@ -255,7 +255,7 @@ int parser_stmt_sub (Sub* ret) {
 
 int parser_stmt (Stmt* ret) {
     // STMT_VAR
-    if (accept(TK_VAL)) {
+    if (accept(TK_VAR)) {
         if (!accept_err(TX_VAR)) {
             return 0;
         }

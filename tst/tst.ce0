@@ -1,0 +1,20 @@
+type rec Nat {
+    Succ: Nat
+}
+
+func snd: (Nat,Nat) -> Nat {
+    return arg.2                    -- o bit do Y e todos REC_CONS serao setados pra 1 bem aqui
+}
+
+--var x: Nat = Succ(Nil)
+
+func f: () -> Nat {                 -- (x,y) sao REC_CONS pois tem construtor
+    var x: Nat = Succ(Nil)          -- ambos sao alocados fora
+    var y: Nat = Succ(Succ(Nil))    -- mas so esse vai sobreviver
+    return snd(x,y)                 -- no _cleanup_ do "x", eu tenho que desalocar a sua subarvore
+        -- TODO: snd(Succ(Nil),y)   -- o arg.1 tem que virar FAT
+}
+
+var v[]: Nat = f()
+call output(v)
+

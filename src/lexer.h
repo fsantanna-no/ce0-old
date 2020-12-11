@@ -22,7 +22,7 @@ typedef enum {
     TK_REC,
     TK_RETURN,
     TK_TYPE,
-    TK_VAL
+    TK_VAR
 } TK;
 
 typedef union {

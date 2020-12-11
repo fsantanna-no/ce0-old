@@ -1,0 +1,8 @@
+type rec Tree {
+    Node: (Tree,Tree)
+}
+
+var x: Tree = Node($Tree,$Tree)
+var z: Tree = Node(x,x)         -- erro: "x" é referenciado 2x
+
+call output(z)

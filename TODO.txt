@@ -19,10 +19,10 @@
     - testar nao caber no pool
     - id()
         func f: () -> Nat {
-            val x: Nat = ...
+            var x: Nat = ...
             return id(x)    -- does not return x, but pass x to id which might return it
         }                   -- solution is to make x also go to the pool
-        val x[] = f()
+        var x[] = f()
     - can't return tuples w/ multiple rec types
     -- TODO-1: warning minor issue
 
@@ -35,7 +35,7 @@
 
 - MINOR
     - subtypes
-        - val x: True = True
+        - var x: True = True
     - https://www.google.com/search?q=same-fringe+problem
         - https://www.lua.org/doc/jai2009.pdf
     - type Expr: (n:Int,env:Env) {
@@ -96,26 +96,26 @@ int main(int argc, char *argv[]) {
 - full previous
 
 
-val y[]: Nat = Succ(f())
+var y[]: Nat = Succ(f())
 
 - further examples: add inside, add outside
 ```
 func f: () -> Nat {
-    val x: Nat = Succ(Succ(Nil))
-    val y: Nat = Succ(Succ(Nil))
-    val z: Nat = add(x,y)
+    var x: Nat = Succ(Succ(Nil))
+    var y: Nat = Succ(Succ(Nil))
+    var z: Nat = add(x,y)
     return z
 }
-val y[]: Nat = f()
+var y[]: Nat = f()
 ```
 ```
 func f: () -> Nat {
-    val x: Nat = Succ(Succ(Nil))
-    val y: Nat = Succ(Succ(Nil))
-    val z: Nat = add(x,y)
+    var x: Nat = Succ(Succ(Nil))
+    var y: Nat = Succ(Succ(Nil))
+    var z: Nat = add(x,y)
     return z
 }
-val y[]: Nat = add(two,f())
+var y[]: Nat = add(two,f())
 ```
 -->
 
@@ -123,8 +123,8 @@ val y[]: Nat = add(two,f())
 
 func max: (Nat,Nat) -> Nat {
     -- arg e x e y sao gordos, todos com bit desligado
-    val x: Nat = arg.1  -- no cleanup eu testo o bit e desaloco geral se tiver desligado
-    val y: Nat = arg.2
+    var x: Nat = arg.1  -- no cleanup eu testo o bit e desaloco geral se tiver desligado
+    var y: Nat = arg.2
     if x > y {
         return x        -- x+1 (liga bit)
     } else {
@@ -148,7 +148,7 @@ se não é uma atribuicao, entao a ref forte é "arg"
 
 struct REC_Cons {
     bool returned = 0;  // did not return ultimately // 1 when actually returned (return sets all)
-    void* val;          // pointer to actual value
+    void* var;          // pointer to actual value
 }
 REC_ALIAS is pointer to REC_CONS
     - I know it is weak so I deref
@@ -165,7 +165,7 @@ vou precisar de refcount
 1. detectar todos EXPR_VAR atingíveis por STMT_RET
     - os outros não precisa se preocupar, pois vão ser desalocados com os pools locais saindo de escopo
         - TODO: como nao desalocar mallocs mais externos em um pool local?
-            - val x[]: Nat = Succ(a)    -- a é uma local retornada
+            - var x[]: Nat = Succ(a)    -- a é uma local retornada
             - return a
             - esse codigo tem que ser recusado
                 - se "a" é alocado com malloc (com pool_alloc nao tem problema pq consigo detectar o pool original)
@@ -187,9 +187,9 @@ vou precisar de refcount
         - fazer um cleanup que percorre a sua lista de Xs que me acessam Y
             - se todos estao com bit=0, entao posso desalocar a minha arvore
 
-val x[]         -- REC_POOL  esse nao precisa ser testado, nao se mistura
-val y = p       -- REC_ALIAS esses dois preciso testar dinamicamente
-val z = Cons    -- REC_CONS  eles se misturam na situacao acima
+var x[]         -- REC_POOL  esse nao precisa ser testado, nao se mistura
+var y = p       -- REC_ALIAS esses dois preciso testar dinamicamente
+var z = Cons    -- REC_CONS  eles se misturam na situacao acima
 
 
 -- uma outra alternativa seria GC na saida de cada funcao:
@@ -197,13 +197,13 @@ val z = Cons    -- REC_CONS  eles se misturam na situacao acima
 
 -- TODO-1
 -- ESTATICO: detectar qd pool é declarado mas valores nao vao pra ele:
-val x[]: Nat = three    -- aqui é uma global declarada em escopo maior
+var x[]: Nat = three    -- aqui é uma global declarada em escopo maior
                         -- na verdade isso nao é um erro, a alocacao nao vai acontecer
                         -- poderia ser um warning pois *so* temos coisas desnecessarias
 
 -- ERR
 func f: () -> Nat {
-    val x[]: Nat = Nil  -- (ln 5, col 9): invalid pool : data returns
+    var x[]: Nat = Nil  -- (ln 5, col 9): invalid pool : data returns
     return x
 }
 

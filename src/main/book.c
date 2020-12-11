@@ -116,8 +116,8 @@ const char _nat[] =
     "\n"
 #if 0
     "func eq: (Nat,Nat) -> Bool {\n"
-    "    val x: Nat = arg.1\n"
-    "    val y: Nat = arg.2\n"
+    "    var x: Nat = arg.1\n"
+    "    var y: Nat = arg.2\n"
     "    if and(x.$Nat?,y.$Nat?) {\n"
     "        return True\n"
     "    } else {\n"
@@ -131,8 +131,8 @@ const char _nat[] =
     "\n"
 #endif
     "func lt: (Nat,Nat) -> Bool {\n"
-    "    val x: Nat = arg.1\n"
-    "    val y: Nat = arg.2\n"
+    "    var x: Nat = arg.1\n"
+    "    var y: Nat = arg.2\n"
     "    if y.$Nat? {\n"
     "        return False\n"
     "    } else {\n"
@@ -146,15 +146,15 @@ const char _nat[] =
     "\n"
 #if 0
     "func lte: (Nat,Nat) -> Bool {\n"
-    "    val x: Nat = arg.1\n"
-    "    val y: Nat = arg.2\n"
+    "    var x: Nat = arg.1\n"
+    "    var y: Nat = arg.2\n"
     "    return or(lt(x,y), eq(x,y))\n"
     "}\n"
     "\n"
 #endif
     "func add: (Nat,Nat) -> Nat {\n"
-    "    val x: Nat = arg.1\n"
-    "    val y: Nat = arg.2\n"
+    "    var x: Nat = arg.1\n"
+    "    var y: Nat = arg.2\n"
     "    if y.$Nat? {\n"
     "        return x\n"
     "    } else {\n"
@@ -163,8 +163,8 @@ const char _nat[] =
     "}\n"
     "\n"
     "func sub: (Nat,Nat) -> Nat {\n"
-    "    val x: Nat = arg.1\n"
-    "    val y: Nat = arg.2\n"
+    "    var x: Nat = arg.1\n"
+    "    var y: Nat = arg.2\n"
     "    if y.$Nat? {\n"
     "        return x\n"
     "    } else {\n"
@@ -173,8 +173,8 @@ const char _nat[] =
     "}\n"
     "\n"
     "func mul: (Nat,Nat) -> Nat {\n"
-    "    val x: Nat = arg.1\n"
-    "    val y: Nat = arg.2\n"
+    "    var x: Nat = arg.1\n"
+    "    var y: Nat = arg.2\n"
     "    if y.$Nat? {\n"
     "        return $Nat\n"
     "    } else {\n"
@@ -183,8 +183,8 @@ const char _nat[] =
     "}\n"
     "\n"
     "func rem: (Nat,Nat) -> Nat {\n"
-    "    val x: Nat = arg.1\n"
-    "    val y: Nat = arg.2\n"
+    "    var x: Nat = arg.1\n"
+    "    var y: Nat = arg.2\n"
     "    if lt(x,y) {\n"
     "        return x\n"
     "    } else {\n"
@@ -192,16 +192,16 @@ const char _nat[] =
     "    }\n"
     "}\n"
     "\n"
-    "val one:   Nat = Succ($Nat)\n"
-    "val two:   Nat = Succ(one)\n"
-    "val three: Nat = Succ(two)\n"
-    "val four:  Nat = Succ(three)\n"
-    "val five:  Nat = Succ(four)\n"
-    "val six:   Nat = Succ(five)\n"
-    "val seven: Nat = Succ(six)\n"
-    "val eight: Nat = Succ(seven)\n"
-    "val nine:  Nat = Succ(eight)\n"
-    "val ten:   Nat = Succ(nine)\n"
+    "var one:   Nat = Succ($Nat)\n"
+    "var two:   Nat = Succ(one)\n"
+    "var three: Nat = Succ(two)\n"
+    "var four:  Nat = Succ(three)\n"
+    "var five:  Nat = Succ(four)\n"
+    "var six:   Nat = Succ(five)\n"
+    "var seven: Nat = Succ(six)\n"
+    "var eight: Nat = Succ(seven)\n"
+    "var nine:  Nat = Succ(eight)\n"
+    "var ten:   Nat = Succ(nine)\n"
 ;
 
 void chap_pre (void) {
@@ -209,7 +209,7 @@ void chap_pre (void) {
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "val n: (Nat,Nat) = ($Nat, Succ($Nat))\n"
+        "var n: (Nat,Nat) = ($Nat, Succ($Nat))\n"
         "call output(n)\n"
     );
     assert(all("($,Succ ($))\n", INP));
@@ -224,7 +224,7 @@ void chap_pre (void) {
     strcpy(INP, _bool);
     strcat(INP, _nat);
     strcat (INP,
-        "val n[]: Nat = add ($Nat, Succ($Nat))\n"
+        "var n[]: Nat = add ($Nat, Succ($Nat))\n"
         "call output(n)\n"
     );
     assert(all("Succ ($)\n", INP));
@@ -232,7 +232,7 @@ void chap_pre (void) {
     strcpy(INP, _bool);
     strcat(INP, _nat);
     strcat (INP,
-        "val n[]: Nat = Succ(add($Nat, Succ($Nat)))\n"
+        "var n[]: Nat = Succ(add($Nat, Succ($Nat)))\n"
         "call output(n)\n"
     );
     assert(all("Succ (Succ ($))\n", INP));
@@ -240,7 +240,7 @@ void chap_pre (void) {
     strcpy(INP, _bool);
     strcat(INP, _nat);
     strcat (INP,
-        "val n[]: Nat = sub(Succ($Nat), $Nat)\n"
+        "var n[]: Nat = sub(Succ($Nat), $Nat)\n"
         "call output(n)\n"
     );
     assert(all("Succ ($)\n", INP));
@@ -248,7 +248,7 @@ void chap_pre (void) {
     strcpy(INP, _bool);
     strcat(INP, _nat);
     strcat (INP,
-        "val n[]: Nat = mul(two,three)\n"
+        "var n[]: Nat = mul(two,three)\n"
         "call output(n)\n"
     );
     assert(all("Succ (Succ (Succ (Succ (Succ (Succ ($))))))\n", INP));
@@ -256,7 +256,7 @@ void chap_pre (void) {
     strcpy(INP, _bool);
     strcat(INP, _nat);
     strcat (INP,
-        "val n[]: Nat = rem(two,three)\n"
+        "var n[]: Nat = rem(two,three)\n"
         "call output(n)\n"
     );
     assert(all("Succ (Succ ($))\n", INP));
@@ -272,7 +272,7 @@ void chap_01 (void) {           // pg 1
         "func square: Nat -> Nat {\n"
         "    return mul(arg,arg)\n"
         "}\n"
-        "val n[]: Nat = square(two)\n"
+        "var n[]: Nat = square(two)\n"
         "call output(n)\n"
     );
     assert(all("Succ (Succ (Succ (Succ ($))))\n", INP));
@@ -281,15 +281,15 @@ void chap_01 (void) {           // pg 1
     strcat(INP, _nat);
     strcat (INP,
         "func smaller: (Nat,Nat) -> Nat {\n"
-        "    val x: Nat = arg.1\n"
-        "    val y: Nat = arg.2\n"
+        "    var x: Nat = arg.1\n"
+        "    var y: Nat = arg.2\n"
         "    if lt(x,y) {\n"
         "        return x\n"
         "    } else {\n"
         "        return y\n"
         "    }\n"
         "}\n"
-        "val n[]: Nat = add (smaller(ten,five), smaller(one,four))\n"
+        "var n[]: Nat = add (smaller(ten,five), smaller(one,four))\n"
         "call output(n)\n"
     );
     assert(all("Succ (Succ (Succ (Succ (Succ (Succ ($))))))\n", INP));
@@ -301,15 +301,15 @@ void chap_01 (void) {           // pg 1
         "    return mul(arg,arg)\n"
         "}\n"
         "func smaller: (Nat,Nat) -> Nat {\n"
-        "    val x: Nat = arg.1\n"
-        "    val y: Nat = arg.2\n"
+        "    var x: Nat = arg.1\n"
+        "    var y: Nat = arg.2\n"
         "    if lt(x,y) {\n"
         "        return x\n"
         "    } else {\n"
         "        return y\n"
         "    }\n"
         "}\n"
-        "val n[]: Nat = square (smaller(four,two))\n"
+        "var n[]: Nat = square (smaller(four,two))\n"
         "call output(n)\n"
     );
     assert(all("Succ (Succ (Succ (Succ ($))))\n", INP));
@@ -324,7 +324,7 @@ void chap_01 (void) {           // pg 1
         "func fthree: () -> Nat {\n"
         "    return three\n" // should not allocate since comes from outside
         "}\n"                // but what if callee returns again?
-        "val x[]: Nat = fthree()\n" // no problem b/c outside will detect and allocate three in received pool
+        "var x[]: Nat = fthree()\n" // no problem b/c outside will detect and allocate three in received pool
         "call output(x)\n"
     );
     assert(all("Succ (Succ (Succ ($)))\n", INP));
