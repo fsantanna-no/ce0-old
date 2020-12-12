@@ -300,7 +300,7 @@ void set_envs (Stmt* S) {
                     Stmt* arg = malloc(sizeof(Stmt));
                     *arg = (Stmt) {
                         0, STMT_VAR, env,
-                        .Var={ {TX_LOWER,{.s="arg"},0,0},*s->Func.type.Func.out,{EXPR_UNIT} }
+                        .Var={ {TX_LOWER,{.s="arg"},0,0},*s->Func.type.Func.inp,{EXPR_UNIT} }
                     };
                     Env* new = malloc(sizeof(Env));
                     *new = (Env) { arg, env };
