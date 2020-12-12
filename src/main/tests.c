@@ -179,7 +179,7 @@ void t_parser_type (void) {
         Type tp;
         parser_type(&tp);
         assert(tp.sub == TYPE_NATIVE);
-        assert(!strcmp(tp.tk.val.s,"_char"));
+        assert(!strcmp(tp.nat.val.s,"_char"));
         fclose(ALL.inp);
     }
     // TYPE_UNIT
@@ -276,7 +276,7 @@ void t_parser_expr (void) {
         all_init(NULL, stropen("r", 0, "x"));
         Expr e;
         assert(parser_expr(&e));
-        assert(e.sub == EXPR_VAR); assert(!strcmp(e.tk.val.s,"x"));
+        assert(e.sub == EXPR_VAR); assert(!strcmp(e.var.val.s,"x"));
         fclose(ALL.inp);
     }
     // EXPR_NATIVE
@@ -284,7 +284,7 @@ void t_parser_expr (void) {
         all_init(NULL, stropen("r", 0, "_x"));
         Expr e;
         assert(parser_expr(&e));
-        assert(e.sub == EXPR_NATIVE); assert(!strcmp(e.tk.val.s,"_x"));
+        assert(e.sub == EXPR_NATIVE); assert(!strcmp(e.nat.val.s,"_x"));
         fclose(ALL.inp);
     }
     // EXPR_TUPLE
@@ -315,7 +315,7 @@ void t_parser_expr (void) {
         assert(parser_expr(&e));
         assert(e.sub == EXPR_TUPLE);
         assert(e.Tuple.size == 3);
-        assert(e.Tuple.vec[1].sub == EXPR_VAR && !strcmp(e.Tuple.vec[1].tk.val.s,"x"));
+        assert(e.Tuple.vec[1].sub == EXPR_VAR && !strcmp(e.Tuple.vec[1].var.val.s,"x"));
         assert(e.Tuple.vec[2].sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
@@ -326,7 +326,7 @@ void t_parser_expr (void) {
         assert(parser_expr(&e));
         assert(e.sub == EXPR_CALL);
         assert(e.Call.func->sub == EXPR_VAR);
-        assert(!strcmp(e.Call.func->tk.val.s, "xxx"));
+        assert(!strcmp(e.Call.func->var.val.s, "xxx"));
         assert(e.Call.arg->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
@@ -338,7 +338,7 @@ void t_parser_expr (void) {
         assert(e.Call.func->sub == EXPR_CALL);
         assert(e.Call.func->Call.func->sub == EXPR_CALL);
         assert(e.Call.func->Call.func->Call.func->sub == EXPR_VAR);
-        assert(!strcmp(e.Call.func->Call.func->Call.func->tk.val.s, "f"));
+        assert(!strcmp(e.Call.func->Call.func->Call.func->var.val.s, "f"));
         fclose(ALL.inp);
     }
     // EXPR_CONS
@@ -492,7 +492,7 @@ void t_parser_stmt (void) {
         assert(s.sub == STMT_CALL);
         assert(s.call.sub == EXPR_CALL);
         assert(s.call.Call.func->sub == EXPR_VAR);
-        assert(!strcmp(s.call.Call.func->tk.val.s,"f"));
+        assert(!strcmp(s.call.Call.func->var.val.s,"f"));
         fclose(ALL.inp);
     }
     {
@@ -502,7 +502,7 @@ void t_parser_stmt (void) {
         assert(s.sub == STMT_CALL);
         assert(s.call.sub == EXPR_CALL);
         assert(s.call.Call.func->sub == EXPR_NATIVE);
-        assert(!strcmp(s.call.Call.func->tk.val.s,"_printf"));
+        assert(!strcmp(s.call.Call.func->nat.val.s,"_printf"));
         fclose(ALL.inp);
     }
     {
@@ -562,8 +562,8 @@ void t_code (void) {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
         Expr e = { _N_++, EXPR_VAR, NULL, {} };
-            e.tk.enu = TX_LOWER;
-            strcpy(e.tk.val.s, "xxx");
+            e.var.enu = TX_LOWER;
+            strcpy(e.var.val.s, "xxx");
         code_expr_1(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"xxx"));
@@ -573,8 +573,8 @@ void t_code (void) {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
         Expr e = { _N_++, EXPR_NATIVE, NULL, {} };
-            e.tk.enu = TX_NATIVE;
-            strcpy(e.tk.val.s, "_printf");
+            e.nat.enu = TX_NATIVE;
+            strcpy(e.nat.val.s, "_printf");
         code_expr_1(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"printf"));

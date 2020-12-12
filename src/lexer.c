@@ -92,13 +92,12 @@ static TK lx_token (TK_val* val) {
         case '}':
         case '(':
         case ')':
-        case '[':
-        case ']':
         case ';':
         case ':':
         case '=':
         case ',':
         case '.':
+        case '&':
         case '$':
         case '!':
         case '?':

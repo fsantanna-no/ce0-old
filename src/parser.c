@@ -74,11 +74,11 @@ int parser_type (Type* ret) {
 
     // TYPE_NATIVE
     } else if (accept(TX_NATIVE)) {
-        *ret = (Type) { TYPE_NATIVE, NULL, .tk=ALL.tk0 };
+        *ret = (Type) { TYPE_NATIVE, NULL, .nat=ALL.tk0 };
 
     // TYPE_USER
     } else if (accept(TX_UPPER)) {
-        *ret = (Type) { TYPE_USER, NULL, .tk=ALL.tk0 };
+        *ret = (Type) { TYPE_USER, NULL, .User={ALL.tk0,0} };
 
     } else {
         return err_expected("type");
@@ -146,11 +146,11 @@ int parser_expr_one (Expr* ret) {
 
     // EXPR_NATIVE
     } else if (accept(TX_NATIVE)) {
-        *ret = (Expr) { _N_++, EXPR_NATIVE, NULL, .tk=ALL.tk0 };
+        *ret = (Expr) { _N_++, EXPR_NATIVE, NULL, .nat=ALL.tk0 };
 
     // EXPR_VAR
     } else if (accept(TX_LOWER) || accept(TK_OUTPUT)) {
-        *ret = (Expr) { _N_++, EXPR_VAR, NULL, .tk=ALL.tk0 };
+        *ret = (Expr) { _N_++, EXPR_VAR, NULL, .var=ALL.tk0 };
 
     // EXPR_CONS
     } else if (accept(TX_UPPER) || accept('$')) {  // True, $Nat

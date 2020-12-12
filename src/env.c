@@ -72,7 +72,7 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
         }
 
         case EXPR_VAR: {
-            Stmt* s = env_find_decl(e->env, e->tk.val.s, NULL);
+            Stmt* s = env_find_decl(e->env, e->var.val.s, NULL);
             assert(s != NULL);
             return (s->sub == STMT_VAR) ? &s->Var.type : &s->Func.type;
         }
@@ -90,6 +90,17 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
             return tp->Func.out;
         }
 
+        case EXPR_ALIAS: {
+            Type* tp = env_expr_type(e->alias);
+            assert(tp->sub==TYPE_USER && !tp->User.isalias);
+
+            Type* ret = malloc(sizeof(Type));
+            assert(ret != NULL);
+            *ret = *tp;
+            ret->User.isalias = 1;
+            return ret;
+        }
+
         case EXPR_CONS: {
             Tk tk;
             if (e->Cons.subtype.enu == TX_NIL) {
@@ -103,7 +114,7 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
             }
             Type* tp = malloc(sizeof(Type));
             assert(tp != NULL);
-            *tp = (Type){ TYPE_USER, e->env, {.tk=tk} };
+            *tp = (Type){ TYPE_USER, e->env, .User={tk,0} };
             return tp;
         }
 
@@ -136,8 +147,8 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
         case EXPR_PRED: {
             Type* tp = malloc(sizeof(Type));
             assert(tp != NULL);
-            *tp = (Type) { TYPE_USER, e->env, {} };
-            strcpy(tp->tk.val.s, "Bool");
+            *tp = (Type) { TYPE_USER, e->env, .User={{},0} };
+            strcpy(tp->User.id.val.s, "Bool");
             return tp;
         }
     }
@@ -151,7 +162,7 @@ Stmt* env_expr_type_find_user (Expr* e) {
     Type* tp = env_expr_type(e);
     assert(tp != NULL);
     if (tp->sub == TYPE_USER) {
-        Stmt* s = env_find_decl(e->env, tp->tk.val.s, NULL);
+        Stmt* s = env_find_decl(e->env, tp->User.id.val.s, NULL);
         assert(s != NULL);
         return s;
     } else {
@@ -284,10 +295,10 @@ int check_undeclareds (Stmt* s) {
 
     int ft (Type* tp) {
         if (tp->sub == TYPE_USER) {
-            if (env_find_decl(tp->env, tp->tk.val.s, NULL) == NULL) {
+            if (env_find_decl(tp->env, tp->User.id.val.s, NULL) == NULL) {
                 char err[512];
-                sprintf(err, "undeclared type \"%s\"", tp->tk.val.s);
-                OK = err_message(tp->tk, err);
+                sprintf(err, "undeclared type \"%s\"", tp->User.id.val.s);
+                OK = err_message(tp->User.id, err);
             }
         }
         return 1;
@@ -296,11 +307,11 @@ int check_undeclareds (Stmt* s) {
     int fe (Expr* e) {
         switch (e->sub) {
             case EXPR_VAR: {
-                Stmt* decl = env_find_decl(e->env, e->tk.val.s, NULL);
+                Stmt* decl = env_find_decl(e->env, e->var.val.s, NULL);
                 if (decl == NULL) {
                     char err[512];
-                    sprintf(err, "undeclared variable \"%s\"", e->tk.val.s);
-                    OK = err_message(e->tk, err);
+                    sprintf(err, "undeclared variable \"%s\"", e->var.val.s);
+                    OK = err_message(e->var, err);
                 }
                 break;
             }
@@ -313,14 +324,16 @@ int check_undeclareds (Stmt* s) {
                     if (decl == NULL) {
                         char err[512];
                         sprintf(err, "undeclared type \"%s\"", sub->val.s);
-                        OK = err_message(e->tk, err);
+assert(0 && "TODO e->tk");
+                        //OK = err_message(e->tk, err);
                     }
                 } else {
                     Stmt* user = env_find_super(e->env, sub->val.s);
                     if (user == NULL) {
                         char err[512];
                         sprintf(err, "undeclared subtype \"%s\"", sub->val.s);
-                        OK = err_message(e->tk, err);
+assert(0 && "TODO e->tk");
+                        //OK = err_message(e->tk, err);
                     }
                 }
                 break;

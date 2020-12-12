@@ -1,10 +1,7 @@
 # Ce
 
-A simple language with algebraic data types and automatic memory management:
-
-- bounded memory allocation
-- deterministic deallocation
-- no garbage collection
+A simple language with algebraic data types and automatic memory management
+with move semantics (i.e., no garbage collection).
 
 # 1. Lexical rules
 
@@ -38,13 +35,13 @@ The following symbols are valid:
 ```
     {   }       -- block delimeter
     (   )       -- unit type, unit value, group expression
-    [   ]       -- pool declaration
     ;           -- sequence separator
     :           -- variable, type, function declaration
     ->          -- function type signature
     =           -- variable assignment
     ,           -- tuple separator
     .           -- tuple index, type predicate & discriminator
+    &           -- alias prefix
     $           -- null subtype
     !           -- type discriminator
     ?           -- type predicate
@@ -78,6 +75,8 @@ A tuple index is a numeric value:
 ```
 1    2    3                     -- tuple indexes
 ```
+
+# TODO. Types
 
 # 2. Expressions
 
@@ -137,7 +136,7 @@ x = ((),())
 output(x)               -- shows "((),())" in the screen
 ```
 
-## Constructor, Discriminator and Predicate
+## Constructor, Discriminator, Predicate, and Alias
 
 A constructor creates a value of a type given one subtype and its argument:
 
@@ -173,6 +172,8 @@ type Member {
 x = Professor
 b = x.Professor?        -- yields True
 ```
+
+An alias `&` TODO
 
 # 3. Statements
 
@@ -257,7 +258,8 @@ func f : () -> () {
 # 4. Syntax
 
 ```
-Stmt ::= `var´ VAR `:´ Type `=´ Expr    -- variable declaration     var x: () = ()
+Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: () = ()
+            `=´ Expr
       |  `type´ [`rec´] USER `{`        -- user type declaration    type rec Nat {
             { USER `:´ Type [`;´] }     --    subtypes                 Succ: Nat
          `}´                                                        }
@@ -281,6 +283,7 @@ Expr ::= `(´ `)´                        -- unit value               ()
       |  USER [`(´ Expr `)´]            -- constructor              True ()
       |  Expr `.´ [`$´] USER `!´        -- discriminator            x.True!
       |  Expr `.´ [`$´] USER `?´        -- predicate                x.False?
+      |  `&´ Expr                       -- alias                    &x
       |  `(´ Expr `)´                   -- group                    (x)
 
 Type ::= `(´ `)´                        -- unit                     ()

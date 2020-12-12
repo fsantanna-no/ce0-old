@@ -14,6 +14,7 @@ typedef enum {
     EXPR_TUPLE,
     EXPR_INDEX,
     EXPR_CALL,
+    EXPR_ALIAS,
     EXPR_CONS,
     EXPR_DISC,
     EXPR_PRED
@@ -35,7 +36,11 @@ typedef struct Type {
     TYPE sub;
     struct Env* env;    // see env.c
     union {
-        Tk tk;          // TYPE_NATIVE, TYPE_USER
+        Tk nat;         // TYPE_NATIVE
+        struct {        // TYPE_USER
+            Tk  id;
+            int isalias;
+        } User;
         struct {        // TYPE_TUPLE
             int size;                   // 2
             struct Type* vec;           // ((),())
@@ -56,7 +61,9 @@ typedef struct Expr {
     EXPR sub;
     struct Env* env;    // see env.c
     union {
-        Tk tk;          // EXPR_NATIVE, EXPR_VAR
+        Tk nat;         // EXPR_NATIVE
+        Tk var;         // EXPR_VAR
+        struct Expr* alias;  // EXPR_ALIAS
         struct {        // EXPR_TUPLE
             int size;                   // 2
             struct Expr* vec;           // (x,y)

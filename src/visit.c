@@ -45,6 +45,9 @@ void visit_expr (Expr* e, f_expr fe) {
             visit_expr(e->Call.func, fe);
             visit_expr(e->Call.arg, fe);
             break;
+        case EXPR_ALIAS:
+            visit_expr(e->alias, fe);
+            break;
         case EXPR_CONS:
             visit_expr(e->Cons.arg, fe);
             break;
