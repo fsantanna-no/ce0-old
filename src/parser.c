@@ -75,15 +75,10 @@ int parser_type (Type* ret) {
         *ret = (Type) { TYPE_NATIVE, NULL, 0, .Nat=ALL.tk0 };
 
     // TYPE_USER
-    } else if (accept('&') || accept(TX_UPPER)) {
-        int isalias = 0;
-        if (ALL.tk0.enu == '&') {
-            isalias = 1;
-            if (!accept_err(TX_UPPER)) {
-                return 0;
-            }
-        }
-        *ret = (Type) { TYPE_USER, NULL, isalias, .User=ALL.tk0 };
+    } else if (accept(TX_UPPER)) {
+        Tk tk = ALL.tk0;
+        int isalias = accept('&');
+        *ret = (Type) { TYPE_USER, NULL, isalias, .User=tk };
 
     } else {
         return err_expected("type");

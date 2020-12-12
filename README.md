@@ -258,7 +258,7 @@ func f : () -> () {
 # 4. Syntax
 
 ```
-Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: () = ()
+Stmt ::= `var´ VAR `:´ Type [`&´]       -- variable declaration     var x: () = ()
             `=´ Expr
       |  `type´ [`rec´] USER `{`        -- user type declaration    type rec Nat {
             { USER `:´ Type [`;´] }     --    subtypes                 Succ: Nat

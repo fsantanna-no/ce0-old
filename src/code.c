@@ -255,10 +255,11 @@ int fe_0 (Expr* e) {
     switch (e->sub) {
         case EXPR_VAR:
             if (e->Var.istx) {
+                char* id = e->Var.id.val.s;
                 fprintf (ALL.out,
-                    "void* _%s = %s;\n"
+                    "typeof(%s) _%s = %s;\n"
                     "%s = NULL;\n",
-                    e->Var.id.val.s, e->Var.id.val.s, e->Var.id.val.s
+                    id, id, id, id
                 );
             }
             return 0;
