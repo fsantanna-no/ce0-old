@@ -77,7 +77,7 @@ int parser_type (Type* ret) {
         *ret = (Type) { TYPE_NATIVE, NULL, .tk=ALL.tk0 };
 
     // TYPE_USER
-    } else if (accept(TX_USER)) {
+    } else if (accept(TX_UPPER)) {
         *ret = (Type) { TYPE_USER, NULL, .tk=ALL.tk0 };
 
     } else {
@@ -149,13 +149,13 @@ int parser_expr_one (Expr* ret) {
         *ret = (Expr) { _N_++, EXPR_NATIVE, NULL, .tk=ALL.tk0 };
 
     // EXPR_VAR
-    } else if (accept(TX_VAR) || accept(TK_OUTPUT)) {
+    } else if (accept(TX_LOWER) || accept(TK_OUTPUT)) {
         *ret = (Expr) { _N_++, EXPR_VAR, NULL, .tk=ALL.tk0 };
 
     // EXPR_CONS
-    } else if (accept(TX_USER) || accept('$')) {  // True, $Nat
+    } else if (accept(TX_UPPER) || accept('$')) {  // True, $Nat
         if (ALL.tk0.enu == '$') {
-            if (!accept_err(TX_USER)) {
+            if (!accept_err(TX_UPPER)) {
                 return 0;
             }
             ALL.tk0.enu = TX_NIL;   // TODO: move to lexer
@@ -202,9 +202,9 @@ int parser_expr (Expr* ret) {
                 *tup = *ret;
                 *ret = (Expr) { _N_++, EXPR_INDEX, NULL, .Index={tup,ALL.tk0.val.n} };
     // EXPR_DISC / EXPR_PRED
-            } else if (accept(TX_USER) || accept('$')) {
+            } else if (accept(TX_UPPER) || accept('$')) {
                 if (ALL.tk0.enu == '$') {
-                    if (!accept_err(TX_USER)) {
+                    if (!accept_err(TX_UPPER)) {
                         return 0;
                     }
                     ALL.tk0.enu = TX_NIL;   // TODO: move to lexer
@@ -235,7 +235,7 @@ int parser_expr (Expr* ret) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int parser_stmt_sub (Sub* ret) {
-    if (!accept_err(TX_USER)) {
+    if (!accept_err(TX_UPPER)) {
         return 0;
     }
     Tk id = ALL.tk0;                // True
@@ -256,7 +256,7 @@ int parser_stmt_sub (Sub* ret) {
 int parser_stmt (Stmt* ret) {
     // STMT_VAR
     if (accept(TK_VAR)) {
-        if (!accept_err(TX_VAR)) {
+        if (!accept_err(TX_LOWER)) {
             return 0;
         }
         Tk id = ALL.tk0;
@@ -283,7 +283,7 @@ int parser_stmt (Stmt* ret) {
         if (accept(TK_REC)) {           // rec
             isrec = 1;
         }
-        if (!accept_err(TX_USER)) {
+        if (!accept_err(TX_UPPER)) {
             return 0;
         }
         Tk id = ALL.tk0;                // Bool
@@ -359,7 +359,7 @@ int parser_stmt (Stmt* ret) {
 
     // STMT_FUNC
     } else if (accept(TK_FUNC)) {   // func
-        if (!accept(TX_VAR)) {      // f
+        if (!accept(TX_LOWER)) {    // f
             return 0;
         }
         Tk id = ALL.tk0;

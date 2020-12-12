@@ -181,7 +181,7 @@ void set_envs (Stmt* S) {
         static Type unit = {TYPE_UNIT};
         static Stmt s_out = {
             0, STMT_VAR, NULL,
-            .Var={ {TX_VAR,{.s="output"},0,0},
+            .Var={ {TX_LOWER,{.s="output"},0,0},
                    {TYPE_FUNC,NULL,.Func={&unit,&unit}},{EXPR_UNIT} }
         };
         env_ = (Env) { &s_out, NULL };
@@ -255,7 +255,7 @@ void set_envs (Stmt* S) {
                     Stmt* arg = malloc(sizeof(Stmt));
                     *arg = (Stmt) {
                         0, STMT_VAR, NULL,
-                        .Var={ {TX_VAR,{.s="arg"},0,0},*s->Func.type.Func.out,{EXPR_UNIT} }
+                        .Var={ {TX_LOWER,{.s="arg"},0,0},*s->Func.type.Func.out,{EXPR_UNIT} }
                     };
                     Env* new = malloc(sizeof(Env));
                     *new = (Env) { arg, env };

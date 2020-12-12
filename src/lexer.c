@@ -35,10 +35,10 @@ const char* lexer_tk2err (TK enu) {
         case TK_EOF:
             sprintf(str, "end of file");
             break;
-        case TX_VAR:
+        case TX_LOWER:
             sprintf(str, "variable identifier");
             break;
-        case TX_USER:
+        case TX_UPPER:
             sprintf(str, "type identifier");
             break;
 #if 0
@@ -65,8 +65,8 @@ const char* lexer_tk2str (Tk* tk) {
             sprintf(str, "end of file");
             break;
         case TX_NATIVE:
-        case TX_VAR:
-        case TX_USER:
+        case TX_LOWER:
+        case TX_UPPER:
             sprintf(str, "\"%s\"", tk->val.s);
             break;
         default:
@@ -159,9 +159,9 @@ static TK lx_token (TK_val* val) {
             if (val->s[0] == '_') {
                 return TX_NATIVE;
             } else if (islower(val->s[0])) {
-                return TX_VAR;
+                return TX_LOWER;
             } else if (isupper(val->s[0])) {
-                return TX_USER;
+                return TX_UPPER;
             } else {
                 // impossible case
             }
