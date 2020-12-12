@@ -256,8 +256,8 @@ int fe_0 (Expr* e) {
         case EXPR_VAR:
             if (e->Var.istx) {
                 fprintf (ALL.out,
-                    "void* _%s = %s\n;"
-                    "%s = NULL\n",
+                    "void* _%s = %s;\n"
+                    "%s = NULL;\n",
                     e->Var.id.val.s, e->Var.id.val.s, e->Var.id.val.s
                 );
             }

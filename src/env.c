@@ -347,10 +347,45 @@ int check_undeclareds (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// Set all EXPR_VAR that are recursive and not alias to istx=1.
+//      f(nat)          -- istx=1
+//      return nat      -- istx=1
+//      output(&nat)    -- istx=0
+//      f(alias_nat)    -- istx=0
+
+void set_vars_istx (Stmt* s) {
+    auto int fe (Expr* e);
+    visit_stmt(s, NULL, fe, NULL);
+
+    int fe (Expr* e) {
+        switch (e->sub) {
+            case EXPR_ALIAS:
+                // keep istx=0
+                return 0;
+            case EXPR_VAR: {
+                Type* tp = env_expr_type(e);
+                if (tp->sub==TYPE_USER && !tp->User.isalias) {
+                    Stmt* user = env_find_decl(e->env, tp->User.id.val.s, NULL);
+                    if (user->User.isrec) {
+                        e->Var.istx = 1;
+                    }
+                }
+                break;
+            }
+            default:
+                break;
+        }
+        return 1;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 int env (Stmt* s) {
     set_envs(s);
     if (!check_undeclareds(s)) {
         return 0;
     }
+    set_vars_istx(s);
     return 1;
 }
