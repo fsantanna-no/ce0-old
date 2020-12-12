@@ -162,10 +162,10 @@ int parser_expr_one (Expr* ret) {
             }
             Expr* e = malloc(sizeof(Expr));
             assert(e != NULL);
-            *e = (Expr) { _N_++, EXPR_VAR, NULL, .var=ALL.tk0 };
+            *e = (Expr) { _N_++, EXPR_VAR, NULL, .Var={ALL.tk0,0} };
             *ret = (Expr) { _N_++, EXPR_ALIAS, .alias=e };
         } else {
-            *ret = (Expr) { _N_++, EXPR_VAR, NULL, .var=ALL.tk0 };
+            *ret = (Expr) { _N_++, EXPR_VAR, NULL, .Var={ALL.tk0,0} };
         }
 
     // EXPR_CONS

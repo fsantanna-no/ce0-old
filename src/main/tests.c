@@ -276,7 +276,7 @@ void t_parser_expr (void) {
         all_init(NULL, stropen("r", 0, "x"));
         Expr e;
         assert(parser_expr(&e));
-        assert(e.sub == EXPR_VAR); assert(!strcmp(e.var.val.s,"x"));
+        assert(e.sub == EXPR_VAR); assert(!strcmp(e.Var.id.val.s,"x"));
         fclose(ALL.inp);
     }
     // EXPR_NATIVE
@@ -315,7 +315,7 @@ void t_parser_expr (void) {
         assert(parser_expr(&e));
         assert(e.sub == EXPR_TUPLE);
         assert(e.Tuple.size == 3);
-        assert(e.Tuple.vec[1].sub == EXPR_VAR && !strcmp(e.Tuple.vec[1].var.val.s,"x"));
+        assert(e.Tuple.vec[1].sub == EXPR_VAR && !strcmp(e.Tuple.vec[1].Var.id.val.s,"x"));
         assert(e.Tuple.vec[2].sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
@@ -326,7 +326,7 @@ void t_parser_expr (void) {
         assert(parser_expr(&e));
         assert(e.sub == EXPR_CALL);
         assert(e.Call.func->sub == EXPR_VAR);
-        assert(!strcmp(e.Call.func->var.val.s, "xxx"));
+        assert(!strcmp(e.Call.func->Var.id.val.s, "xxx"));
         assert(e.Call.arg->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
@@ -338,7 +338,7 @@ void t_parser_expr (void) {
         assert(e.Call.func->sub == EXPR_CALL);
         assert(e.Call.func->Call.func->sub == EXPR_CALL);
         assert(e.Call.func->Call.func->Call.func->sub == EXPR_VAR);
-        assert(!strcmp(e.Call.func->Call.func->Call.func->var.val.s, "f"));
+        assert(!strcmp(e.Call.func->Call.func->Call.func->Var.id.val.s, "f"));
         fclose(ALL.inp);
     }
     // EXPR_CONS
@@ -492,7 +492,7 @@ void t_parser_stmt (void) {
         assert(s.sub == STMT_CALL);
         assert(s.call.sub == EXPR_CALL);
         assert(s.call.Call.func->sub == EXPR_VAR);
-        assert(!strcmp(s.call.Call.func->var.val.s,"f"));
+        assert(!strcmp(s.call.Call.func->Var.id.val.s,"f"));
         fclose(ALL.inp);
     }
     {
@@ -561,9 +561,9 @@ void t_code (void) {
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr e = { _N_++, EXPR_VAR, NULL, {} };
-            e.var.enu = TX_LOWER;
-            strcpy(e.var.val.s, "xxx");
+        Expr e = { _N_++, EXPR_VAR, NULL, .Var={{},0} };
+            e.Var.id.enu = TX_LOWER;
+            strcpy(e.Var.id.val.s, "xxx");
         code_expr_1(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"xxx"));

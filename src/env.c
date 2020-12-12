@@ -72,7 +72,7 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
         }
 
         case EXPR_VAR: {
-            Stmt* s = env_find_decl(e->env, e->var.val.s, NULL);
+            Stmt* s = env_find_decl(e->env, e->Var.id.val.s, NULL);
             assert(s != NULL);
             return (s->sub == STMT_VAR) ? &s->Var.type : &s->Func.type;
         }
@@ -307,11 +307,11 @@ int check_undeclareds (Stmt* s) {
     int fe (Expr* e) {
         switch (e->sub) {
             case EXPR_VAR: {
-                Stmt* decl = env_find_decl(e->env, e->var.val.s, NULL);
+                Stmt* decl = env_find_decl(e->env, e->Var.id.val.s, NULL);
                 if (decl == NULL) {
                     char err[512];
-                    sprintf(err, "undeclared variable \"%s\"", e->var.val.s);
-                    OK = err_message(e->var, err);
+                    sprintf(err, "undeclared variable \"%s\"", e->Var.id.val.s);
+                    OK = err_message(e->Var.id, err);
                 }
                 break;
             }

@@ -161,7 +161,10 @@ int fe_1 (Expr* e) {
             out(&e->nat.val.s[1]);
             break;
         case EXPR_VAR:
-            out(e->var.val.s);
+            if (e->Var.istx) {
+                out("_");
+            }
+            out(e->Var.id.val.s);
             break;
         case EXPR_ALIAS:
             // same as e->alias
@@ -184,7 +187,7 @@ int fe_1 (Expr* e) {
             } else {
                 assert(e->Call.func->sub == EXPR_VAR);
 
-                if (!strcmp(e->Call.func->var.val.s,"output")) {
+                if (!strcmp(e->Call.func->Var.id.val.s,"output")) {
                     out("output_");
                     code_to_ce(env_expr_type(e->Call.arg));
                 } else {
@@ -243,52 +246,67 @@ int fe_1 (Expr* e) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// var transfer ownership
 // tuple structs pre declarations
 // cons structs pre allocations
 // user structs pre declarations
 
 int fe_0 (Expr* e) {
-    if (e->sub == EXPR_TUPLE) {
-        for (int i=0; i<e->Tuple.size; i++) {
-            visit_expr(&e->Tuple.vec[i], fe_0); // first visit child
-        }
-        ft(env_expr_type(e));                   // second visit myself
-        return 0;
+    switch (e->sub) {
+        case EXPR_VAR:
+            if (e->Var.istx) {
+                fprintf (ALL.out,
+                    "void* _%s = %s\n;"
+                    "%s = NULL\n",
+                    e->Var.id.val.s, e->Var.id.val.s, e->Var.id.val.s
+                );
+            }
+            return 0;
 
-    } else if (e->sub == EXPR_CONS) {
-        visit_expr(e->Cons.arg, fe_0);          // first visit child
+        case EXPR_TUPLE:
+            for (int i=0; i<e->Tuple.size; i++) {
+                visit_expr(&e->Tuple.vec[i], fe_0); // first visit child
+            }
+            ft(env_expr_type(e));                   // second visit myself
+            return 0;
 
-        if (e->Cons.subtype.enu == TX_NIL) {
-            return 0;                           // out(NULL) in fe_1
-        }
+        case EXPR_CONS: {
+            visit_expr(e->Cons.arg, fe_0);          // first visit child
 
-        Stmt* user = env_find_super(e->env, e->Cons.subtype.val.s);
-        assert(user != NULL);
+            if (e->Cons.subtype.enu == TX_NIL) {
+                return 0;                           // out(NULL) in fe_1
+            }
 
-        char* sup = user->User.id.val.s;
-        char* sub = e->Cons.subtype.val.s;
+            Stmt* user = env_find_super(e->env, e->Cons.subtype.val.s);
+            assert(user != NULL);
 
-        // Bool __1 = (Bool) { False, {_False=1} };
-        // Nat  __1 = (Nat)  { Succ,  {_Succ=&_2} };
-        fprintf(ALL.out,
-            "%s %s_%d = ((%s) { %s, { ._%s=",
-            sup, (user->User.isrec ? "_" : ""), e->N, sup, sub, sub);
-        visit_expr(e->Cons.arg, fe_1);
-        out(" } });\n");
+            char* sup = user->User.id.val.s;
+            char* sub = e->Cons.subtype.val.s;
 
-        if (user->User.isrec) {
-            // Nat* _1 = (Nat*) malloc(sizeof(Nat));
-            // *_1 = __1;
+            // Bool __1 = (Bool) { False, {_False=1} };
+            // Nat  __1 = (Nat)  { Succ,  {_Succ=&_2} };
             fprintf(ALL.out,
-                "%s* _%d = (%s*) malloc(sizeof(%s));\n"
-                "assert(_%d!=NULL && \"not enough memory\");\n"
-                "*_%d = __%d;\n",
-                    sup, e->N, sup, sup, e->N, e->N, e->N);
-        } else {
-            // plain cons: nothing else to do
+                "%s %s_%d = ((%s) { %s, { ._%s=",
+                sup, (user->User.isrec ? "_" : ""), e->N, sup, sub, sub);
+            visit_expr(e->Cons.arg, fe_1);
+            out(" } });\n");
+
+            if (user->User.isrec) {
+                // Nat* _1 = (Nat*) malloc(sizeof(Nat));
+                // *_1 = __1;
+                fprintf(ALL.out,
+                    "%s* _%d = (%s*) malloc(sizeof(%s));\n"
+                    "assert(_%d!=NULL && \"not enough memory\");\n"
+                    "*_%d = __%d;\n",
+                        sup, e->N, sup, sup, e->N, e->N, e->N);
+            } else {
+                // plain cons: nothing else to do
+            }
+            return 0;
         }
 
-        return 0;
+        default:
+            break;
     }
     return 1;
 }
@@ -458,7 +476,7 @@ void code_stmt (Stmt* s) {
             out(" ");
             out(id);
 
-            if (s->Var.type.sub == TYPE_USER) {
+            if (s->Var.type.sub==TYPE_USER && !s->Var.type.User.isalias) {
                 Stmt* user = env_find_decl(s->env, s->Var.type.User.id.val.s, NULL);
                 assert(user!=NULL && user->sub==STMT_USER);
                 if (user->User.isrec) {
@@ -484,25 +502,9 @@ void code_stmt (Stmt* s) {
 
         case STMT_RETURN: {
             visit_expr(&s->ret, fe_0);
-            int isrec = 0; {
-                if (s->ret.sub == EXPR_VAR) {
-                    Stmt* user = env_expr_type_find_user(&s->ret);
-                    isrec = (user!=NULL && user->User.isrec);
-                }
-            }
-            if (isrec) {
-                out("{\n"
-                    "void* ret = ");
-                visit_expr(&s->ret, fe_1);
-                out(";\n");
-                out("x = NULL;\n"
-                    "return ret;\n"
-                    "}\n");
-            } else {
-                out("return ");
-                visit_expr(&s->ret, fe_1);
-                out(";\n");
-            }
+            out("return ");
+            visit_expr(&s->ret, fe_1);
+            out(";\n");
             break;
         }
 

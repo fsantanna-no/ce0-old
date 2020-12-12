@@ -62,8 +62,11 @@ typedef struct Expr {
     struct Env* env;    // see env.c
     union {
         Tk nat;         // EXPR_NATIVE
-        Tk var;         // EXPR_VAR
         struct Expr* alias;  // EXPR_ALIAS
+        struct {        // EXPR_VAR
+            Tk id;
+            int istx;
+        } Var;
         struct {        // EXPR_TUPLE
             int size;                   // 2
             struct Expr* vec;           // (x,y)
