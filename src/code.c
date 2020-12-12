@@ -305,6 +305,18 @@ int fe_0 (Expr* e) {
             return 0;
         }
 
+        case EXPR_DISC: {
+            Stmt* s = env_expr_type_find_user(e->Disc.val);
+            assert(s != NULL);
+            out("assert(");
+            visit_expr(e->Disc.val, fe_1);
+            fprintf (ALL.out,
+                "%ssub == %s && \"discriminator failed\");\n",
+                (s->User.isrec ? "->" : "."), e->Disc.subtype.val.s
+            );
+            return 0;
+        }
+
         default:
             break;
     }
