@@ -30,7 +30,7 @@ void to_ce_ (char* out, Type* tp) {
             strcat(out, &tp->nat.val.s[1]);
             break;
         case TYPE_USER: {
-            strcat(out, tp->User.id.val.s);
+            strcat(out, tp->user.val.s);
             break;
         }
         case TYPE_TUPLE:
@@ -67,9 +67,9 @@ void to_c_ (char* out, Type* tp) {
             strcat(out, &tp->nat.val.s[1]);
             break;
         case TYPE_USER: {
-            Stmt* s = env_find_decl(tp->env, tp->User.id.val.s, NULL);
+            Stmt* s = env_find_decl(tp->env, tp->user.val.s, NULL);
             if (s!=NULL && s->User.isrec) strcat(out, "struct ");
-            strcat(out, tp->User.id.val.s);
+            strcat(out, tp->user.val.s);
             if (s!=NULL && s->User.isrec) strcat(out, "*");
             break;
         }
@@ -390,7 +390,7 @@ void code_stmt (Stmt* s) {
                 );
                 for (int i=0; i<s->User.size; i++) {
                     Sub sub = s->User.vec[i];
-                    if (sub.type.sub==TYPE_USER && (!strcmp(sup,sub.type.User.id.val.s))) {
+                    if (sub.type.sub==TYPE_USER && (!strcmp(sup,sub.type.user.val.s))) {
                         fprintf (ALL.out,
                             "    %s_free(&(*p)->_%s);\n"
                             "    free(*p);\n",
@@ -431,7 +431,7 @@ void code_stmt (Stmt* s) {
                             break;
                         case TYPE_USER:
                             yes = par = 1;
-                            sprintf(arg, "output_%s_(v%s_%s)", sub->type.User.id.val.s, op, sub->id.val.s);
+                            sprintf(arg, "output_%s_(v%s_%s)", sub->type.user.val.s, op, sub->id.val.s);
                             break;
                         case TYPE_TUPLE:
                             yes = 1;
@@ -476,8 +476,8 @@ void code_stmt (Stmt* s) {
             out(" ");
             out(id);
 
-            if (s->Var.type.sub==TYPE_USER && !s->Var.type.User.isalias) {
-                Stmt* user = env_find_decl(s->env, s->Var.type.User.id.val.s, NULL);
+            if (s->Var.type.sub==TYPE_USER && !s->Var.type.isalias) {
+                Stmt* user = env_find_decl(s->env, s->Var.type.user.val.s, NULL);
                 assert(user!=NULL && user->sub==STMT_USER);
                 if (user->User.isrec) {
                     fprintf (ALL.out,

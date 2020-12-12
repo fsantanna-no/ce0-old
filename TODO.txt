@@ -1,3 +1,5 @@
+- caps para sutipos, mesmo com 1 campos so
+- testar ser disc funciona agora no lte recursivo
 - STMT_VAR init / fazer igual ao STMT_RETURN / setar NULL para referencia usada
 - x=NULL quando f(x) retorna Nat
 - testar ADT/MUT/MOVE in rust

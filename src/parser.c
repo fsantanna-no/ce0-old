@@ -38,7 +38,7 @@ int parser_type (Type* ret) {
     // TYPE_UNIT
     if (accept('(')) {
         if (accept(')')) {
-            *ret = (Type) { TYPE_UNIT, NULL };
+            *ret = (Type) { TYPE_UNIT, NULL, 0 };
         } else {
             if (!parser_type(ret)) {
                 return 0;
@@ -62,7 +62,7 @@ int parser_type (Type* ret) {
                 if (!accept_err(')')) {
                     return 0;
                 }
-                *ret = (Type) { TYPE_TUPLE, NULL, .Tuple={n,vec} };
+                *ret = (Type) { TYPE_TUPLE, NULL, 0, .Tuple={n,vec} };
 
     // TYPE_PARENS
             } else if (!accept_err(')')) {
@@ -72,7 +72,7 @@ int parser_type (Type* ret) {
 
     // TYPE_NATIVE
     } else if (accept(TX_NATIVE)) {
-        *ret = (Type) { TYPE_NATIVE, NULL, .nat=ALL.tk0 };
+        *ret = (Type) { TYPE_NATIVE, NULL, 0, .nat=ALL.tk0 };
 
     // TYPE_USER
     } else if (accept('&') || accept(TX_UPPER)) {
@@ -83,7 +83,7 @@ int parser_type (Type* ret) {
                 return 0;
             }
         }
-        *ret = (Type) { TYPE_USER, NULL, .User={ALL.tk0,isalias} };
+        *ret = (Type) { TYPE_USER, NULL, isalias, .user=ALL.tk0 };
 
     } else {
         return err_expected("type");
@@ -101,7 +101,7 @@ int parser_type (Type* ret) {
         assert(out != NULL);
         *inp = *ret;
         *out = tp;
-        *ret = (Type) { TYPE_FUNC, NULL, .Func={inp,out} };
+        *ret = (Type) { TYPE_FUNC, NULL, 0, .Func={inp,out} };
     }
 
     return 1;

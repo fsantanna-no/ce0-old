@@ -73,7 +73,7 @@ const char _bool[] =
     "    False: ()\n"
     "    True:  ()\n"
     "}\n"
-    "\n"
+    "\n"                                        // 5
 #if 0
     "func not: Bool -> Bool {\n"
     "    if arg.1.True? {\n"
@@ -113,7 +113,7 @@ const char _nat[] =
     "type rec Nat {\n"
     "   Succ: Nat\n"
     "}\n"
-    "\n"
+    "\n"                                        // 9
 #if 0
     "func eq: (Nat,Nat) -> Bool {\n"
     "    var x: Nat = arg.1\n"
@@ -130,9 +130,9 @@ const char _nat[] =
     "}\n"
     "\n"
 #endif
-    "func lt: (Nat,Nat) -> Bool {\n"
-    "    var x: Nat = arg.1\n"
-    "    var y: Nat = arg.2\n"
+    "func lt: (&Nat,&Nat) -> Bool {\n"
+    "    var x: &Nat = arg.1\n"
+    "    var y: &Nat = arg.2\n"
     "    if y.$Nat? {\n"
     "        return False\n"
     "    } else {\n"
@@ -143,7 +143,7 @@ const char _nat[] =
     "        }\n"
     "    }\n"
     "}\n"
-    "\n"
+    "\n"                                        // 23
 #if 0
     "func lte: (Nat,Nat) -> Bool {\n"
     "    var x: Nat = arg.1\n"
@@ -185,7 +185,7 @@ const char _nat[] =
     "func rem: (Nat,Nat) -> Nat {\n"
     "    var x: Nat = arg.1\n"
     "    var y: Nat = arg.2\n"
-    "    if lt(x,y) {\n"
+    "    if lt(&x,&y) {\n"
     "        return x\n"
     "    } else {\n"
     "        return rem(sub(x,y),y)\n"
@@ -217,7 +217,9 @@ void chap_pre (void) {
     strcpy(INP, _bool);
     strcat(INP, _nat);
     strcat (INP,
-        "call output(lt($Nat, Succ($Nat)))\n"
+        "var x: Nat = $Nat\n"
+        "var y: Nat = Succ($Nat)\n"
+        "call output(lt(&x,&y))\n"
     );
     assert(all("True\n", INP));
 

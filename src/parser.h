@@ -35,12 +35,10 @@ typedef enum {
 typedef struct Type {
     TYPE sub;
     struct Env* env;    // see env.c
+    int isalias;
     union {
         Tk nat;         // TYPE_NATIVE
-        struct {        // TYPE_USER
-            Tk  id;
-            int isalias;
-        } User;
+        Tk user;        // TYPE_USER
         struct {        // TYPE_TUPLE
             int size;                   // 2
             struct Type* vec;           // ((),())
