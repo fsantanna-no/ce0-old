@@ -67,7 +67,7 @@ void to_c_ (char* out, Type* tp) {
             strcat(out, &tp->Nat.val.s[1]);
             break;
         case TYPE_USER: {
-            Stmt* s = env_find_decl(tp->env, tp->User.val.s, NULL);
+            Stmt* s = env_id_to_stmt(tp->env, tp->User.val.s, NULL);
             if (s!=NULL && s->User.isrec) strcat(out, "struct ");
             strcat(out, tp->User.val.s);
             if (s!=NULL && s->User.isrec) strcat(out, "*");
@@ -192,7 +192,7 @@ int fe_1 (Expr* e) {
 
                 if (!strcmp(e->Call.func->Var.id.val.s,"output")) {
                     out("output_");
-                    code_to_ce(env_expr_type(e->Call.arg));
+                    code_to_ce(env_expr_to_type(e->Call.arg));
                 } else {
                     visit_expr(e->Call.func, fe_1);
                 }
@@ -206,7 +206,7 @@ int fe_1 (Expr* e) {
 
         case EXPR_TUPLE:
             out("((");
-            out(to_c(env_expr_type(e)));
+            out(to_c(env_expr_to_type(e)));
             out(") { ");
             for (int i=0; i<e->Tuple.size; i++) {
                 //fprintf (ALL.out[OGLOB], "%c _%d=", ((i==0) ? ' ' : ','), i);
@@ -224,7 +224,7 @@ int fe_1 (Expr* e) {
             return 0;
 
         case EXPR_DISC: {
-            Stmt* s = env_expr_type_find_user(e->Disc.val);
+            Stmt* s = env_expr_to_type_to_user_stmt(e->Disc.val);
             assert(s != NULL);
             visit_expr(e->Disc.val, fe_1);
             fprintf(ALL.out, "%s_%s", (s->User.isrec ? "->" : "."), e->Disc.subtype.val.s);
@@ -232,7 +232,7 @@ int fe_1 (Expr* e) {
         }
 
         case EXPR_PRED: {
-            Stmt* s = env_expr_type_find_user(e->Pred.val);
+            Stmt* s = env_expr_to_type_to_user_stmt(e->Pred.val);
             assert(s != NULL);
             int isnil = (e->Pred.subtype.enu == TX_NIL);
             out("((");
@@ -271,7 +271,7 @@ int fe_0 (Expr* e) {
             for (int i=0; i<e->Tuple.size; i++) {
                 visit_expr(&e->Tuple.vec[i], fe_0); // first visit child
             }
-            ft(env_expr_type(e));                   // second visit myself
+            ft(env_expr_to_type(e));                // second visit myself
             return 0;
 
         case EXPR_CONS: {
@@ -281,7 +281,7 @@ int fe_0 (Expr* e) {
                 return 0;                           // out(NULL) in fe_1
             }
 
-            Stmt* user = env_find_super(e->env, e->Cons.subtype.val.s);
+            Stmt* user = env_sub_id_to_user_stmt(e->env, e->Cons.subtype.val.s);
             assert(user != NULL);
 
             char* sup = user->User.id.val.s;
@@ -310,7 +310,7 @@ int fe_0 (Expr* e) {
         }
 
         case EXPR_DISC: {
-            Stmt* s = env_expr_type_find_user(e->Disc.val);
+            Stmt* s = env_expr_to_type_to_user_stmt(e->Disc.val);
             assert(s != NULL);
             visit_expr(e->Disc.val, fe_0);
             out("assert(");
@@ -494,7 +494,7 @@ void code_stmt (Stmt* s) {
             out(id);
 
             if (s->Var.type.sub==TYPE_USER && !s->Var.type.isalias) {
-                Stmt* user = env_find_decl(s->env, s->Var.type.User.val.s, NULL);
+                Stmt* user = env_id_to_stmt(s->env, s->Var.type.User.val.s, NULL);
                 assert(user!=NULL && user->sub==STMT_USER);
                 if (user->User.isrec) {
                     fprintf (ALL.out,

@@ -11,7 +11,7 @@ int err_message (Tk tk, const char* v) {
     return 0;
 }
 
-Stmt* env_find_decl (Env* env, const char* id, int* scope) {    // scope=# of times crossed "arg"
+Stmt* env_id_to_stmt (Env* env, const char* id, int* scope) {    // scope=# of times crossed "arg"
     if (scope != NULL) {
         *scope = 0;
     }
@@ -41,7 +41,7 @@ Stmt* env_find_decl (Env* env, const char* id, int* scope) {    // scope=# of ti
     return NULL;
 }
 
-Stmt* env_find_super (Env* env, const char* sub) {
+Stmt* env_sub_id_to_user_stmt (Env* env, const char* sub) {
     while (env != NULL) {
         if (env->stmt->sub == STMT_USER) {
             for (int i=0; i<env->stmt->User.size; i++) {
@@ -69,7 +69,7 @@ Sub* env_find_sub (Env* env, const char* sub) {
     return NULL;
 }
 
-Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids underneath
+Type* env_expr_to_type (Expr* e) { // static returns use env=NULL b/c no ids underneath
     switch (e->sub) {
         case EXPR_UNIT: {
             static Type tp = { TYPE_UNIT, NULL, 0 };
@@ -77,7 +77,7 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
         }
 
         case EXPR_ARG: {
-            Stmt* s = env_find_decl(e->env, "arg", NULL);
+            Stmt* s = env_id_to_stmt(e->env, "arg", NULL);
             assert(s->sub == STMT_VAR);
             return &s->Var.type;
         }
@@ -88,7 +88,7 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
         }
 
         case EXPR_VAR: {
-            Stmt* s = env_find_decl(e->env, e->Var.id.val.s, NULL);
+            Stmt* s = env_id_to_stmt(e->env, e->Var.id.val.s, NULL);
             assert(s != NULL);
             return (s->sub == STMT_VAR) ? &s->Var.type : &s->Func.type;
         }
@@ -96,7 +96,7 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
         case EXPR_CALL: {
             Type* tp = NULL;
             if (e->Call.func->sub == EXPR_VAR) {
-                tp = env_expr_type(e->Call.func);
+                tp = env_expr_to_type(e->Call.func);
             } else {
                 static Type nat = { TYPE_NATIVE, NULL, 0 };
                 static Type tp_ = { TYPE_FUNC, NULL, 0, .Func={&nat,&nat} };
@@ -107,7 +107,7 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
         }
 
         case EXPR_ALIAS: {
-            Type* tp = env_expr_type(e->Alias);
+            Type* tp = env_expr_to_type(e->Alias);
             assert(tp->sub==TYPE_USER && !tp->isalias);
 
             Type* ret = malloc(sizeof(Type));
@@ -120,11 +120,11 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
         case EXPR_CONS: {
             Tk tk;
             if (e->Cons.subtype.enu == TX_NIL) {
-                Stmt* user = env_find_decl(e->env, e->Cons.subtype.val.s, NULL);
+                Stmt* user = env_id_to_stmt(e->env, e->Cons.subtype.val.s, NULL);
                 assert(user != NULL);
                 tk = user->User.id;
             } else {
-                Stmt* user = env_find_super(e->env, e->Cons.subtype.val.s);
+                Stmt* user = env_sub_id_to_user_stmt(e->env, e->Cons.subtype.val.s);
                 assert(user != NULL);
                 tk = user->User.id;
             }
@@ -138,7 +138,7 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
             Type* vec = malloc(e->Tuple.size*sizeof(Type));
             assert(vec != NULL);
             for (int i=0; i<e->Tuple.size; i++) {
-                vec[i] = *env_expr_type(&e->Tuple.vec[i]);
+                vec[i] = *env_expr_to_type(&e->Tuple.vec[i]);
             }
             Type* tp = malloc(sizeof(Type));
             assert(tp != NULL);
@@ -147,12 +147,12 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
         }
 
         case EXPR_INDEX:    // x.1
-            return &env_expr_type(e->Index.tuple)->Tuple.vec[e->Index.index];
+            return &env_expr_to_type(e->Index.tuple)->Tuple.vec[e->Index.index];
 
         case EXPR_DISC: {   // x.True
-            Type* val = env_expr_type(e->Disc.val);
+            Type* val = env_expr_to_type(e->Disc.val);
             assert(val->sub == TYPE_USER);
-            Stmt* decl = env_find_decl(e->env, val->User.val.s, NULL);
+            Stmt* decl = env_id_to_stmt(e->env, val->User.val.s, NULL);
             assert(decl!=NULL && decl->sub==STMT_USER);
             for (int i=0; i<decl->User.size; i++) {
                 if (!strcmp(decl->User.vec[i].id.val.s, e->Disc.subtype.val.s)) {
@@ -186,11 +186,11 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
 //  type Bool { ... }
 //  var x: Bool
 //  ... x ...           -- give "x" -> "var x" -> type Bool
-Stmt* env_expr_type_find_user (Expr* e) {
-    Type* tp = env_expr_type(e);
+Stmt* env_expr_to_type_to_user_stmt (Expr* e) {
+    Type* tp = env_expr_to_type(e);
     assert(tp != NULL);
     if (tp->sub == TYPE_USER) {
-        Stmt* s = env_find_decl(e->env, tp->User.val.s, NULL);
+        Stmt* s = env_id_to_stmt(e->env, tp->User.val.s, NULL);
         assert(s != NULL);
         return s;
     } else {
@@ -323,7 +323,7 @@ int check_undeclareds (Stmt* s) {
 
     int ft (Type* tp) {
         if (tp->sub == TYPE_USER) {
-            if (env_find_decl(tp->env, tp->User.val.s, NULL) == NULL) {
+            if (env_id_to_stmt(tp->env, tp->User.val.s, NULL) == NULL) {
                 char err[512];
                 sprintf(err, "undeclared type \"%s\"", tp->User.val.s);
                 OK = err_message(tp->User, err);
@@ -335,7 +335,7 @@ int check_undeclareds (Stmt* s) {
     int fe (Expr* e) {
         switch (e->sub) {
             case EXPR_VAR: {
-                Stmt* decl = env_find_decl(e->env, e->Var.id.val.s, NULL);
+                Stmt* decl = env_id_to_stmt(e->env, e->Var.id.val.s, NULL);
                 if (decl == NULL) {
                     char err[512];
                     sprintf(err, "undeclared variable \"%s\"", e->Var.id.val.s);
@@ -348,14 +348,14 @@ int check_undeclareds (Stmt* s) {
             case EXPR_CONS: {
                 Tk* sub = (e->sub==EXPR_DISC ? &e->Disc.subtype : (e->sub==EXPR_PRED ? &e->Pred.subtype : &e->Cons.subtype));
                 if (sub->enu == TX_NIL) {
-                    Stmt* decl = env_find_decl(e->env, sub->val.s, NULL);
+                    Stmt* decl = env_id_to_stmt(e->env, sub->val.s, NULL);
                     if (decl == NULL) {
                         char err[512];
                         sprintf(err, "undeclared type \"%s\"", sub->val.s);
                         OK = err_message(*sub, err);
                     }
                 } else {
-                    Stmt* user = env_find_super(e->env, sub->val.s);
+                    Stmt* user = env_sub_id_to_user_stmt(e->env, sub->val.s);
                     if (user == NULL) {
                         char err[512];
                         sprintf(err, "undeclared subtype \"%s\"", sub->val.s);
@@ -378,9 +378,9 @@ int check_undeclareds (Stmt* s) {
 int check_types (Stmt* S) {
     int OK = 1;
 
-    //auto int fs (Stmt* s);
+    auto int fs (Stmt* s);
     auto int fe (Expr* e);
-    visit_stmt(S, NULL, fe, NULL);
+    visit_stmt(S, fs, fe, NULL);
 
     int type_is_sup_sub (Type* sup, Type* sub) {
         if (sup->sub!=sub->sub || sup->isalias!=sub->isalias) {
@@ -415,8 +415,8 @@ int check_types (Stmt* S) {
                 break;
 
             case EXPR_CALL: {
-                Type* func = env_expr_type(e->Call.func);
-                Type* arg  = env_expr_type(e->Call.arg);
+                Type* func = env_expr_to_type(e->Call.func);
+                Type* arg  = env_expr_to_type(e->Call.arg);
 
                 if (e->Call.func->sub == EXPR_NATIVE) {
                     // TODO
@@ -440,17 +440,21 @@ int check_types (Stmt* S) {
                     assert(sub != NULL);
                     subtype = &sub->type;
                 }
-                if (!type_is_sup_sub(subtype, env_expr_type(e->Cons.arg))) {
+                if (!type_is_sup_sub(subtype, env_expr_to_type(e->Cons.arg))) {
                     char err[512];
                     sprintf(err, "invalid constructor \"%s\" : type mismatch", e->Cons.subtype.val.s);
                     OK = err_message(e->Cons.subtype, err);
                 }
             }
-
-            default:
-                break;
         }
         return 1;
+    }
+
+    int fs (Stmt* s) {
+        switch (s->sub) {
+            case STMT_RETURN:
+                break;
+        }
     }
 
     return OK;
@@ -474,9 +478,9 @@ void set_vars_istx (Stmt* s) {
                 // keep istx=0
                 return 0;
             case EXPR_VAR: {
-                Type* tp = env_expr_type(e);
+                Type* tp = env_expr_to_type(e);
                 if (tp->sub==TYPE_USER && !tp->isalias) {
-                    Stmt* user = env_find_decl(e->env, tp->User.val.s, NULL);
+                    Stmt* user = env_id_to_stmt(e->env, tp->User.val.s, NULL);
                     if (user->User.isrec) {
                         e->Var.istx = 1;
                     }
