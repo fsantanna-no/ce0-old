@@ -518,9 +518,9 @@ void code_stmt (Stmt* s) {
             break;
 
         case STMT_RETURN: {
-            visit_expr(&s->Ret, fe_0);
+            visit_expr(&s->Return, fe_0);
             out("return ");
-            visit_expr(&s->Ret, fe_1);
+            visit_expr(&s->Return, fe_1);
             out(";\n");
             break;
         }

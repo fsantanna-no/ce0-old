@@ -78,7 +78,7 @@ void visit_stmt (Stmt* s, f_stmt fs, f_expr fe, f_type ft) {
             visit_expr(&s->Call, fe);
             break;
         case STMT_RETURN:
-            visit_expr(&s->Ret, fe);
+            visit_expr(&s->Return, fe);
             break;
         case STMT_SEQ:
             for (int i=0; i<s->Seq.size; i++) {

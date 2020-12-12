@@ -5,6 +5,7 @@
 #include "all.h"
 
 Type Type_Unit  = { TYPE_UNIT, NULL, 0 };
+Type Type_Bool  = { TYPE_USER, NULL, 0, .User={TX_UPPER,{.s="Bool"},0,0} };
 
 int err_message (Tk tk, const char* v) {
     sprintf(ALL.err, "(ln %ld, col %ld): %s", tk.lin, tk.col, v);
@@ -27,6 +28,7 @@ Stmt* env_id_to_stmt (Env* env, const char* id) {
             default:
                 assert(0 && "bug found");
         }
+//puts(cur);
         if (cur!=NULL && !strcmp(id,cur)) {
             return env->stmt;
         }
@@ -35,6 +37,18 @@ Stmt* env_id_to_stmt (Env* env, const char* id) {
     return NULL;
 }
 
+Stmt* env_stmt_to_func (Stmt* s) {
+    Stmt* arg = env_id_to_stmt(s->env, "arg");
+    assert(arg != NULL);
+    Env* env = arg->env;
+    while (env != NULL) {
+        if (env->stmt->sub == STMT_FUNC) {
+            return env->stmt;
+        }
+        env = env->prev;
+    }
+    return NULL;
+}
 
 Stmt* env_sub_id_to_user_stmt (Env* env, const char* sub) {
     while (env != NULL) {
@@ -142,7 +156,7 @@ Type* env_expr_to_type (Expr* e) { // static returns use env=NULL b/c no ids und
         }
 
         case EXPR_INDEX:    // x.1
-            return &env_expr_to_type(e->Index.tuple)->Tuple.vec[e->Index.index];
+            return &env_expr_to_type(e->Index.tuple)->Tuple.vec[e->Index.index-1];
 
         case EXPR_DISC: {   // x.True
             Type* val = env_expr_to_type(e->Disc.val);
@@ -167,13 +181,8 @@ Type* env_expr_to_type (Expr* e) { // static returns use env=NULL b/c no ids und
             assert(0 && "bug found");
         }
 
-        case EXPR_PRED: {
-            Type* tp = malloc(sizeof(Type));
-            assert(tp != NULL);
-            *tp = (Type) { TYPE_USER, e->env, 0, .User={} };
-            strcpy(tp->User.val.s, "Bool");
-            return tp;
-        }
+        case EXPR_PRED:
+            return &Type_Bool;
     }
     assert(0 && "bug found");
 }
@@ -193,6 +202,7 @@ Stmt* env_expr_to_type_to_user_stmt (Expr* e) {
     }
 }
 
+#if 0
 void env_dump (Env* env) {
     while (env != NULL) {
         if (env->stmt->sub == STMT_USER) {
@@ -204,6 +214,7 @@ void env_dump (Env* env) {
         env = env->prev;
     }
 }
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -288,7 +299,7 @@ void set_envs (Stmt* S) {
                 {
                     Stmt* arg = malloc(sizeof(Stmt));
                     *arg = (Stmt) {
-                        0, STMT_VAR, NULL,
+                        0, STMT_VAR, env,
                         .Var={ {TX_LOWER,{.s="arg"},0,0},*s->Func.type.Func.out,{EXPR_UNIT} }
                     };
                     Env* new = malloc(sizeof(Env));
@@ -405,9 +416,15 @@ int check_types (Stmt* S) {
 
     int fe (Expr* e) {
         switch (e->sub) {
-            case EXPR_INDEX:
-                // TODO: check if e->tuple is really a tuple and that e->index is in range
+            case EXPR_UNIT:
+            case EXPR_ARG:
+            case EXPR_NATIVE:
+            case EXPR_VAR:
+            case EXPR_TUPLE:
                 break;
+
+            //case EXPR_INDEX:
+                // TODO: check if e->tuple is really a tuple and that e->index is in range
 
             case EXPR_CALL: {
                 Type* func = env_expr_to_type(e->Call.func);
@@ -447,8 +464,51 @@ int check_types (Stmt* S) {
 
     int fs (Stmt* s) {
         switch (s->sub) {
-            case STMT_RETURN:
+            case STMT_FUNC:
+            case STMT_SEQ:
                 break;
+
+            case STMT_VAR:
+                if (!type_is_sup_sub(&s->Var.type, env_expr_to_type(&s->Var.init))) {
+                    char err[512];
+                    sprintf(err, "invalid assignment to \"%s\" : type mismatch", s->Var.id.val.s);
+                    OK = err_message(s->Var.id, err);
+                }
+                break;
+
+            //case STMT_USER: no & in subtypes
+
+            case STMT_CALL: {
+                Type* tp = env_expr_to_type(&s->Call);
+                if (tp->sub != TYPE_UNIT) {
+                    assert(s->Call.sub == EXPR_CALL);
+                    Expr* func = s->Call.Call.func;
+                    assert(func->sub==EXPR_VAR || func->sub==EXPR_NATIVE);
+                    if (func->sub == EXPR_VAR) {
+                        char err[512];
+                        sprintf(err, "invalid call to \"%s\" : missing return assignment",
+                                func->Var.id.val.s);
+                        OK = err_message(s->tk, err);
+                    }
+                }
+                break;
+            }
+
+            case STMT_IF:
+                if (!type_is_sup_sub(&Type_Bool, env_expr_to_type(&s->If.cond))) {
+                    OK = err_message(s->tk, "invalid condition : type mismatch");
+                }
+                break;
+
+            case STMT_RETURN: {
+                Stmt* func = env_stmt_to_func(s);
+                assert(func != NULL);
+                assert(func->Func.type.sub == TYPE_FUNC);
+                if (!type_is_sup_sub(func->Func.type.Func.out, env_expr_to_type(&s->Return))) {
+                    OK = err_message(s->tk, "invalid return : type mismatch");
+                }
+                break;
+            }
         }
     }
 

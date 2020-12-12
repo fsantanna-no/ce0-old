@@ -1,4 +1,5 @@
 - erro de tipo em book: TODO-TIPO
+- type mismatch: expected vs have
 
 - testar ADT/MUT/MOVE in rust
 

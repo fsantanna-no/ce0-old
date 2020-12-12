@@ -101,9 +101,10 @@ typedef struct Stmt {
     int N;
     STMT sub;
     struct Env* env;    // see env.c
+    Tk tk;
     union {
         Expr Call;      // STMT_CALL
-        Expr Ret;       // STMT_RETURN
+        Expr Return;    // STMT_RETURN
         struct {
             Tk   id;                    // ns
             Type type;                  // : Nat
