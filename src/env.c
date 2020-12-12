@@ -11,10 +11,7 @@ int err_message (Tk tk, const char* v) {
     return 0;
 }
 
-Stmt* env_id_to_stmt (Env* env, const char* id, int* scope) {    // scope=# of times crossed "arg"
-    if (scope != NULL) {
-        *scope = 0;
-    }
+Stmt* env_id_to_stmt (Env* env, const char* id) {
     while (env != NULL) {
         const char* cur = NULL;
         switch (env->stmt->sub) {
@@ -30,9 +27,6 @@ Stmt* env_id_to_stmt (Env* env, const char* id, int* scope) {    // scope=# of t
             default:
                 assert(0 && "bug found");
         }
-        if (scope!=NULL && !strcmp("arg",cur)) {
-            *scope = *scope + 1;
-        }
         if (cur!=NULL && !strcmp(id,cur)) {
             return env->stmt;
         }
@@ -40,6 +34,7 @@ Stmt* env_id_to_stmt (Env* env, const char* id, int* scope) {    // scope=# of t
     }
     return NULL;
 }
+
 
 Stmt* env_sub_id_to_user_stmt (Env* env, const char* sub) {
     while (env != NULL) {
@@ -77,7 +72,7 @@ Type* env_expr_to_type (Expr* e) { // static returns use env=NULL b/c no ids und
         }
 
         case EXPR_ARG: {
-            Stmt* s = env_id_to_stmt(e->env, "arg", NULL);
+            Stmt* s = env_id_to_stmt(e->env, "arg");
             assert(s->sub == STMT_VAR);
             return &s->Var.type;
         }
@@ -88,7 +83,7 @@ Type* env_expr_to_type (Expr* e) { // static returns use env=NULL b/c no ids und
         }
 
         case EXPR_VAR: {
-            Stmt* s = env_id_to_stmt(e->env, e->Var.id.val.s, NULL);
+            Stmt* s = env_id_to_stmt(e->env, e->Var.id.val.s);
             assert(s != NULL);
             return (s->sub == STMT_VAR) ? &s->Var.type : &s->Func.type;
         }
@@ -120,7 +115,7 @@ Type* env_expr_to_type (Expr* e) { // static returns use env=NULL b/c no ids und
         case EXPR_CONS: {
             Tk tk;
             if (e->Cons.subtype.enu == TX_NIL) {
-                Stmt* user = env_id_to_stmt(e->env, e->Cons.subtype.val.s, NULL);
+                Stmt* user = env_id_to_stmt(e->env, e->Cons.subtype.val.s);
                 assert(user != NULL);
                 tk = user->User.id;
             } else {
@@ -152,7 +147,7 @@ Type* env_expr_to_type (Expr* e) { // static returns use env=NULL b/c no ids und
         case EXPR_DISC: {   // x.True
             Type* val = env_expr_to_type(e->Disc.val);
             assert(val->sub == TYPE_USER);
-            Stmt* decl = env_id_to_stmt(e->env, val->User.val.s, NULL);
+            Stmt* decl = env_id_to_stmt(e->env, val->User.val.s);
             assert(decl!=NULL && decl->sub==STMT_USER);
             for (int i=0; i<decl->User.size; i++) {
                 if (!strcmp(decl->User.vec[i].id.val.s, e->Disc.subtype.val.s)) {
@@ -190,7 +185,7 @@ Stmt* env_expr_to_type_to_user_stmt (Expr* e) {
     Type* tp = env_expr_to_type(e);
     assert(tp != NULL);
     if (tp->sub == TYPE_USER) {
-        Stmt* s = env_id_to_stmt(e->env, tp->User.val.s, NULL);
+        Stmt* s = env_id_to_stmt(e->env, tp->User.val.s);
         assert(s != NULL);
         return s;
     } else {
@@ -323,7 +318,7 @@ int check_undeclareds (Stmt* s) {
 
     int ft (Type* tp) {
         if (tp->sub == TYPE_USER) {
-            if (env_id_to_stmt(tp->env, tp->User.val.s, NULL) == NULL) {
+            if (env_id_to_stmt(tp->env, tp->User.val.s) == NULL) {
                 char err[512];
                 sprintf(err, "undeclared type \"%s\"", tp->User.val.s);
                 OK = err_message(tp->User, err);
@@ -335,7 +330,7 @@ int check_undeclareds (Stmt* s) {
     int fe (Expr* e) {
         switch (e->sub) {
             case EXPR_VAR: {
-                Stmt* decl = env_id_to_stmt(e->env, e->Var.id.val.s, NULL);
+                Stmt* decl = env_id_to_stmt(e->env, e->Var.id.val.s);
                 if (decl == NULL) {
                     char err[512];
                     sprintf(err, "undeclared variable \"%s\"", e->Var.id.val.s);
@@ -348,7 +343,7 @@ int check_undeclareds (Stmt* s) {
             case EXPR_CONS: {
                 Tk* sub = (e->sub==EXPR_DISC ? &e->Disc.subtype : (e->sub==EXPR_PRED ? &e->Pred.subtype : &e->Cons.subtype));
                 if (sub->enu == TX_NIL) {
-                    Stmt* decl = env_id_to_stmt(e->env, sub->val.s, NULL);
+                    Stmt* decl = env_id_to_stmt(e->env, sub->val.s);
                     if (decl == NULL) {
                         char err[512];
                         sprintf(err, "undeclared type \"%s\"", sub->val.s);
@@ -480,7 +475,7 @@ void set_vars_istx (Stmt* s) {
             case EXPR_VAR: {
                 Type* tp = env_expr_to_type(e);
                 if (tp->sub==TYPE_USER && !tp->isalias) {
-                    Stmt* user = env_id_to_stmt(e->env, tp->User.val.s, NULL);
+                    Stmt* user = env_id_to_stmt(e->env, tp->User.val.s);
                     if (user->User.isrec) {
                         e->Var.istx = 1;
                     }

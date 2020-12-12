@@ -3,7 +3,7 @@ typedef struct Env {
     struct Env* prev;
 } Env;
 
-Stmt* env_id_to_stmt (Env* env, const char* id, int* scope);
+Stmt* env_id_to_stmt (Env* env, const char* id);
 Type* env_expr_to_type (Expr* e);
 Stmt* env_sub_id_to_user_stmt (Env* env, const char* sub);
 Stmt* env_expr_to_type_to_user_stmt (Expr* e);

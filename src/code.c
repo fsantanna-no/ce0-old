@@ -67,7 +67,7 @@ void to_c_ (char* out, Type* tp) {
             strcat(out, &tp->Nat.val.s[1]);
             break;
         case TYPE_USER: {
-            Stmt* s = env_id_to_stmt(tp->env, tp->User.val.s, NULL);
+            Stmt* s = env_id_to_stmt(tp->env, tp->User.val.s);
             if (s!=NULL && s->User.isrec) strcat(out, "struct ");
             strcat(out, tp->User.val.s);
             if (s!=NULL && s->User.isrec) strcat(out, "*");
@@ -494,7 +494,7 @@ void code_stmt (Stmt* s) {
             out(id);
 
             if (s->Var.type.sub==TYPE_USER && !s->Var.type.isalias) {
-                Stmt* user = env_id_to_stmt(s->env, s->Var.type.User.val.s, NULL);
+                Stmt* user = env_id_to_stmt(s->env, s->Var.type.User.val.s);
                 assert(user!=NULL && user->sub==STMT_USER);
                 if (user->User.isrec) {
                     fprintf (ALL.out,
