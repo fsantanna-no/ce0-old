@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-//#define DEBUG
+#define DEBUG
 
 #include "../all.h"
 
@@ -797,6 +797,11 @@ void t_all (void) {
         "call output(f())\n"
     ));
     assert(all(
+        "(ln 2, col 6): invalid call to \"f\" : type mismatch",
+        "func f : ((),()) -> () { return arg }\n"
+        "call f()\n"
+    ));
+    assert(all(
         "False\n",
         "type Bool {\n"
         "    False: ()\n"
@@ -877,7 +882,7 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "var n: Nat = Succ(Succ($Nat))\n"
-        "call output(n)\n"
+        "call output(&n)\n"
     ));
     assert(all(
         "Succ (Succ ($))\n",
@@ -885,7 +890,7 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "var n: Nat = Succ(Succ($Nat))\n"
-        "call _output_Nat(n)\n"
+        "call _output_Nat(&n)\n"
     ));
 #if TODO
     assert(all(

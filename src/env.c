@@ -189,11 +189,12 @@ void set_envs (Stmt* S) {
     // predeclare function `output`
     static Env env_;
     {
-        static Type unit = {TYPE_UNIT};
+        static Type unit  = { TYPE_UNIT };
+        static Type alias = { TYPE_USER, NULL, .User={{TK_ERR,{},0,0},1} };
         static Stmt s_out = {
             0, STMT_VAR, NULL,
             .Var={ {TX_LOWER,{.s="output"},0,0},
-                   {TYPE_FUNC,NULL,.Func={&unit,&unit}},{EXPR_UNIT} }
+                   {TYPE_FUNC,NULL,.Func={&alias,&unit}},{EXPR_UNIT} }
         };
         env_ = (Env) { &s_out, NULL };
     }
@@ -347,6 +348,68 @@ int check_undeclareds (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+int check_types (Stmt* S) {
+    int OK = 1;
+
+    //auto int fs (Stmt* s);
+    auto int fe (Expr* e);
+    visit_stmt(S, NULL, fe, NULL);
+
+    int type_is_sup_sub (Type* sup, Type* sub) {
+        if (sup->sub != sub->sub) {
+            return 0;
+        }
+        switch (sup->sub) {
+            case TYPE_TUPLE:
+                if (sup->Tuple.size != sub->Tuple.size) {
+                    return 0;
+                }
+                for (int i=0; i<sup->Tuple.size; i++) {
+                    if (!type_is_sup_sub(&sup->Tuple.vec[i], &sub->Tuple.vec[i])) {
+                        return 0;
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+        return 1;
+    }
+
+    int fe (Expr* e) {
+        switch (e->sub) {
+            case EXPR_INDEX:
+                // TODO: check if e->tuple is really a tuple and that e->index is in range
+                break;
+
+            case EXPR_CALL: {
+                Type* func = env_expr_type(e->Call.func);
+                Type* arg  = env_expr_type(e->Call.arg);
+
+                if (e->Call.func->sub == EXPR_NATIVE) {
+                    // TODO
+                } else if (!strcmp(e->Call.func->Var.id.val.s,"output")) {
+                    // TODO
+                } else if (!type_is_sup_sub(func->Func.inp, arg)) {
+                    assert(e->Call.func->sub == EXPR_VAR);
+                    char err[512];
+                    sprintf(err, "invalid call to \"%s\" : type mismatch", e->Call.func->Var.id.val.s);
+                    OK = err_message(e->Call.func->Var.id, err);
+                }
+                break;
+            }
+
+            default:
+                break;
+        }
+        return 1;
+    }
+
+    return OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 // Set all EXPR_VAR that are recursive and not alias to istx=1.
 //      f(nat)          -- istx=1
 //      return nat      -- istx=1
@@ -379,11 +442,12 @@ void set_vars_istx (Stmt* s) {
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-
 int env (Stmt* s) {
     set_envs(s);
     if (!check_undeclareds(s)) {
+        return 0;
+    }
+    if (!check_types(s)) {
         return 0;
     }
     set_vars_istx(s);

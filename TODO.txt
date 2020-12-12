@@ -1,8 +1,3 @@
-- double free
-- borrow / owner
-    - set v=NULL (transfer ownership)
-        - qualquer uso EXPR_VAR que nao seja pra um alias
-- ALIAS output
 - STMT_VAR init / fazer igual ao STMT_RETURN / setar NULL para referencia usada
 - x=NULL quando f(x) retorna Nat
 - testar ADT/MUT/MOVE in rust
@@ -13,6 +8,10 @@
 - book
 - verificar alocacoes em todos os exemplos
 - estudar sobre avaliacao, tail call
+
+- CHECKS
+    - ALIAS output
+    - borrow vs access
 
 - POOLS
     - testar nao caber no pool
