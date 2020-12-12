@@ -1,12 +1,9 @@
-- check conss
+- ALIAS output
 - STMT_VAR init / fazer igual ao STMT_RETURN / setar NULL para referencia usada
 - x=NULL quando f(x) retorna Nat
-    - agora tudo tem a ver com o pool
-    - cada ID esta associado a um pool entao fica facil diferenciar
+
 - STMT_SET
     - var, swap semantics
-- erro ao compartilhar refs de malloc pools diferentes
-    - EXPR_COPY
 - tests TODO
 - book
 - verificar alocacoes em todos os exemplos

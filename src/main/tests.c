@@ -963,9 +963,8 @@ void t_all (void) {
         "var y: Nat = f()\n"
         "call output(y)\n"
     ));
-#if TODO
     assert(all(
-        "(ln 5, col 23): missing pool for constructor",
+        "Succ (Succ ($))\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -976,7 +975,6 @@ void t_all (void) {
         "var y: Nat = f()\n"
         "call output(y)\n"
     ));
-#endif
     assert(all(
         "Succ (Succ ($))\n",
         "type rec Nat {\n"
