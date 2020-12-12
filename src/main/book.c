@@ -158,7 +158,7 @@ const char _nat[] =
     "    if y.$Nat? {\n"
     "        return x\n"
     "    } else {\n"
-    "        return Succ(add(x,y.Succ!))\n"
+    "        return Succ(add(x,y.Succ!))\n"     // 30
     "    }\n"
     "}\n"
     "\n"
@@ -168,17 +168,17 @@ const char _nat[] =
     "    if y.$Nat? {\n"
     "        return x\n"
     "    } else {\n"
-    "        return sub(x.Succ!,y.Succ!)\n"
+    "        return sub(x.Succ!,y.Succ!)\n"     // 40
     "    }\n"
     "}\n"
     "\n"
-    "func mul: (Nat,Nat) -> Nat {\n"
-    "    var x: Nat = arg.1\n"
-    "    var y: Nat = arg.2\n"
+    "func mul: (Nat,Nat&) -> Nat {\n"
+    "    var x: Nat  = arg.1\n"
+    "    var y: Nat& = arg.2\n"
     "    if y.$Nat? {\n"
     "        return $Nat\n"
     "    } else {\n"
-    "        return add(mul(x,y.Succ!),x)\n"
+    "        return add(mul(x,y.Succ!),&x)\n"    // 50
     "    }\n"
     "}\n"
     "\n"
@@ -192,16 +192,16 @@ const char _nat[] =
     "    }\n"
     "}\n"
     "\n"
-    "var one:   Nat = Succ($Nat)\n"
-    "var two:   Nat = Succ(one)\n"
-    "var three: Nat = Succ(two)\n"
-    "var four:  Nat = Succ(three)\n"
-    "var five:  Nat = Succ(four)\n"
-    "var six:   Nat = Succ(five)\n"
-    "var seven: Nat = Succ(six)\n"
-    "var eight: Nat = Succ(seven)\n"
-    "var nine:  Nat = Succ(eight)\n"
-    "var ten:   Nat = Succ(nine)\n"
+    "func one:   ()->Nat { return Succ($Nat) }\n"
+    "func two:   ()->Nat { return Succ(one  ()) }\n"
+    "func three: ()->Nat { return Succ(two  ()) }\n"
+    "func four:  ()->Nat { return Succ(three()) }\n"
+    "func five:  ()->Nat { return Succ(four ()) }\n"
+    "func six:   ()->Nat { return Succ(five ()) }\n"
+    "func seven: ()->Nat { return Succ(six  ()) }\n"
+    "func eight: ()->Nat { return Succ(seven()) }\n"
+    "func nine:  ()->Nat { return Succ(eight()) }\n"
+    "func ten:   ()->Nat { return Succ(nine ()) }\n"
 ;
 
 void chap_pre (void) {
@@ -226,34 +226,43 @@ void chap_pre (void) {
     strcpy(INP, _bool);
     strcat(INP, _nat);
     strcat (INP,
-        "var n[]: Nat = add ($Nat, Succ($Nat))\n"
-        "call output(n)\n"
+        "var x: Nat = $Nat\n"
+        "var y: Nat = Succ($Nat)\n"
+        "var z: Nat = add(x,&y)\n"
+        "call output(z)\n"
     );
     assert(all("Succ ($)\n", INP));
 
     strcpy(INP, _bool);
     strcat(INP, _nat);
     strcat (INP,
-        "var n[]: Nat = Succ(add($Nat, Succ($Nat)))\n"
-        "call output(n)\n"
-    );
-    assert(all("Succ (Succ ($))\n", INP));
-
-    strcpy(INP, _bool);
-    strcat(INP, _nat);
-    strcat (INP,
-        "var n[]: Nat = sub(Succ($Nat), $Nat)\n"
-        "call output(n)\n"
+        "var x: Nat = Succ($Nat)\n"
+        "var y: Nat = $Nat\n"
+        "var z: Nat = add(x,&y)\n"
+        "call output(z)\n"
     );
     assert(all("Succ ($)\n", INP));
 
     strcpy(INP, _bool);
     strcat(INP, _nat);
     strcat (INP,
-        "var n[]: Nat = mul(two,three)\n"
+        "var x: Nat = two()\n"
+        "var y: Nat = three()\n"
+        "var z: Nat = add(x,&y)\n"
+        "call output(z)\n"
+    );
+    assert(all("Succ (Succ (Succ (Succ (Succ ($)))))\n", INP));
+
+    strcpy(INP, _bool);
+    strcat(INP, _nat);
+    strcat (INP,
+        "var t: Nat = three()\n"
+        "var n: Nat = mul(two(),&t)\n"
         "call output(n)\n"
     );
     assert(all("Succ (Succ (Succ (Succ (Succ (Succ ($))))))\n", INP));
+
+assert(0);
 
     strcpy(INP, _bool);
     strcat(INP, _nat);

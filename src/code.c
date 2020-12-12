@@ -165,6 +165,9 @@ int fe_1 (Expr* e) {
                 out("_");
             }
             out(e->Var.id.val.s);
+            if (e->Var.istx) {
+                fprintf(ALL.out, "_%d", e->N);
+            }
             break;
         case EXPR_ALIAS:
             // same as e->alias
@@ -257,9 +260,9 @@ int fe_0 (Expr* e) {
             if (e->Var.istx) {
                 char* id = e->Var.id.val.s;
                 fprintf (ALL.out,
-                    "typeof(%s) _%s = %s;\n"
+                    "typeof(%s) _%s_%d = %s;\n"
                     "%s = NULL;\n",
-                    id, id, id, id
+                    id, id, e->N, id, id
                 );
             }
             return 0;
@@ -309,6 +312,7 @@ int fe_0 (Expr* e) {
         case EXPR_DISC: {
             Stmt* s = env_expr_type_find_user(e->Disc.val);
             assert(s != NULL);
+            visit_expr(e->Disc.val, fe_0);
             out("assert(");
             visit_expr(e->Disc.val, fe_1);
             fprintf (ALL.out,
