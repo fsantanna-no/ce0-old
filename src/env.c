@@ -324,16 +324,14 @@ int check_undeclareds (Stmt* s) {
                     if (decl == NULL) {
                         char err[512];
                         sprintf(err, "undeclared type \"%s\"", sub->val.s);
-assert(0 && "TODO e->tk");
-                        //OK = err_message(e->tk, err);
+                        OK = err_message(*sub, err);
                     }
                 } else {
                     Stmt* user = env_find_super(e->env, sub->val.s);
                     if (user == NULL) {
                         char err[512];
                         sprintf(err, "undeclared subtype \"%s\"", sub->val.s);
-assert(0 && "TODO e->tk");
-                        //OK = err_message(e->tk, err);
+                        OK = err_message(*sub, err);
                     }
                 }
                 break;
