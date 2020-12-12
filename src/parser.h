@@ -37,8 +37,8 @@ typedef struct Type {
     struct Env* env;    // see env.c
     int isalias;
     union {
-        Tk nat;         // TYPE_NATIVE
-        Tk user;        // TYPE_USER
+        Tk Nat;         // TYPE_NATIVE
+        Tk User;        // TYPE_USER
         struct {        // TYPE_TUPLE
             int size;                   // 2
             struct Type* vec;           // ((),())
@@ -59,8 +59,8 @@ typedef struct Expr {
     EXPR sub;
     struct Env* env;    // see env.c
     union {
-        Tk nat;         // EXPR_NATIVE
-        struct Expr* alias;  // EXPR_ALIAS
+        Tk Nat;         // EXPR_NATIVE
+        struct Expr* Alias;  // EXPR_ALIAS
         struct {        // EXPR_VAR
             Tk id;
             int istx;
@@ -102,8 +102,8 @@ typedef struct Stmt {
     STMT sub;
     struct Env* env;    // see env.c
     union {
-        Expr call;      // STMT_CALL
-        Expr ret;       // STMT_RETURN
+        Expr Call;      // STMT_CALL
+        Expr Ret;       // STMT_RETURN
         struct {
             Tk   id;                    // ns
             Type type;                  // : Nat

@@ -72,7 +72,7 @@ int parser_type (Type* ret) {
 
     // TYPE_NATIVE
     } else if (accept(TX_NATIVE)) {
-        *ret = (Type) { TYPE_NATIVE, NULL, 0, .nat=ALL.tk0 };
+        *ret = (Type) { TYPE_NATIVE, NULL, 0, .Nat=ALL.tk0 };
 
     // TYPE_USER
     } else if (accept('&') || accept(TX_UPPER)) {
@@ -83,7 +83,7 @@ int parser_type (Type* ret) {
                 return 0;
             }
         }
-        *ret = (Type) { TYPE_USER, NULL, isalias, .user=ALL.tk0 };
+        *ret = (Type) { TYPE_USER, NULL, isalias, .User=ALL.tk0 };
 
     } else {
         return err_expected("type");
@@ -151,7 +151,7 @@ int parser_expr_one (Expr* ret) {
 
     // EXPR_NATIVE
     } else if (accept(TX_NATIVE)) {
-        *ret = (Expr) { _N_++, EXPR_NATIVE, NULL, .nat=ALL.tk0 };
+        *ret = (Expr) { _N_++, EXPR_NATIVE, NULL, .Nat=ALL.tk0 };
 
     // EXPR_VAR
     } else if (accept('&') || accept(TX_LOWER) || accept(TK_OUTPUT)) {
@@ -163,7 +163,7 @@ int parser_expr_one (Expr* ret) {
             Expr* e = malloc(sizeof(Expr));
             assert(e != NULL);
             *e = (Expr) { _N_++, EXPR_VAR, NULL, .Var={ALL.tk0,0} };
-            *ret = (Expr) { _N_++, EXPR_ALIAS, .alias=e };
+            *ret = (Expr) { _N_++, EXPR_ALIAS, .Alias=e };
         } else {
             *ret = (Expr) { _N_++, EXPR_VAR, NULL, .Var={ALL.tk0,0} };
         }
@@ -342,7 +342,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_expr(&e)) {
             return 0;
         }
-        *ret = (Stmt) { _N_++, STMT_CALL, NULL, .call=e };
+        *ret = (Stmt) { _N_++, STMT_CALL, NULL, .Call=e };
 
     // STMT_IF
     } else if (accept(TK_IF)) {         // if
@@ -405,7 +405,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_expr(&e)) {
             return 0;
         }
-        *ret = (Stmt) { _N_++, STMT_RETURN, NULL, .ret=e };
+        *ret = (Stmt) { _N_++, STMT_RETURN, NULL, .Ret=e };
 
     } else {
         return err_expected("statement (maybe `call´?)");

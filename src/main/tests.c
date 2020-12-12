@@ -179,7 +179,7 @@ void t_parser_type (void) {
         Type tp;
         parser_type(&tp);
         assert(tp.sub == TYPE_NATIVE);
-        assert(!strcmp(tp.nat.val.s,"_char"));
+        assert(!strcmp(tp.Nat.val.s,"_char"));
         fclose(ALL.inp);
     }
     // TYPE_UNIT
@@ -284,7 +284,7 @@ void t_parser_expr (void) {
         all_init(NULL, stropen("r", 0, "_x"));
         Expr e;
         assert(parser_expr(&e));
-        assert(e.sub == EXPR_NATIVE); assert(!strcmp(e.nat.val.s,"_x"));
+        assert(e.sub == EXPR_NATIVE); assert(!strcmp(e.Nat.val.s,"_x"));
         fclose(ALL.inp);
     }
     // EXPR_TUPLE
@@ -490,9 +490,9 @@ void t_parser_stmt (void) {
         Stmt s;
         assert(parser_stmt(&s));
         assert(s.sub == STMT_CALL);
-        assert(s.call.sub == EXPR_CALL);
-        assert(s.call.Call.func->sub == EXPR_VAR);
-        assert(!strcmp(s.call.Call.func->Var.id.val.s,"f"));
+        assert(s.Call.sub == EXPR_CALL);
+        assert(s.Call.Call.func->sub == EXPR_VAR);
+        assert(!strcmp(s.Call.Call.func->Var.id.val.s,"f"));
         fclose(ALL.inp);
     }
     {
@@ -500,9 +500,9 @@ void t_parser_stmt (void) {
         Stmt s;
         assert(parser_stmt(&s));
         assert(s.sub == STMT_CALL);
-        assert(s.call.sub == EXPR_CALL);
-        assert(s.call.Call.func->sub == EXPR_NATIVE);
-        assert(!strcmp(s.call.Call.func->nat.val.s,"_printf"));
+        assert(s.Call.sub == EXPR_CALL);
+        assert(s.Call.Call.func->sub == EXPR_NATIVE);
+        assert(!strcmp(s.Call.Call.func->Nat.val.s,"_printf"));
         fclose(ALL.inp);
     }
     {
@@ -573,8 +573,8 @@ void t_code (void) {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
         Expr e = { _N_++, EXPR_NATIVE, NULL, {} };
-            e.nat.enu = TX_NATIVE;
-            strcpy(e.nat.val.s, "_printf");
+            e.Nat.enu = TX_NATIVE;
+            strcpy(e.Nat.val.s, "_printf");
         code_expr_1(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"printf"));

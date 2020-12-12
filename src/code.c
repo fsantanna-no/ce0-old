@@ -27,10 +27,10 @@ void to_ce_ (char* out, Type* tp) {
             strcat(out, "Unit");
             break;
         case TYPE_NATIVE:
-            strcat(out, &tp->nat.val.s[1]);
+            strcat(out, &tp->Nat.val.s[1]);
             break;
         case TYPE_USER: {
-            strcat(out, tp->user.val.s);
+            strcat(out, tp->User.val.s);
             break;
         }
         case TYPE_TUPLE:
@@ -64,12 +64,12 @@ void to_c_ (char* out, Type* tp) {
             strcat(out, "int");
             break;
         case TYPE_NATIVE:
-            strcat(out, &tp->nat.val.s[1]);
+            strcat(out, &tp->Nat.val.s[1]);
             break;
         case TYPE_USER: {
-            Stmt* s = env_find_decl(tp->env, tp->user.val.s, NULL);
+            Stmt* s = env_find_decl(tp->env, tp->User.val.s, NULL);
             if (s!=NULL && s->User.isrec) strcat(out, "struct ");
-            strcat(out, tp->user.val.s);
+            strcat(out, tp->User.val.s);
             if (s!=NULL && s->User.isrec) strcat(out, "*");
             break;
         }
@@ -158,7 +158,7 @@ int fe_1 (Expr* e) {
             out("arg");
             break;
         case EXPR_NATIVE:
-            out(&e->nat.val.s[1]);
+            out(&e->Nat.val.s[1]);
             break;
         case EXPR_VAR:
             if (e->Var.istx) {
@@ -390,7 +390,7 @@ void code_stmt (Stmt* s) {
                 );
                 for (int i=0; i<s->User.size; i++) {
                     Sub sub = s->User.vec[i];
-                    if (sub.type.sub==TYPE_USER && (!strcmp(sup,sub.type.user.val.s))) {
+                    if (sub.type.sub==TYPE_USER && (!strcmp(sup,sub.type.User.val.s))) {
                         fprintf (ALL.out,
                             "    %s_free(&(*p)->_%s);\n"
                             "    free(*p);\n",
@@ -431,7 +431,7 @@ void code_stmt (Stmt* s) {
                             break;
                         case TYPE_USER:
                             yes = par = 1;
-                            sprintf(arg, "output_%s_(v%s_%s)", sub->type.user.val.s, op, sub->id.val.s);
+                            sprintf(arg, "output_%s_(v%s_%s)", sub->type.User.val.s, op, sub->id.val.s);
                             break;
                         case TYPE_TUPLE:
                             yes = 1;
@@ -477,7 +477,7 @@ void code_stmt (Stmt* s) {
             out(id);
 
             if (s->Var.type.sub==TYPE_USER && !s->Var.type.isalias) {
-                Stmt* user = env_find_decl(s->env, s->Var.type.user.val.s, NULL);
+                Stmt* user = env_find_decl(s->env, s->Var.type.User.val.s, NULL);
                 assert(user!=NULL && user->sub==STMT_USER);
                 if (user->User.isrec) {
                     fprintf (ALL.out,
@@ -495,15 +495,15 @@ void code_stmt (Stmt* s) {
         }
 
         case STMT_CALL:
-            visit_expr(&s->ret, fe_0);
-            visit_expr(&s->ret, fe_1);
+            visit_expr(&s->Call, fe_0);
+            visit_expr(&s->Call, fe_1);
             out(";\n");
             break;
 
         case STMT_RETURN: {
-            visit_expr(&s->ret, fe_0);
+            visit_expr(&s->Ret, fe_0);
             out("return ");
-            visit_expr(&s->ret, fe_1);
+            visit_expr(&s->Ret, fe_1);
             out(";\n");
             break;
         }

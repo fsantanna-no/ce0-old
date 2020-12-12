@@ -91,7 +91,7 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
         }
 
         case EXPR_ALIAS: {
-            Type* tp = env_expr_type(e->alias);
+            Type* tp = env_expr_type(e->Alias);
             assert(tp->sub==TYPE_USER && !tp->isalias);
 
             Type* ret = malloc(sizeof(Type));
@@ -114,7 +114,7 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
             }
             Type* tp = malloc(sizeof(Type));
             assert(tp != NULL);
-            *tp = (Type){ TYPE_USER, e->env, 0, .user=tk };
+            *tp = (Type){ TYPE_USER, e->env, 0, .User=tk };
             return tp;
         }
 
@@ -136,7 +136,7 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
         case EXPR_DISC: {   // x.True
             Type* val = env_expr_type(e->Disc.val);
             assert(val->sub == TYPE_USER);
-            Stmt* decl = env_find_decl(e->env, val->user.val.s, NULL);
+            Stmt* decl = env_find_decl(e->env, val->User.val.s, NULL);
             assert(decl!=NULL && decl->sub==STMT_USER);
             for (int i=0; i<decl->User.size; i++) {
                 if (!strcmp(decl->User.vec[i].id.val.s, e->Disc.subtype.val.s)) {
@@ -159,8 +159,8 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
         case EXPR_PRED: {
             Type* tp = malloc(sizeof(Type));
             assert(tp != NULL);
-            *tp = (Type) { TYPE_USER, e->env, 0, .user={} };
-            strcpy(tp->user.val.s, "Bool");
+            *tp = (Type) { TYPE_USER, e->env, 0, .User={} };
+            strcpy(tp->User.val.s, "Bool");
             return tp;
         }
     }
@@ -174,7 +174,7 @@ Stmt* env_expr_type_find_user (Expr* e) {
     Type* tp = env_expr_type(e);
     assert(tp != NULL);
     if (tp->sub == TYPE_USER) {
-        Stmt* s = env_find_decl(e->env, tp->user.val.s, NULL);
+        Stmt* s = env_find_decl(e->env, tp->User.val.s, NULL);
         assert(s != NULL);
         return s;
     } else {
@@ -202,7 +202,7 @@ void set_envs (Stmt* S) {
     static Env env_;
     {
         static Type unit  = { TYPE_UNIT, NULL, 0 };
-        static Type alias = { TYPE_USER, NULL, 0, .user={TK_ERR,{},0,0} };
+        static Type alias = { TYPE_USER, NULL, 0, .User={TK_ERR,{},0,0} };
         static Stmt s_out = {
             0, STMT_VAR, NULL,
             .Var={ {TX_LOWER,{.s="output"},0,0},
@@ -308,10 +308,10 @@ int check_undeclareds (Stmt* s) {
 
     int ft (Type* tp) {
         if (tp->sub == TYPE_USER) {
-            if (env_find_decl(tp->env, tp->user.val.s, NULL) == NULL) {
+            if (env_find_decl(tp->env, tp->User.val.s, NULL) == NULL) {
                 char err[512];
-                sprintf(err, "undeclared type \"%s\"", tp->user.val.s);
-                OK = err_message(tp->user, err);
+                sprintf(err, "undeclared type \"%s\"", tp->User.val.s);
+                OK = err_message(tp->User, err);
             }
         }
         return 1;
@@ -373,7 +373,7 @@ int check_types (Stmt* S) {
         }
         switch (sup->sub) {
             case TYPE_USER:
-                return (!strcmp(sup->user.val.s,sub->user.val.s) &&
+                return (!strcmp(sup->User.val.s,sub->User.val.s) &&
                         sup->isalias == sub->isalias);
 
             case TYPE_TUPLE:
@@ -445,7 +445,7 @@ void set_vars_istx (Stmt* s) {
             case EXPR_VAR: {
                 Type* tp = env_expr_type(e);
                 if (tp->sub==TYPE_USER && !tp->isalias) {
-                    Stmt* user = env_find_decl(e->env, tp->user.val.s, NULL);
+                    Stmt* user = env_find_decl(e->env, tp->User.val.s, NULL);
                     if (user->User.isrec) {
                         e->Var.istx = 1;
                     }
