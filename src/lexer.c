@@ -14,6 +14,7 @@ static char* reserved[] = {
     "if",
     "in",
     "output",
+    "pool",
     "rec",
     "return",
     "type",

@@ -21,6 +21,8 @@ Stmt* env_find_decl (Env* env, const char* id, int* scope) {    // scope=# of ti
                 break;
             case STMT_VAR:
                 cur = env->stmt->Var.id.val.s;
+            case STMT_POOL:
+                cur = env->stmt->Pool.id.val.s;
                 break;
             case STMT_FUNC:
                 cur = env->stmt->Func.id.val.s;
@@ -74,7 +76,7 @@ Type* env_expr_type (Expr* e) { // static returns use env=NULL b/c no ids undern
         case EXPR_VAR: {
             Stmt* s = env_find_decl(e->env, e->tk.val.s, NULL);
             assert(s != NULL);
-            return (s->sub == STMT_VAR) ? &s->Var.type : &s->Func.type;
+            return (s->sub == STMT_VAR) ? &s->Var.type : ((s->sub == STMT_POOL) ? &s->Pool.type : &s->Func.type);
         }
 
         case EXPR_CALL: {
@@ -181,7 +183,7 @@ void set_envs (Stmt* S) {
         static Type unit = {TYPE_UNIT};
         static Stmt s_out = {
             0, STMT_VAR, NULL,
-            .Var={ {TX_VAR,{.s="output"},0,0},0,
+            .Var={ {TX_VAR,{.s="output"},0,0},
                    {TYPE_FUNC,NULL,.Func={&unit,&unit}},{EXPR_UNIT} }
         };
         env_ = (Env) { &s_out, NULL };
@@ -221,6 +223,13 @@ void set_envs (Stmt* S) {
                 return 0;                               // do not visit expr again
             }
 
+            case STMT_POOL: {
+                visit_type(&s->Pool.type, ft);
+                Env* new = malloc(sizeof(Env));
+                *new = (Env) { s, env };
+                env = new;
+            }
+
             case STMT_USER: {
                 Env* new = malloc(sizeof(Env));
                 *new = (Env) { s, env };
@@ -255,7 +264,7 @@ void set_envs (Stmt* S) {
                     Stmt* arg = malloc(sizeof(Stmt));
                     *arg = (Stmt) {
                         0, STMT_VAR, NULL,
-                        .Var={ {TX_VAR,{.s="arg"},0,0},0,*s->Func.type.Func.out,{EXPR_UNIT} }
+                        .Var={ {TX_VAR,{.s="arg"},0,0},*s->Func.type.Func.out,{EXPR_UNIT} }
                     };
                     Env* new = malloc(sizeof(Env));
                     *new = (Env) { arg, env };
@@ -303,11 +312,11 @@ int check_undeclareds (Stmt* s) {
                     OK = err_message(e->tk, err);
                 } else {
                     // check "in pool"
-                    if (decl->sub==STMT_VAR && decl->Var.in_pool.enu==TX_VAR) {
-                        Stmt* pool = env_find_decl(decl->env, decl->Var.in_pool.val.s, NULL);
-                        if (pool==NULL || pool->sub!=STMT_VAR || !pool->Var.sz_pool) {
+                    if (decl->sub==STMT_VAR && decl->Var.in.enu==TX_VAR) {
+                        Stmt* pool = env_find_decl(decl->env, decl->Var.in.val.s, NULL);
+                        if (pool==NULL || pool->sub!=STMT_POOL) {
                             char err[512];
-                            sprintf(err, "undeclared pool \"%s\"", decl->Var.in_pool.val.s);
+                            sprintf(err, "undeclared pool \"%s\"", decl->Var.in.val.s);
                             OK = err_message(e->tk, err);
                         }
                     }
@@ -388,10 +397,8 @@ int check_conss_pool (Stmt* S) {
                 if (s->Var.type.sub == TYPE_USER) {
                     Stmt* user = env_find_decl(s->env, s->Var.type.tk.val.s, NULL);
                     assert(user != NULL);
-                    if (user->sub==STMT_USER && user->User.isrec) {
-                        if (!s->Var.sz_pool && s->Var.in_pool.enu==TK_ERR) {
-                            visit_expr(&s->Var.init, fe);   // must not have any cons
-                        }
+                    if (user->sub==STMT_USER && user->User.isrec && s->Var.in.enu==TK_ERR) {
+                        visit_expr(&s->Var.init, fe);   // must not have any cons
                     }
                 }
                 break;

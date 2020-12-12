@@ -261,16 +261,50 @@ int parser_stmt (Stmt* ret) {
         }
         Tk id = ALL.tk0;
 
-        int sz_pool = 0;                    // no pool
-        if (accept('[')) {
-            if (accept(TX_NUM)) {
-                sz_pool = ALL.tk0.val.n;    // bounded
-            } else {
-                sz_pool = -1;               // unbounded
-            }
-            if (!accept_err(']')) {
+        if (!accept_err(':')) {
+            return 0;
+        }
+        Type tp;
+        if (!parser_type(&tp)) {
+            return 0;
+        }
+        Tk in;
+        if (accept(TK_IN)) {
+            if (!accept(TK_RETURN) && !accept_err(TX_VAR)) {
                 return 0;
             }
+            in = ALL.tk0;
+        } else {
+            in.enu = TK_ERR;       // no pool
+        }
+        if (!accept_err('=')) {
+            return 0;
+        }
+        Expr e;
+        if (!parser_expr(&e)) {
+            return 0;
+        }
+        *ret = (Stmt) { _N_++, STMT_VAR, NULL, .Var={id,tp,in,e} };
+
+    // STMT_POOL
+    } else if (accept(TK_POOL)) {
+        if (!accept_err(TX_VAR)) {
+            return 0;
+        }
+        Tk id = ALL.tk0;
+
+        if (!accept_err('[')) {
+            return 0;
+        }
+        int size; {
+            if (accept(TX_NUM)) {
+                size = ALL.tk0.val.n;    // bounded
+            } else {
+                size = -1;               // unbounded
+            }
+        }
+        if (!accept_err(']')) {
+            return 0;
         }
 
         if (!accept_err(':')) {
@@ -280,23 +314,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_type(&tp)) {
             return 0;
         }
-        if (!accept_err('=')) {
-            return 0;
-        }
-        Expr e;
-        if (!parser_expr(&e)) {
-            return 0;
-        }
-        Tk in_pool;
-        if (accept(TK_IN)) {
-            if (!accept(TK_RETURN) && !accept_err(TX_VAR)) {
-                return 0;
-            }
-            in_pool = ALL.tk0;
-        } else {
-            in_pool.enu = TK_ERR;       // no pool
-        }
-        *ret = (Stmt) { _N_++, STMT_VAR, NULL, .Var={id,sz_pool,tp,e,in_pool} };
+        *ret = (Stmt) { _N_++, STMT_POOL, NULL, .Pool={id,size,tp} };
 
     // STMT_USER
     } else if (accept(TK_TYPE)) {       // type

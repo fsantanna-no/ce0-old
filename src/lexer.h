@@ -20,6 +20,7 @@ typedef enum {
     TK_IF,
     TK_IN,
     TK_OUTPUT,
+    TK_POOL,
     TK_REC,
     TK_RETURN,
     TK_TYPE,

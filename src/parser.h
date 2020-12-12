@@ -21,6 +21,7 @@ typedef enum {
 
 typedef enum {
     STMT_VAR = 1,
+    STMT_POOL,
     STMT_USER,
     STMT_CALL,
     STMT_SEQ,
@@ -97,12 +98,16 @@ typedef struct Stmt {
         Expr call;      // STMT_CALL
         Expr ret;       // STMT_RETURN
         struct {
-            Tk   id;                    // x
-            int  sz_pool;               // -, [], [n], (0,-1,n)
-            Type type;                  // : Bool
-            Expr init;                  // = y
-            Tk   in_pool;               // in p
+            Tk   id;                    // ns
+            Type type;                  // : Nat
+            Tk   in;                    // in ns
+            Expr init;                  // = n
         } Var;          // STMT_VAR
+        struct {
+            Tk   id;                    // ns
+            int  size;                  // [], [n], (-1,n)
+            Type type;                  // : Bool
+        } Pool;         // STMT_POOL
         struct {
             int  isrec;                 // rec
             Tk   id;                    // Bool

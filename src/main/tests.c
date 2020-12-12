@@ -919,7 +919,8 @@ void t_all (void) {
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "var n[]: Nat = Succ(Succ($Nat))\n"
+        "pool ns[]: Nat\n"
+        "var n: Nat in ns = Succ(Succ($Nat))\n"
         "call output(n)\n"
     ));
     assert(all(
@@ -935,7 +936,8 @@ void t_all (void) {
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "var n[]: Nat = Succ(Succ($Nat))\n"
+        "pool ns[]: Nat\n"
+        "var n: Nat in ns = Succ(Succ($Nat))\n"
         "call _output_Nat(n)\n"
     ));
     assert(all(
@@ -958,7 +960,8 @@ void t_all (void) {
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "var n[]: Nat = Succ($Nat)\n"
+        "pool ns[]: Nat\n"
+        "var n: Nat = Succ($Nat) in ns\n"
         "call output(n)\n"
     ));
     assert(all(

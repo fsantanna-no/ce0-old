@@ -1,7 +1,6 @@
 # Ce
 
-A simple (functional?) language with algebraic data types and automatic memory
-management:
+A simple language with algebraic data types and automatic memory management:
 
 - bounded memory allocation
 - deterministic deallocation
@@ -29,6 +28,7 @@ The following keywords are reserved:
     if          -- conditional statement
     in          -- allocation destination
     output      -- output function
+    pool        -- pool declaration
     rec         -- type, function recursive declaration
     return      -- function return
     type        -- new type declaration
@@ -205,24 +205,20 @@ type rec Tree {
 A variable declaration assigns a value to a name of a given type:
 
 ```
-var x : () = ()                 -- assigns `()` to variable `x` of type `()`
-var y : Bool = True             -- assigns `True` to variable `y` of type `Bool`
-var z : (Bool,()) = (False,())  -- assigns a tuple to variable `z`
+var x : () = ()                 -- `x` of type `()` holds `()`
+var y : Bool = True             -- `y` of type `Bool` holds `True`
+var z : (Bool,()) = (False,())  -- `z` of given tuple type holds the given tuple
+var n : Nat = Succ($Nat) in ns  -- `n` of recursive type `Nat` holds result of constructor in pool `ns`
 ```
 
-A pool declaration, which includes a size between brackets, holds multi-part
-values of recursive types:
+## Pool declaration
+
+A pool holds multi-part values of recursive types.
+A pool declaration includes a memory size between brackets:
 
 ```
-var n[4] : Nat = Succ(Succ($Nat))       -- bounded size limits the number of nodes
-var t[] : Tree = Node($Tree,(),$Tree)   -- unbounded size
-```
-
-A recursive value can also be declared using the keyword `in` for an existing
-pool:
-
-```
-var m : Nat = Succ($Nat) in n   -- `m` resides in `n`
+pool ns[4] : Nat    -- pool `ns` holds up to 4 nodes of type `Nat`
+pool ts[]  : Tree   -- pool `ts` holds unbounded values of type `Tree`
 ```
 
 ## Call
@@ -273,11 +269,12 @@ func f : () -> () {
 # 4. Syntax
 
 ```
-Stmt ::= `var´ VAR [`[´[NUM]`]´] `:´    -- variable declaration     var x: () = ()
-            Type `=´ Expr
-               `in´ (VAR|`return`)      -- allocation               var i: Nat = f_nat() in n
-      |  `type´ [`rec´] USER `{`        -- user type declaration
-            { USER `:´ Type [`;´] }     -- subtypes
+Stmt ::= `var´ VAR `:´ Type                 -- variable declaration     var x: () = ()
+            [ `in´ (VAR|`return`) ]         --   with pool              var n: Nat in ns = f_nat()
+               `=´ Expr
+      |  `pool´ VAR `[´[NUM]`]´ `:´ Type    -- pool declaration         pool ns[5]: Nat
+      |  `type´ [`rec´] USER `{`            -- user type declaration
+            { USER `:´ Type [`;´] }         -- subtypes
          `}´
       |  `call´ Expr                    -- call                     call f()
       |  `if´ Expr `{´ Stmt `}´         -- conditional              if x { call f() } else { call g() }

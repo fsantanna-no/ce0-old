@@ -480,24 +480,11 @@ void code_stmt (Stmt* s) {
             char sup[256];
             strcpy(sup, to_ce(&s->Var.type));
 
-            if (s->Var.sz_pool == 0) {
-                // no pool
-            } else if (s->Var.sz_pool == -1) {
-                fprintf(ALL.out, "Pool* _pool_%s = NULL;\n", id);
-            } else {
-                fprintf (ALL.out,
-                    "%s _buf[%d];\n"
-                    "Pool _%s = { _buf,sizeof(_buf),0 };\n"
-                    "Pool* _pool_%s = &_%s;\n",
-                    sup, s->Var.sz_pool, id, id, id
-                );
-            }
-
             out(to_c(&s->Var.type));
             out(" ");
             out(id);
 
-            if (s->Var.sz_pool==-1 || s->Var.in_pool.enu!=TK_ERR) {
+            if (s->Var.in.enu != TK_ERR) {
                 fprintf (ALL.out,
                     " __attribute__ ((__cleanup__(%s_free)))",
                     sup
@@ -506,20 +493,11 @@ void code_stmt (Stmt* s) {
 
             out(";\n");
 
-            char* pool = NULL; {
-                if (s->Var.sz_pool) {
-                    pool = id;
-                } else if (s->Var.in_pool.enu == TK_RETURN) {
-                    pool = NULL;
-                } else if (s->Var.in_pool.enu == TX_VAR) {
-                    pool = s->Var.in_pool.val.s;
-                }
-            }
-            if (pool != NULL) {
+            if (s->Var.in.enu == TX_VAR) {
                 fprintf (ALL.out,
                     "{\n"
-                    "    Pool* _pool = _pool_%s;\n", // create new _pool context for initialization
-                    pool
+                    "    Pool* _pool = %s;\n",
+                    s->Var.in.val.s
                 );
             }
 
@@ -530,9 +508,34 @@ void code_stmt (Stmt* s) {
             visit_expr(&s->Var.init, fe_1);
             out(";\n");
 
-            if (pool != NULL) {
+            if (s->Var.in.enu == TX_VAR) {
                 out("}\n");
             }
+            break;
+        }
+
+        case STMT_POOL: {
+            visit_type(&s->Pool.type, ft);
+
+            char* id = s->Pool.id.val.s;
+            char sup[256];
+            strcpy(sup, to_ce(&s->Pool.type));
+
+            if (s->Pool.size == -1) {
+                fprintf(ALL.out, "Pool* %s = NULL;\n", id);
+            } else {
+                fprintf (ALL.out,
+                    "%s _buf[%d];\n"
+                    "Pool _%s = { _buf,sizeof(_buf),0 };\n"
+                    "Pool* %s = &_%s;\n",
+                    sup, s->Pool.size, id, id, id
+                );
+            }
+
+            out(to_c(&s->Pool.type));
+            out(" ");
+            out(id);
+            out(";\n");
             break;
         }
 
