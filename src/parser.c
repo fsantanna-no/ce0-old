@@ -3,8 +3,6 @@
 
 #include "all.h"
 
-int parser_stmts_opt (TK opt, Stmt* ret);
-
 int _N_ = 1;    // TODO: see env.c _N_=0
 
 int err_expected (const char* v) {
@@ -77,8 +75,15 @@ int parser_type (Type* ret) {
         *ret = (Type) { TYPE_NATIVE, NULL, .nat=ALL.tk0 };
 
     // TYPE_USER
-    } else if (accept(TX_UPPER)) {
-        *ret = (Type) { TYPE_USER, NULL, .User={ALL.tk0,0} };
+    } else if (accept('&') || accept(TX_UPPER)) {
+        int isalias = 0;
+        if (ALL.tk0.enu == '&') {
+            isalias = 1;
+            if (!accept_err(TX_UPPER)) {
+                return 0;
+            }
+        }
+        *ret = (Type) { TYPE_USER, NULL, .User={ALL.tk0,isalias} };
 
     } else {
         return err_expected("type");
@@ -253,6 +258,8 @@ int parser_stmt_sub (Sub* ret) {
     return 1;
 }
 
+int parser_stmts (TK opt, Stmt* ret);
+
 int parser_stmt (Stmt* ret) {
     // STMT_VAR
     if (accept(TK_VAR)) {
@@ -337,7 +344,7 @@ int parser_stmt (Stmt* ret) {
 
         Stmt* t = malloc(sizeof(Stmt));
         assert(t != NULL);
-        if (!parser_stmts_opt('}',t)) {         // true()
+        if (!parser_stmts('}',t)) {         // true()
             return 0;
         }
 
@@ -347,7 +354,7 @@ int parser_stmt (Stmt* ret) {
         assert(f != NULL);
         if (accept(TK_ELSE)) {
             if (!accept_err('{')) { return 0; }
-            if (!parser_stmts_opt('}',f)) {     // false()
+            if (!parser_stmts('}',f)) {     // false()
                 return 0;
             }
             if (!accept_err('}')) { return 0; }
@@ -374,7 +381,7 @@ int parser_stmt (Stmt* ret) {
 
         Stmt* s = malloc(sizeof(Stmt)); // return ()
         assert(s != NULL);
-        if (!parser_stmts_opt('}',s)) {
+        if (!parser_stmts('}',s)) {
             return 0;
         }
         *ret = (Stmt) { _N_++, STMT_FUNC, NULL, .Func={id,tp,s} };
@@ -396,7 +403,7 @@ int parser_stmt (Stmt* ret) {
     return 1;
 }
 
-int parser_stmts (Stmt* ret) {
+int parser_stmts (TK opt, Stmt* ret) {
     int n = 0;
     Stmt* vec = NULL;
 
@@ -404,10 +411,10 @@ int parser_stmts (Stmt* ret) {
         accept(';');    // optional
         Stmt q;
         if (!parser_stmt(&q)) {
-            if (n == 0) {
-                return 0;
-            } else {
+            if (check(opt)) {
                 break;
+            } else {
+                return 0;
             }
         }
         n++;
@@ -420,16 +427,8 @@ int parser_stmts (Stmt* ret) {
     return 1;
 }
 
-int parser_stmts_opt (TK opt, Stmt* ret) {
-    if (check(opt)) {
-        *ret = (Stmt) { _N_++, STMT_SEQ, NULL, { .Seq={0,NULL} } };
-        return 1;
-    }
-    return parser_stmts(ret);
-}
-
 int parser (Stmt* ret) {
-    if (!parser_stmts_opt(TK_EOF,ret)) {
+    if (!parser_stmts(TK_EOF,ret)) {
         return 0;
     }
     if (!accept_err(TK_EOF)) {

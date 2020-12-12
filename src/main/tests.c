@@ -508,7 +508,7 @@ void t_parser_stmt (void) {
     {
         all_init(NULL, stropen("r", 0, "call f() ; call g()"));
         Stmt s;
-        assert(parser_stmts(&s));
+        assert(parser_stmts(TK_EOF,&s));
         assert(s.sub == STMT_SEQ);
         assert(s.Seq.size == 2);
         assert(s.Seq.vec[1].sub == STMT_CALL);
@@ -607,7 +607,7 @@ void t_code (void) {
             stropen("r", 0, "var a : () = () ; call _output_Unit(a)")
         );
         Stmt s;
-        assert(parser_stmts(&s));
+        assert(parser_stmts(TK_EOF,&s));
         code(&s);
         fclose(ALL.out);
         char* ret =
@@ -632,7 +632,7 @@ void t_code (void) {
             stropen("r", 0, "type Bool { False: () ; True: () }")
         );
         Stmt s;
-        assert(parser_stmts(&s));
+        assert(parser_stmts(TK_EOF,&s));
         code(&s);
         fclose(ALL.out);
         char* ret =
