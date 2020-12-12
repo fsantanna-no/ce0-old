@@ -4,6 +4,8 @@
 
 #include "all.h"
 
+Type Type_Unit  = { TYPE_UNIT, NULL, 0 };
+
 int err_message (Tk tk, const char* v) {
     sprintf(ALL.err, "(ln %ld, col %ld): %s", tk.lin, tk.col, v);
     return 0;
@@ -45,6 +47,20 @@ Stmt* env_find_super (Env* env, const char* sub) {
             for (int i=0; i<env->stmt->User.size; i++) {
                 if (!strcmp(sub, env->stmt->User.vec[i].id.val.s)) {
                     return env->stmt;
+                }
+            }
+        }
+        env = env->prev;
+    }
+    return NULL;
+}
+
+Sub* env_find_sub (Env* env, const char* sub) {
+    while (env != NULL) {
+        if (env->stmt->sub == STMT_USER) {
+            for (int i=0; i<env->stmt->User.size; i++) {
+                if (!strcmp(sub, env->stmt->User.vec[i].id.val.s)) {
+                    return &env->stmt->User.vec[i];
                 }
             }
         }
@@ -201,12 +217,11 @@ void set_envs (Stmt* S) {
     // predeclare function `output`
     static Env env_;
     {
-        static Type unit  = { TYPE_UNIT, NULL, 0 };
         static Type alias = { TYPE_USER, NULL, 0, .User={TK_ERR,{},0,0} };
         static Stmt s_out = {
             0, STMT_VAR, NULL,
             .Var={ {TX_LOWER,{.s="output"},0,0},
-                   {TYPE_FUNC,NULL,.Func={&alias,&unit}},{EXPR_UNIT} }
+                   {TYPE_FUNC,NULL,.Func={&alias,&Type_Unit}},{EXPR_UNIT} }
         };
         env_ = (Env) { &s_out, NULL };
     }
@@ -368,7 +383,7 @@ int check_types (Stmt* S) {
     visit_stmt(S, NULL, fe, NULL);
 
     int type_is_sup_sub (Type* sup, Type* sub) {
-        if (sup->sub != sub->sub) {
+        if (sup->sub!=sub->sub || sup->isalias!=sub->isalias) {
             return 0;
         }
         switch (sup->sub) {
@@ -414,6 +429,22 @@ int check_types (Stmt* S) {
                     OK = err_message(e->Call.func->Var.id, err);
                 }
                 break;
+            }
+
+            case EXPR_CONS: {
+                Type* subtype;
+                if (e->Cons.subtype.enu == TX_NIL) {
+                    subtype = &Type_Unit;
+                } else {
+                    Sub* sub = env_find_sub(e->env, e->Cons.subtype.val.s);
+                    assert(sub != NULL);
+                    subtype = &sub->type;
+                }
+                if (!type_is_sup_sub(subtype, env_expr_type(e->Cons.arg))) {
+                    char err[512];
+                    sprintf(err, "invalid constructor \"%s\" : type mismatch", e->Cons.subtype.val.s);
+                    OK = err_message(e->Cons.subtype, err);
+                }
             }
 
             default:
