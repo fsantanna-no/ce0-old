@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DEBUG
+//#define DEBUG
 
 #include "../all.h"
 
@@ -28,7 +28,9 @@ int all (const char* xp, char* src) {
     }
 
     if (!env(&s)) {
+#ifdef DEBUG
         puts(ALL.err);
+#endif
         return !strcmp(ALL.err, xp);
     }
     code(&s);
@@ -612,34 +614,11 @@ void t_code (void) {
             "#include <assert.h>\n"
             "#include <stdio.h>\n"
             "#include <stdlib.h>\n"
-            "#define MIN(x,y)   (((x) < (y)) ? (x) : (y))\n"
-            "#define MAX(x,y)   (((x) > (y)) ? (x) : (y))\n"
-            "#define BET(x,y,z) (MIN(x,z)<y && y<MAX(x,z))\n"
             "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
             "#define output_Unit(x)  (output_Unit_(x), puts(\"\"))\n"
-            "typedef struct {\n"
-            "    void* buf;\n"
-            "    int max;\n"
-            "    int cur;\n"
-            "} Pool;\n"
-            "void* pool_alloc (Pool* pool, int n) {\n"
-            "    if (pool == NULL) {\n"
-            "        return malloc(n);\n"
-            "    } else {\n"
-            "        void* ret = pool->buf + pool->cur;\n"
-            "        pool->cur += n;\n"
-            "        if (pool->cur <= pool->max) {\n"
-            "            return ret;\n"
-            "        } else {\n"
-            "            return NULL;\n"
-            "        }\n"
-            "    }\n"
-            "}\n"
             "int main (void) {\n"
-            "    void* _STACK = &_STACK;\n"
             "\n"
-            "int a;\n"
-            "a = 1;\n"
+            "int a = 1;\n"
             "output_Unit(a);\n"
             "\n"
             "}\n";
@@ -660,31 +639,9 @@ void t_code (void) {
             "#include <assert.h>\n"
             "#include <stdio.h>\n"
             "#include <stdlib.h>\n"
-            "#define MIN(x,y)   (((x) < (y)) ? (x) : (y))\n"
-            "#define MAX(x,y)   (((x) > (y)) ? (x) : (y))\n"
-            "#define BET(x,y,z) (MIN(x,z)<y && y<MAX(x,z))\n"
             "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
             "#define output_Unit(x)  (output_Unit_(x), puts(\"\"))\n"
-            "typedef struct {\n"
-            "    void* buf;\n"
-            "    int max;\n"
-            "    int cur;\n"
-            "} Pool;\n"
-            "void* pool_alloc (Pool* pool, int n) {\n"
-            "    if (pool == NULL) {\n"
-            "        return malloc(n);\n"
-            "    } else {\n"
-            "        void* ret = pool->buf + pool->cur;\n"
-            "        pool->cur += n;\n"
-            "        if (pool->cur <= pool->max) {\n"
-            "            return ret;\n"
-            "        } else {\n"
-            "            return NULL;\n"
-            "        }\n"
-            "    }\n"
-            "}\n"
             "int main (void) {\n"
-            "    void* _STACK = &_STACK;\n"
             "\n"
             "struct Bool;\n"
             "typedef struct Bool Bool;\n"
@@ -919,15 +876,6 @@ void t_all (void) {
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "pool ns[]: Nat\n"
-        "var n: Nat in ns = Succ(Succ($Nat))\n"
-        "call output(n)\n"
-    ));
-    assert(all(
-        "(ln 4, col 19): missing pool for constructor",
-        "type rec Nat {\n"
-        "   Succ: Nat\n"
-        "}\n"
         "var n: Nat = Succ(Succ($Nat))\n"
         "call output(n)\n"
     ));
@@ -936,10 +884,10 @@ void t_all (void) {
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "pool ns[]: Nat\n"
-        "var n: Nat in ns = Succ(Succ($Nat))\n"
+        "var n: Nat = Succ(Succ($Nat))\n"
         "call _output_Nat(n)\n"
     ));
+#if TODO
     assert(all(
         "(ln 4, col 23): missing pool for constructor",
         "type rec Nat {\n"
@@ -947,6 +895,7 @@ void t_all (void) {
         "}\n"
         "call _output_Nat(Succ(Succ($Nat)))\n"
     ));
+#endif
     // POOL
     assert(all(
         "$\n",
@@ -960,10 +909,10 @@ void t_all (void) {
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "pool ns[]: Nat\n"
-        "var n: Nat = Succ($Nat) in ns\n"
+        "var n: Nat = Succ($Nat)\n"
         "call output(n)\n"
     ));
+#if TODO
     assert(all(
         "(ln 5, col 13): missing pool for call",
         "type rec Nat {\n"
@@ -972,7 +921,6 @@ void t_all (void) {
         "func f: () -> Nat {}\n"
         "call output(f())\n"
     ));
-#if TODO
     assert(all(
         "(ln 5, col 6): missing pool for return of \"f\"",
         "type rec Nat {\n"
@@ -981,18 +929,19 @@ void t_all (void) {
         "func f: () -> Nat {}\n"
         "call f()\n"
     ));
-    assert(all(
-        "(ln 6, col 12): invalid access to \"x\" : pool escapes",
-        "type rec Nat {\n"
-        "   Succ: Nat\n"
-        "}\n"
-        "func f: () -> Nat {\n"
-        "    var x[]: Nat = $Nat\n"
-        "    return x\n"
-        "}\n"
-    ));
 #endif
     assert(all(
+        "$\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "func f: () -> Nat {\n"
+        "    var x: Nat = $Nat\n"
+        "    return x\n"
+        "}\n"
+        "call output(f())\n"
+    ));
+    assert(all(
         "Succ (Succ ($))\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
@@ -1000,7 +949,7 @@ void t_all (void) {
         "func f: () -> Nat {\n"
         "    return Succ(Succ($Nat))\n"
         "}\n"
-        "var y[]: Nat = f()\n"
+        "var y: Nat = f()\n"
         "call output(y)\n"
     ));
     assert(all(
@@ -1011,9 +960,10 @@ void t_all (void) {
         "func f: () -> Nat {\n"
         "    return Succ(Succ($Nat))\n"
         "}\n"
-        "var y[5]: Nat = f()\n"
+        "var y: Nat = f()\n"
         "call output(y)\n"
     ));
+#if TODO
     assert(all(
         "(ln 5, col 23): missing pool for constructor",
         "type rec Nat {\n"
@@ -1023,19 +973,20 @@ void t_all (void) {
         "    var x: Nat = Succ(Succ($Nat))\n"
         "    return x\n"
         "}\n"
-        "var y[]: Nat = f()\n"
+        "var y: Nat = f()\n"
         "call output(y)\n"
     ));
+#endif
     assert(all(
         "Succ (Succ ($))\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "func f: () -> Nat {\n"
-        "    var x: Nat = Succ(Succ($Nat)) in return\n"
+        "    var x: Nat = Succ(Succ($Nat))\n"
         "    return x\n"
         "}\n"
-        "var y[]: Nat = f()\n"
+        "var y: Nat = f()\n"
         "call output(y)\n"
     ));
     assert(all(
@@ -1054,23 +1005,8 @@ void t_all (void) {
         "        return Succ(len(arg.Succ!))\n"
         "    }\n"
         "}\n"
-        "var x[]: Nat = Succ(Succ(Succ($Nat)))\n"
-        "var y: Nat = len(x) in x\n"
-        "call output(y)\n"
-    ));
-//puts("===============================================================================");
-//assert(0);
-assert(0 && "OK");
-    // TODO: bounded allocation fail
-    assert(all(
-        "$\n",
-        "type rec Nat {\n"
-        "   Succ: Nat\n"
-        "}\n"
-        "func f: () -> Nat {\n"
-        "    return Succ(Succ($Nat))\n"
-        "}\n"
-        "var y[1]: Nat = f()\n"
+        "var x: Nat = Succ(Succ(Succ($Nat)))\n"
+        "var y: Nat = len(x)\n"
         "call output(y)\n"
     ));
 }

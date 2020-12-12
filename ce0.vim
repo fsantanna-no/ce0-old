@@ -12,9 +12,9 @@ set cpo&vim
 
 let s:ft = matchstr(&ft, '^\([^.]\)\+')
 
-syn keyword Statement   set call return in
+syn keyword Statement   set call return
 syn keyword Statement   if else
-syn keyword Statement   var pool type rec func
+syn keyword Statement   var type rec func
 syn keyword Statement   arg output
 
 syn keyword cTodo contained TODO FIXME XXX

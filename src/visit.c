@@ -70,8 +70,6 @@ void visit_stmt (Stmt* s, f_stmt fs, f_expr fe, f_type ft) {
         case STMT_VAR:
             visit_type(&s->Var.type, ft);
             visit_expr(&s->Var.init, fe);
-        case STMT_POOL:
-            visit_type(&s->Var.type, ft);
             break;
         case STMT_CALL:
             visit_expr(&s->call, fe);

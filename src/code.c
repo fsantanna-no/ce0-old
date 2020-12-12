@@ -181,22 +181,14 @@ int fe_1 (Expr* e) {
             } else {
                 assert(e->Call.func->sub == EXPR_VAR);
 
-                int isrec = 0;
-
                 if (!strcmp(e->Call.func->tk.val.s,"output")) {
                     out("output_");
                     code_to_ce(env_expr_type(e->Call.arg));
                 } else {
                     visit_expr(e->Call.func, fe_1);
-
-                    Stmt* s = env_expr_type_find_user(e);
-                    isrec = (s!=NULL && s->User.isrec);
                 }
 
                 out("(");
-                if (isrec) {
-                    out("_pool, ");
-                }
                 visit_expr(e->Call.arg, fe_1);
                 out(")");
             }
@@ -282,11 +274,11 @@ int fe_0 (Expr* e) {
         out(" } });\n");
 
         if (user->User.isrec) {
-            // Nat* _1 = (Nat*) pool_alloc(pool, sizeof(Nat));
+            // Nat* _1 = (Nat*) malloc(sizeof(Nat));
             // *_1 = __1;
             fprintf(ALL.out,
-                "%s* _%d = (%s*) pool_alloc(_pool, sizeof(%s));\n"
-                "assert(_%d!=NULL && \"TODO\");\n"
+                "%s* _%d = (%s*) malloc(sizeof(%s));\n"
+                "assert(_%d!=NULL && \"not enough memory\");\n"
                 "*_%d = __%d;\n",
                     sup, e->N, sup, sup, e->N, e->N, e->N);
         } else {
@@ -380,29 +372,7 @@ void code_stmt (Stmt* s) {
                     if (sub.type.sub==TYPE_USER && (!strcmp(sup,sub.type.tk.val.s))) {
                         fprintf (ALL.out,
                             "    %s_free(&(*p)->_%s);\n"
-                            "    if (!BET((long)_STACK,(long)*p,(long)&p)) {\n"
-                            "       free(*p);\n"
-                            "    }\n",
-                            sup, sub.id.val.s
-                        );
-                    }
-                }
-                out("}\n");
-
-                // Nat_clean_cons
-                fprintf (ALL.out,
-                    "void %s_clean_cons (struct %s** p) {\n"
-                    "    if (*p == NULL) { return; }\n",
-                    sup, sup
-                );
-                for (int i=0; i<s->User.size; i++) {
-                    Sub sub = s->User.vec[i];
-                    if (sub.type.sub==TYPE_USER && (!strcmp(sup,sub.type.tk.val.s))) {
-                        fprintf (ALL.out,
-                            "    %s_free(&(*p)->_%s);\n"
-                            "    if (!BET((long)_STACK,(long)*p,(long)&p)) {\n"
-                            "       free(*p);\n"
-                            "    }\n",
+                            "    free(*p);\n",
                             sup, sub.id.val.s
                         );
                     }
@@ -475,6 +445,7 @@ void code_stmt (Stmt* s) {
 
         case STMT_VAR: {
             visit_type(&s->Var.type, ft);
+            visit_expr(&s->Var.init, fe_0);
 
             char* id = s->Var.id.val.s;
             char sup[256];
@@ -484,58 +455,21 @@ void code_stmt (Stmt* s) {
             out(" ");
             out(id);
 
-            if (s->Var.in.enu != TK_ERR) {
-                fprintf (ALL.out,
-                    " __attribute__ ((__cleanup__(%s_free)))",
-                    sup
-                );
+            if (s->Var.type.sub == TYPE_USER) {
+                Stmt* user = env_find_decl(s->env, s->Var.type.tk.val.s, NULL);
+                assert(user!=NULL && user->sub==STMT_USER);
+                if (user->User.isrec) {
+                    fprintf (ALL.out,
+                        " __attribute__ ((__cleanup__(%s_free)))",
+                        sup
+                    );
+                }
             }
 
-            out(";\n");
-
-            if (s->Var.in.enu == TX_VAR) {
-                fprintf (ALL.out,
-                    "{\n"
-                    "    Pool* _pool = %s;\n",
-                    s->Var.in.val.s
-                );
-            }
-
-            visit_expr(&s->Var.init, fe_0);
-
-            out(s->Var.id.val.s);
             fputs(" = ", ALL.out);
             visit_expr(&s->Var.init, fe_1);
             out(";\n");
 
-            if (s->Var.in.enu == TX_VAR) {
-                out("}\n");
-            }
-            break;
-        }
-
-        case STMT_POOL: {
-            visit_type(&s->Pool.type, ft);
-
-            char* id = s->Pool.id.val.s;
-            char sup[256];
-            strcpy(sup, to_ce(&s->Pool.type));
-
-            if (s->Pool.size == -1) {
-                fprintf(ALL.out, "Pool* %s = NULL;\n", id);
-            } else {
-                fprintf (ALL.out,
-                    "%s _buf[%d];\n"
-                    "Pool _%s = { _buf,sizeof(_buf),0 };\n"
-                    "Pool* %s = &_%s;\n",
-                    sup, s->Pool.size, id, id, id
-                );
-            }
-
-            out(to_c(&s->Pool.type));
-            out(" ");
-            out(id);
-            out(";\n");
             break;
         }
 
@@ -591,14 +525,6 @@ void code_stmt (Stmt* s) {
             visit_type(&s->Func.type, ft);
 
             // f: a -> User
-            // f: (Pool,a) -> User
-            int isrec = 0; {
-                if (s->Func.type.Func.out->sub == TYPE_USER) {
-                    Stmt* decl = env_find_decl(s->env, s->Func.type.Func.out->tk.val.s, NULL);
-                    assert(decl!=NULL && decl->sub==STMT_USER);
-                    isrec = decl->User.isrec;
-                }
-            }
 
             char tp_out[256] = "";
             to_c_(tp_out, s->Func.type.Func.out);
@@ -607,10 +533,9 @@ void code_stmt (Stmt* s) {
             to_c_(tp_inp, s->Func.type.Func.inp);
 
             fprintf (ALL.out,
-                "%s %s (%s %s arg) {\n",
+                "%s %s (%s arg) {\n",
                 tp_out,
                 s->Func.id.val.s,
-                (isrec ? "Pool* _pool," : ""),
                 tp_inp
             );
             code_stmt(s->Func.body);
@@ -631,31 +556,9 @@ void code (Stmt* s) {
         "#include <assert.h>\n"
         "#include <stdio.h>\n"
         "#include <stdlib.h>\n"
-        "#define MIN(x,y)   (((x) < (y)) ? (x) : (y))\n"
-        "#define MAX(x,y)   (((x) > (y)) ? (x) : (y))\n"
-        "#define BET(x,y,z) (MIN(x,z)<y && y<MAX(x,z))\n"
         "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
         "#define output_Unit(x)  (output_Unit_(x), puts(\"\"))\n"
-        "typedef struct {\n"
-        "    void* buf;\n"      // stack-allocated buffer
-        "    int max;\n"        // maximum size
-        "    int cur;\n"        // current size
-        "} Pool;\n"
-        "void* pool_alloc (Pool* pool, int n) {\n"
-        "    if (pool == NULL) {\n"                     // pool is unbounded
-        "        return malloc(n);\n"                   // fall back to `malloc`
-        "    } else {\n"
-        "        void* ret = pool->buf + pool->cur;\n"
-        "        pool->cur += n;\n"                     // nodes are allocated sequentially
-        "        if (pool->cur <= pool->max) {\n"
-        "            return ret;\n"
-        "        } else {\n"
-        "            return NULL;\n"
-        "        }\n"
-        "    }\n"
-        "}\n"
         "int main (void) {\n"
-        "    void* _STACK = &_STACK;\n"
         "\n"
     );
     code_stmt(s);

@@ -26,9 +26,7 @@ The following keywords are reserved:
     else        -- conditional statement
     func        -- function declaration
     if          -- conditional statement
-    in          -- allocation destination
     output      -- output function
-    pool        -- pool declaration
     rec         -- type, function recursive declaration
     return      -- function return
     type        -- new type declaration
@@ -208,17 +206,7 @@ A variable declaration assigns a value to a name of a given type:
 var x : () = ()                 -- `x` of type `()` holds `()`
 var y : Bool = True             -- `y` of type `Bool` holds `True`
 var z : (Bool,()) = (False,())  -- `z` of given tuple type holds the given tuple
-var n : Nat = Succ($Nat) in ns  -- `n` of recursive type `Nat` holds result of constructor in pool `ns`
-```
-
-## Pool declaration
-
-A pool holds multi-part values of recursive types.
-A pool declaration includes a memory size between brackets:
-
-```
-pool ns[4] : Nat    -- pool `ns` holds up to 4 nodes of type `Nat`
-pool ts[]  : Tree   -- pool `ts` holds unbounded values of type `Tree`
+var n : Nat = Succ(Succ($Nat))  -- `n` of recursive type `Nat` holds result of constructor
 ```
 
 ## Call
@@ -269,13 +257,10 @@ func f : () -> () {
 # 4. Syntax
 
 ```
-Stmt ::= `var´ VAR `:´ Type                 -- variable declaration     var x: () = ()
-            [ `in´ (VAR|`return`) ]         --   with pool              var n: Nat in ns = f_nat()
-               `=´ Expr
-      |  `pool´ VAR `[´[NUM]`]´ `:´ Type    -- pool declaration         pool ns[5]: Nat
-      |  `type´ [`rec´] USER `{`            -- user type declaration
-            { USER `:´ Type [`;´] }         -- subtypes
-         `}´
+Stmt ::= `var´ VAR `:´ Type `=´ Expr    -- variable declaration     var x: () = ()
+      |  `type´ [`rec´] USER `{`        -- user type declaration    type rec Nat {
+            { USER `:´ Type [`;´] }     --    subtypes                 Succ: Nat
+         `}´                                                        }
       |  `call´ Expr                    -- call                     call f()
       |  `if´ Expr `{´ Stmt `}´         -- conditional              if x { call f() } else { call g() }
          [`else´ `{´ Stmt `}´]
