@@ -275,6 +275,7 @@ Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: ()
 Expr ::= `(´ `)´                        -- unit value               ()
       |  NATIVE                         -- native identifier        _printf
       |  VAR                            -- variable identifier      i
+      |  `&´ VAR                        -- alias                    &x
       |  `arg´                          -- function argument        arg
       |  `(´ Expr {`,´ Expr} `)´        -- tuple                    (x,())
       |  Expr `.´ NUM                   -- tuple index              x.1
@@ -283,7 +284,6 @@ Expr ::= `(´ `)´                        -- unit value               ()
       |  USER [`(´ Expr `)´]            -- constructor              True ()
       |  Expr `.´ [`$´] USER `!´        -- discriminator            x.True!
       |  Expr `.´ [`$´] USER `?´        -- predicate                x.False?
-      |  `&´ Expr                       -- alias                    &x
       |  `(´ Expr `)´                   -- group                    (x)
 
 Type ::= `(´ `)´                        -- unit                     ()

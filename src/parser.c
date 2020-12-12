@@ -154,8 +154,19 @@ int parser_expr_one (Expr* ret) {
         *ret = (Expr) { _N_++, EXPR_NATIVE, NULL, .nat=ALL.tk0 };
 
     // EXPR_VAR
-    } else if (accept(TX_LOWER) || accept(TK_OUTPUT)) {
-        *ret = (Expr) { _N_++, EXPR_VAR, NULL, .var=ALL.tk0 };
+    } else if (accept('&') || accept(TX_LOWER) || accept(TK_OUTPUT)) {
+        int isalias = (ALL.tk0.enu == '&');
+        if (isalias) {
+            if (!accept(TK_OUTPUT) && !accept_err(TX_LOWER)) {
+                return 0;
+            }
+            Expr* e = malloc(sizeof(Expr));
+            assert(e != NULL);
+            *e = (Expr) { _N_++, EXPR_VAR, NULL, .var=ALL.tk0 };
+            *ret = (Expr) { _N_++, EXPR_ALIAS, .alias=e };
+        } else {
+            *ret = (Expr) { _N_++, EXPR_VAR, NULL, .var=ALL.tk0 };
+        }
 
     // EXPR_CONS
     } else if (accept(TX_UPPER) || accept('$')) {  // True, $Nat
