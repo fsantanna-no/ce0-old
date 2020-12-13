@@ -178,7 +178,7 @@ int fe_1 (Expr* e) {
             } else {
                 fprintf(ALL.out, "_%d", e->N);
             }
-            return 0;   // do not generate arg (already generated at fe_0)
+            return VISIT_BREAK;   // do not generate arg (already generated at fe_0)
         }
 
         case EXPR_CALL: {
@@ -201,7 +201,7 @@ int fe_1 (Expr* e) {
                 visit_expr(e->Call.arg, fe_1);
                 out(")");
             }
-            return 0;
+            return VISIT_BREAK;
         }
 
         case EXPR_TUPLE:
@@ -216,19 +216,19 @@ int fe_1 (Expr* e) {
                 visit_expr(&e->Tuple.vec[i], fe_1);
             }
             out(" })");
-            return 0;
+            return VISIT_BREAK;
 
         case EXPR_INDEX:
             visit_expr(e->Index.tuple, fe_1);
             fprintf(ALL.out, "._%d", e->Index.index);
-            return 0;
+            return VISIT_BREAK;
 
         case EXPR_DISC: {
             Stmt* s = env_expr_to_type_to_user_stmt(e->Disc.val);
             assert(s != NULL);
             visit_expr(e->Disc.val, fe_1);
             fprintf(ALL.out, "%s_%s", (s->User.isrec ? "->" : "."), e->Disc.subtype.val.s);
-            return 0;
+            return VISIT_BREAK;
         }
 
         case EXPR_PRED: {
@@ -241,7 +241,7 @@ int fe_1 (Expr* e) {
                 (isnil ? "" : (s->User.isrec ? "->sub" : ".sub")),
                 (isnil ? "NULL" : e->Pred.subtype.val.s)
             );
-            return 0;
+            return VISIT_BREAK;
         }
     }
     return 1;
@@ -265,20 +265,20 @@ int fe_0 (Expr* e) {
                     id, id, e->N, id, id
                 );
             }
-            return 0;
+            return VISIT_BREAK;
 
         case EXPR_TUPLE:
             for (int i=0; i<e->Tuple.size; i++) {
                 visit_expr(&e->Tuple.vec[i], fe_0); // first visit child
             }
             ft(env_expr_to_type(e));                // second visit myself
-            return 0;
+            return VISIT_BREAK;
 
         case EXPR_CONS: {
             visit_expr(e->Cons.arg, fe_0);          // first visit child
 
             if (e->Cons.subtype.enu == TX_NIL) {
-                return 0;                           // out(NULL) in fe_1
+                return VISIT_BREAK;                 // out(NULL) in fe_1
             }
 
             Stmt* user = env_sub_id_to_user_stmt(e->env, e->Cons.subtype.val.s);
@@ -306,7 +306,7 @@ int fe_0 (Expr* e) {
             } else {
                 // plain cons: nothing else to do
             }
-            return 0;
+            return VISIT_BREAK;
         }
 
         case EXPR_DISC: {
@@ -319,7 +319,7 @@ int fe_0 (Expr* e) {
                 "%ssub == %s && \"discriminator failed\");\n",
                 (s->User.isrec ? "->" : "."), e->Disc.subtype.val.s
             );
-            return 0;
+            return VISIT_BREAK;
         }
 
         default:

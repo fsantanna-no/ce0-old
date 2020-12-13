@@ -234,11 +234,6 @@ void set_envs (Stmt* S) {
 
     Env* env = &env_;
 
-    auto int ft (Type* tp);
-    auto int fe (Expr* e);
-    auto int fs (Stmt* t);
-    visit_stmt(S, fs, fe, ft);
-
     int ft (Type* tp) {
         tp->env = env;
         return 1;
@@ -259,11 +254,11 @@ void set_envs (Stmt* S) {
 
             case STMT_VAR: {
                 visit_type(&s->Var.type, ft);
-                visit_expr(&s->Var.init, fe); // visit expr before stmt below
-                Env* new = malloc(sizeof(Env));         // visit stmt after expr above
+                visit_expr(&s->Var.init, fe);       // visit expr before stmt below
+                Env* new = malloc(sizeof(Env));     // visit stmt after expr above
                 *new = (Env) { s, env };
                 env = new;
-                return 0;                               // do not visit expr again
+                return VISIT_BREAK;                 // do not visit expr again
             }
 
             case STMT_USER: {
@@ -275,12 +270,12 @@ void set_envs (Stmt* S) {
 
             case STMT_IF: {
                 Env* save = env;
-                visit_expr(&s->If.cond, fe);  // visit expr before stmts below
+                visit_expr(&s->If.cond, fe);        // visit expr before stmts below
                 visit_stmt(s->If.true,  fs, fe, ft);
                 env = save;
                 visit_stmt(s->If.false, fs, fe, ft);
                 env = save;
-                return 0;                               // do not visit children, I just did that
+                return VISIT_BREAK;                 // do not visit children, I just did that
             }
 
             case STMT_FUNC: {
@@ -311,28 +306,25 @@ void set_envs (Stmt* S) {
 
                 env = save;
 
-                return 0;       // do not visit children, I just did that
+                return VISIT_BREAK;                 // do not visit children, I just did that
             }
         }
         return 1;
     }
+
+    visit_stmt(S, fs, fe, ft);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
 int check_undeclareds (Stmt* s) {
-    int OK = 1;
-
-    auto int ft (Type* tp);
-    auto int fe (Expr* e);
-    visit_stmt(s, NULL, fe, ft);
-
     int ft (Type* tp) {
         if (tp->sub == TYPE_USER) {
             if (env_id_to_stmt(tp->env, tp->User.val.s) == NULL) {
                 char err[512];
                 sprintf(err, "undeclared type \"%s\"", tp->User.val.s);
-                OK = err_message(tp->User, err);
+                return err_message(tp->User, err);
+            } else {
             }
         }
         return 1;
@@ -345,7 +337,7 @@ int check_undeclareds (Stmt* s) {
                 if (decl == NULL) {
                     char err[512];
                     sprintf(err, "undeclared variable \"%s\"", e->Var.id.val.s);
-                    OK = err_message(e->Var.id, err);
+                    return err_message(e->Var.id, err);
                 }
                 break;
             }
@@ -358,14 +350,14 @@ int check_undeclareds (Stmt* s) {
                     if (decl == NULL) {
                         char err[512];
                         sprintf(err, "undeclared type \"%s\"", sub->val.s);
-                        OK = err_message(*sub, err);
+                        return err_message(*sub, err);
                     }
                 } else {
                     Stmt* user = env_sub_id_to_user_stmt(e->env, sub->val.s);
                     if (user == NULL) {
                         char err[512];
                         sprintf(err, "undeclared subtype \"%s\"", sub->val.s);
-                        OK = err_message(*sub, err);
+                        return err_message(*sub, err);
                     }
                 }
                 break;
@@ -376,18 +368,12 @@ int check_undeclareds (Stmt* s) {
         return 1;
     }
 
-    return OK;
+    return visit_stmt(s, NULL, fe, ft);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
 int check_types (Stmt* S) {
-    int OK = 1;
-
-    auto int fs (Stmt* s);
-    auto int fe (Expr* e);
-    visit_stmt(S, fs, fe, NULL);
-
     int type_is_sup_sub (Type* sup, Type* sub) {
         if (sup->sub!=sub->sub || sup->isalias!=sub->isalias) {
             return 0;
@@ -438,7 +424,7 @@ int check_types (Stmt* S) {
                     assert(e->Call.func->sub == EXPR_VAR);
                     char err[512];
                     sprintf(err, "invalid call to \"%s\" : type mismatch", e->Call.func->Var.id.val.s);
-                    OK = err_message(e->Call.func->Var.id, err);
+                    return err_message(e->Call.func->Var.id, err);
                 }
                 break;
             }
@@ -455,7 +441,7 @@ int check_types (Stmt* S) {
                 if (!type_is_sup_sub(subtype, env_expr_to_type(e->Cons.arg))) {
                     char err[512];
                     sprintf(err, "invalid constructor \"%s\" : type mismatch", e->Cons.subtype.val.s);
-                    OK = err_message(e->Cons.subtype, err);
+                    return err_message(e->Cons.subtype, err);
                 }
             }
         }
@@ -472,7 +458,7 @@ int check_types (Stmt* S) {
                 if (!type_is_sup_sub(&s->Var.type, env_expr_to_type(&s->Var.init))) {
                     char err[512];
                     sprintf(err, "invalid assignment to \"%s\" : type mismatch", s->Var.id.val.s);
-                    OK = err_message(s->Var.id, err);
+                    return err_message(s->Var.id, err);
                 }
                 break;
 
@@ -488,7 +474,7 @@ int check_types (Stmt* S) {
                         char err[512];
                         sprintf(err, "invalid call to \"%s\" : missing return assignment",
                                 func->Var.id.val.s);
-                        OK = err_message(s->tk, err);
+                        return err_message(s->tk, err);
                     }
                 }
                 break;
@@ -496,7 +482,7 @@ int check_types (Stmt* S) {
 
             case STMT_IF:
                 if (!type_is_sup_sub(&Type_Bool, env_expr_to_type(&s->If.cond))) {
-                    OK = err_message(s->tk, "invalid condition : type mismatch");
+                    return err_message(s->tk, "invalid condition : type mismatch");
                 }
                 break;
 
@@ -505,14 +491,15 @@ int check_types (Stmt* S) {
                 assert(func != NULL);
                 assert(func->Func.type.sub == TYPE_FUNC);
                 if (!type_is_sup_sub(func->Func.type.Func.out, env_expr_to_type(&s->Return))) {
-                    OK = err_message(s->tk, "invalid return : type mismatch");
+                    return err_message(s->tk, "invalid return : type mismatch");
                 }
                 break;
             }
         }
+        return 1;
     }
 
-    return OK;
+    return visit_stmt(S, fs, fe, NULL);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -531,7 +518,7 @@ void set_vars_istx (Stmt* s) {
         switch (e->sub) {
             case EXPR_ALIAS:
                 // keep istx=0
-                return 0;
+                return VISIT_BREAK;
             case EXPR_VAR: {
                 Type* tp = env_expr_to_type(e);
                 if (tp->sub==TYPE_USER && !tp->isalias) {
@@ -549,6 +536,61 @@ void set_vars_istx (Stmt* s) {
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
+// How to detect if EXPR_VAR.istx is unsafe?
+//   1. For each EXPR_VAR.istx
+//   2. Start from declaration and go towards EXPR_VAR.istx. (IMPL: find N between both)
+//   3. Find one of the following:
+//       - any other EXPR_VAR.istx for the same EXPR_VAR
+//       - any active EXPR_ALIAS for the same EXPR_VAR, i.e., the reference that borrowed is still in scope
+//  - pass ownership and then access again
+//      var x: Nat = ...            -- owner
+//      val z: Nat = add(x,...)     -- transfer
+//      ... x or &x ...             -- error!
+//  - save reference and then pass ownership
+//      var x: Nat = ...            -- owner
+//      val z: Nat = &x             -- borrow
+//      ... x ...                   -- error!
+
+int check_txs (Stmt* S) {
+    int OK = 1;
+
+    auto int fe2 (Expr* e);
+    visit_stmt(S, NULL, fe2, NULL);
+
+    int fe2 (Expr* e1) {
+        // for each EXPR_VAR.istx
+        if (e1->sub==EXPR_VAR && e1->Var.istx) {
+            Stmt* decl1 = env_id_to_stmt(e1->env, e1->Var.id.val.s);
+            assert(decl1!=NULL && decl1->sub==STMT_VAR);
+
+            auto int fe2 (Expr* e2);
+            visit_stmt(S, NULL, fe2, NULL);
+            int fe2 (Expr* e2) {
+                // for all other *previous* accesses to same EXPR_VAR
+                if (e2->sub==EXPR_VAR && !strcmp(e1->Var.id.val.s,e2->Var.id.val.s)) {
+                    Stmt* decl2 = env_id_to_stmt(e2->env, e2->Var.id.val.s);
+                    assert(decl2!=NULL && decl2->sub==STMT_VAR);
+                    if (decl1==decl2 && e2->N<e1->N) {
+                        if (e2->Var.istx) {
+                            char err[1024];
+                            sprintf(err, "invalid access to \"%s\" : value moved to \"%s\"",
+                                    e1->Var.id.val.s, e2->Var.id.val.s);
+                            OK = err_message(e1->Var.id, err);
+                        }
+                    }
+                }
+                return 1;
+            }
+        }
+        return 1;
+    }
+    return OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 int env (Stmt* s) {
     set_envs(s);
     if (!check_undeclareds(s)) {
@@ -558,5 +600,8 @@ int env (Stmt* s) {
         return 0;
     }
     set_vars_istx(s);
+    if (!check_txs(s)) {
+        return 0;
+    }
     return 1;
 }

@@ -694,8 +694,8 @@ void t_all (void) {
         "func f: () -> () { return x }\n"
     ));
     assert(all(
-        "(ln 1, col 15): undeclared type \"Nat\"",
-        "func f: () -> Nat { return () }\n"
+        "(ln 1, col 9): undeclared type \"Nat\"",
+        "func f: Nat -> () { return () }\n"
     ));
     // UNIT
     assert(all(
@@ -797,8 +797,13 @@ void t_all (void) {
         "call output(f())\n"
     ));
     assert(all(
-        "(ln 2, col 6): invalid call to \"f\" : type mismatch",
+        "(ln 1, col 26): invalid return : type mismatch",
         "func f : ((),()) -> () { return arg }\n"
+        "call f()\n"
+    ));
+    assert(all(
+        "(ln 2, col 6): invalid call to \"f\" : type mismatch",
+        "func f : ((),()) -> () { return () }\n"
         "call f()\n"
     ));
     assert(all(

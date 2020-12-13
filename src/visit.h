@@ -1,7 +1,13 @@
-typedef int (*f_stmt) (Stmt* s);
-typedef int (*f_expr) (Expr* e);
-typedef int (*f_type) (Type* tp);
+enum {
+    VISIT_ERROR = 0,
+    VISIT_CONTINUE,     // continue normally
+    VISIT_BREAK         // continue but do not nest
+};
 
-void visit_type (Type* tp, f_type f);
-void visit_expr (Expr* e,  f_expr fe);
-void visit_stmt (Stmt* s,  f_stmt fs, f_expr fe, f_type ft);
+typedef int (*F_Stmt) (Stmt* s);
+typedef int (*F_Expr) (Expr* e);
+typedef int (*F_Type) (Type* tp);
+
+int visit_type (Type* tp, F_Type f);
+int visit_expr (Expr* e,  F_Expr fe);
+int visit_stmt (Stmt* s,  F_Stmt fs, F_Expr fe, F_Type ft);
