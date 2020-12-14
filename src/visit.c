@@ -46,7 +46,6 @@ int visit_expr (Expr* e, F_Expr fe) {
 
     switch (e->sub) {
         case EXPR_UNIT:
-        case EXPR_ARG:
         case EXPR_NATIVE:
         case EXPR_VAR:
             return 1;
@@ -147,7 +146,6 @@ int exec_expr (Exec_State* est, Expr* e, F_Expr fe) {
 
     switch (e->sub) {
         case EXPR_UNIT:
-        case EXPR_ARG:
         case EXPR_NATIVE:
         case EXPR_VAR:
             return 1;

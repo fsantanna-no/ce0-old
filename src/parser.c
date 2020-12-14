@@ -141,19 +141,15 @@ int parser_expr_one (Expr* ret) {
             }
         }
 
-    // EXPR_ARG
-    } else if (accept(TK_ARG)) {
-        *ret = (Expr) { _N_++, EXPR_ARG, NULL };
-
     // EXPR_NATIVE
     } else if (accept(TX_NATIVE)) {
         *ret = (Expr) { _N_++, EXPR_NATIVE, NULL, .Nat=ALL.tk0 };
 
     // EXPR_VAR
-    } else if (accept('&') || accept(TX_LOWER) || accept(TK_OUTPUT)) {
+    } else if (accept('&') || accept(TK_ARG) || accept(TK_OUTPUT) || accept(TX_LOWER)) {
         int isalias = (ALL.tk0.enu == '&');
         if (isalias) {
-            if (!accept(TK_OUTPUT) && !accept_err(TX_LOWER)) {
+            if (!accept(TK_ARG) && !accept(TK_OUTPUT) && !accept_err(TX_LOWER)) {
                 return 0;
             }
             Expr* e = malloc(sizeof(Expr));
@@ -449,9 +445,9 @@ int parser_stmts (TK opt, Stmt* ret) {
                 break;
             case STMT_SEQ:
                 if (prv->Seq.size == 0) {
-                    prv->seq = nxt;
+                    prv->seq = nxt;                 // Stmt -> nxt
                 } else {
-                    prv->seq = &prv->Seq.vec[0];
+                    prv->seq = &prv->Seq.vec[0];    // Stmt -> Stmt[0]
                 }
                 break;
             default:
@@ -462,7 +458,7 @@ int parser_stmts (TK opt, Stmt* ret) {
     for (int i=0; i<ret->Seq.size-1; i++) {
         Stmt* prv = &ret->Seq.vec[i];
         Stmt* nxt = &ret->Seq.vec[i+1];
-        set_seq(prv, nxt);
+        set_seq(prv, nxt);                          // Stmt[i] -> Stmt[i+1]
     }
 
     return 1;

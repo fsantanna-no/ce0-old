@@ -154,9 +154,6 @@ int fe_1 (Expr* e) {
         case EXPR_UNIT:
             out("1");
             break;
-        case EXPR_ARG:
-            out("arg");
-            break;
         case EXPR_NATIVE:
             out(&e->Nat.val.s[1]);
             break;

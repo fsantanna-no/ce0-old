@@ -85,12 +85,6 @@ Type* env_expr_to_type (Expr* e) { // static returns use env=NULL b/c no ids und
             return &tp;
         }
 
-        case EXPR_ARG: {
-            Stmt* s = env_id_to_stmt(e->env, "arg");
-            assert(s->sub == STMT_VAR);
-            return &s->Var.type;
-        }
-
         case EXPR_NATIVE: {
             static Type tp = { TYPE_NATIVE, NULL, 0 };
             return &tp;
@@ -225,7 +219,7 @@ void set_envs (Stmt* S) {
     {
         static Type alias = { TYPE_USER, NULL, 0, .User={TK_ERR,{},0,0} };
         static Stmt s_out = {
-            0, STMT_VAR, NULL,
+            0, STMT_VAR, NULL, NULL,
             .Var={ {TX_LOWER,{.s="output"},0,0},
                    {TYPE_FUNC,NULL,.Func={&alias,&Type_Unit}},{EXPR_UNIT} }
         };
@@ -294,8 +288,8 @@ void set_envs (Stmt* S) {
                 {
                     Stmt* arg = malloc(sizeof(Stmt));
                     *arg = (Stmt) {
-                        0, STMT_VAR, env,
-                        .Var={ {TX_LOWER,{.s="arg"},0,0},*s->Func.type.Func.inp,{EXPR_UNIT} }
+                        0, STMT_VAR, env, s->Func.body,
+                        .Var={ {TX_LOWER,{.s="arg"},0,0},*s->Func.type.Func.inp,{0,EXPR_UNIT,env,{}} }
                     };
                     Env* new = malloc(sizeof(Env));
                     *new = (Env) { arg, env };
@@ -403,7 +397,6 @@ int check_types (Stmt* S) {
     int fe (Expr* e) {
         switch (e->sub) {
             case EXPR_UNIT:
-            case EXPR_ARG:
             case EXPR_NATIVE:
             case EXPR_VAR:
             case EXPR_TUPLE:

@@ -686,7 +686,7 @@ void t_code (void) {
 void t_all (void) {
     // ERROR
     assert(all(
-        "(ln 1, col 1): invalid token `/´",
+        "(ln 1, col 1): expected statement (maybe `call´?) : have \"/\"",
         "//call output()\n"
     ));
     assert(all(
