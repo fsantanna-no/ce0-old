@@ -258,7 +258,7 @@ int fe_0 (Expr* e) {
                 char* id = e->Var.id.val.s;
                 fprintf (ALL.out,
                     "typeof(%s) _%s_%d = %s;\n"
-                    "%s = NULL;\n",
+                    "%s = NULL;\n",             // this prevents "double free"
                     id, id, e->N, id, id
                 );
             }

@@ -246,13 +246,11 @@ int exec_stmt (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe) {
     assert(0);
 }
 
-// 1=more, 0=exhausted  //  ret: 0=error, 1=success, EXEC_HALT=aborted
-
-int exec (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe, int* ret) {
+int exec (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe, int* fret) {
     est->cur = 0;
-    *ret = exec_stmt(est, s, fs, fe);
+    *fret = exec_stmt(est, s, fs, fe);
 
-    switch (*ret) {
+    switch (*fret) {
         case 0:         return 0;
         case 1:         break;
         case EXEC_HALT: break;
