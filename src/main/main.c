@@ -54,6 +54,7 @@ int main (int argc, char* argv[]) {
 
     if (!env(&s)) {
         fprintf(stderr, "%s\n", ALL.err);
+        fputs("int main (void) {}", fout);
         exit(EXIT_FAILURE);
     }
     code(&s);

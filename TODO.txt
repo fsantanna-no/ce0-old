@@ -1,18 +1,45 @@
-- erro de tipo em book: TODO-TIPO
-- type mismatch: expected vs have
+- descobri as diferencas
+    1. ce nao tem foco em mut: concorrencia/write-while-reading/iterator
+        - problema ortogonal
+    2. ADTs em rust sao ruins
+    3. Rust nao consegue mover partes de estruturas recursivas
+    4. Ce terá pools (pool xs[]:Nat ; var x:Nat in xs = ...)
+        4.1 Limita escopo da memória
+            - o sistema de ownership não respeita escopo mínimo, sempre posso retornar.
+            - confusão com entendimento da memória em determinado momento
+            - ter um ponteiro único nao ajuda necessariamente a entender
+        4.2 Permite bounded pool
+- closures explicitas precisa de new+ref para tuplas
 
-- testar ADT/MUT/MOVE in rust
+- plains: copy
+- references:
+    - root / owner / strong
+    - alias / borrow / weak
+- VAL_PLAIN=0, VAL_REF_ROOT, VAL_REF_ALIAS
 
+var x: Int              -- plain
+var x: Int = new 10     -- root
+var x: Int& = &y        -- alias
+var x: Int in xs = new 10     -- root
+
+- borrow vs access
+
+- How to detect if EXPR_ALIAS is unsafe?
+    1. For each EXPR_ALIAS
+    2. Start from declaration and go towards EXPR_ALIAS
+    3. Find any other EXPR_VAR.istx for the same EXPR_ALIAS->EXPR_VAR
+
+- pega todos os acessos istx
+
+- clone
 - STMT_SET
-    - var, swap semantics
+    - var, ---swap--- move semantics
 - tests TODO
 - book
-- verificar alocacoes em todos os exemplos
-- estudar sobre avaliacao, tail call
 
 - CHECKS
     - ALIAS output
-    - borrow vs access
+    - type mismatch: expected vs have
 
 - POOLS
     - testar nao caber no pool
@@ -76,6 +103,11 @@
     - pattern matching
     - lambdas
     - synchronous concurrency
+
+1. scope of &x <= x
+2. not both at the same time:
+    - one or more references (&T) to a resource
+    - exactly one mutable reference (&mut T)
 
 void *heap_locations;
 void *stack_location;

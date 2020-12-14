@@ -1,0 +1,7 @@
+type rec Nat {
+    Succ: Nat
+}
+
+var i: Nat = Succ($Nat)
+var j: Nat = i  -- tx
+var k: Nat = i  -- erro
