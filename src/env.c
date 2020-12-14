@@ -554,39 +554,64 @@ void set_vars_istx (Stmt* s) {
 //      ... x ...                   -- error!
 
 int check_txs (Stmt* S) {
-    int OK = 1;
+    int fe1 (Expr* e1) {
+        if (e1->sub!=EXPR_VAR || !e1->Var.istx) {
+            return EXEC_CONTINUE;
+        }
 
-    auto int fe2 (Expr* e);
-    visit_stmt(S, NULL, fe2, NULL);
-
-    int fe2 (Expr* e1) {
         // for each EXPR_VAR.istx
-        if (e1->sub==EXPR_VAR && e1->Var.istx) {
-            Stmt* decl1 = env_id_to_stmt(e1->env, e1->Var.id.val.s);
-            assert(decl1!=NULL && decl1->sub==STMT_VAR);
 
-            auto int fe2 (Expr* e2);
-            visit_stmt(S, NULL, fe2, NULL);
-            int fe2 (Expr* e2) {
-                // for all other *previous* accesses to same EXPR_VAR
-                if (e2->sub==EXPR_VAR && !strcmp(e1->Var.id.val.s,e2->Var.id.val.s)) {
-                    Stmt* decl2 = env_id_to_stmt(e2->env, e2->Var.id.val.s);
-                    assert(decl2!=NULL && decl2->sub==STMT_VAR);
-                    if (decl1==decl2 && e2->N<e1->N) {
-                        if (e2->Var.istx) {
-                            char err[1024];
-                            sprintf(err, "invalid access to \"%s\" : value moved to \"%s\"",
-                                    e1->Var.id.val.s, e2->Var.id.val.s);
-                            OK = err_message(e1->Var.id, err);
-                        }
-                    }
-                }
-                return 1;
+        // exec back from its decl until itself
+        Stmt* decl1 = env_id_to_stmt(e1->env, e1->Var.id.val.s);
+        assert(decl1!=NULL && decl1->sub==STMT_VAR);
+
+        auto int fs2 (Stmt* s2);
+        auto int fe2 (Expr* e2);
+
+        Exec_State st;
+        exec_init(&st);
+        while (1) {
+            int ret2;
+            int ret1 = exec(&st, decl1, fs2, fe2, &ret2);
+            if (ret2 == 0) {            // user returned error
+                return EXEC_ERROR;      // so it's an error
+            }
+            if (ret1 == 0) {            // no more cases
+                return EXEC_CONTINUE;   // so it's not an error
             }
         }
-        return 1;
+        assert(0);
+
+        int fs2 (Stmt* s2) {
+            if (s2->N > e1->N) {
+                return EXEC_HALT;
+            }
+            return EXEC_CONTINUE;
+        }
+
+        int fe2 (Expr* e2) {
+            if (e2->N > e1->N) {
+                return EXEC_HALT;
+            }
+
+            // for all other *previous* accesses to same EXPR_VAR
+            if (e2->sub==EXPR_VAR && !strcmp(e1->Var.id.val.s,e2->Var.id.val.s)) {
+                Stmt* decl2 = env_id_to_stmt(e2->env, e2->Var.id.val.s);
+                assert(decl2!=NULL && decl2->sub==STMT_VAR);
+                if (decl1==decl2 && e2->N<e1->N) {
+                    if (e2->Var.istx) {
+                        char err[1024];
+                        sprintf(err, "invalid access to \"%s\" : ownership moved away (ln %ld)",
+                                e1->Var.id.val.s, e2->Var.id.lin);
+                        err_message(e1->Var.id, err);
+                        return EXEC_ERROR;
+                    }
+                }
+            }
+            return EXEC_CONTINUE;
+        }
     }
-    return OK;
+    return visit_stmt(S, NULL, fe1, NULL);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

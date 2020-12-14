@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DEBUG
+//#define DEBUG
 
 #include "../all.h"
 
@@ -1016,6 +1016,16 @@ void t_all (void) {
         "var x: Nat = Succ(Succ(Succ($Nat)))\n"
         "var y: Nat = len(x)\n"
         "call output(y)\n"
+    ));
+    // OWNERSHIP
+    assert(all(
+        "(ln 6, col 14): invalid access to \"i\" : ownership moved away (ln 5)",
+        "type rec Nat {\n"
+        "    Succ: Nat\n"
+        "}\n"
+        "var i: Nat = Succ($Nat)\n"
+        "var j: Nat = i  -- tx\n"
+        "var k: Nat = i  -- erro\n"
     ));
 }
 
