@@ -13,7 +13,8 @@ int err_expected (const char* v) {
 
 int accept (TK enu) {
     if (ALL.tk1.enu == enu) {
-        return lexer();
+        lexer();
+        return 1;
     } else {
         return 0;
     }

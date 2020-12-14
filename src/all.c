@@ -18,7 +18,7 @@ int all_init (FILE* out, FILE* inp) {
         {}, { TK_ERR, {}, 1, 1 }    // tk0, tk1
     };
     if (inp != NULL) {
-        return lexer();
+        lexer();
     }
     return 1;
 }

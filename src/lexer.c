@@ -67,6 +67,7 @@ const char* lexer_tk2str (Tk* tk) {
         case TX_NATIVE:
         case TX_LOWER:
         case TX_UPPER:
+        case TK_ERR:
             sprintf(str, "\"%s\"", tk->val.s);
             break;
         default:
@@ -209,18 +210,13 @@ static void lx_blanks (void) {
     }
 }
 
-int lexer (void) {
+void lexer (void) {
     ALL.tk0 = ALL.tk1;
     lx_blanks();
     ALL.tk1.lin = ALL.lin;
     ALL.tk1.col = ALL.col;
     long bef = ftell(ALL.inp);
     ALL.tk1.enu = lx_token(&ALL.tk1.val);
-    if (ALL.tk1.enu == TK_ERR) {
-        sprintf(ALL.err, "(ln %ld, col %ld): invalid token `%s´", ALL.tk1.lin, ALL.tk1.col, ALL.tk1.val.s);
-        return 0;
-    }
     ALL.col += ftell(ALL.inp) - bef;
     lx_blanks();
-    return 1;
 }

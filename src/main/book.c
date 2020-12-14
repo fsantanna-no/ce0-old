@@ -172,13 +172,14 @@ const char _nat[] =
     "    }\n"
     "}\n"
     "\n"
-    "func mul: (Nat,Nat&) -> Nat {\n"
-    "    var x: Nat  = arg.1\n"
+    "func mul: (Nat&,Nat&) -> Nat {\n"
+    "    var x: Nat& = arg.1\n"
     "    var y: Nat& = arg.2\n"
     "    if y.$Nat? {\n"
     "        return $Nat\n"
     "    } else {\n"
-    "        return add(mul(x,y.Succ!),&x)\n"    // 50
+    "        var z: Nat = mul(x,y.Succ!)\n"    // 50
+    "        return add(z,x)\n"                         // x ja foi consumido: dar erro
     "    }\n"
     "}\n"
     "\n"
@@ -187,7 +188,7 @@ const char _nat[] =
     "    var y: Nat = arg.2\n"
     "    if lt(&x,&y) {\n"
     "        return x\n"
-    "    } else {\n"
+    "    } else {\n"                            // 60
     "        return rem(sub(x,y),y)\n"
     "    }\n"
     "}\n"
@@ -256,18 +257,17 @@ void chap_pre (void) {
     strcpy(INP, _bool);
     strcat(INP, _nat);
     strcat (INP,
-        "var t: Nat = three()\n"
-        "var n: Nat = mul(two(),&t)\n"
+        "var tw: Nat = two()\n"
+        "var th: Nat = three()\n"
+        "var n: Nat = mul(&tw,&th)\n"
         "call output(n)\n"
     );
     assert(all("Succ (Succ (Succ (Succ (Succ (Succ ($))))))\n", INP));
 
-assert(0);
-
     strcpy(INP, _bool);
     strcat(INP, _nat);
     strcat (INP,
-        "var n[]: Nat = rem(two,three)\n"
+        "var n: Nat = rem(two(),three())\n"
         "call output(n)\n"
     );
     assert(all("Succ (Succ ($))\n", INP));
@@ -281,11 +281,12 @@ void chap_01 (void) {           // pg 1
     strcat(INP, _nat);
     strcat (INP,
         "func square: Nat -> Nat {\n"
-        "    return mul(arg,arg)\n"
+        "    return mul(&arg,&arg)\n"
         "}\n"
-        "var n[]: Nat = square(two)\n"
+        "var n: Nat = square(two)\n"
         "call output(n)\n"
     );
+puts(INP);
     assert(all("Succ (Succ (Succ (Succ ($))))\n", INP));
 
     strcpy(INP, _bool);         // pg 2

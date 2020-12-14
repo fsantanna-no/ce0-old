@@ -1,6 +1,12 @@
-type rec Nat {
-    Succ: Nat
+type Bool {
+    False: ()
+    True:  ()
 }
-var i: Nat = Succ($Nat)
-var j: Nat = i  -- tx
-var k: Nat = i  -- erro
+type rec Nat {
+   Succ: Nat
+}
+func lt: (Nat&,Nat&) -> Bool {
+}
+var x: Nat = $Nat
+var y: Nat = Succ($Nat)
+call output(lt(&x,&y))
