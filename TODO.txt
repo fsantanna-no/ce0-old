@@ -11,6 +11,9 @@
         4.2 Permite bounded pool
 - closures explicitas precisa de new+ref para tuplas
 
+- check_txs nao avalia funcoes que acessam ambiente externo
+    - talvez já sim, pois EXPR_CALL chama body
+
 - plains: copy
 - references:
     - root / owner / strong

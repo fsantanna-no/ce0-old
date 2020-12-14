@@ -497,11 +497,12 @@ int check_types (Stmt* S) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// Set all EXPR_VAR that are recursive and not alias to istx=1.
-//      f(nat)          -- istx=1
-//      return nat      -- istx=1
-//      output(&nat)    -- istx=0
-//      f(alias_nat)    -- istx=0
+// Set all EXPR_VAR that are root recursive and not alias to istx=1.
+//      f(nat)          -- istx=1       -- root, recursive
+//      return nat      -- istx=1       -- root, recursive
+//      output(&nat)    -- istx=0       -- root, recursive, alias
+//      f(alias_nat)    -- istx=0       -- root, recursive, alias
+//      nat.xxx         -- istx=0       -- not root, recursive
 
 void set_vars_istx (Stmt* s) {
     auto int fe (Expr* e);
@@ -510,6 +511,8 @@ void set_vars_istx (Stmt* s) {
     int fe (Expr* e) {
         switch (e->sub) {
             case EXPR_ALIAS:
+            case EXPR_DISC:
+            case EXPR_PRED:
                 // keep istx=0
                 return VISIT_BREAK;
             case EXPR_VAR: {
