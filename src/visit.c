@@ -246,7 +246,9 @@ int exec_stmt (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe) {
     assert(0);
 }
 
-int exec (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe, int* fret) {
+// 1=more, 0=exhausted  //  fret (fs/fe): 0=error, 1=success
+
+int exec1 (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe, int* fret) {
     est->cur = 0;
     *fret = exec_stmt(est, s, fs, fe);
 
@@ -267,4 +269,20 @@ int exec (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe, int* fret) {
     }
     // retorna 0 que o percorrimento acabou
     return 0;
+}
+
+int exec (Stmt* s, F_Stmt fs, F_Expr fe) {      // 0=error, 1=success
+    Exec_State est;
+    exec_init(&est);
+    while (1) {
+        int ret2;
+        int ret1 = exec1(&est, s, fs, fe, &ret2);
+        if (ret2 == 0) {            // user returned error
+            return 0;               // so it's an error
+        }
+        if (ret1 == 0) {            // no more cases
+            return 1;   // so it's not an error
+        }
+    }
+    assert(0);
 }
