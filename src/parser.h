@@ -101,6 +101,7 @@ typedef struct Stmt {
     int N;
     STMT sub;
     struct Env* env;    // see env.c
+    struct Stmt* seq;
     Tk tk;
     union {
         Expr Call;      // STMT_CALL

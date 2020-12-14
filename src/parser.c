@@ -289,7 +289,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_expr(&e)) {
             return 0;
         }
-        *ret = (Stmt) { _N_++, STMT_VAR, NULL, tk, .Var={id,tp,e} };
+        *ret = (Stmt) { _N_++, STMT_VAR, NULL, NULL, tk, .Var={id,tp,e} };
 
     // STMT_USER
     } else if (accept(TK_TYPE)) {       // type
@@ -331,7 +331,7 @@ int parser_stmt (Stmt* ret) {
             return 0;
         }
 
-        *ret = (Stmt) { _N_++, STMT_USER, NULL, tk, .User={isrec,id,n,vec} };
+        *ret = (Stmt) { _N_++, STMT_USER, NULL, NULL, tk, .User={isrec,id,n,vec} };
 
     // STMT_CALL
     } else if (accept(TK_CALL)) {
@@ -340,7 +340,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_expr(&e)) {
             return 0;
         }
-        *ret = (Stmt) { _N_++, STMT_CALL, NULL, tk, .Call=e };
+        *ret = (Stmt) { _N_++, STMT_CALL, NULL, NULL, tk, .Call=e };
 
     // STMT_IF
     } else if (accept(TK_IF)) {         // if
@@ -369,10 +369,10 @@ int parser_stmt (Stmt* ret) {
             }
             if (!accept_err('}')) { return 0; }
         } else {
-            *f = (Stmt) { _N_++, STMT_SEQ, NULL, ALL.tk0, .Seq={0,NULL} };
+            *f = (Stmt) { _N_++, STMT_SEQ, NULL, NULL, ALL.tk0, .Seq={0,NULL} };
         }
 
-        *ret = (Stmt) { _N_++, STMT_IF, NULL, tk, .If={e,t,f} };
+        *ret = (Stmt) { _N_++, STMT_IF, NULL, NULL, tk, .If={e,t,f} };
 
     // STMT_FUNC
     } else if (accept(TK_FUNC)) {   // func
@@ -395,7 +395,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_stmts('}',s)) {
             return 0;
         }
-        *ret = (Stmt) { _N_++, STMT_FUNC, NULL, tk, .Func={id,tp,s} };
+        *ret = (Stmt) { _N_++, STMT_FUNC, NULL, NULL, tk, .Func={id,tp,s} };
 
         if (!accept('}')) { return 0; }
 
@@ -406,7 +406,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_expr(&e)) {
             return 0;
         }
-        *ret = (Stmt) { _N_++, STMT_RETURN, NULL, tk, .Return=e };
+        *ret = (Stmt) { _N_++, STMT_RETURN, NULL, NULL, tk, .Return=e };
 
     } else {
         return err_expected("statement (maybe `call´?)");
@@ -435,7 +435,35 @@ int parser_stmts (TK opt, Stmt* ret) {
         accept(';');    // optional
     }
 
-    *ret = (Stmt) { _N_++, STMT_SEQ, NULL, ALL.tk0, { .Seq={n,vec} } };
+    *ret = (Stmt) { _N_++, STMT_SEQ, NULL, NULL, ALL.tk0, { .Seq={n,vec} } };
+
+    // STMT_SEQ.seq of its children
+
+    void set_seq (Stmt* prv, Stmt* nxt) {
+        switch (prv->sub) {
+            case STMT_IF:
+                set_seq(prv->If.true, nxt);
+                set_seq(prv->If.false, nxt);
+                prv->seq = NULL; // undetermined: user code has to determine
+                break;
+            case STMT_SEQ:
+                if (prv->Seq.size == 0) {
+                    prv->seq = nxt;
+                } else {
+                    prv->seq = &prv->Seq.vec[0];
+                }
+                break;
+            default:
+                prv->seq = nxt;
+        }
+    }
+
+    for (int i=0; i<ret->Seq.size-1; i++) {
+        Stmt* prv = &ret->Seq.vec[i];
+        Stmt* nxt = &ret->Seq.vec[i+1];
+        set_seq(prv, nxt);
+    }
+
     return 1;
 }
 
