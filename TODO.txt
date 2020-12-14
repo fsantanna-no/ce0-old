@@ -1,3 +1,5 @@
+- posso passar uma REF onde espero um plain
+
 - descobri as diferencas
     1. ce nao tem foco em mut: concorrencia/write-while-reading/iterator
         - problema ortogonal

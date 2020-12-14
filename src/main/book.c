@@ -283,25 +283,29 @@ void chap_01 (void) {           // pg 1
         "func square: Nat -> Nat {\n"
         "    return mul(&arg,&arg)\n"
         "}\n"
-        "var n: Nat = square(two)\n"
+        "var n: Nat = square(two())\n"
         "call output(n)\n"
     );
-puts(INP);
     assert(all("Succ (Succ (Succ (Succ ($))))\n", INP));
 
+// TODO: esse esta falhando pois nao consigo passar smaller() que retorna & para add que espera *
     strcpy(INP, _bool);         // pg 2
     strcat(INP, _nat);
     strcat (INP,
-        "func smaller: (Nat,Nat) -> Nat {\n"
-        "    var x: Nat = arg.1\n"
-        "    var y: Nat = arg.2\n"
+        "func smaller: (Nat&,Nat&) -> Nat& {\n"
+        "    var x: Nat& = arg.1\n"
+        "    var y: Nat& = arg.2\n"
         "    if lt(x,y) {\n"
         "        return x\n"
         "    } else {\n"
         "        return y\n"
         "    }\n"
         "}\n"
-        "var n[]: Nat = add (smaller(ten,five), smaller(one,four))\n"
+        "var one_ : Nat = one()\n"
+        "var four_: Nat = four()\n"
+        "var ten_ : Nat = ten()\n"
+        "var five_: Nat = five()\n"
+        "var n: Nat = add (smaller(&ten_,&five_), smaller(&one_,&four_))\n"
         "call output(n)\n"
     );
     assert(all("Succ (Succ (Succ (Succ (Succ (Succ ($))))))\n", INP));

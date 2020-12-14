@@ -369,7 +369,10 @@ int check_undeclareds (Stmt* s) {
 
 int check_types (Stmt* S) {
     int type_is_sup_sub (Type* sup, Type* sub) {
-        if (sup->sub!=sub->sub || sup->isalias!=sub->isalias) {
+        if (sup->sub != sub->sub) {
+            return 0;   // different TYPE_xxx
+        }
+        if (sup->isalias != sub->isalias) {
             return 0;
         }
         switch (sup->sub) {
@@ -402,17 +405,25 @@ int check_types (Stmt* S) {
             case EXPR_TUPLE:
                 break;
 
-            //case EXPR_INDEX:
+            case EXPR_ALIAS:
+            case EXPR_DISC:
+            case EXPR_PRED:
+                TODO("TODO [check_types]: EXPR_INDEX/EXPR_ALIAS/EXPR_DISC/EXPR_PRED\n");
+                break;
+
+            case EXPR_INDEX:
                 // TODO: check if e->tuple is really a tuple and that e->index is in range
+                TODO("TODO [check_types]: (x,y,z).1\n");
+                break;
 
             case EXPR_CALL: {
                 Type* func = env_expr_to_type(e->Call.func);
                 Type* arg  = env_expr_to_type(e->Call.arg);
 
                 if (e->Call.func->sub == EXPR_NATIVE) {
-                    // TODO
+                    TODO("TODO [check_types]: _f(...)\n");
                 } else if (!strcmp(e->Call.func->Var.id.val.s,"output")) {
-                    // TODO
+                    TODO("TODO [check_types]: output(...)\n");
                 } else if (!type_is_sup_sub(func->Func.inp, arg)) {
                     assert(e->Call.func->sub == EXPR_VAR);
                     char err[512];
@@ -455,7 +466,9 @@ int check_types (Stmt* S) {
                 }
                 break;
 
-            //case STMT_USER: no & in subtypes
+            case STMT_USER: // no & in subtypes
+                TODO("TODO [check_types]: STMT_USER\n");
+                break;
 
             case STMT_CALL: {
                 Type* tp = env_expr_to_type(&s->Call);

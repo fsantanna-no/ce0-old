@@ -8,6 +8,9 @@
 
 #define GCC "gcc -Wall -Wno-unused-but-set-variable -Wno-unused-local-typedefs -Wno-unused-function -Wno-format-zero-length"
 
+//#define TODO(msg) fprintf(stderr, msg)
+#define TODO(msg)
+
 FILE* stropen  (const char* mode, size_t size, char* str);
 
 typedef struct {
