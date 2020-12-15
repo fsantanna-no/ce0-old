@@ -135,11 +135,13 @@ void exec_init (Exec_State* est) {
 int exec_expr (Exec_State* est, Expr* e, F_Expr fe) {
     if (fe != NULL) {
         switch (fe(e)) {
-            case EXEC_ERROR:
+            case EXEC_ERROR:            // error stop all
                 return 0;
-            case EXEC_CONTINUE:
+            case EXEC_CONTINUE:         // continue to children
                 break;
-            case EXEC_HALT:
+            case EXEC_BREAK:            // continue skip children
+                return EXEC_CONTINUE;
+            case EXEC_HALT:             // no error stop all
                 return EXEC_HALT;
         }
     }
@@ -184,11 +186,13 @@ int exec_stmt (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe) {
     while (s != NULL) {
         if (fs != NULL) {
             switch (fs(s)) {
-                case EXEC_ERROR:
+                case EXEC_ERROR:            // error stop all
                     return 0;
-                case EXEC_CONTINUE:
+                case EXEC_CONTINUE:         // continue to children
                     break;
-                case EXEC_HALT:
+                case EXEC_BREAK:            // continue skip children
+                    return EXEC_CONTINUE;
+                case EXEC_HALT:             // no error stop all
                     return EXEC_HALT;
             }
         }
@@ -243,7 +247,7 @@ int exec_stmt (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe) {
             }
         }
     }
-    assert(0);
+    return EXEC_CONTINUE;   // last statement?
 }
 
 // 1=more, 0=exhausted  //  fret (fs/fe): 0=error, 1=success

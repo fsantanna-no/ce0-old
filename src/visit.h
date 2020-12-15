@@ -8,8 +8,9 @@ enum {
 
 enum {
     EXEC_ERROR = 0,
-    EXEC_CONTINUE,     // continue normally
-    EXEC_HALT          // stop everything
+    EXEC_CONTINUE,      // continue normally
+    EXEC_BREAK,         // stop current stmt/expr
+    EXEC_HALT           // stop everything
 };
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -577,19 +577,7 @@ int check_txs (Stmt* S) {
         auto int fs2 (Stmt* s2);
         auto int fe2 (Expr* e2);
 
-        Exec_State st;
-        exec_init(&st);
-        while (1) {
-            int ret2;
-            int ret1 = exec(&st, decl1, fs2, fe2, &ret2);
-            if (ret2 == 0) {            // user returned error
-                return EXEC_ERROR;      // so it's an error
-            }
-            if (ret1 == 0) {            // no more cases
-                return EXEC_CONTINUE;   // so it's not an error
-            }
-        }
-        assert(0);
+        return exec(decl1, fs2, fe2);
 
         int fs2 (Stmt* s2) {
             if (s2->N > e1->N) {
@@ -625,6 +613,119 @@ int check_txs (Stmt* S) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// How to detect ownership violations?
+//  - Pass ownership and then access again:
+//      var x: Nat = ...            -- owner
+//      val z: Nat = add(x,...)     -- transfer
+//      ... x or &x ...             -- error: access after ownership transfer
+//  - Save reference and then pass ownership:
+//      var x: Nat = ...            -- owner
+//      val z: Nat = &x             -- borrow
+//      ... x ...                   -- error: transfer while borrow is active
+//
+//  - Start from each STMT_VAR declaration: find all with `visit`.
+//      - only STMT_VAR.isrec
+//  - Call `exec` and stop when `env_id_to_stmt` fails.
+//      - track EXPR_VAR acesses:
+//          - transfer (istx)  // error if state=borrowed/moved // set state=moved
+//          - borrow   (!istx) // error if state=moved          // set state=borrowed
+
+#if 1
+int check_txs2 (Stmt* S) {
+
+    // visit all var declarations
+    auto int fs1 (Stmt* s1);
+    return visit_stmt(S, fs1, NULL, NULL);
+
+    int fs1 (Stmt* s1) {
+        if (s1->sub != STMT_VAR) {
+            return 1;               // not var declaration
+        }
+        if (s1->Var.type.sub != TYPE_USER) {
+            return 1;               // not user type
+        }
+
+        Stmt* user = env_id_to_stmt(s1->env, s1->Var.type.User.val.s);
+        assert(user!=NULL && user->sub==STMT_USER);
+        if (!user->User.isrec) {
+            return 1;               // not recursive type
+        }
+
+        // var n: Nat = ...         // starting from each declaration
+
+        typedef enum { NONE, MOVED, BORROWED } State;
+        State state = NONE;
+        Expr* e1 = NULL;
+
+        auto int fs2 (Stmt* s2);
+        auto int fe2 (Expr* e2);
+
+        return exec(s1->seq, fs2, fe2);
+
+        // ... n ...                // check all accesses to it
+
+        int fs2 (Stmt* s2) {
+            Stmt* decl = env_id_to_stmt(s2->env, s1->Var.id.val.s);
+            if (decl!=NULL && decl==s1) {
+                return EXEC_CONTINUE;       // ok: s1 is still in scope
+            } else {
+                return EXEC_HALT;           // no: s1 is not in scope
+            }
+        }
+
+        int fe2 (Expr* e2) {
+            int is_alias = 0;
+            switch (e2->sub) {
+                case EXPR_ALIAS:
+                    is_alias = 1;
+                    e2 = e2->Alias;
+                    assert(e2->sub == EXPR_VAR);
+                    // continue to EXPR_VAR as an alias
+
+                case EXPR_VAR:
+                    if (strcmp(s1->Var.id.val.s,e2->Var.id.val.s)) {
+                        return EXEC_CONTINUE;   // not same id
+                    }
+
+                    // ensure that EXPR_VAR is really same as STMT_VAR
+                    Stmt* decl = env_id_to_stmt(e2->env, e2->Var.id.val.s);
+                    assert(decl!=NULL && decl==s1);
+
+                    // if already moved, it doesn't matter, any access is invalid
+
+                    switch (state) {
+                        case NONE:      break;
+                        case MOVED:     goto __ERROR__;
+                        case BORROWED:  if (!is_alias) goto __ERROR__;
+                    }
+                    e1 = e2;
+                    state = (is_alias ? BORROWED : MOVED);
+
+                    if (is_alias) {
+                        return EXEC_BREAK;      // do not visit EXPR_VAR again
+                    } else {
+                        return EXEC_CONTINUE;
+                    }
+__ERROR__:
+                    {
+                        assert(e1 != NULL);
+                        char err[1024];
+                        sprintf(err, "invalid access to \"%s\" : ownership moved away (ln %ld)",
+                                e2->Var.id.val.s, e1->Var.id.lin);
+                        err_message(e2->Var.id, err);
+                        return EXEC_ERROR;
+                    }
+
+                default:
+                    return EXEC_CONTINUE;
+            }
+        }
+    }
+}
+#endif
+
+///////////////////////////////////////////////////////////////////////////////
+
 int env (Stmt* s) {
     set_envs(s);
     if (!check_undeclareds(s)) {
@@ -634,7 +735,7 @@ int env (Stmt* s) {
         return 0;
     }
     set_vars_istx(s);
-    if (!check_txs(s)) {
+    if (!check_txs2(s)) {
         return 0;
     }
     return 1;
