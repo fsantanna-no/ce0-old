@@ -1,7 +1,7 @@
 # Ce
 
 A simple language with algebraic data types and scoped memory management with
-move semantics (i.e., no garbage collection).
+ownership semantics (i.e., no garbage collection).
 
 # 1. Lexical rules
 
@@ -49,8 +49,8 @@ The following symbols are valid:
 
 ## Identifiers
 
-A variable identifier starts with a  lowercase letter and might contain
-letters, digits, and underscores:
+A variable identifier starts with a lowercase letter and might contain letters,
+digits, and underscores:
 
 ```
 i    myCounter    x_10          -- variable identifiers
@@ -60,7 +60,7 @@ A type identifier starts with an uppercase letter and might contain letters,
 digits, and underscores:
 
 ```
-Int    A10    Tree              -- type identifiers
+Int    U32    Tree              -- type identifiers
 ```
 
 A native identifier starts with an underscore and might contain letters,
@@ -76,37 +76,89 @@ A tuple index is a numeric value:
 1    2    3                     -- tuple indexes
 ```
 
-# TODO. Types
-
-# 2. Expressions
+# 2. Types
 
 ## Unit
 
-The unit value is the unique value of the [unit type](TODO):
+The unit type `()` only allows the [single value](TODO) `()`.
+
+## Native
+
+A native type holds external [values from the host language](TODO), i.e.,
+values which *Ce* cannot create or manipulate directly.
+
+A native type identifier starts with an underscore `_`:
+
+```
+_char     _int    _FILE
+```
+
+## User
+
+A user type is a [new type](TODO) introduced by the programmer.
+A user type holds values created from [custom subtype constructors](TODO) also
+introduced by the programmer.
+A user type can be an alias if its value holds a reference to another value of
+the same type.
+
+A user type identifier starts with an uppercase letter and terminates with an
+ampersand `&` if an alias:
+
+```
+List    Nat     Tree     Nat&
+```
+
+## Tuple
+
+A tuple type combines a fixed number of other types to form a compound type.
+A tuple type holds [compound values](TODO) from its combined types.
+
+A tuple type identifier is a comma-separated list of types, enclosed in
+parentheses:
+
+```
+((),())     (_int,(Tree,Tree))
+```
+
+## Function
+
+A function type holds a [function](TODO) value.
+It and is composed of an input and output types separated by an arrow `->`:
+
+```
+() -> Nat
+(Nat,Nat) -> ()
+```
+
+# 3. Expressions
+
+## Unit
+
+The unit value is the single value of the [unit type](TODO):
 
 ```
 ()
 ```
 
-## Variable
-
-A variable holds a value of its type:
-
-```
-i    myCounter    x_10
-```
-
 ## Native symbol
 
-A native symbol holds a value from the host language:
+A native symbol holds a value from a [host language type](TODO):
 
 ```
 _printf    _errno
 ```
 
+## Variable
+
+A variable holds a value of its [type](TODO):
+
+```
+i    myCounter    x_10
+```
+
 ## Tuple and Index
 
-A tuple holds a fixed number of values of different types:
+A tuple holds a fixed number of values of a compound [tuple type](TODO):
 
 ```
 ((),False)              -- a pair with () and False
@@ -121,7 +173,7 @@ A tuple index holds the value at the given position:
 
 ## Call
 
-A call invokes an expression as a function with the given argument:
+A call invokes an expression as a [function](TODO) with the given argument:
 
 ```
 f ()                    -- f   receives unit     ()
@@ -138,7 +190,10 @@ output(x)               -- shows "((),())" in the screen
 
 ## Constructor, Discriminator, Predicate, and Alias
 
-A constructor creates a value of a type given one subtype and its argument:
+### Constructor
+
+A constructor creates a value of a [user type](TODO) given one subtype and its
+argument:
 
 ```
 True ()                 -- value of type Bool
@@ -146,21 +201,29 @@ False                   -- () is optional
 Car (True,())           -- subtype Car holds a tuple
 ```
 
-A discriminator accesses the value of a type as one of its subtypes.
+### Discriminator
+
+A discriminator accesses the value of a [user type](TODO) as one of its
+subtypes.
 It suffixes the value with a dot `.`, a subtype identifier, and an exclamation
 mark `!`:
 
 ```
 (True ()).True!         -- yields ()
 
-x = Node ($Node,(),$Node)
+x = Node ($Tree,(),$Tree)
 x.Node!.2               -- yields ()
+x.$True                 -- yields error (x is a `Node`)
 ```
 
-The prefix `$` yield the null subtype of all recursive types, e.g., $Node is
-the null subtype of `Node`.
+An error occurs if the discriminated subtype does not match the actual value.
 
-A predicate checks if the value of a type is of its given subtype.
+The prefix `$` yields the null subtype of all recursive types, e.g., `$Tree` is
+the null subtype of `Tree`.
+
+### Predicate
+
+A predicate checks if the value of a [user type](TODO) is of its given subtype.
 It suffixes the value with a dot `.`, a subtype identifier, and a question mark
 `?`:
 
@@ -173,13 +236,20 @@ x = Professor
 b = x.Professor?        -- yields True
 ```
 
-An alias `&` TODO
+### Alias
 
-# 3. Statements
+An alias is a [reference](TODO) to a variable of a [user type](TODO).
+It prefixes the variable with an ampersand `&`:
+
+```
+var y: Nat = &x      -- alias to `x`
+```
+
+# 4. Statements
 
 ## Type declaration
 
-A type declaration creates a new type.
+A type declaration creates a new [user type](TODO).
 Each case in the type declaration defines a subtype of it:
 
 ```
@@ -201,7 +271,8 @@ type rec Tree {
 
 ## Variable declaration
 
-A variable declaration assigns a value to a name of a given type:
+A variable declaration intoduces a name of a given type and assigns a value to
+it:
 
 ```
 var x : () = ()                 -- `x` of type `()` holds `()`
@@ -255,7 +326,20 @@ func f : () -> () {
 }
 ```
 
-# 4. Syntax
+## Block
+
+A block delimits, between curly braces `{` and `}`, the scope and visibility of
+[variables](TODO):
+
+```
+{
+    var x: () = ()
+    ... x ...           -- `x` is visible here
+}
+... x ...               -- `x` is not visible here
+```
+
+# 5. Syntax
 
 ```
 Stmt ::= `var´ VAR `:´ Type [`&´]       -- variable declaration     var x: () = ()
@@ -294,6 +378,7 @@ Type ::= `(´ `)´                        -- unit                     ()
       |  Type `->´ Type                 -- function                 () -> ()
 ```
 
+<!--
 # A. Pools and recursive types
 
 ## Goals
@@ -311,8 +396,49 @@ Pools enable to the following properties for recursive types:
 - bounded memory allocation
 - deterministic deallocation
 - no garbage collection
+-->
+
+# A. Recursive types
+
+Values of recursive types, such as lists and trees, require dynamic memory
+allocation since their sizes are unbounded.
+They also grow and shrink during runtime since they typically represent complex
+data structures that evolve over time.
+Finally, they are manipulated by different parts of the program, even outside
+the scope in which they were originally instantiated.
+These three characteristics, (a) dynamic allocation, (b) variable size and (c)
+scope portability, need to be addressed somehow.
+
+Ce approaches recursive types with algebraic data types and scoped memory
+management with ownership semantics.
+Allocation is bound to the scope of the assignee, which is the owner of the
+value.
+Deallocation occurs automatically when the scope of the owner terminates.
+Ownership can be transferred by reassigning the value to another assignee,
+which can live in another scope.
+A value can also be shared with an alias without transfering ownership.
+
+Ce ensures that deallocation occurs exactly once at the very moment when there
+are no more active references to the value.
+In particular the following cases must be prevented:
+
+- Memory leak: when a value cannot be referenced but is not deallocated and remains in memory.
+- Dangling reference: when a value is deallocated but can still be referenced.
+- Double free: when a value is deallocated multiple times.
 
 ## Basics
+
+In Ce, type declarations support tuples and variants (subtypes):
+
+```
+type Character {
+    Warrior: (_int,_int)    -- variant Warrior has strength and stamina
+    Ranger:  (_int,_int)    -- variant Ranger has sight and speed
+    Wizard:  _int           -- variant Wizard has mana power
+}
+
+This composite type constructor is also known as algebraic data types because
+they are composed of products (tuples) and sums (variants).
 
 A recursive type declaration uses itself in one of its subtypes:
 
@@ -326,6 +452,8 @@ var two: Nat = Succ(Succ($Nat)) -- `two` is the successor of the successor of ze
 ```
 
 Values of recursive types are always references:
+
+TODO
 
 ```
 var x: Nat = Succ(Succ($Nat))
