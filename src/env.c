@@ -676,6 +676,29 @@ int check_txs2 (Stmt* S) {
         int fe2 (Expr* e2) {
             int is_alias = 0;
             switch (e2->sub) {
+                case EXPR_UNIT:
+                case EXPR_NATIVE:
+                case EXPR_TUPLE:
+                case EXPR_CALL:
+                case EXPR_CONS:
+                    return EXEC_CONTINUE;
+
+                case EXPR_INDEX:
+                    if (e2->Index.tuple->sub == EXPR_VAR) {
+                        return EXEC_BREAK;
+                    }
+                    return fe2(e2->Index.tuple);
+                case EXPR_DISC:
+                    if (e2->Disc.val->sub == EXPR_VAR) {
+                        return EXEC_BREAK;
+                    }
+                    return fe2(e2->Disc.val);
+                case EXPR_PRED:
+                    if (e2->Pred.val->sub == EXPR_VAR) {
+                        return EXEC_BREAK;
+                    }
+                    return fe2(e2->Pred.val);
+
                 case EXPR_ALIAS:
                     is_alias = 1;
                     e2 = e2->Alias;
@@ -715,10 +738,8 @@ __ERROR__:
                         err_message(e2->Var.id, err);
                         return EXEC_ERROR;
                     }
-
-                default:
-                    return EXEC_CONTINUE;
             }
+            assert(0 && "bug found");
         }
     }
 }
