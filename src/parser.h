@@ -26,7 +26,8 @@ typedef enum {
     STMT_SEQ,
     STMT_IF,
     STMT_FUNC,
-    STMT_RETURN
+    STMT_RETURN,
+    STMT_BLOCK
 } STMT;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -99,33 +100,34 @@ typedef struct {
 typedef struct Stmt {
     int N;
     STMT sub;
-    struct Env* env;    // see env.c
+    struct Env* env;        // see env.c
     struct Stmt* seq;
     Tk tk;
     union {
-        Expr Call;      // STMT_CALL
-        Expr Return;    // STMT_RETURN
+        Expr Call;          // STMT_CALL
+        Expr Return;        // STMT_RETURN
+        struct Stmt* Block; // STMT_BLOCK
         struct {
             Tk   id;                    // ns
             Type type;                  // : Nat
             Expr init;                  // = n
-        } Var;          // STMT_VAR
+        } Var;              // STMT_VAR
         struct {
             int  isrec;                 // rec
             Tk   id;                    // Bool
             int  size;                  // 2 subs
             Sub* vec;                   // [True,False]
-        } User;         // STMT_USER
+        } User;             // STMT_USER
         struct {
             int size;                   // 3
             struct Stmt* vec;           // a ; b ; c
-        } Seq;          // STMT_SEQ
-        struct {        // STMT_IF
+        } Seq;              // STMT_SEQ
+        struct {            // STMT_IF
             struct Expr  cond;          // if (tst)
             struct Stmt* true;          // { ... }
             struct Stmt* false;         // else { ... }
         } If;
-        struct {        // STMT_FUNC
+        struct {            // STMT_FUNC
             Tk id;                      // func f
             Type type;                  // : () -> ()
             struct Stmt* body;          // { ... }

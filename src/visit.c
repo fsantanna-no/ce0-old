@@ -115,6 +115,8 @@ int visit_stmt (Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
             );
         case STMT_FUNC:
             return (visit_type(&s->Func.type, ft) && visit_stmt(s->Func.body, fs, fe, ft));
+        case STMT_BLOCK:
+            return visit_stmt(s->Block, fs, fe, ft);
     }
     assert(0 && "bug found");
 }
@@ -201,6 +203,7 @@ int exec_stmt (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe) {
         switch (s->sub) {
             case STMT_USER:
             case STMT_SEQ:
+            case STMT_BLOCK:
             case STMT_FUNC:
             case STMT_IF:   // handle in separate b/c of if/else
                 break;

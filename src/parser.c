@@ -264,6 +264,23 @@ int parser_stmt_sub (Sub* ret) {
 int parser_stmts (TK opt, Stmt* ret);
 
 int parser_stmt (Stmt* ret) {
+    int parser_block (Stmt* ret) {
+        if (!accept('{')) {
+            return 0;
+        }
+        Tk tk = ALL.tk0;
+
+        Stmt* blk = malloc(sizeof(Stmt));
+        assert(blk != NULL);
+        if (!parser_stmts('}',blk)) {
+            return 0;
+        }
+
+        if (!accept_err('}')) { return 0; }
+        *ret = (Stmt) { _N_++, STMT_BLOCK, NULL, NULL, tk, .Block=blk };
+        return 1;
+    }
+
     // STMT_VAR
     if (accept(TK_VAR)) {
         Tk tk = ALL.tk0;
@@ -347,26 +364,25 @@ int parser_stmt (Stmt* ret) {
             return 0;
         }
 
-        if (!accept_err('{')) { return 0; }
-
         Stmt* t = malloc(sizeof(Stmt));
         assert(t != NULL);
-        if (!parser_stmts('}',t)) {         // true()
+        err_expected("{");
+        if (!parser_block(t)) {         // true()
             return 0;
         }
-
-        if (!accept_err('}')) { return 0; }
 
         Stmt* f = malloc(sizeof(Stmt));
         assert(f != NULL);
         if (accept(TK_ELSE)) {
-            if (!accept_err('{')) { return 0; }
-            if (!parser_stmts('}',f)) {     // false()
+            err_expected("{");
+            if (!parser_block(f)) {     // false()
                 return 0;
             }
-            if (!accept_err('}')) { return 0; }
         } else {
-            *f = (Stmt) { _N_++, STMT_SEQ, NULL, NULL, ALL.tk0, .Seq={0,NULL} };
+            Stmt* seq = malloc(sizeof(Stmt));
+            assert(seq != NULL);
+            *seq = (Stmt) { _N_++, STMT_SEQ,   NULL, NULL, ALL.tk0, .Seq={0,NULL} };
+            *f   = (Stmt) { _N_++, STMT_BLOCK, NULL, NULL, ALL.tk0, .Block=seq };
         }
 
         *ret = (Stmt) { _N_++, STMT_IF, NULL, NULL, tk, .If={e,t,f} };
@@ -385,16 +401,14 @@ int parser_stmt (Stmt* ret) {
         if (!parser_type(&tp)) {    // () -> ()
             return 0;
         }
-        if (!accept('{')) { return 0; }
 
         Stmt* s = malloc(sizeof(Stmt)); // return ()
         assert(s != NULL);
-        if (!parser_stmts('}',s)) {
+        err_expected("{");
+        if (!parser_block(s)) {
             return 0;
         }
         *ret = (Stmt) { _N_++, STMT_FUNC, NULL, NULL, tk, .Func={id,tp,s} };
-
-        if (!accept('}')) { return 0; }
 
     // STMT_RETURN
     } else if (accept(TK_RETURN)) {
@@ -449,6 +463,10 @@ int parser_stmts (TK opt, Stmt* ret) {
                 } else {
                     prv->seq = &prv->Seq.vec[0];    // Stmt -> Stmt[0]
                 }
+                break;
+            case STMT_BLOCK:
+                set_seq(prv->Block, nxt);
+                prv->seq = prv->Block;
                 break;
             default:
                 prv->seq = nxt;

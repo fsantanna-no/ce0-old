@@ -1,7 +1,7 @@
 # Ce
 
-A simple language with algebraic data types and automatic memory management
-with move semantics (i.e., no garbage collection).
+A simple language with algebraic data types and scoped memory management with
+move semantics (i.e., no garbage collection).
 
 # 1. Lexical rules
 
@@ -271,6 +271,7 @@ Stmt ::= `var´ VAR `:´ Type [`&´]       -- variable declaration     var x: ()
          `}´
       |  `return´ Expr                  -- function return          return ()
       |  { Stmt [`;´] }                 -- sequence                 call f() ; call g()
+      |  `{´ Stmt `}´                   -- block                    { call f() ; call g() }
 
 Expr ::= `(´ `)´                        -- unit value               ()
       |  NATIVE                         -- native identifier        _printf

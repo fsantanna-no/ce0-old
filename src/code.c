@@ -561,6 +561,10 @@ void code_stmt (Stmt* s) {
             out("}\n");
             break;
         }
+
+        case STMT_BLOCK:
+            code_stmt(s->Block);
+            break;
     }
 }
 

@@ -521,16 +521,17 @@ void t_parser_stmt (void) {
         assert(parser_stmt(&s));
         assert(s.sub == STMT_IF);
         assert(s.If.cond.sub == EXPR_UNIT);
-        assert(s.If.true ->sub==STMT_SEQ && s.If.true ->Seq.size==0);
-        assert(s.If.false->sub==STMT_SEQ && s.If.false->Seq.size==1);
+        assert(s.If.true->sub==STMT_BLOCK && s.If.false->sub==STMT_BLOCK);
+        assert(s.If.true ->Block->sub==STMT_SEQ && s.If.true ->Block->Seq.size==0);
+        assert(s.If.false->Block->sub==STMT_SEQ && s.If.false->Block->Seq.size==1);
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "if () { call () } "));
         Stmt s;
         assert(parser_stmt(&s));
-        assert(s.sub == STMT_IF);
-        assert(s.If.false->sub==STMT_SEQ && s.If.false->Seq.size==0);
+        assert(s.sub==STMT_IF && s.If.false->sub==STMT_BLOCK);
+        assert(s.If.false->Block->sub==STMT_SEQ && s.If.false->Block->Seq.size==0);
         fclose(ALL.inp);
     }
     // STMT_FUNC
@@ -541,8 +542,9 @@ void t_parser_stmt (void) {
         assert(s.sub == STMT_FUNC);
         assert(s.Func.type.sub == TYPE_FUNC);
         assert(!strcmp(s.Func.id.val.s, "f"));
-        assert(s.Func.body->sub == STMT_SEQ);
-        assert(s.Func.body->Seq.vec[0].sub == STMT_RETURN);
+        assert(s.Func.body->sub == STMT_BLOCK);
+        assert(s.Func.body->Block->sub == STMT_SEQ);
+        assert(s.Func.body->Block->Seq.vec[0].sub == STMT_RETURN);
         fclose(ALL.inp);
     }
 }

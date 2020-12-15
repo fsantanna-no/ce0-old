@@ -244,6 +244,7 @@ void set_envs (Stmt* S) {
             case STMT_RETURN:
             case STMT_CALL:
             case STMT_SEQ:
+            case STMT_IF:
                 break;
 
             case STMT_VAR: {
@@ -262,23 +263,20 @@ void set_envs (Stmt* S) {
                 break;
             }
 
-            case STMT_IF: {
+            case STMT_BLOCK: {
                 Env* save = env;
-                visit_expr(&s->If.cond, fe);        // visit expr before stmts below
-                visit_stmt(s->If.true,  fs, fe, ft);
+                visit_stmt(s->Block, fs, fe, ft);
                 env = save;
-                visit_stmt(s->If.false, fs, fe, ft);
-                env = save;
-                return VISIT_BREAK;                 // do not visit children, I just did that
+                return VISIT_BREAK;                 // do not re-visit children, I just did them
             }
 
             case STMT_FUNC: {
                 visit_type(&s->Func.type, ft);
 
-                // body of recursive function depends on new env
+                // body of recursive function depends on myself
                 {
                     Env* new = malloc(sizeof(Env));
-                    *new = (Env) { s, env };
+                    *new = (Env) { s, env };        // put myself
                     env = new;
                 }
 
@@ -456,6 +454,7 @@ int check_types (Stmt* S) {
         switch (s->sub) {
             case STMT_FUNC:
             case STMT_SEQ:
+            case STMT_BLOCK:
                 break;
 
             case STMT_VAR:

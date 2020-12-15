@@ -1,3 +1,6 @@
+- adicionar blocos {}
+- refazer docs
+
 - istx -> ismoved (dentro de set_check_txs)
 - posso passar uma REF onde espero um plain
 
