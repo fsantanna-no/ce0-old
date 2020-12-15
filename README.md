@@ -326,7 +326,7 @@ A function declaration binds a block of statements to a name which can be
 [called](TODO) afterwards.
 The declaration also determines the types of the argument and return values
 separated by an arrow `->`.
-The argument can be acessed through the identifier `arg`.
+The argument can be accessed through the identifier `arg`.
 A `return` exits a function with a value:
 
 ```
@@ -425,7 +425,7 @@ value.
 Deallocation occurs automatically when the scope of the owner terminates.
 Ownership can be transferred by reassigning the value to another assignee,
 which can live in another scope.
-A value can also be shared with an alias without transfering ownership.
+A value can also be shared with an alias without transferring ownership.
 
 *Ce* ensures that deallocation occurs exactly once at the very moment when there
 are no more active references to the value.
@@ -447,6 +447,7 @@ type Character {
     Ranger:  (_int,_int)    -- variant Ranger has sight and speed
     Wizard:  _int           -- variant Wizard has mana power
 }
+```
 
 This composite type constructor is also known as algebraic data types because
 they are composed of products (tuples) and sums (variants).
