@@ -57,6 +57,7 @@ int all (const char* xp, char* src) {
         FILE* f = popen("./a.out", "r");
         assert(f != NULL);
         char* cur = out;
+        cur[0] = '\0';
         int n = sizeof(out) - 1;
         while (1) {
             char* ret = fgets(cur,n,f);
@@ -791,6 +792,19 @@ void t_all (void) {
         "type Bool { False: () ; True: () }\n"
         "var b : Bool = True()\n"
         "if b.False? { } else { call output(()) }\n"
+    ));
+    // DISCRIMINATOR
+    assert(all(
+        "()\n",
+        "type Bool { False: () ; True: () }\n"
+        "var b : Bool = True()\n"
+        "call output(b.True!)\n"
+    ));
+    assert(all(
+        "",     // ERROR
+        "type Bool { False: () ; True: () }\n"
+        "var b : Bool = True()\n"
+        "call output(b.False!)\n"
     ));
     // FUNC
     assert(all(
