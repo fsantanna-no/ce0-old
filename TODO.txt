@@ -1,7 +1,7 @@
-- _{...}    stmt
-- _(...)    expr
-- adicionar blocos {}
 - refazer docs
+- clone
+- STMT_SET
+    - var, ---swap--- move semantics
 
 - istx -> ismoved (dentro de set_check_txs)
 - posso passar uma REF onde espero um plain
@@ -42,9 +42,6 @@ var x: Int in xs = new 10     -- root
 
 - pega todos os acessos istx
 
-- clone
-- STMT_SET
-    - var, ---swap--- move semantics
 - tests TODO
 - book
 

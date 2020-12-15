@@ -418,7 +418,7 @@ the scope in which they were originally instantiated.
 These three characteristics, (a) dynamic allocation, (b) variable size and (c)
 scope portability, need to be addressed somehow.
 
-Ce approaches recursive types with algebraic data types and scoped memory
+*Ce* approaches recursive types with algebraic data types and scoped memory
 management with ownership semantics.
 Allocation is bound to the scope of the assignee, which is the owner of the
 value.
@@ -427,7 +427,7 @@ Ownership can be transferred by reassigning the value to another assignee,
 which can live in another scope.
 A value can also be shared with an alias without transfering ownership.
 
-Ce ensures that deallocation occurs exactly once at the very moment when there
+*Ce* ensures that deallocation occurs exactly once at the very moment when there
 are no more active references to the value.
 In particular the following cases must be prevented:
 
@@ -435,9 +435,11 @@ In particular the following cases must be prevented:
 - Dangling reference: when a value is deallocated but can still be referenced.
 - Double free: when a value is deallocated multiple times.
 
+TODO: limitations (trees, aliasing rules)
+
 ## Basics
 
-In Ce, type declarations support tuples and variants (subtypes):
+In *Ce*, type declarations support tuples and variants (subtypes):
 
 ```
 type Character {
@@ -460,38 +462,52 @@ var two: Nat = Succ(Succ($Nat)) -- `two` is the successor of the successor of ze
                                 --       (represented as `$Nat`)
 ```
 
-Values of recursive types are always references:
-
-TODO
+Variables of recursive types always hold references to constructors dynamically
+allocated in the heap:
 
 ```
 var x: Nat = Succ(Succ($Nat))
-var y: Nat = x  -- x,y share the same reference, no copy is made
+   _|_            _|_
+  /   \          /   \
+  | x | -------> |...| <-- actual allocated memory
+  \___/          \___/
+    |              |
+  stack           heap
 ```
 
-If the constructors reside in the scope of the assignee, no dynamic memory
-allocation is required.
-Internally, the constructors can be references allocated in the stack:
+The assigned variable is the owner of the allocated value, which is
+automatically deallocated when the enclosing scope terminates:
 
 ```
--- x = y = Succ(Succ($Nat))
-Nat _2 = (Nat) { Succ, {._Succ=NULL} };   -- declares last value first (Succ($Nat)
-Nat _1 = (Nat) { Succ, {._Succ=&_2} };    -- points to previous value  (Succ(...))
-Nat* x = &_1;                             -- points to last reference
-Nat* y = x;                               -- copies reference
-```
-
-If the constructors do not survive the scope of the assignee, they are
-allocated in a memory pool declared with brackets in the assignee:
-
-```
-func f: () -> Nat {
-    var x: Nat = Succ(Succ($Nat))   -- constructor inside a function
-    return x                        -- `x` does not survive the scope
+{
+    var x: Nat = Succ(Succ($Nat))
 }
-var y[]: Nat = f()                  -- `y` is a memory pool for a Nat tree
-                                    --     to be allocated inside `f`
+-- scope terminates, memory pointed by `x` is deallocated
 ```
+
+A variable can be aliased or *borrowed* with the prefix ampersand `&`.
+In this case, both the owner and the alias refer to the same allocated value:
+
+```
+var x: Nat  = Succ(Succ($Nat))
+var y: Nat& = &x   |
+   _|_            _|_
+  /   \          /   \
+  | x | -------> |...| <-- actual allocated memory
+  \___/      /   \___/
+    |       /      |
+  stack    /      heap
+   _|_    /
+  /   \  /
+  | y | -
+  \___/
+```
+
+## Ownership transfer
+
+## Borrowing rules
+
+<!--
 
 All dependencies of an assignment are tracked and all constructors are
 allocated in the same pool.
@@ -522,12 +538,12 @@ Pool _yp = { _yv, 64, 0 };  // buffer, max size, cur size
 Nat* y = f(&_yp);           // pool is NULL if unbounded
 ```
 
-<!--
+!--
 If the pool is unbouded (e.g. `y[]`), all allocation is made in the heap with
 `malloc`.
 Then, when the root reference (e.g. `y`) goes out of scope, it is traversed to
 `free` all memory.
--->
+--
 
 ## Details
 
@@ -560,6 +576,8 @@ void* pool_alloc (Pool* pool, int n) {
     }
 }
 ```
+
+-->
 
 A dynamic constructor must check if all allocations succeeded.
 
