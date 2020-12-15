@@ -65,6 +65,8 @@ const char* lexer_tk2str (Tk* tk) {
             sprintf(str, "end of file");
             break;
         case TX_NATIVE:
+            sprintf(str, "\"_%s\"", tk->val.s);
+            break;
         case TX_LOWER:
         case TX_UPPER:
         case TK_ERR:
@@ -118,6 +120,28 @@ static TK lx_token (TK_val* val) {
                 return TK_ERR;
             }
 
+        case '_': {
+            c = fgetc(ALL.inp);
+            char delim = 0;
+            if (c=='(' || c=='{') {
+                delim = (c == '(' ? ')' : '}');
+                c = fgetc(ALL.inp);
+            }
+            int i = 0;
+            while (delim || isalnum(c) || c=='_') {
+                if (c == delim) {
+                    break;
+                }
+                val->s[i++] = c;
+                c = fgetc(ALL.inp);
+            }
+            val->s[i] = '\0';
+            if (!delim) {
+                ungetc(c, ALL.inp);
+            }
+            return TX_NATIVE;
+        }
+
         default:
             // TX_NUM
             if (isdigit(c)) {
@@ -134,15 +158,15 @@ static TK lx_token (TK_val* val) {
                 val->n = atoi(val->s);
                 ungetc(c, ALL.inp);
                 return TX_NUM;
-            } else if (isalpha(c) || c=='_') {
-                // var,user,native
+            } else if (isalpha(c)) {
+                // var,user
             } else {
                 val->s[0] = c;
                 val->s[1] = '\0';
                 return TK_ERR;
             }
 
-            // TK_VAR, TK_TYPE, TK_NATIVE
+            // TK_VAR, TK_TYPE
             int i = 0;
             while (isalnum(c) || c=='_') {
                 val->s[i++] = c;
@@ -156,9 +180,7 @@ static TK lx_token (TK_val* val) {
                 return key;
             }
 
-            if (val->s[0] == '_') {
-                return TX_NATIVE;
-            } else if (islower(val->s[0])) {
+            if (islower(val->s[0])) {
                 return TX_LOWER;
             } else if (isupper(val->s[0])) {
                 return TX_UPPER;

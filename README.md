@@ -63,17 +63,26 @@ digits, and underscores:
 Int    U32    Tree              -- type identifiers
 ```
 
-A native identifier starts with an underscore and might contain letters,
+A tuple index is a numeric value:
+
+```
+1    2    3                     -- tuple indexes
+```
+
+## Native token
+
+A native token starts with an underscore `_` and might contain letters,
 digits, and underscores:
 
 ```
 _char    _printf    _errno      -- native identifiers
 ```
 
-A tuple index is a numeric value:
+A native token may also start with underscore `_` and be enclosed by curly
+braces `{` and `}` or parenthesis `(` and `)`:
 
 ```
-1    2    3                     -- tuple indexes
+_(1 + 1)     _{2 * (1+1)}
 ```
 
 # 2. Types
@@ -87,10 +96,10 @@ The unit type `()` only allows the [single value](TODO) `()`.
 A native type holds external [values from the host language](TODO), i.e.,
 values which *Ce* cannot create or manipulate directly.
 
-A native type identifier starts with an underscore `_`:
+Native type identifiers follow the rules for [native tokens](TODO):
 
 ```
-_char     _int    _FILE
+_char     _int    _{FILE*}
 ```
 
 ## User
@@ -140,12 +149,12 @@ The unit value is the single value of the [unit type](TODO):
 ()
 ```
 
-## Native symbol
+## Native expression
 
-A native symbol holds a value from a [host language type](TODO):
+A native expression holds a value from a [host language type](TODO):
 
 ```
-_printf    _errno
+_printf    _(2+2)     _{f(x,y)}
 ```
 
 ## Variable
@@ -358,7 +367,7 @@ Stmt ::= `var´ VAR `:´ Type [`&´]       -- variable declaration     var x: ()
       |  `{´ Stmt `}´                   -- block                    { call f() ; call g() }
 
 Expr ::= `(´ `)´                        -- unit value               ()
-      |  NATIVE                         -- native identifier        _printf
+      |  NATIVE                         -- native expression        _printf
       |  VAR                            -- variable identifier      i
       |  `&´ VAR                        -- alias                    &x
       |  `arg´                          -- function argument        arg
@@ -372,7 +381,7 @@ Expr ::= `(´ `)´                        -- unit value               ()
       |  `(´ Expr `)´                   -- group                    (x)
 
 Type ::= `(´ `)´                        -- unit                     ()
-      |  NATIVE                         -- native                   _char
+      |  NATIVE                         -- native type              _char
       |  USER                           -- user type                Bool
       |  `(´ Type {`,´ Type} `)´        -- tuple                    ((),())
       |  Type `->´ Type                 -- function                 () -> ()

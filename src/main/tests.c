@@ -145,8 +145,14 @@ void t_lexer (void) {
     }
     {
         all_init(NULL, stropen("r", 0, "_char _Tp"));
-        assert(ALL.tk1.enu == TX_NATIVE);  assert(!strcmp(ALL.tk1.val.s, "_char"));
-        lexer(); assert(ALL.tk1.enu == TX_NATIVE); assert(!strcmp(ALL.tk1.val.s, "_Tp"));
+        assert(ALL.tk1.enu == TX_NATIVE);  assert(!strcmp(ALL.tk1.val.s, "char"));
+        lexer(); assert(ALL.tk1.enu == TX_NATIVE); assert(!strcmp(ALL.tk1.val.s, "Tp"));
+        fclose(ALL.inp);
+    }
+    {
+        all_init(NULL, stropen("r", 0, "_{(1)} _(2+2)"));
+        assert(ALL.tk1.enu == TX_NATIVE); assert(!strcmp(ALL.tk1.val.s, "(1)"));
+        lexer(); assert(ALL.tk1.enu == TX_NATIVE); assert(!strcmp(ALL.tk1.val.s, "2+2"));
         fclose(ALL.inp);
     }
     {
@@ -180,7 +186,7 @@ void t_parser_type (void) {
         Type tp;
         parser_type(&tp);
         assert(tp.sub == TYPE_NATIVE);
-        assert(!strcmp(tp.Nat.val.s,"_char"));
+        assert(!strcmp(tp.Nat.val.s,"char"));
         fclose(ALL.inp);
     }
     // TYPE_UNIT
@@ -285,7 +291,7 @@ void t_parser_expr (void) {
         all_init(NULL, stropen("r", 0, "_x"));
         Expr e;
         assert(parser_expr(&e));
-        assert(e.sub == EXPR_NATIVE); assert(!strcmp(e.Nat.val.s,"_x"));
+        assert(e.sub == EXPR_NATIVE); assert(!strcmp(e.Nat.val.s,"x"));
         fclose(ALL.inp);
     }
     // EXPR_TUPLE
@@ -503,7 +509,7 @@ void t_parser_stmt (void) {
         assert(s.sub == STMT_CALL);
         assert(s.Call.sub == EXPR_CALL);
         assert(s.Call.Call.func->sub == EXPR_NATIVE);
-        assert(!strcmp(s.Call.Call.func->Nat.val.s,"_printf"));
+        assert(!strcmp(s.Call.Call.func->Nat.val.s,"printf"));
         fclose(ALL.inp);
     }
     {
@@ -577,7 +583,7 @@ void t_code (void) {
         all_init(stropen("w",sizeof(out),out), NULL);
         Expr e = { _N_++, EXPR_NATIVE, NULL, {} };
             e.Nat.enu = TX_NATIVE;
-            strcpy(e.Nat.val.s, "_printf");
+            strcpy(e.Nat.val.s, "printf");
         code_expr_1(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"printf"));

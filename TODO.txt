@@ -1,3 +1,5 @@
+- _{...}    stmt
+- _(...)    expr
 - adicionar blocos {}
 - refazer docs
 

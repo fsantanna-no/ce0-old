@@ -27,7 +27,7 @@ void to_ce_ (char* out, Type* tp) {
             strcat(out, "Unit");
             break;
         case TYPE_NATIVE:
-            strcat(out, &tp->Nat.val.s[1]);
+            strcat(out, tp->Nat.val.s);
             break;
         case TYPE_USER: {
             strcat(out, tp->User.val.s);
@@ -64,7 +64,7 @@ void to_c_ (char* out, Type* tp) {
             strcat(out, "int");
             break;
         case TYPE_NATIVE:
-            strcat(out, &tp->Nat.val.s[1]);
+            strcat(out, tp->Nat.val.s);
             break;
         case TYPE_USER: {
             Stmt* s = env_id_to_stmt(tp->env, tp->User.val.s);
@@ -155,7 +155,7 @@ int fe_1 (Expr* e) {
             out("1");
             break;
         case EXPR_NATIVE:
-            out(&e->Nat.val.s[1]);
+            out(e->Nat.val.s);
             break;
         case EXPR_VAR:
             if (e->Var.istx) {
