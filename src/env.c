@@ -509,11 +509,11 @@ int check_types (Stmt* S) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// Set EXPR_VAR.istx=1 for root recursive and not alias.
+// Set EXPR_VAR.istx=1 for root recursive and not alias/alias type.
 //      f(nat)          -- istx=1       -- root, recursive
 //      return nat      -- istx=1       -- root, recursive
 //      output(&nat)    -- istx=0       -- root, recursive, alias
-//      f(alias_nat)    -- istx=0       -- root, recursive, alias
+//      f(alias_nat)    -- istx=0       -- root, recursive, alias type
 //      nat.xxx         -- istx=0       -- not root, recursive
 
 void set_vars_istx (Stmt* s) {
@@ -657,7 +657,7 @@ int check_owner_alias (Stmt* S) {
                     switch (state) {
                         case NONE:
                             break;
-                        case MOVED: {
+                        case MOVED: {       // Rule 6
                             assert(e1 != NULL);
                             char err[1024];
                             sprintf(err, "invalid access to \"%s\" : ownership was transferred (ln %ld)",
@@ -665,7 +665,7 @@ int check_owner_alias (Stmt* S) {
                             err_message(e2->Var.id, err);
                             return EXEC_ERROR;
                         }
-                        case BORROWED: {
+                        case BORROWED: {    // Rule 5
                             assert(e1 != NULL);
                             if (!is_alias) {
                                 char err[1024];

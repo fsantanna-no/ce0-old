@@ -1,3 +1,4 @@
+- f(g(x),2) ---> a=g(x) ; b=2 ; f(a,b)
 - verificar alias out of scope
 - refazer docs
 - clone
