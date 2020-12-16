@@ -342,10 +342,8 @@ void t_parser_expr (void) {
         Expr e;
         assert(parser_expr(&e));
         assert(e.sub == EXPR_CALL);
-        assert(e.Call.func->sub == EXPR_CALL);
-        assert(e.Call.func->Call.func->sub == EXPR_CALL);
-        assert(e.Call.func->Call.func->Call.func->sub == EXPR_VAR);
-        assert(!strcmp(e.Call.func->Call.func->Call.func->Var.id.val.s, "f"));
+        assert(e.Call.func->sub == EXPR_VAR);
+        assert(e.Call.arg->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
     // EXPR_CONS
@@ -382,15 +380,15 @@ void t_parser_expr (void) {
         Expr e;
         assert(parser_expr(&e));
         assert(e.sub == EXPR_CALL);
-        assert(e.Call.func->sub == EXPR_INDEX);
-        assert(e.Call.func->Index.tuple->sub == EXPR_CALL);
+        assert(e.Call.func->sub == EXPR_VAR);
+        assert(e.Call.arg->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
     {
-        all_init(NULL, stropen("r", 0, "x().."));
+        all_init(NULL, stropen("r", 0, "x.."));
         Expr e;
         assert(!parser_expr(&e));
-        assert(!strcmp(ALL.err, "(ln 1, col 5): expected index or subtype : have `.´"));
+        assert(!strcmp(ALL.err, "(ln 1, col 3): expected index or subtype : have `.´"));
         fclose(ALL.inp);
     }
 }
@@ -728,7 +726,9 @@ void t_all (void) {
     ));
     assert(all(
         "()\n",
-        "call _output_Unit(((),((),())).2.1)\n"
+        "var x: ((),()) = ((),((),())).2\n"
+        "var y: () = x.2\n"
+        "call _output_Unit(y)\n"
     ));
     // OUTPUT
     assert(all(
@@ -752,8 +752,12 @@ void t_all (void) {
         "type Zz { Zz1:() }\n"
         "type Yy { Yy1:Zz }\n"
         "type Xx { Xx1:Yy }\n"
-        "var x : Xx = Xx1(Yy1(Zz1))\n"
-        "call _output_Zz(x.Xx1!.Yy1!)\n"
+        "var z : Zz = Zz1\n"
+        "var y : Yy = Yy1(z)\n"
+        "var x : Xx = Xx1(y)\n"
+        "var yy: Yy = x.Xx1!\n"
+        "var zz: Zz = yy.Yy1!\n"
+        "call _output_Zz(zz)\n"
     ));
     assert(all(
         "Zz1 ((),())\n",

@@ -360,28 +360,30 @@ Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: ()
             { USER `:´ Type [`;´] }     --    subtypes                 Cons: List
          `}´                                                        }
       |  `call´ Expr                    -- call                     call f()
-      |  `if´ Expr `{´ Stmt `}´         -- conditional              if x { call f() } else { call g() }
+      |  `if´ Exp0 `{´ Stmt `}´         -- conditional              if x { call f() } else { call g() }
          [`else´ `{´ Stmt `}´]
       |  `func´ VAR `:´ Type `{´        -- function                 func f : ()->() { return () }
             Stmt
          `}´
-      |  `return´ Expr                  -- function return          return ()
+      |  `return´ Exp0                  -- function return          return ()
       |  { Stmt [`;´] }                 -- sequence                 call f() ; call g()
       |  `{´ Stmt `}´                   -- block                    { call f() ; call g() }
 
-Expr ::= `(´ `)´                        -- unit value               ()
+Exp0 ::= `(´ `)´                        -- unit value               ()
+      |  `(´ Exp0 `)´                   -- group                    (x)
+      |  `(´ Exp0 {`,´ Exp0} `)´        -- tuple                    (x,())
       |  NATIVE                         -- native expression        _printf
       |  VAR                            -- variable identifier      i
       |  `&´ VAR                        -- alias                    &x
       |  `arg´                          -- function argument        arg
-      |  `(´ Expr {`,´ Expr} `)´        -- tuple                    (x,())
-      |  Expr `.´ NUM                   -- tuple index              x.1
-      |  Expr `(´ Expr `)´              -- call                     f(x)
       |  `$´ USER                       -- null constructor         $List
-      |  USER [`(´ Expr `)´]            -- constructor              True ()
-      |  Expr `.´ [`$´] USER `!´        -- discriminator            x.True!
-      |  Expr `.´ [`$´] USER `?´        -- predicate                x.False?
-      |  `(´ Expr `)´                   -- group                    (x)
+
+Expr ::= Exp0
+      |  USER [`(´ Exp0 `)´]            -- constructor              True ()
+      |  Exp0 `(´ Exp0 `)´              -- call                     f(x)
+      |  Exp0 `.´ [`$´] USER `!´        -- discriminator            x.True!
+      |  Exp0 `.´ [`$´] USER `?´        -- predicate                x.False?
+      |  Exp0 `.´ NUM                   -- tuple index              x.1
 
 Type ::= `(´ `)´                        -- unit                     ()
       |  NATIVE                         -- native type              _char

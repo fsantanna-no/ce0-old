@@ -107,7 +107,7 @@ int parser_type (Type* ret) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int parser_expr_one (Expr* ret) {
+int parser_expr_0 (Expr* ret) {
     // EXPR_UNIT
     if (accept('(')) {
         if (accept(')')) {
@@ -162,24 +162,6 @@ int parser_expr_one (Expr* ret) {
             *ret = (Expr) { _N_++, EXPR_VAR, NULL, .Var={ALL.tk0,0} };
         }
 
-    // EXPR_CONS
-    } else if (accept(TX_UPPER) || accept('$')) {  // True, $Nat
-        if (ALL.tk0.enu == '$') {
-            if (!accept_err(TX_UPPER)) {
-                return 0;
-            }
-            ALL.tk0.enu = TX_NIL;   // TODO: move to lexer
-        }
-        Tk sub = ALL.tk0;
-
-        Expr* arg = malloc(sizeof(Expr));
-        assert(arg != NULL);
-        if (sub.enu==TX_NIL || !parser_expr_one(arg)) {   // ()
-            *arg = (Expr) { _N_++, EXPR_UNIT, NULL };
-        }
-
-        *ret = (Expr) { _N_++, EXPR_CONS, NULL, { .Cons={sub,arg} } };
-
     } else {
         return err_expected("expression");
     }
@@ -187,16 +169,12 @@ int parser_expr_one (Expr* ret) {
 }
 
 int parser_expr (Expr* ret) {
-    if (!parser_expr_one(ret)) {
-        return 0;
-    }
-
-    while (1) {
-    // EXPR_CALL
+    if (parser_expr_0(ret)) {
+// EXPR_CALL
         if (check('(')) {                // only checks, arg will accept
             Expr* arg = malloc(sizeof(Expr));
             assert(arg != NULL);
-            if (!parser_expr_one(arg)) {   // f().() and not f.()()
+            if (!parser_expr_0(arg)) {   // f().() and not f.()()
                 return 0;
             }
 
@@ -205,13 +183,13 @@ int parser_expr (Expr* ret) {
             *func = *ret;
             *ret  = (Expr) { _N_++, EXPR_CALL, NULL, .Call={func,arg} };
         } else if (accept('.')) {
-    // EXPR_INDEX
+// EXPR_INDEX
             if (accept(TX_NUM)) {
                 Expr* tup = malloc(sizeof(Expr));
                 assert(tup != NULL);
                 *tup = *ret;
                 *ret = (Expr) { _N_++, EXPR_INDEX, NULL, .Index={tup,ALL.tk0.val.n} };
-    // EXPR_DISC / EXPR_PRED
+// EXPR_DISC / EXPR_PRED
             } else if (accept(TX_UPPER) || accept('$')) {
                 if (ALL.tk0.enu == '$') {
                     if (!accept_err(TX_UPPER)) {
@@ -235,8 +213,29 @@ int parser_expr (Expr* ret) {
                 return err_expected("index or subtype");
             }
         } else {
-            break;
+            // ok: single Exp0
         }
+
+// EXPR_CONS
+    } else if (accept(TX_UPPER) || accept('$')) {  // True, $Nat
+        if (ALL.tk0.enu == '$') {
+            if (!accept_err(TX_UPPER)) {
+                return 0;
+            }
+            ALL.tk0.enu = TX_NIL;   // TODO: move to lexer
+        }
+        Tk sub = ALL.tk0;
+
+        Expr* arg = malloc(sizeof(Expr));
+        assert(arg != NULL);
+        if (sub.enu==TX_NIL || !parser_expr_0(arg)) {   // ()
+            *arg = (Expr) { _N_++, EXPR_UNIT, NULL };
+        }
+
+        *ret = (Expr) { _N_++, EXPR_CONS, NULL, { .Cons={sub,arg} } };
+
+    } else {
+        return 0;
     }
 
     return 1;
