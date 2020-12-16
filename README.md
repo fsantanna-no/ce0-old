@@ -114,7 +114,7 @@ A user type identifier starts with an uppercase letter and terminates with an
 ampersand `&` if an alias:
 
 ```
-List    Nat     Tree     Nat&
+List    Nat     Tree     List&
 ```
 
 ## Tuple
@@ -135,8 +135,8 @@ A function type holds a [function](TODO) value.
 It and is composed of an input and output types separated by an arrow `->`:
 
 ```
-() -> Nat
-(Nat,Nat) -> ()
+() -> Tree
+(List,List) -> ()
 ```
 
 # 3. Expressions
@@ -225,7 +225,8 @@ x.Node!.2               -- yields ()
 x.$True                 -- yields error (x is a `Node`)
 ```
 
-An error occurs if the discriminated subtype does not match the actual value.
+An error occurs during execution if the discriminated subtype does not match
+the actual value.
 
 The prefix `$` yields the null subtype of all recursive types, e.g., `$Tree` is
 the null subtype of `Tree`.
@@ -242,7 +243,7 @@ type Member {
     Professor: ()
 }
 x = Professor
-b = x.Professor?        -- yields True
+b = x.Professor?    -- yields True
 ```
 
 ### Alias
@@ -251,7 +252,7 @@ An alias is a [reference](TODO) to a variable of a [user type](TODO).
 It prefixes the variable with an ampersand `&`:
 
 ```
-var y: Nat = &x      -- alias to `x`
+var y: List = &x    -- alias to `x`
 ```
 
 # 4. Statements
@@ -284,10 +285,10 @@ A variable declaration intoduces a name of a given type and assigns a value to
 it:
 
 ```
-var x : () = ()                 -- `x` of type `()` holds `()`
-var y : Bool = True             -- `y` of type `Bool` holds `True`
-var z : (Bool,()) = (False,())  -- `z` of given tuple type holds the given tuple
-var n : Nat = Succ(Succ($Nat))  -- `n` of recursive type `Nat` holds result of constructor
+var x : () = ()                  -- `x` of type `()` holds `()`
+var y : Bool = True              -- `y` of type `Bool` holds `True`
+var z : (Bool,()) = (False,())   -- `z` of given tuple type holds the given tuple
+var n : List = Cons(Cons($List)) -- `n` of recursive type `List` holds result of constructor
 ```
 
 ## Call
@@ -353,8 +354,8 @@ A block delimits, between curly braces `{` and `}`, the scope and visibility of
 ```
 Stmt ::= `var´ VAR `:´ Type [`&´]       -- variable declaration     var x: () = ()
             `=´ Expr
-      |  `type´ [`rec´] USER `{`        -- user type declaration    type rec Nat {
-            { USER `:´ Type [`;´] }     --    subtypes                 Succ: Nat
+      |  `type´ [`rec´] USER `{`        -- user type declaration    type rec List {
+            { USER `:´ Type [`;´] }     --    subtypes                 Cons: List
          `}´                                                        }
       |  `call´ Expr                    -- call                     call f()
       |  `if´ Expr `{´ Stmt `}´         -- conditional              if x { call f() } else { call g() }
@@ -455,25 +456,25 @@ they are composed of products (tuples) and sums (variants).
 A recursive type declaration uses itself in one of its subtypes:
 
 ```
-type rec Nat {  -- a natural number is either zero (`$Nat`) or
-    Succ: Nat   -- a successor of a natural number (`Succ(Nat)`)
+type rec List {         -- a list is either empty (`$List`) or
+    Item: (_int,List)   -- an item that holds a number and a sublist
 }
 
-var two: Nat = Succ(Succ($Nat)) -- `two` is the successor of the successor of zero
-                                --       (represented as `$Nat`)
+var l: List = Item(_1,Item(_2,$List))   -- list 1 -> 2 -> null
 ```
 
 Variables of recursive types always hold references to constructors dynamically
 allocated in the heap:
 
 ```
-var x: Nat = Succ(Succ($Nat))
-   _|_            _|_
-  /   \          /   \
-  | x | -------> |...| <-- actual allocated memory
-  \___/          \___/
-    |              |
-  stack           heap
+var x: List = Item(_1, $List)
+   _|_             __|__
+  /   \           /     \
+ |  x  |-------> |   1   | <-- actual allocated memory with the linked list
+  \___/          |  null |
+    |             \_____/
+    |                |
+  stack             heap
 ```
 
 The assigned variable is the owner of the allocated value, which is
@@ -481,7 +482,7 @@ automatically deallocated when the enclosing scope terminates:
 
 ```
 {
-    var x: Nat = Succ(Succ($Nat))
+    var x: List = Item(_1, $List)
 }
 -- scope terminates, memory pointed by `x` is deallocated
 ```
@@ -490,21 +491,38 @@ A variable can be aliased or *borrowed* with the prefix ampersand `&`.
 In this case, both the owner and the alias refer to the same allocated value:
 
 ```
-var x: Nat  = Succ(Succ($Nat))
-var y: Nat& = &x   |
-   _|_            _|_
-  /   \          /   \
-  | x | -------> |...| <-- actual allocated memory
-  \___/      /   \___/
-    |       /      |
-  stack    /      heap
+var x: List  = Item(_1, $List)
+var y: List& = &x    |
+   _|_             __|__
+  /   \           /     \
+ |  x  |-------> |   1   |
+  \___/       /  |  null | <-- actual allocated memory
+    |        /    \_____/
+    |       /        |
+  stack    /        heap
    _|_    /
   /   \  /
-  | y | -
+ |  y  |-
   \___/
 ```
 
-## Ownership transfer
+## Ownership rules
+
+- Every allocated constructor has a single owner. Not zero, not two or more.
+- The owner is a variable that lives in the stack.
+- When the owner goes out of scope, the allocated memory is automatically
+  deallocated.
+
+```
+{
+    var x: List = Item(_1, $List)
+    var y: List = x
+}
+-- scope terminates, memory pointed by `x` is deallocated
+```
+
+
+
 
 ## Borrowing rules
 
