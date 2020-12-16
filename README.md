@@ -110,11 +110,11 @@ introduced by the programmer.
 A user type can be an alias if its value holds a reference to another value of
 the same type.
 
-A user type identifier starts with an uppercase letter and terminates with an
-ampersand `&` if an alias:
+A user type identifier starts with an uppercase letter and might be prefixed
+with an ampersand `&` if an alias:
 
 ```
-List    Nat     Tree     List&
+List    Nat     Tree     &List
 ```
 
 ## Tuple
@@ -352,7 +352,7 @@ A block delimits, between curly braces `{` and `}`, the scope and visibility of
 # 5. Syntax
 
 ```
-Stmt ::= `var´ VAR `:´ Type [`&´]       -- variable declaration     var x: () = ()
+Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: () = ()
             `=´ Expr
       |  `type´ [`rec´] USER `{`        -- user type declaration    type rec List {
             { USER `:´ Type [`;´] }     --    subtypes                 Cons: List
@@ -494,7 +494,7 @@ In this case, both the owner and the alias refer to the same allocated value:
 
 ```
 var x: List  = Item(_1, $List)
-var y: List& = &x    |
+var y: &List = &x    |
     |              __|__
    / \            /     \
   | x |--------> |   1   | <-- actual allocated memory with the linked list
@@ -508,7 +508,9 @@ var y: List& = &x    |
    \_/
 ```
 
-## Ownership rules
+## Ownership
+
+The ownership of dynamically allocated values must follow a set of rules:
 
 - Every allocated constructor has a single owner. Not zero, not two or more.
 - The owner is a variable that lives in the stack.
@@ -559,10 +561,16 @@ func build: () -> List {
 var l: List = build()       -- `l` is the new owner
 ```
 
+## Borrowing
 
+Borrowing dynamically allocated values must also follow a set of rules:
 
-
-## Borrowing rules
+```
+func length: (&List -> _int) {
+    ...                 -- alias is destroyed on termination
+}
+var l: List = build()   -- original owner
+... length(&l) ...      -- borrow on call and unborrow on return
 
 <!--
 
