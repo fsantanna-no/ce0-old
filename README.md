@@ -470,10 +470,10 @@ allocated in the heap:
 
 ```
 var x: List = Item(_1, $List)
-   _|_             __|__
-  /   \           /     \
- |  x  |-------> |   1   | <-- actual allocated memory with the linked list
-  \___/          |  null |
+    |              __|__
+   / \            /     \
+  | x |--------> |   1   | <-- actual allocated memory with the linked list
+   \_/           |  null |
     |             \_____/
     |                |
   stack             heap
@@ -495,17 +495,17 @@ In this case, both the owner and the alias refer to the same allocated value:
 ```
 var x: List  = Item(_1, $List)
 var y: List& = &x    |
-   _|_             __|__
-  /   \           /     \
- |  x  |-------> |   1   |
-  \___/       /  |  null | <-- actual allocated memory
-    |        /    \_____/
-    |       /        |
-  stack    /        heap
-   _|_    /
-  /   \  /
- |  y  |-
-  \___/
+    |              __|__
+   / \            /     \
+  | x |--------> |   1   | <-- actual allocated memory with the linked list
+   \_/       /   |  null |
+    |       /     \_____/
+    |      /         |
+  stack   /         heap
+    |    /
+   / \  /
+  | y |-
+   \_/
 ```
 
 ## Ownership rules
@@ -514,12 +514,18 @@ var y: List& = &x    |
 - The owner is a variable that lives in the stack.
 - When the owner goes out of scope, the allocated memory is automatically
   deallocated.
+- Ownership can be transferred in three ways:
+    - Assigning the owner to another variable, which becomes the new owner.
+    - Passing the owner to a function call argument, which becomes the new owner.
+    - Returning the owner from a function call to an assignee, which becomes the new owner.
 
-All rules are verified at compile time, i.e., there are not runtime checks or
-overheads.
+All rules are verified at compile time, i.e., there are no runtime checks or
+extra overheads.
 
-The ownership can be transferred with an assignment, invalidating any further
-accesses to the original owner:
+### Ownership transfer
+
+An ownership transfer invalidates the original owner and rejects further
+accesses to it:
 
 ```
 {
@@ -528,7 +534,29 @@ accesses to the original owner:
     ... x ...                       -- error: `x` cannot be referred again
     ... y ...                       -- ok
 }
--- scope terminates, memory pointed by `x` is deallocated
+```
+
+If ownership were shared among multiple references, deallocation would be
+ambiguous since owners could be in different scopes:
+
+```
+{
+    var x: List = Item(_1, $List)   -- `x` is the original owner
+    {
+        var y: List = x             -- `y` is the new owner
+    }                               -- deallocate here?
+}                                   -- or here?
+```
+
+Ownership transfer is particularly important when the value must survive the
+allocation scope, which is typical of constructor functions:
+
+```
+func build: () -> List {
+    var tmp: List = ...     -- `tmp` is the original owner
+    return tmp              -- `return` transfers ownership (we don't want to deallocate it now)
+}
+var l: List = build()       -- `l` is the new owner
 ```
 
 
