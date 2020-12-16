@@ -1041,7 +1041,7 @@ void t_all (void) {
     ));
     // OWNERSHIP
     assert(all(
-        "(ln 6, col 14): invalid access to \"i\" : ownership moved away (ln 5)",
+        "(ln 6, col 14): invalid access to \"i\" : ownership was transferred (ln 5)",
         "type rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"

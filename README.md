@@ -463,6 +463,8 @@ type rec List {         -- a list is either empty (`$List`) or
 var l: List = Item(_1,Item(_2,$List))   -- list 1 -> 2 -> null
 ```
 
+TODO: implicit null is important
+
 Variables of recursive types always hold references to constructors dynamically
 allocated in the heap:
 
@@ -513,10 +515,18 @@ var y: List& = &x    |
 - When the owner goes out of scope, the allocated memory is automatically
   deallocated.
 
+All rules are verified at compile time, i.e., there are not runtime checks or
+overheads.
+
+The ownership can be transferred with an assignment, invalidating any further
+accesses to the original owner:
+
 ```
 {
-    var x: List = Item(_1, $List)
-    var y: List = x
+    var x: List = Item(_1, $List)   -- `x` is the original owner
+    var y: List = x                 -- `y` is the new owner
+    ... x ...                       -- error: `x` cannot be referred again
+    ... y ...                       -- ok
 }
 -- scope terminates, memory pointed by `x` is deallocated
 ```

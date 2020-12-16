@@ -419,6 +419,10 @@ int parser_stmt (Stmt* ret) {
         }
         *ret = (Stmt) { _N_++, STMT_RETURN, NULL, NULL, tk, .Return=e };
 
+    // STMT_BLOCK
+    } else if (check('{')) {
+        return parser_block(ret);
+
     } else {
         return err_expected("statement (maybe `call´?)");
     }

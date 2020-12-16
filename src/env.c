@@ -546,72 +546,6 @@ void set_vars_istx (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// How to detect if EXPR_VAR.istx is unsafe?
-//   1. For each EXPR_VAR.istx
-//   2. Start from declaration and go towards EXPR_VAR.istx. (IMPL: find N between both)
-//   3. Find one of the following:
-//       - any other EXPR_VAR.istx for the same EXPR_VAR
-//       - any active EXPR_ALIAS for the same EXPR_VAR, i.e., the reference that borrowed is still in scope
-//  - pass ownership and then access again
-//      var x: Nat = ...            -- owner
-//      val z: Nat = add(x,...)     -- transfer
-//      ... x or &x ...             -- error!
-//  - save reference and then pass ownership
-//      var x: Nat = ...            -- owner
-//      val z: Nat = &x             -- borrow
-//      ... x ...                   -- error!
-
-int check_txs (Stmt* S) {
-    int fe1 (Expr* e1) {
-        if (e1->sub!=EXPR_VAR || !e1->Var.istx) {
-            return EXEC_CONTINUE;
-        }
-
-        // for each EXPR_VAR.istx
-
-        // exec back from its decl until itself
-        Stmt* decl1 = env_id_to_stmt(e1->env, e1->Var.id.val.s);
-        assert(decl1!=NULL && decl1->sub==STMT_VAR);
-
-        auto int fs2 (Stmt* s2);
-        auto int fe2 (Expr* e2);
-
-        return exec(decl1, fs2, fe2);
-
-        int fs2 (Stmt* s2) {
-            if (s2->N > e1->N) {
-                return EXEC_HALT;
-            }
-            return EXEC_CONTINUE;
-        }
-
-        int fe2 (Expr* e2) {
-            if (e2->N > e1->N) {
-                return EXEC_HALT;
-            }
-
-            // for all other *previous* accesses to same EXPR_VAR
-            if (e2->sub==EXPR_VAR && !strcmp(e1->Var.id.val.s,e2->Var.id.val.s)) {
-                Stmt* decl2 = env_id_to_stmt(e2->env, e2->Var.id.val.s);
-                assert(decl2!=NULL && decl2->sub==STMT_VAR);
-                if (decl1==decl2 && e2->N<e1->N) {
-                    if (e2->Var.istx) {
-                        char err[1024];
-                        sprintf(err, "invalid access to \"%s\" : ownership moved away (ln %ld)",
-                                e1->Var.id.val.s, e2->Var.id.lin);
-                        err_message(e1->Var.id, err);
-                        return EXEC_ERROR;
-                    }
-                }
-            }
-            return EXEC_CONTINUE;
-        }
-    }
-    return visit_stmt(S, NULL, fe1, NULL);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
 // How to detect ownership violations?
 //  - Pass ownership and then access again:
 //      var x: Nat = ...            -- owner
@@ -629,8 +563,7 @@ int check_txs (Stmt* S) {
 //          - transfer (istx)  // error if state=borrowed/moved // set state=moved
 //          - borrow   (!istx) // error if state=moved          // set state=borrowed
 
-#if 1
-int check_txs2 (Stmt* S) {
+int check_txs (Stmt* S) {
 
     // visit all var declarations
     auto int fs1 (Stmt* s1);
@@ -732,7 +665,7 @@ __ERROR__:
                     {
                         assert(e1 != NULL);
                         char err[1024];
-                        sprintf(err, "invalid access to \"%s\" : ownership moved away (ln %ld)",
+                        sprintf(err, "invalid access to \"%s\" : ownership was transferred (ln %ld)",
                                 e2->Var.id.val.s, e1->Var.id.lin);
                         err_message(e2->Var.id, err);
                         return EXEC_ERROR;
@@ -742,7 +675,6 @@ __ERROR__:
         }
     }
 }
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -755,7 +687,7 @@ int env (Stmt* s) {
         return 0;
     }
     set_vars_istx(s);
-    if (!check_txs2(s)) {
+    if (!check_txs(s)) {
         return 0;
     }
     return 1;

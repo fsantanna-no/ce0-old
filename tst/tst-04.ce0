@@ -1,12 +1,10 @@
-type Bool {
-    False: ()
-    True:  ()
+type rec List {         -- a list is either empty (`$List`) or
+    Item: (_int,List)   -- an item that holds a number and a sublist
 }
-type rec Nat {
-   Succ: Nat
+
+{
+    var x: List = Item(_1, $List)   -- `x` is the original owner
+    var y: List = x                 -- `y` is the new owner
+    call output(x)                  -- error: `x` cannot be referred again
+    call output(y)                  -- ok
 }
-func lt: (Nat&,Nat&) -> Bool {
-}
-var x: Nat = $Nat
-var y: Nat = Succ($Nat)
-call output(lt(&x,&y))
