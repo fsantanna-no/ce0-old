@@ -231,7 +231,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "()"));
         Expr e;
-        assert(parser_expr(&e));
+        assert(parser_expr_1(&e));
         assert(e.sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
@@ -239,50 +239,50 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "(())"));
         Expr e;
-        assert(parser_expr(&e));
+        assert(parser_expr_1(&e));
         assert(e.sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "("));
         Expr e;
-        assert(!parser_expr(&e));
-        assert(!strcmp(ALL.err, "(ln 1, col 2): expected expression : have end of file"));
+        assert(!parser_expr_1(&e));
+        assert(!strcmp(ALL.err, "(ln 1, col 2): expected simple expression : have end of file"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "(x"));
         Expr e;
-        assert(!parser_expr(&e));
+        assert(!parser_expr_1(&e));
         assert(!strcmp(ALL.err, "(ln 1, col 3): expected `)´ : have end of file"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "( ( ) )"));
         Expr e;
-        assert(parser_expr(&e));
+        assert(parser_expr_1(&e));
         assert(e.sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "(("));
         Expr e;
-        assert(!parser_expr(&e));
-        assert(!strcmp(ALL.err, "(ln 1, col 3): expected expression : have end of file"));
+        assert(!parser_expr_1(&e));
+        assert(!strcmp(ALL.err, "(ln 1, col 3): expected simple expression : have end of file"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "(\n( \n"));
         Expr e;
-        assert(!parser_expr(&e));
-        assert(!strcmp(ALL.err, "(ln 3, col 1): expected expression : have end of file"));
+        assert(!parser_expr_1(&e));
+        assert(!strcmp(ALL.err, "(ln 3, col 1): expected simple expression : have end of file"));
         fclose(ALL.inp);
     }
     // EXPR_VAR
     {
         all_init(NULL, stropen("r", 0, "x"));
         Expr e;
-        assert(parser_expr(&e));
+        assert(parser_expr_1(&e));
         assert(e.sub == EXPR_VAR); assert(!strcmp(e.Var.id.val.s,"x"));
         fclose(ALL.inp);
     }
@@ -290,7 +290,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "_x"));
         Expr e;
-        assert(parser_expr(&e));
+        assert(parser_expr_1(&e));
         assert(e.sub == EXPR_NATIVE); assert(!strcmp(e.Nat.val.s,"x"));
         fclose(ALL.inp);
     }
@@ -298,28 +298,28 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "((),x,"));
         Expr e;
-        assert(!parser_expr(&e));
-        assert(!strcmp(ALL.err, "(ln 1, col 7): expected expression : have end of file"));
+        assert(!parser_expr_1(&e));
+        assert(!strcmp(ALL.err, "(ln 1, col 7): expected simple expression : have end of file"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "((),)"));
         Expr e;
-        assert(!parser_expr(&e));
-        assert(!strcmp(ALL.err, "(ln 1, col 5): expected expression : have `)´"));
+        assert(!parser_expr_1(&e));
+        assert(!strcmp(ALL.err, "(ln 1, col 5): expected simple expression : have `)´"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "((),x:"));
         Expr e;
-        assert(!parser_expr(&e));
+        assert(!parser_expr_1(&e));
         assert(!strcmp(ALL.err, "(ln 1, col 6): expected `)´ : have `:´"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "((),x,())"));
         Expr e;
-        assert(parser_expr(&e));
+        assert(parser_expr_1(&e));
         assert(e.sub == EXPR_TUPLE);
         assert(e.Tuple.size == 3);
         assert(e.Tuple.vec[1].sub == EXPR_VAR && !strcmp(e.Tuple.vec[1].Var.id.val.s,"x"));
@@ -330,7 +330,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "xxx (  )"));
         Expr e;
-        assert(parser_expr(&e));
+        assert(parser_expr_1(&e));
         assert(e.sub == EXPR_CALL);
         assert(e.Call.func->sub == EXPR_VAR);
         assert(!strcmp(e.Call.func->Var.id.val.s, "xxx"));
@@ -340,7 +340,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "f()\n(  )\n()"));
         Expr e;
-        assert(parser_expr(&e));
+        assert(parser_expr_1(&e));
         assert(e.sub == EXPR_CALL);
         assert(e.Call.func->sub == EXPR_VAR);
         assert(e.Call.arg->sub == EXPR_UNIT);
@@ -350,7 +350,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "True ()"));
         Expr e;
-        assert(parser_expr(&e));
+        assert(parser_expr_1(&e));
         assert(e.sub == EXPR_CONS);
         assert(!strcmp(e.Cons.subtype.val.s,"True"));
         assert(e.Cons.arg->sub == EXPR_UNIT);
@@ -359,7 +359,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "Zz1 ((),())"));
         Expr e;
-        assert(parser_expr(&e));
+        assert(parser_expr_1(&e));
         assert(e.sub == EXPR_CONS);
         assert(!strcmp(e.Cons.subtype.val.s,"Zz1"));
         assert(e.Cons.arg->sub == EXPR_TUPLE);
@@ -369,7 +369,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "x.1"));
         Expr e;
-        assert(parser_expr(&e));
+        assert(parser_expr_1(&e));
         assert(e.sub == EXPR_INDEX);
         assert(e.Index.tuple->sub == EXPR_VAR);
         assert(e.Index.index == 1);
@@ -378,7 +378,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "x().1()"));
         Expr e;
-        assert(parser_expr(&e));
+        assert(parser_expr_1(&e));
         assert(e.sub == EXPR_CALL);
         assert(e.Call.func->sub == EXPR_VAR);
         assert(e.Call.arg->sub == EXPR_UNIT);
@@ -387,8 +387,8 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "x.."));
         Expr e;
-        assert(!parser_expr(&e));
-        assert(!strcmp(ALL.err, "(ln 1, col 3): expected index or subtype : have `.´"));
+        assert(!parser_expr_1(&e));
+        assert(!strcmp(ALL.err, "(ln 1, col 3): expected tuple index : have `.´"));
         fclose(ALL.inp);
     }
 }
@@ -487,7 +487,7 @@ void t_parser_stmt (void) {
         all_init(NULL, stropen("r", 0, "output()"));
         Stmt s;
         assert(!parser_stmt(&s));
-        assert(!strcmp(ALL.err, "(ln 1, col 1): expected statement (maybe `call´?) : have `output´"));
+        assert(!strcmp(ALL.err, "(ln 1, col 1): expected statement : have `output´"));
         fclose(ALL.inp);
     }
     {
@@ -519,9 +519,16 @@ void t_parser_stmt (void) {
         assert(s.Seq.vec[1].sub == STMT_CALL);
         fclose(ALL.inp);
     }
+    {
+        all_init(NULL, stropen("r", 0, "{ call () }"));
+        Stmt s;
+        assert(!parser_stmt(&s));
+        assert(!strcmp(ALL.err, "(ln 1, col 8): expected call expression : have `(´"));
+        fclose(ALL.inp);
+    }
     // STMT_IF
     {
-        all_init(NULL, stropen("r", 0, "if () { } else { call () }"));
+        all_init(NULL, stropen("r", 0, "if () { } else { call f() }"));
         Stmt s;
         assert(parser_stmt(&s));
         assert(s.sub == STMT_IF);
@@ -532,7 +539,7 @@ void t_parser_stmt (void) {
         fclose(ALL.inp);
     }
     {
-        all_init(NULL, stropen("r", 0, "if () { call () } "));
+        all_init(NULL, stropen("r", 0, "if () { call f() } "));
         Stmt s;
         assert(parser_stmt(&s));
         assert(s.sub==STMT_IF && s.If.false->sub==STMT_BLOCK);
@@ -693,7 +700,7 @@ void t_code (void) {
 void t_all (void) {
     // ERROR
     assert(all(
-        "(ln 1, col 1): expected statement (maybe `call´?) : have \"/\"",
+        "(ln 1, col 1): expected statement : have \"/\"",
         "//call output()\n"
     ));
     assert(all(
@@ -722,13 +729,24 @@ void t_all (void) {
     ));
     assert(all(
         "()\n",
-        "call _output_Unit(((),()).1)\n"
+        "var x: ((),()) = (((),()))\n"
+        "var y: () = x.1\n"
+        "call _output_Unit(y)\n"
+    ));
+    assert(all(
+        "(ln 1, col 30): unexpected `,´ : cannot nest tuple expressions",
+        "var x: ((),((),())) = ((),((),()))\n"
+        "var y: ((),()) = x.2\n"
+        "var z: () = y.2\n"
+        "call _output_Unit(z)\n"
     ));
     assert(all(
         "()\n",
-        "var x: ((),()) = ((),((),())).2\n"
-        "var y: () = x.2\n"
-        "call _output_Unit(y)\n"
+        "var v: ((),()) = ((),())\n"
+        "var x: ((),((),())) = ((),v)\n"
+        "var y: ((),()) = x.2\n"
+        "var z: () = y.2\n"
+        "call _output_Unit(z)\n"
     ));
     // OUTPUT
     assert(all(
@@ -752,11 +770,11 @@ void t_all (void) {
         "type Zz { Zz1:() }\n"
         "type Yy { Yy1:Zz }\n"
         "type Xx { Xx1:Yy }\n"
-        "var z : Zz = Zz1\n"
+        "var z : Zz = Zz1()\n"
         "var y : Yy = Yy1(z)\n"
         "var x : Xx = Xx1(y)\n"
-        "var yy: Yy = x.Xx1!\n"
-        "var zz: Zz = yy.Yy1!\n"
+        "var yy: Yy = !x.Xx1\n"
+        "var zz: Zz = !yy.Yy1\n"
         "call _output_Zz(zz)\n"
     ));
     assert(all(
@@ -774,7 +792,9 @@ void t_all (void) {
         "type Zz { Zz1:() }\n"
         "type Yy { Yy1:() }\n"
         "type Xx { Xx1:(Yy,Zz) }\n"
-        "var x : Xx = Xx1(Yy1,Zz1)\n"
+        "var y: Yy = Yy1 ()\n"
+        "var z: Zz = Zz1()\n"
+        "var x: Xx = Xx1(y,z)\n"
         "call output(x)\n"
     ));
     // IF
@@ -787,7 +807,7 @@ void t_all (void) {
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
-        "var b : Bool = True\n"
+        "var b : Bool = True()\n"
         "if b { call output() }\n"
     ));
     // PREDICATE
@@ -795,32 +815,35 @@ void t_all (void) {
         "()\n",
         "type Bool { False: () ; True: () }\n"
         "var b : Bool = True()\n"
-        "if b.True? { call output(()) }\n"
+        "var tst: Bool = ?b.True\n"
+        "if tst { call output(()) }\n"
     ));
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
         "var b : Bool = True()\n"
-        "if b.False? { } else { call output(()) }\n"
+        "var tst: Bool = ?b.False\n"
+        "if tst {} else { call output(()) }\n"
     ));
     // DISCRIMINATOR
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
         "var b : Bool = True()\n"
-        "call output(b.True!)\n"
+        "call output(!b.True)\n"
     ));
     assert(all(
         "",     // ERROR
         "type Bool { False: () ; True: () }\n"
         "var b : Bool = True()\n"
-        "call output(b.False!)\n"
+        "call output(!b.False)\n"
     ));
     // FUNC
     assert(all(
         "()\n",
         "func f : () -> () { return arg }\n"
-        "call output(f())\n"
+        "var v: () = f()\n"
+        "call output(v)\n"
     ));
     assert(all(
         "(ln 1, col 26): invalid return : type mismatch",
@@ -839,17 +862,22 @@ void t_all (void) {
         "    True:  ()\n"
         "}\n"
         "func inv : (Bool -> Bool) {\n"
-        "    if arg.True? {\n"
-        "        return False\n"
+        "    var tst: Bool = ?arg.True\n"
+        "    if tst {\n"
+        "        var v: Bool = False()\n"
+        "        return v\n"
         "    } else {\n"
-        "        return True ()\n"
+        "        var v: Bool = True ()\n"
+        "        return v\n"
         "    }\n"
         "}\n"
-        "call output(inv(True))\n"
+        "var a: Bool = True()\n"
+        "var b: Bool = inv(a)\n"
+        "call output(b)\n"
     ));
     // ENV
     assert(all(
-        "(ln 1, col 1): expected statement (maybe `call´?) : have \"_output_Unit\"",
+        "(ln 1, col 1): expected statement : have \"_output_Unit\"",
         "_output_Unit(x)\n"
     ));
     assert(all(
@@ -872,8 +900,10 @@ void t_all (void) {
     ));
     // TYPE REC
     assert(all(
-        "(ln 1, col 13): undeclared subtype \"List\"",
-        "call output(List)\n"
+        "(ln 2, col 15): undeclared subtype \"Item\"",
+        "type List { Cons:() }\n"
+        "var l: List = Item ()\n"
+        "call output(l)\n"
     ));
     assert(all(
         "(ln 1, col 14): undeclared type \"List\"",
@@ -892,8 +922,10 @@ void t_all (void) {
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "var n: Nat = ($Nat,($Nat,$Nat)).1\n"
-        "call output(n)\n"
+        "var a: (Nat,Nat) = ($Nat,$Nat)\n"
+        "var b: (Nat,(Nat,Nat)) = ($Nat,a)\n"
+        "var c: Nat = b.1\n"
+        "call output(c)\n"
     ));
     assert(all(
         "True\n",
@@ -905,23 +937,28 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "var n: Nat = $Nat\n"
-        "call _output_Bool(n.$Nat?)\n"
+        "var tst: Bool = ?n.$Nat\n"
+        "call _output_Bool(tst)\n"
     ));
     assert(all(
         "Succ (Succ ($))\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "var n: Nat = Succ(Succ($Nat))\n"
-        "call output(&n)\n"
+        "var a: Nat = Succ($Nat)\n"
+        "var n: Nat = Succ(a)\n"
+        "var n_: &Nat = &n\n"
+        "call output(n_)\n"
     ));
     assert(all(
         "Succ (Succ ($))\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "var n: Nat = Succ(Succ($Nat))\n"
-        "call _output_Nat(&n)\n"
+        "var a: Nat = Succ($Nat)\n"
+        "var n: Nat = Succ(a)\n"
+        "var n_: &Nat = &n\n"
+        "call _output_Nat(n_)\n"
     ));
 #if TODO
     assert(all(
@@ -975,7 +1012,8 @@ void t_all (void) {
         "    var x: Nat = $Nat\n"
         "    return x\n"
         "}\n"
-        "call output(f())\n"
+        "var v: Nat = f()\n"
+        "call output(v)\n"
     ));
     assert(all(
         "Succ (Succ ($))\n",
@@ -983,7 +1021,9 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "func f: () -> Nat {\n"
-        "    return Succ(Succ($Nat))\n"
+        "    var a: Nat = Succ($Nat)\n"
+        "    var b: Nat = Succ(a)\n"
+        "    return b\n"
         "}\n"
         "var y: Nat = f()\n"
         "call output(y)\n"
@@ -994,7 +1034,9 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "func f: () -> Nat {\n"
-        "    return Succ(Succ($Nat))\n"
+        "    var a: Nat = Succ($Nat)\n"
+        "    var b: Nat = Succ(a)\n"
+        "    return b\n"
         "}\n"
         "var y: Nat = f()\n"
         "call output(y)\n"
@@ -1005,8 +1047,9 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "func f: () -> Nat {\n"
-        "    var x: Nat = Succ(Succ($Nat))\n"
-        "    return x\n"
+        "    var a: Nat = Succ($Nat)\n"
+        "    var b: Nat = Succ(a)\n"
+        "    return b\n"
         "}\n"
         "var y: Nat = f()\n"
         "call output(y)\n"
@@ -1017,12 +1060,15 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "func f: () -> Nat {\n"
-        "    var x: Nat = Succ(Succ($Nat))\n"
-        "    return x\n"
+        "    var a: Nat = Succ($Nat)\n"
+        "    var b: Nat = Succ(a)\n"
+        "    return b\n"
         "}\n"
         "var y: Nat = f()\n"
-        "call output(y)\n"
+        "var y_: &Nat = &y\n"
+        "call output(y_)\n"
     ));
+puts("-=-=-=-=-");
     assert(all(
         "Succ (Succ (Succ ($)))\n",
         "type Bool {\n"
@@ -1033,15 +1079,22 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "func len: Nat -> Nat {\n"
-        "    if arg.$Nat? {\n"
+        "    var tst: Bool = ?arg.$Nat\n"
+        "    if tst {\n"
         "        return $Nat\n"
         "    } else {\n"
-        "        return Succ(len(arg.Succ!))\n"
+        "        var a: Nat = !arg.Succ\n"
+        "        var b: Nat = len(a)\n"
+        "        var c: Nat = Succ(b)\n"
+        "        return c\n"
         "    }\n"
         "}\n"
-        "var x: Nat = Succ(Succ(Succ($Nat)))\n"
+        "var a: Nat = Succ($Nat)\n"
+        "var b: Nat = Succ(a)\n"
+        "var x: Nat = Succ(b)\n"
         "var y: Nat = len(x)\n"
-        "call output(y)\n"
+        "var y_: &Nat = &y\n"
+        "call output(y_)\n"
     ));
     // OWNERSHIP / BORROWING
     assert(all(
@@ -1060,7 +1113,7 @@ void t_all (void) {
         "}\n"
         "var x: Nat = $Nat   -- owner\n"
         "var z: &Nat = &x    -- borrow\n"
-        "call output(&x)\n"
+        "call output(z)\n"
     ));
     assert(all(
         "(ln 6, col 14): invalid transfer of \"x\" : active alias in scope (ln 5)",
@@ -1071,7 +1124,6 @@ void t_all (void) {
         "var z: &Nat = &x    -- borrow\n"
         "var y: Nat = x      -- error: transfer while borrow is active\n"
     ));
-puts("========================================");
     assert(all(
         "TODO",
         "type rec List {\n"
@@ -1079,7 +1131,8 @@ puts("========================================");
         "}\n"
         "func f: () -> &List {\n"
         "    var l: List = $List   -- `l` is the owner\n"
-        "    return &l             -- error: cannot return alias to deallocated value\n"
+        "    var l_: &List = &l\n"
+        "    return l_             -- error: cannot return alias to deallocated value\n"
         "}\n"
     ));
 #if 0   // TODO: set

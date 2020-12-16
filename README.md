@@ -355,11 +355,11 @@ A block delimits, between curly braces `{` and `}`, the scope and visibility of
 
 ```
 Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: () = ()
-            `=´ Expr
+            `=´ Exp1
       |  `type´ [`rec´] USER `{`        -- user type declaration    type rec List {
             { USER `:´ Type [`;´] }     --    subtypes                 Cons: List
          `}´                                                        }
-      |  `call´ Expr                    -- call                     call f()
+      |  `call´ VAR `(´ Exp0 `)´        -- call                     call f()
       |  `if´ Exp0 `{´ Stmt `}´         -- conditional              if x { call f() } else { call g() }
          [`else´ `{´ Stmt `}´]
       |  `func´ VAR `:´ Type `{´        -- function                 func f : ()->() { return () }
@@ -370,20 +370,19 @@ Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: ()
       |  `{´ Stmt `}´                   -- block                    { call f() ; call g() }
 
 Exp0 ::= `(´ `)´                        -- unit value               ()
-      |  `(´ Exp0 `)´                   -- group                    (x)
       |  `(´ Exp0 {`,´ Exp0} `)´        -- tuple                    (x,())
+      |  `(´ Exp0 `)´                   -- group                    (x)
       |  NATIVE                         -- native expression        _printf
-      |  VAR                            -- variable identifier      i
-      |  `&´ VAR                        -- alias                    &x
       |  `arg´                          -- function argument        arg
+      |  VAR                            -- variable identifier      i
       |  `$´ USER                       -- null constructor         $List
+      |  `!´ VAR `.´ [`$´] USER         -- discriminator            !x.True
 
-Expr ::= Exp0
-      |  USER [`(´ Exp0 `)´]            -- constructor              True ()
-      |  Exp0 `(´ Exp0 `)´              -- call                     f(x)
-      |  Exp0 `.´ [`$´] USER `!´        -- discriminator            x.True!
-      |  Exp0 `.´ [`$´] USER `?´        -- predicate                x.False?
-      |  Exp0 `.´ NUM                   -- tuple index              x.1
+Exp1 ::= `&´ Exp0                       -- alias                    &x
+      |  VAR `.´ NUM                    -- tuple index              x.1
+      |  (VAR | NATIVE) `(´ Exp0 `)´    -- call                     f(x)
+      |  `?´ VAR `.´ [`$´] USER         -- predicate                ?x.False
+      |  USER `(´ Exp0 `)´              -- constructor              True ()
 
 Type ::= `(´ `)´                        -- unit                     ()
       |  NATIVE                         -- native type              _char
