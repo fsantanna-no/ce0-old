@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-//#define DEBUG
+#define DEBUG
 
 #include "../all.h"
 
@@ -1039,7 +1039,7 @@ void t_all (void) {
         "var y: Nat = len(x)\n"
         "call output(y)\n"
     ));
-    // OWNERSHIP
+    // OWNERSHIP / BORROWING
     assert(all(
         "(ln 6, col 14): invalid access to \"i\" : ownership was transferred (ln 5)",
         "type rec Nat {\n"
@@ -1049,6 +1049,49 @@ void t_all (void) {
         "var j: Nat = i  -- tx\n"
         "var k: Nat = i  -- erro\n"
     ));
+    assert(all(
+        "$\n",
+        "type rec Nat {\n"
+        "    Succ: Nat\n"
+        "}\n"
+        "var x: Nat = $Nat   -- owner\n"
+        "var z: &Nat = &x    -- borrow\n"
+        "call output(&x)\n"
+    ));
+    assert(all(
+        "(ln 6, col 14): invalid transfer of \"x\" : active alias in scope (ln 5)",
+        "type rec Nat {\n"
+        "    Succ: Nat\n"
+        "}\n"
+        "var x: Nat = $Nat   -- owner\n"
+        "var z: &Nat = &x    -- borrow\n"
+        "var y: Nat = x      -- error: transfer while borrow is active\n"
+    ));
+puts("========================================");
+    assert(all(
+        "TODO",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "func f: () -> &List {\n"
+        "    var l: List = $List   -- `l` is the owner\n"
+        "    return &l             -- error: cannot return alias to deallocated value\n"
+        "}\n"
+    ));
+#if 0   // TODO: set
+    assert(all(
+        "TODO",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "var l1: List = $List\n"
+        "var r: &List = build()\n"
+        "{\n"
+        "    var l2: List = $List\n"
+        "    set r = &l2  -- error\n"
+        "}\n"
+    ));
+#endif
 }
 
 void t_parser (void) {

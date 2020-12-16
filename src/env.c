@@ -509,7 +509,7 @@ int check_types (Stmt* S) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// Set all EXPR_VAR that are root recursive and not alias to istx=1.
+// Set EXPR_VAR.istx=1 for root recursive and not alias.
 //      f(nat)          -- istx=1       -- root, recursive
 //      return nat      -- istx=1       -- root, recursive
 //      output(&nat)    -- istx=0       -- root, recursive, alias
@@ -547,14 +547,19 @@ void set_vars_istx (Stmt* s) {
 ///////////////////////////////////////////////////////////////////////////////
 
 // How to detect ownership violations?
-//  - Pass ownership and then access again:
+//  - Rule 6: transfer ownership and then access again:
 //      var x: Nat = ...            -- owner
-//      val z: Nat = add(x,...)     -- transfer
+//      var z: Nat = add(x,...)     -- transfer
 //      ... x or &x ...             -- error: access after ownership transfer
-//  - Save reference and then pass ownership:
+//  - Rule 5: save reference and then pass ownership:
 //      var x: Nat = ...            -- owner
-//      val z: Nat = &x             -- borrow
+//      var z: Nat = &x             -- borrow
 //      ... x ...                   -- error: transfer while borrow is active
+//  - Rule 3: return alias pointing to local owner
+//      func f: () -> &List {
+//          var l: List = build()   -- `l` is the owner
+//          return &l               -- error: cannot return alias to deallocated value
+//      }
 //
 //  - Start from each STMT_VAR declaration: find all with `visit`.
 //      - only STMT_VAR.isrec
@@ -563,7 +568,7 @@ void set_vars_istx (Stmt* s) {
 //          - transfer (istx)  // error if state=borrowed/moved // set state=moved
 //          - borrow   (!istx) // error if state=moved          // set state=borrowed
 
-int check_txs (Stmt* S) {
+int check_owner_alias (Stmt* S) {
 
     // visit all var declarations
     auto int fs1 (Stmt* s1);
@@ -647,11 +652,29 @@ int check_txs (Stmt* S) {
                     assert(decl!=NULL && decl==s1);
 
                     // if already moved, it doesn't matter, any access is invalid
+//printf(">>> [%ld] %s isalias=%d state=%d\n", e2->Var.id.lin, e2->Var.id.val.s, is_alias, state);
 
                     switch (state) {
-                        case NONE:      break;
-                        case MOVED:     goto __ERROR__;
-                        case BORROWED:  if (!is_alias) goto __ERROR__;
+                        case NONE:
+                            break;
+                        case MOVED: {
+                            assert(e1 != NULL);
+                            char err[1024];
+                            sprintf(err, "invalid access to \"%s\" : ownership was transferred (ln %ld)",
+                                    e2->Var.id.val.s, e1->Var.id.lin);
+                            err_message(e2->Var.id, err);
+                            return EXEC_ERROR;
+                        }
+                        case BORROWED: {
+                            assert(e1 != NULL);
+                            if (!is_alias) {
+                                char err[1024];
+                                sprintf(err, "invalid transfer of \"%s\" : active alias in scope (ln %ld)",
+                                        e2->Var.id.val.s, e1->Var.id.lin);
+                                err_message(e2->Var.id, err);
+                                return EXEC_ERROR;
+                            }
+                        }
                     }
                     e1 = e2;
                     state = (is_alias ? BORROWED : MOVED);
@@ -660,15 +683,6 @@ int check_txs (Stmt* S) {
                         return EXEC_BREAK;      // do not visit EXPR_VAR again
                     } else {
                         return EXEC_CONTINUE;
-                    }
-__ERROR__:
-                    {
-                        assert(e1 != NULL);
-                        char err[1024];
-                        sprintf(err, "invalid access to \"%s\" : ownership was transferred (ln %ld)",
-                                e2->Var.id.val.s, e1->Var.id.lin);
-                        err_message(e2->Var.id, err);
-                        return EXEC_ERROR;
                     }
             }
             assert(0 && "bug found");
@@ -687,7 +701,7 @@ int env (Stmt* s) {
         return 0;
     }
     set_vars_istx(s);
-    if (!check_txs(s)) {
+    if (!check_owner_alias(s)) {
         return 0;
     }
     return 1;
