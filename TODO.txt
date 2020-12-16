@@ -1,3 +1,4 @@
+- verificar alias out of scope
 - refazer docs
 - clone
 - STMT_SET

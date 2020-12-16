@@ -1,7 +1,9 @@
 # Ce
 
 A simple language with algebraic data types and scoped memory management with
-ownership semantics (i.e., no garbage collection).
+ownership semantics similar to Rust (i.e. no garbage collection).
+
+- Jump straight to [memory management](TODO).
 
 # 1. Lexical rules
 
@@ -222,7 +224,7 @@ mark `!`:
 
 x = Node ($Tree,(),$Tree)
 x.Node!.2               -- yields ()
-x.$True                 -- yields error (x is a `Node`)
+x.$True                 -- error: `x` is a `Node`
 ```
 
 An error occurs during execution if the discriminated subtype does not match
@@ -408,7 +410,7 @@ Pools enable to the following properties for recursive types:
 - no garbage collection
 -->
 
-# A. Recursive types
+# A. Memory management
 
 Values of recursive types, such as lists and trees, require dynamic memory
 allocation since their sizes are unbounded.
@@ -433,7 +435,7 @@ are no more active references to the value.
 In particular the following cases must be prevented:
 
 - Memory leak: when a value cannot be referenced but is not deallocated and remains in memory.
-- Dangling reference: when a value is deallocated but can still be referenced.
+- Dangling reference: when a value is deallocated but can still be referenced (aka. *use-after-free*).
 - Double free: when a value is deallocated multiple times.
 
 TODO: limitations (trees, aliasing rules)
@@ -508,26 +510,30 @@ var y: &List = &x    |
    \_/
 ```
 
-## Ownership
+## Ownership and Borrowing
 
-The ownership of dynamically allocated values must follow a set of rules:
+The ownership and borrowing of dynamically allocated values must follow a set
+of rules:
 
-- Every allocated constructor has a single owner. Not zero, not two or more.
-- The owner is a variable that lives in the stack.
-- When the owner goes out of scope, the allocated memory is automatically
-  deallocated.
-- Ownership can be transferred in three ways:
-    - Assigning the owner to another variable, which becomes the new owner.
-    - Passing the owner to a function call argument, which becomes the new owner.
-    - Returning the owner from a function call to an assignee, which becomes the new owner.
+1. Every allocated constructor has a single owner. Not zero, not two or more.
+    - The owner is a variable that lives in the stack and reaches the allocated value.
+2. When the owner goes out of scope, the allocated memory is automatically
+   deallocated.
+3. An alias cannot escape the scope of its owner.
+4. Ownership can be transferred in three ways:
+    - Assigning the owner to another variable, which becomes the new owner (e.g. `new = old`).
+    - Passing the owner to a function call argument, which becomes the new owner (e.g. `f(old)`).
+    - Returning the owner from a function call to an assignee, which becomes the new owner (e.g. `new = f()`).
+5. Ownership cannot be transferred with an active alias in scope.
+6. The original owner is invalidated after transferring its ownership.
 
 All rules are verified at compile time, i.e., there are no runtime checks or
 extra overheads.
 
 ### Ownership transfer
 
-An ownership transfer invalidates the original owner and rejects further
-accesses to it:
+As stated in rule 6, an ownership transfer invalidates the original owner and
+rejects further accesses to it:
 
 ```
 {
@@ -538,8 +544,10 @@ accesses to it:
 }
 ```
 
-If ownership were shared among multiple references, deallocation would be
-ambiguous since owners could be in different scopes:
+Ownership transfer ensures that rule 1 is preserved.
+If ownership were shared among multiple references, deallocation in rule 2
+would be ambiguous or cause a double free, since owners could be in different
+scopes:
 
 ```
 {
@@ -547,7 +555,7 @@ ambiguous since owners could be in different scopes:
     {
         var y: List = x             -- `y` is the new owner
     }                               -- deallocate here?
-}                                   -- or here?
+}                                   -- or here or both?
 ```
 
 Ownership transfer is particularly important when the value must survive the
@@ -563,14 +571,32 @@ var l: List = build()       -- `l` is the new owner
 
 ## Borrowing
 
-Borrowing dynamically allocated values must also follow a set of rules:
+In many situations, transferring ownership is undesirable, such as when passing
+a value to a narrower scope for temporary manipulation:
 
 ```
+var l: List = build()   -- `l` is the owner
+... length(&l) ...      -- `l` is borrowed on call and unborrowed on return
+... l ...               -- `l` is still the owner
+
 func length: (&List -> _int) {
-    ...                 -- alias is destroyed on termination
+    ... -- use alias, which is destroyed on termination
 }
-var l: List = build()   -- original owner
-... length(&l) ...      -- borrow on call and unborrow on return
+```
+
+Rule 3 states that an alias cannot escape the scope of its owner:
+
+```
+func f: () -> &List {
+    var l: List = build()   -- `l` is the owner
+    return &l               -- error: cannot return alias to deallocated value
+}
+```
+
+If escaping an alias were allowed, it would refer to a value that would be
+deallocated from memory, resulting in a dangling reference.
+
+TODO: rule 5
 
 <!--
 
