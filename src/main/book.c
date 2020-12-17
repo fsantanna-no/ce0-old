@@ -133,17 +133,24 @@ const char _nat[] =
     "func lt: (&Nat,&Nat) -> Bool {\n"
     "    var x: &Nat = arg.1\n"
     "    var y: &Nat = arg.2\n"
-    "    if y.$Nat? {\n"
-    "        return False\n"
+    "    var tst: Bool = ?y.$Nat\n"
+    "    if tst {\n"
+    "        var b: Bool = False ()\n"
+    "        return b\n"
     "    } else {\n"
-    "        if x.$Nat? {\n"
-    "            return True\n"
+    "        var tst: Bool = ?x.$Nat\n"
+    "        if tst {\n"
+    "            var b: Bool = True ()\n"       // 20
+    "            return b\n"
     "        } else {\n"
-    "            return lt(x.Succ!, y.Succ!)\n"
+    "            var x_: &Nat = !x.Succ\n"
+    "            var y_: &Nat = !y.Succ\n"
+    "            var a : Bool = lt(x_,y_)\n"
+    "            return a\n"
     "        }\n"
     "    }\n"
     "}\n"
-    "\n"                                        // 23
+    "\n"                                        // 30
 #if 0
     "func lte: (Nat,Nat) -> Bool {\n"
     "    var x: Nat = arg.1\n"
@@ -151,7 +158,7 @@ const char _nat[] =
     "    return or(lt(x,y), eq(x,y))\n"
     "}\n"
     "\n"
-#endif
+//#endif
     "func add: (Nat,&Nat) -> Nat {\n"
     "    var x: Nat  = arg.1\n"
     "    var y: &Nat = arg.2\n"
@@ -203,6 +210,7 @@ const char _nat[] =
     "func eight: ()->Nat { return Succ(seven()) }\n"
     "func nine:  ()->Nat { return Succ(eight()) }\n"
     "func ten:   ()->Nat { return Succ(nine ()) }\n"
+#endif
 ;
 
 void chap_pre (void) {
@@ -210,7 +218,8 @@ void chap_pre (void) {
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "var n: (Nat,Nat) = ($Nat, Succ($Nat))\n"
+        "var a: Nat = Succ($Nat)\n"
+        "var n: (Nat,Nat) = ($Nat, a)\n"
         "call output(n)\n"
     );
     assert(all("($,Succ ($))\n", INP));
@@ -220,7 +229,10 @@ void chap_pre (void) {
     strcat (INP,
         "var x: Nat = $Nat\n"
         "var y: Nat = Succ($Nat)\n"
-        "call output(lt(&x,&y))\n"
+        "var x_: &Nat = &x\n"
+        "var y_: &Nat = &y\n"
+        "var l: Bool = lt(x_,y_)\n"
+        "call output(l)\n"
     );
     assert(all("True\n", INP));
 

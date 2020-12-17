@@ -1,3 +1,10 @@
+- Tirar &Exp0, ficar &var, voltar com DSIC pra Exp1
+- voltar para book
+    - programar um pouco mais
+    - trabalhar com desugar
+    - quanto estiver confortavel, voltar pro sugar
+    - ler sobre lifetimes
+
 - testar alias para discrs
 - f(g(x),2) ---> a=g(x) ; b=2 ; f(a,b)
 - verificar alias que sai de escopo e entao pode move novamente
