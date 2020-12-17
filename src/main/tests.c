@@ -1137,14 +1137,15 @@ void t_all (void) {
         "call output(y_)\n"
     ));
     assert(all(
-        "TODO",
+        "(ln 8, col 12): invalid return : cannot return alias to local \"l\" (ln 5)",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
         "func f: () -> &List {\n"
         "    var l: List = $List   -- `l` is the owner\n"
-        "    var l_: &List = &l\n"
-        "    return l_             -- error: cannot return alias to deallocated value\n"
+        "    var a: &List = &l\n"
+        "    var b: &List = a\n"
+        "    return b             -- error: cannot return alias to deallocated value\n"
         "}\n"
     ));
 #if 0   // TODO: set

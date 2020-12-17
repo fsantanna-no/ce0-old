@@ -12,7 +12,10 @@ int err_message (Tk tk, const char* v) {
     return 0;
 }
 
-Stmt* env_id_to_stmt (Env* env, const char* id) {
+Stmt* env_id_to_stmt (Env* env, const char* id, int* scope) {
+    if (scope != NULL) {
+        *scope = 0;
+    }
     while (env != NULL) {
         const char* cur = NULL;
         switch (env->stmt->sub) {
@@ -29,6 +32,9 @@ Stmt* env_id_to_stmt (Env* env, const char* id) {
                 assert(0 && "bug found");
         }
 //puts(cur);
+        if (scope!=NULL && !strcmp("arg",cur)) {
+            *scope = *scope + 1;
+        }
         if (cur!=NULL && !strcmp(id,cur)) {
             return env->stmt;
         }
@@ -38,7 +44,7 @@ Stmt* env_id_to_stmt (Env* env, const char* id) {
 }
 
 Stmt* env_stmt_to_func (Stmt* s) {
-    Stmt* arg = env_id_to_stmt(s->env, "arg");
+    Stmt* arg = env_id_to_stmt(s->env, "arg", NULL);
     assert(arg != NULL);
     Env* env = arg->env;
     while (env != NULL) {
@@ -91,7 +97,7 @@ Type* env_expr_to_type (Expr* e) { // static returns use env=NULL b/c no ids und
         }
 
         case EXPR_VAR: {
-            Stmt* s = env_id_to_stmt(e->env, e->Var.id.val.s);
+            Stmt* s = env_id_to_stmt(e->env, e->Var.id.val.s, NULL);
             assert(s != NULL);
             return (s->sub == STMT_VAR) ? &s->Var.type : &s->Func.type;
         }
@@ -123,7 +129,7 @@ Type* env_expr_to_type (Expr* e) { // static returns use env=NULL b/c no ids und
         case EXPR_CONS: {
             Tk tk;
             if (e->Cons.subtype.enu == TX_NIL) {
-                Stmt* user = env_id_to_stmt(e->env, e->Cons.subtype.val.s);
+                Stmt* user = env_id_to_stmt(e->env, e->Cons.subtype.val.s, NULL);
                 assert(user != NULL);
                 tk = user->User.id;
             } else {
@@ -155,7 +161,7 @@ Type* env_expr_to_type (Expr* e) { // static returns use env=NULL b/c no ids und
         case EXPR_DISC: {   // x.True
             Type* val = env_expr_to_type(e->Disc.val);
             assert(val->sub == TYPE_USER);
-            Stmt* decl = env_id_to_stmt(e->env, val->User.val.s);
+            Stmt* decl = env_id_to_stmt(e->env, val->User.val.s, NULL);
             assert(decl!=NULL && decl->sub==STMT_USER);
             for (int i=0; i<decl->User.size; i++) {
                 if (!strcmp(decl->User.vec[i].id.val.s, e->Disc.subtype.val.s)) {
@@ -188,7 +194,7 @@ Stmt* env_expr_to_type_to_user_stmt (Expr* e) {
     Type* tp = env_expr_to_type(e);
     assert(tp != NULL);
     if (tp->sub == TYPE_USER) {
-        Stmt* s = env_id_to_stmt(e->env, tp->User.val.s);
+        Stmt* s = env_id_to_stmt(e->env, tp->User.val.s, NULL);
         assert(s != NULL);
         return s;
     } else {
@@ -312,7 +318,7 @@ void set_envs (Stmt* S) {
 int check_undeclareds (Stmt* s) {
     int ft (Type* tp) {
         if (tp->sub == TYPE_USER) {
-            if (env_id_to_stmt(tp->env, tp->User.val.s) == NULL) {
+            if (env_id_to_stmt(tp->env, tp->User.val.s, NULL) == NULL) {
                 char err[512];
                 sprintf(err, "undeclared type \"%s\"", tp->User.val.s);
                 return err_message(tp->User, err);
@@ -325,7 +331,7 @@ int check_undeclareds (Stmt* s) {
     int fe (Expr* e) {
         switch (e->sub) {
             case EXPR_VAR: {
-                Stmt* decl = env_id_to_stmt(e->env, e->Var.id.val.s);
+                Stmt* decl = env_id_to_stmt(e->env, e->Var.id.val.s, NULL);
                 if (decl == NULL) {
                     char err[512];
                     sprintf(err, "undeclared variable \"%s\"", e->Var.id.val.s);
@@ -338,7 +344,7 @@ int check_undeclareds (Stmt* s) {
             case EXPR_CONS: {
                 Tk* sub = (e->sub==EXPR_DISC ? &e->Disc.subtype : (e->sub==EXPR_PRED ? &e->Pred.subtype : &e->Cons.subtype));
                 if (sub->enu == TX_NIL) {
-                    Stmt* decl = env_id_to_stmt(e->env, sub->val.s);
+                    Stmt* decl = env_id_to_stmt(e->env, sub->val.s, NULL);
                     if (decl == NULL) {
                         char err[512];
                         sprintf(err, "undeclared type \"%s\"", sub->val.s);
@@ -530,7 +536,7 @@ void set_vars_istx (Stmt* s) {
             case EXPR_VAR: {
                 Type* tp = env_expr_to_type(e);
                 if (tp->sub==TYPE_USER && !tp->isalias) {
-                    Stmt* user = env_id_to_stmt(e->env, tp->User.val.s);
+                    Stmt* user = env_id_to_stmt(e->env, tp->User.val.s, NULL);
                     if (user->User.isrec) {
                         e->Var.istx = 1;
                     }
@@ -582,7 +588,7 @@ int check_owner_alias (Stmt* S) {
             return 1;               // not user type
         }
 
-        Stmt* user = env_id_to_stmt(s1->env, s1->Var.type.User.val.s);
+        Stmt* user = env_id_to_stmt(s1->env, s1->Var.type.User.val.s, NULL);
         assert(user!=NULL && user->sub==STMT_USER);
         if (!user->User.isrec) {
             return 1;               // not recursive type
@@ -598,6 +604,9 @@ int check_owner_alias (Stmt* S) {
         Stack stack[256];
         int stack_n = 0;
 
+        Stmt* aliases[256] = { s1 }; // list of declarations that reach me, start with myself
+        int aliases_n = 1;           // if someneone points to theses, it also points to myself
+
         auto int fs2 (Stmt* s2);
         auto int fe2 (Expr* e2);
 
@@ -606,16 +615,75 @@ int check_owner_alias (Stmt* S) {
         // ... n ...                // check all accesses to it
 
         int fs2 (Stmt* s2) {
-            Stmt* decl = env_id_to_stmt(s2->env, s1->Var.id.val.s);
+            Stmt* decl = env_id_to_stmt(s2->env, s1->Var.id.val.s, NULL);
             if (decl!=NULL && decl==s1) {
                 // ok: s1 is still in scope
             } else {
                 return EXEC_HALT;           // no: s1 is not in scope
             }
 
+            // Rule 3
+            switch (s2->sub) {
+                case STMT_VAR: {
+                    // var s1: T = ...
+                    // var s2: &T = &y;      <-- if y reaches s1, so does s2
+                    if (s2->Var.type.isalias) {
+                        // get "var" being aliased
+                        Expr* var = NULL;
+                        if (s2->Var.init.sub == EXPR_ALIAS) {
+                            assert(s2->Var.init.Alias->sub == EXPR_VAR);
+                            var = s2->Var.init.Alias;
+                        } else if (s2->Var.init.sub == EXPR_VAR) {
+                            Type* tp = env_expr_to_type(&s2->Var.init);
+                            assert(tp->isalias);
+                            var = &s2->Var.init;
+                        }
+                        assert(var != NULL);
+
+                        decl = env_id_to_stmt(s2->env, var->Var.id.val.s, NULL);
+                        assert(decl != NULL);
+
+                        // check if y reaches s1
+                        // if reaches, include s2 in the list
+                        for (int i=0; i<aliases_n; i++) {
+                            if (aliases[i] == decl) {
+                                assert(aliases_n < 256);
+                                aliases[aliases_n++] = s2;
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                }
+                case STMT_RETURN: {
+                    Type* tp = env_expr_to_type(&s2->Return);
+                    if (tp->isalias) {
+                        assert(s2->Return.sub == EXPR_VAR);
+                        int scope;
+                        Stmt* decl = env_id_to_stmt(s2->env, s2->Return.Var.id.val.s, &scope);
+                        assert(decl != NULL);
+                        if (scope == 0) {
+                            for (int i=0; i<aliases_n; i++) {
+                                if (aliases[i] == decl) {
+                                    char err[1024];
+                                    sprintf(err, "invalid return : cannot return alias to local \"%s\" (ln %ld)",
+                                            s1->Var.id.val.s, s1->Var.id.lin);
+                                    err_message(s2->Return.Var.id, err);
+                                    return EXEC_ERROR;
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
+                default:
+                    break;
+            }
+
             if (s2->sub == STMT_BLOCK) {        // enter block: push state
                 stack[stack_n].s = s2->seqs[0];
                 stack[stack_n].state = state;
+                assert(stack_n < 256);
                 stack_n++;
             }
 
@@ -667,7 +735,7 @@ int check_owner_alias (Stmt* S) {
                     }
 
                     // ensure that EXPR_VAR is really same as STMT_VAR
-                    Stmt* decl = env_id_to_stmt(e2->env, e2->Var.id.val.s);
+                    Stmt* decl = env_id_to_stmt(e2->env, e2->Var.id.val.s, NULL);
                     assert(decl!=NULL && decl==s1);
 
                     // if already moved, it doesn't matter, any access is invalid
