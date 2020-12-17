@@ -516,7 +516,7 @@ var y: &List = &x    |
 The ownership and borrowing of dynamically allocated values must follow a set
 of rules:
 
-1. Every allocated constructor has a single owner. Not zero, not two or more.
+1. Every allocated constructor has a single owner at any given time. Not zero, not two or more.
     - The owner is a variable that lives in the stack and reaches the allocated value.
 2. When the owner goes out of scope, the allocated memory is automatically
    deallocated.

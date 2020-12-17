@@ -1125,6 +1125,19 @@ puts("-=-=-=-=-");
         "var y: Nat = x      -- error: transfer while borrow is active\n"
     ));
     assert(all(
+        "(ln 6, col 14): invalid transfer of \"x\" : active alias in scope (ln 5)",
+        "type rec Nat {\n"
+        "    Succ: Nat\n"
+        "}\n"
+        "var x: Nat = $Nat    -- owner\n"
+        "{\n"
+        "    var z: &Nat = &x -- borrow\n"
+        "}\n"
+        "var y: Nat = x       -- ok: borrow is inactive\n"
+        "var x_: &Nat = &x\n"
+        "call output(x_)\n"
+    ));
+    assert(all(
         "TODO",
         "type rec List {\n"
         "    Item: List\n"

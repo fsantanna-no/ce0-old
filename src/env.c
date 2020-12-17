@@ -590,7 +590,7 @@ int check_owner_alias (Stmt* S) {
 
         // var n: Nat = ...         // starting from each declaration
 
-        typedef enum { NONE, MOVED, BORROWED } State;
+        typedef enum { NONE, TRANSFERED, BORROWED } State;
         State state = NONE;
         Expr* e1 = NULL;
 
@@ -657,7 +657,7 @@ int check_owner_alias (Stmt* S) {
                     switch (state) {
                         case NONE:
                             break;
-                        case MOVED: {       // Rule 6
+                        case TRANSFERED: {  // Rule 6
                             assert(e1 != NULL);
                             char err[1024];
                             sprintf(err, "invalid access to \"%s\" : ownership was transferred (ln %ld)",
@@ -677,7 +677,7 @@ int check_owner_alias (Stmt* S) {
                         }
                     }
                     e1 = e2;
-                    state = (is_alias ? BORROWED : MOVED);
+                    state = (is_alias ? BORROWED : TRANSFERED);
 
                     if (is_alias) {
                         return EXEC_BREAK;      // do not visit EXPR_VAR again

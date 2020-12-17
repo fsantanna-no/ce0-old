@@ -1,5 +1,6 @@
 - f(g(x),2) ---> a=g(x) ; b=2 ; f(a,b)
-- verificar alias out of scope
+- verificar alias que sai de escopo e entao pode move novamente
+- verificar returno de alias p/ fora do escopo
 - refazer docs
 - clone
 - STMT_SET
