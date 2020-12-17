@@ -213,7 +213,7 @@ int parser_expr_1 (Expr* ret) {
 
     // EXPR_ALIAS
     } else if (accept('&')) {
-        if (!check(TX_LOWER)) {
+        if (!check(TX_LOWER) && !check(TK_ARG)) {
             return 0;
         }
         Expr* e = malloc(sizeof(Expr));

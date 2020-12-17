@@ -279,10 +279,13 @@ int exec1 (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe, int* fret) {
     return 0;
 }
 
-int exec (Stmt* s, F_Stmt fs, F_Expr fe) {      // 0=error, 1=success
+int exec (Stmt* s, F_Pre pre, F_Stmt fs, F_Expr fe) {      // 0=error, 1=success
     Exec_State est;
     exec_init(&est);
     while (1) {
+        if (pre) {
+            pre();
+        }
         int ret2;
         int ret1 = exec1(&est, s, fs, fe, &ret2);
         if (ret2 == 0) {            // user returned error

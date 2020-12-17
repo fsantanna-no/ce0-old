@@ -607,12 +607,21 @@ int check_owner_alias (Stmt* S) {
         Stmt* aliases[256] = { s1 }; // list of declarations that reach me, start with myself
         int aliases_n = 1;           // if someneone points to theses, it also points to myself
 
+        auto void pre (void);
         auto int fs2 (Stmt* s2);
         auto int fe2 (Expr* e2);
 
-        return exec(s1->seqs[1], fs2, fe2);
+        return exec(s1->seqs[1], pre, fs2, fe2);
 
         // ... n ...                // check all accesses to it
+
+        void pre (void) {
+            state = NONE;
+            e1 = NULL;
+            stack_n = 0;
+            aliases[0] = s1;
+            aliases_n = 1;
+        }
 
         int fs2 (Stmt* s2) {
             Stmt* decl = env_id_to_stmt(s2->env, s1->Var.id.val.s, NULL);
@@ -630,14 +639,28 @@ int check_owner_alias (Stmt* S) {
                     if (s2->Var.type.isalias) {
                         // get "var" being aliased
                         Expr* var = NULL;
-                        if (s2->Var.init.sub == EXPR_ALIAS) {
-                            assert(s2->Var.init.Alias->sub == EXPR_VAR);
-                            var = s2->Var.init.Alias;
-                        } else if (s2->Var.init.sub == EXPR_VAR) {
-                            Type* tp = env_expr_to_type(&s2->Var.init);
-                            assert(tp->isalias);
-                            var = &s2->Var.init;
+                        Type* tp = env_expr_to_type(&s2->Var.init);
+                        assert(tp->isalias);
+                        switch (s2->Var.init.sub) {
+                            case EXPR_ALIAS:
+                                var = s2->Var.init.Alias;
+                                assert(var->sub == EXPR_VAR);
+                                break;
+                            case EXPR_VAR:
+                                var = &s2->Var.init;
+                                break;
+                            case EXPR_INDEX:
+                                var = s2->Var.init.Index.tuple;
+                                assert(var->sub == EXPR_VAR);
+                                break;
+                            case EXPR_DISC:
+                                var = s2->Var.init.Disc.val;
+                                assert(var->sub == EXPR_VAR);
+                                break;
+                            default:
+                                break;  // assert below
                         }
+printf(">>> %ld\n", s2->tk.lin);
                         assert(var != NULL);
 
                         decl = env_id_to_stmt(s2->env, var->Var.id.val.s, NULL);
@@ -698,7 +721,7 @@ int check_owner_alias (Stmt* S) {
         }
 
         int fe2 (Expr* e2) {
-            int isalias = 0;
+            int isalias = env_expr_to_type(e2)->isalias;
             switch (e2->sub) {
                 case EXPR_UNIT:
                 case EXPR_NATIVE:
@@ -724,7 +747,6 @@ int check_owner_alias (Stmt* S) {
                     return fe2(e2->Pred.val);
 
                 case EXPR_ALIAS:
-                    isalias = 1;
                     e2 = e2->Alias;
                     assert(e2->sub == EXPR_VAR);
                     // continue to EXPR_VAR as an alias

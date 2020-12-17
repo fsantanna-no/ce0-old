@@ -130,7 +130,7 @@ const char _nat[] =
     "}\n"
     "\n"
 #endif
-    "func lt: (&Nat,&Nat) -> Bool {\n"
+    "func lt: (&Nat,&Nat) -> Bool {\n"          // 10
     "    var x: &Nat = arg.1\n"
     "    var y: &Nat = arg.2\n"
     "    var tst: Bool = ?y.$Nat\n"
@@ -158,59 +158,75 @@ const char _nat[] =
     "    return or(lt(x,y), eq(x,y))\n"
     "}\n"
     "\n"
-//#endif
+#endif
     "func add: (Nat,&Nat) -> Nat {\n"
     "    var x: Nat  = arg.1\n"
     "    var y: &Nat = arg.2\n"
-    "    if y.$Nat? {\n"
+    "    var tst: Bool = ?y.$Nat\n"
+    "    if tst {\n"
     "        return x\n"
     "    } else {\n"
-    "        return Succ(add(x,y.Succ!))\n"     // 30
+    "        var a: &Nat = !y.Succ\n"
+    "        var b: Nat = add(x,a)\n"
+    "        var c: Nat = Succ(b)\n"            // 40
+    "        return c\n"
     "    }\n"
     "}\n"
     "\n"
     "func sub: (Nat,Nat) -> Nat {\n"
     "    var x: Nat = arg.1\n"
     "    var y: Nat = arg.2\n"
-    "    if y.$Nat? {\n"
-    "        return x\n"
+    "    var tst: Bool = ?y.$Nat\n"
+    "    if tst {\n"
+    "        return x\n"                        // 50
     "    } else {\n"
-    "        return sub(x.Succ!,y.Succ!)\n"     // 40
+    "        var a: Nat = !x.Succ\n"
+    "        var b: Nat = !y.Succ\n"
+    "        var c: Nat = sub(a,b)\n"
+    "        return c\n"
     "    }\n"
     "}\n"
     "\n"
     "func mul: (&Nat,&Nat) -> Nat {\n"
-    "    var x: &Nat = arg.1\n"
+    "    var x: &Nat = arg.1\n"                 // 60
     "    var y: &Nat = arg.2\n"
-    "    if y.$Nat? {\n"
-    "        return $Nat\n"
+    "    var tst: Bool = ?y.$Nat\n"
+    "    if tst {\n"
+    "        var a:Nat = $Nat\n"
+    "        return a\n"
     "    } else {\n"
-    "        var z: Nat = mul(x,y.Succ!)\n"    // 50
-    "        return add(z,x)\n"                         // x ja foi consumido: dar erro
+    "        var a: &Nat = !y.Succ\n"
+    "        var z: Nat = mul(x,a)\n"
+    "        var b: Nat = add(z,x)\n"   // x ja foi consumido: dar erro
+    "        return b\n"                // x ja foi consumido: dar erro // 70
     "    }\n"
     "}\n"
     "\n"
     "func rem: (Nat,Nat) -> Nat {\n"
     "    var x: Nat = arg.1\n"
     "    var y: Nat = arg.2\n"
-    "    if lt(&x,&y) {\n"
+    "    var x_: &Nat = &x\n"
+    "    var y_: &Nat = &y\n"
+    "    var tst: Bool = lt(x_,y_)\n"
+    "    if tst {\n"                            // 80
     "        return x\n"
-    "    } else {\n"                            // 60
-    "        return rem(sub(x,y),y)\n"
+    "    } else {\n"
+    "        var a: Nat = sub(x,y)\n"
+    "        var b: Nat = rem(a,y)\n"
+    "        return b\n"
     "    }\n"
     "}\n"
     "\n"
-    "func one:   ()->Nat { return Succ($Nat) }\n"
-    "func two:   ()->Nat { return Succ(one  ()) }\n"
-    "func three: ()->Nat { return Succ(two  ()) }\n"
-    "func four:  ()->Nat { return Succ(three()) }\n"
-    "func five:  ()->Nat { return Succ(four ()) }\n"
-    "func six:   ()->Nat { return Succ(five ()) }\n"
-    "func seven: ()->Nat { return Succ(six  ()) }\n"
-    "func eight: ()->Nat { return Succ(seven()) }\n"
-    "func nine:  ()->Nat { return Succ(eight()) }\n"
-    "func ten:   ()->Nat { return Succ(nine ()) }\n"
-#endif
+    "func one:   ()->Nat { var a:Nat=Succ($Nat) ; return a }\n"
+    "func two:   ()->Nat { var a:Nat=one()   ; var b:Nat=Succ(a) ; return b }\n"    // 90
+    "func three: ()->Nat { var a:Nat=two()   ; var b:Nat=Succ(a) ; return b }\n"
+    "func four:  ()->Nat { var a:Nat=three() ; var b:Nat=Succ(a) ; return b }\n"
+    "func five:  ()->Nat { var a:Nat=four()  ; var b:Nat=Succ(a) ; return b }\n"
+    "func six:   ()->Nat { var a:Nat=five()  ; var b:Nat=Succ(a) ; return b }\n"    // 50
+    "func seven: ()->Nat { var a:Nat=six()   ; var b:Nat=Succ(a) ; return b }\n"
+    "func eight: ()->Nat { var a:Nat=seven() ; var b:Nat=Succ(a) ; return b }\n"
+    "func nine:  ()->Nat { var a:Nat=eight() ; var b:Nat=Succ(a) ; return b }\n"
+    "func ten:   ()->Nat { var a:Nat=nine()  ; var b:Nat=Succ(a) ; return b }\n"    // 98
 ;
 
 void chap_pre (void) {
@@ -241,7 +257,8 @@ void chap_pre (void) {
     strcat (INP,
         "var x: Nat = $Nat\n"
         "var y: Nat = Succ($Nat)\n"
-        "var z: Nat = add(x,&y)\n"
+        "var y_: &Nat = &y\n"
+        "var z: Nat = add(x,y_)\n"
         "call output(z)\n"
     );
     assert(all("Succ ($)\n", INP));
@@ -251,7 +268,8 @@ void chap_pre (void) {
     strcat (INP,
         "var x: Nat = Succ($Nat)\n"
         "var y: Nat = $Nat\n"
-        "var z: Nat = add(x,&y)\n"
+        "var y_: &Nat = &y\n"
+        "var z: Nat = add(x,y_)\n"
         "call output(z)\n"
     );
     assert(all("Succ ($)\n", INP));
@@ -261,7 +279,8 @@ void chap_pre (void) {
     strcat (INP,
         "var x: Nat = two()\n"
         "var y: Nat = three()\n"
-        "var z: Nat = add(x,&y)\n"
+        "var y_: &Nat = &y\n"
+        "var z: Nat = add(x,y_)\n"
         "call output(z)\n"
     );
     assert(all("Succ (Succ (Succ (Succ (Succ ($)))))\n", INP));
@@ -271,7 +290,9 @@ void chap_pre (void) {
     strcat (INP,
         "var tw: Nat = two()\n"
         "var th: Nat = three()\n"
-        "var n: Nat = mul(&tw,&th)\n"
+        "var tw_: &Nat = &tw\n"
+        "var th_: &Nat = &th\n"
+        "var n: Nat = mul(tw_,th_)\n"
         "call output(n)\n"
     );
     assert(all("Succ (Succ (Succ (Succ (Succ (Succ ($))))))\n", INP));
@@ -279,7 +300,9 @@ void chap_pre (void) {
     strcpy(INP, _bool);
     strcat(INP, _nat);
     strcat (INP,
-        "var n: Nat = rem(two(),three())\n"
+        "var a: Nat = two()\n"
+        "var b: Nat = three()\n"
+        "var n: Nat = rem(a,b)\n"
         "call output(n)\n"
     );
     assert(all("Succ (Succ ($))\n", INP));
@@ -293,10 +316,13 @@ void chap_01 (void) {           // pg 1
     strcat(INP, _nat);
     strcat (INP,
         "func square: Nat -> Nat {\n"
-        "    return mul(&arg,&arg)\n"
+        "    var a: &Nat = &arg\n"
+        "    var b: Nat = mul(a,a)\n"
+        "    return b\n"
         "}\n"
-        "var n: Nat = square(two())\n"
-        "call output(n)\n"
+        "var a: Nat = two()\n"
+        "var b: Nat = square(a)\n"
+        "call output(b)\n"
     );
     assert(all("Succ (Succ (Succ (Succ ($))))\n", INP));
 
@@ -307,7 +333,8 @@ void chap_01 (void) {           // pg 1
         "func smaller: (&Nat,&Nat) -> &Nat {\n"
         "    var x: &Nat = arg.1\n"
         "    var y: &Nat = arg.2\n"
-        "    if lt(x,y) {\n"
+        "    var tst: Bool = lt(x,y)\n"
+        "    if tst {\n"
         "        return x\n"
         "    } else {\n"
         "        return y\n"
@@ -317,7 +344,13 @@ void chap_01 (void) {           // pg 1
         "var four_: Nat = four()\n"
         "var ten_ : Nat = ten()\n"
         "var five_: Nat = five()\n"
-        "var n: Nat = add (smaller(&ten_,&five_), smaller(&one_,&four_))\n"
+        "var c: &Nat = &ten_\n"
+        "var d: &Nat = &five_\n"
+        "var a: &Nat = smaller(c,d)\n"
+        "var e: &Nat = &one_\n"
+        "var f: &Nat = &four_\n"
+        "var b: &Nat = smaller(e,f)\n"
+        "var n: Nat = add (a, b)\n"
         "call output(n)\n"
     );
     assert(all("Succ (Succ (Succ (Succ (Succ (Succ ($))))))\n", INP));
