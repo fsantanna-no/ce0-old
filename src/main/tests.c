@@ -830,13 +830,14 @@ void t_all (void) {
         "()\n",
         "type Bool { False: () ; True: () }\n"
         "var b : Bool = True()\n"
-        "call output(!b.True)\n"
+        "var u : () = !b.True\n"
+        "call output(u)\n"
     ));
     assert(all(
         "",     // ERROR
         "type Bool { False: () ; True: () }\n"
         "var b : Bool = True()\n"
-        "call output(!b.False)\n"
+        "var u : () = !b.False\n"
     ));
     // FUNC
     assert(all(

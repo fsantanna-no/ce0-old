@@ -174,32 +174,6 @@ int parser_expr_0 (Expr* ret, int isnested) {
 
         *ret = (Expr) { _N_++, EXPR_CONS, NULL, { .Cons={sub,arg} } };
 
-    // EXPR_DISC
-    } else if (accept('!')) {
-        if (!accept(TK_ARG) && !accept_err(TX_LOWER)) {
-            return 0;
-        }
-        Tk tk_val = ALL.tk0;
-        if (!accept_err('.')) {
-            return 0;
-        }
-        if (!accept('$') && !accept_err(TX_UPPER)) {
-            return 0;
-        }
-        if (ALL.tk0.enu == '$') {
-            if (!accept_err(TX_UPPER)) {
-                return 0;
-            }
-            ALL.tk0.enu = TX_NIL;   // TODO: move to lexer
-        }
-        Tk tk_sub = ALL.tk0;
-
-        Expr* val = malloc(sizeof(Expr));
-        assert(val != NULL);
-        *val = (Expr) { _N_++, EXPR_VAR, NULL, .Var={tk_val,0} };
-
-        *ret = (Expr) { _N_++, EXPR_DISC, NULL, .Disc={val,tk_sub} };
-
     } else {
         return err_expected("simple expression");
     }
@@ -239,12 +213,27 @@ int parser_expr_1 (Expr* ret) {
 
     // EXPR_ALIAS
     } else if (accept('&')) {
+        if (!check(TX_LOWER)) {
+            return 0;
+        }
         Expr* e = malloc(sizeof(Expr));
         assert(e != NULL);
         if (!parser_expr_0(e, 0)) {
             return 0;
         }
         *ret = (Expr) { _N_++, EXPR_ALIAS, .Alias=e };
+
+    // EXPR_CONS
+    } else if (accept(TX_UPPER)) {  // True, $Nat
+        Tk sub = ALL.tk0;
+
+        Expr* arg = malloc(sizeof(Expr));
+        assert(arg != NULL);
+        if (!parser_expr_0(arg, 0)) {   // ()
+            return 0;
+        }
+
+        *ret = (Expr) { _N_++, EXPR_CONS, NULL, { .Cons={sub,arg} } };
 
     // EXPR_PRED
     } else if (accept('?')) {
@@ -272,17 +261,31 @@ int parser_expr_1 (Expr* ret) {
 
         *ret = (Expr) { _N_++, EXPR_PRED, NULL, .Disc={val,tk_sub} };
 
-    // EXPR_CONS
-    } else if (accept(TX_UPPER)) {  // True, $Nat
-        Tk sub = ALL.tk0;
-
-        Expr* arg = malloc(sizeof(Expr));
-        assert(arg != NULL);
-        if (!parser_expr_0(arg, 0)) {   // ()
+    // EXPR_DISC
+    } else if (accept('!')) {
+        if (!accept(TK_ARG) && !accept_err(TX_LOWER)) {
             return 0;
         }
+        Tk tk_val = ALL.tk0;
+        if (!accept_err('.')) {
+            return 0;
+        }
+        if (!accept('$') && !accept_err(TX_UPPER)) {
+            return 0;
+        }
+        if (ALL.tk0.enu == '$') {
+            if (!accept_err(TX_UPPER)) {
+                return 0;
+            }
+            ALL.tk0.enu = TX_NIL;   // TODO: move to lexer
+        }
+        Tk tk_sub = ALL.tk0;
 
-        *ret = (Expr) { _N_++, EXPR_CONS, NULL, { .Cons={sub,arg} } };
+        Expr* val = malloc(sizeof(Expr));
+        assert(val != NULL);
+        *val = (Expr) { _N_++, EXPR_VAR, NULL, .Var={tk_val,0} };
+
+        *ret = (Expr) { _N_++, EXPR_DISC, NULL, .Disc={val,tk_sub} };
 
     } else {
         return 0;

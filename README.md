@@ -376,13 +376,13 @@ Exp0 ::= `(´ `)´                        -- unit value               ()
       |  `arg´                          -- function argument        arg
       |  VAR                            -- variable identifier      i
       |  `$´ USER                       -- null constructor         $List
-      |  `!´ VAR `.´ [`$´] USER         -- discriminator            !x.True
 
-Exp1 ::= `&´ Exp0                       -- alias                    &x
+Exp1 ::= `&´ VAR                        -- alias                    &x
       |  VAR `.´ NUM                    -- tuple index              x.1
       |  (VAR | NATIVE) `(´ Exp0 `)´    -- call                     f(x)
-      |  `?´ VAR `.´ [`$´] USER         -- predicate                ?x.False
       |  USER `(´ Exp0 `)´              -- constructor              True ()
+      |  `?´ VAR `.´ [`$´] USER         -- predicate                ?x.False
+      |  `!´ VAR `.´ [`$´] USER         -- discriminator            !x.True
 
 Type ::= `(´ `)´                        -- unit                     ()
       |  NATIVE                         -- native type              _char
