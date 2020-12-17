@@ -328,7 +328,7 @@ int parser_stmt (Stmt* ret) {
         }
 
         if (!accept_err('}')) { return 0; }
-        *ret = (Stmt) { _N_++, STMT_BLOCK, NULL, NULL, tk, .Block=blk };
+        *ret = (Stmt) { _N_++, STMT_BLOCK, NULL, {NULL,NULL}, tk, .Block=blk };
         return 1;
     }
 
@@ -354,7 +354,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_expr_1(&e)) {
             return 0;
         }
-        *ret = (Stmt) { _N_++, STMT_VAR, NULL, NULL, tk, .Var={id,tp,e} };
+        *ret = (Stmt) { _N_++, STMT_VAR, NULL, {NULL,NULL}, tk, .Var={id,tp,e} };
 
     // STMT_USER
     } else if (accept(TK_TYPE)) {       // type
@@ -396,7 +396,7 @@ int parser_stmt (Stmt* ret) {
             return 0;
         }
 
-        *ret = (Stmt) { _N_++, STMT_USER, NULL, NULL, tk, .User={isrec,id,n,vec} };
+        *ret = (Stmt) { _N_++, STMT_USER, NULL, {NULL,NULL}, tk, .User={isrec,id,n,vec} };
 
     // STMT_CALL
     } else if (accept(TK_CALL)) {
@@ -411,7 +411,7 @@ int parser_stmt (Stmt* ret) {
                 tk.lin, tk.col, lexer_tk2str(&tk));
             return 0;
         }
-        *ret = (Stmt) { _N_++, STMT_CALL, NULL, NULL, tk, .Call=e };
+        *ret = (Stmt) { _N_++, STMT_CALL, NULL, {NULL,NULL}, tk, .Call=e };
 
     // STMT_IF
     } else if (accept(TK_IF)) {         // if
@@ -438,11 +438,11 @@ int parser_stmt (Stmt* ret) {
         } else {
             Stmt* seq = malloc(sizeof(Stmt));
             assert(seq != NULL);
-            *seq = (Stmt) { _N_++, STMT_SEQ,   NULL, NULL, ALL.tk0, .Seq={0,NULL} };
-            *f   = (Stmt) { _N_++, STMT_BLOCK, NULL, NULL, ALL.tk0, .Block=seq };
+            *seq = (Stmt) { _N_++, STMT_SEQ,   NULL, {NULL,NULL}, ALL.tk0, .Seq={0,NULL} };
+            *f   = (Stmt) { _N_++, STMT_BLOCK, NULL, {NULL,NULL}, ALL.tk0, .Block=seq };
         }
 
-        *ret = (Stmt) { _N_++, STMT_IF, NULL, NULL, tk, .If={e,t,f} };
+        *ret = (Stmt) { _N_++, STMT_IF, NULL, {NULL,NULL}, tk, .If={e,t,f} };
 
     // STMT_FUNC
     } else if (accept(TK_FUNC)) {   // func
@@ -465,7 +465,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_block(s)) {
             return 0;
         }
-        *ret = (Stmt) { _N_++, STMT_FUNC, NULL, NULL, tk, .Func={id,tp,s} };
+        *ret = (Stmt) { _N_++, STMT_FUNC, NULL, {NULL,NULL}, tk, .Func={id,tp,s} };
 
     // STMT_RETURN
     } else if (accept(TK_RETURN)) {
@@ -474,7 +474,7 @@ int parser_stmt (Stmt* ret) {
         if (!parser_expr_0(&e, 0)) {
             return 0;
         }
-        *ret = (Stmt) { _N_++, STMT_RETURN, NULL, NULL, tk, .Return=e };
+        *ret = (Stmt) { _N_++, STMT_RETURN, NULL, {NULL,NULL}, tk, .Return=e };
 
     // STMT_BLOCK
     } else if (check('{')) {
@@ -507,37 +507,39 @@ int parser_stmts (TK opt, Stmt* ret) {
         accept(';');    // optional
     }
 
-    *ret = (Stmt) { _N_++, STMT_SEQ, NULL, NULL, ALL.tk0, { .Seq={n,vec} } };
+    *ret = (Stmt) { _N_++, STMT_SEQ, NULL, {NULL,NULL}, ALL.tk0, { .Seq={n,vec} } };
 
-    // STMT_SEQ.seq of its children
+    // STMT_SEQ.seqs of its children
 
-    void set_seq (Stmt* prv, Stmt* nxt) {
-        switch (prv->sub) {
+    void set_seq (Stmt* cur, Stmt* nxt) {
+        cur->seqs[0] = nxt;
+        switch (cur->sub) {
             case STMT_IF:
-                set_seq(prv->If.true, nxt);
-                set_seq(prv->If.false, nxt);
-                prv->seq = NULL; // undetermined: user code has to determine
+                set_seq(cur->If.true, nxt);
+                set_seq(cur->If.false, nxt);
+                cur->seqs[1] = NULL; // undetermined: user code has to determine
                 break;
             case STMT_SEQ:
-                if (prv->Seq.size == 0) {
-                    prv->seq = nxt;                 // Stmt -> nxt
+                if (cur->Seq.size == 0) {
+                    cur->seqs[1] = nxt;                             // Stmt -> nxt
                 } else {
-                    prv->seq = &prv->Seq.vec[0];    // Stmt -> Stmt[0]
+                    cur->seqs[1] = &cur->Seq.vec[0];                // Stmt    -> Stmt[0]
+                    cur->Seq.vec[cur->Seq.size-1].seqs[1] = nxt;    // Stmt[n] -> nxt
                 }
                 break;
             case STMT_BLOCK:
-                set_seq(prv->Block, nxt);
-                prv->seq = prv->Block;
+                set_seq(cur->Block, nxt);
+                cur->seqs[1] = cur->Block;
                 break;
             default:
-                prv->seq = nxt;
+                cur->seqs[1] = nxt;
         }
     }
 
     for (int i=0; i<ret->Seq.size-1; i++) {
-        Stmt* prv = &ret->Seq.vec[i];
+        Stmt* cur = &ret->Seq.vec[i];
         Stmt* nxt = &ret->Seq.vec[i+1];
-        set_seq(prv, nxt);                          // Stmt[i] -> Stmt[i+1]
+        set_seq(cur, nxt);                          // Stmt[i] -> Stmt[i+1]
     }
 
     return 1;

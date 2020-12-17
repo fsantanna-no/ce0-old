@@ -219,7 +219,7 @@ void set_envs (Stmt* S) {
     {
         static Type alias = { TYPE_USER, NULL, 0, .User={TK_ERR,{},0,0} };
         static Stmt s_out = {
-            0, STMT_VAR, NULL, NULL,
+            0, STMT_VAR, NULL, {NULL,NULL},
             .Var={ {TX_LOWER,{.s="output"},0,0},
                    {TYPE_FUNC,NULL,.Func={&alias,&Type_Unit}},{EXPR_UNIT} }
         };
@@ -286,7 +286,7 @@ void set_envs (Stmt* S) {
                 {
                     Stmt* arg = malloc(sizeof(Stmt));
                     *arg = (Stmt) {
-                        0, STMT_VAR, env, s->Func.body,
+                        0, STMT_VAR, env, {s->Func.body,s->Func.body},
                         .Var={ {TX_LOWER,{.s="arg"},0,0},*s->Func.type.Func.inp,{0,EXPR_UNIT,env,{}} }
                     };
                     Env* new = malloc(sizeof(Env));
@@ -590,28 +590,47 @@ int check_owner_alias (Stmt* S) {
 
         // var n: Nat = ...         // starting from each declaration
 
-        typedef enum { NONE, TRANSFERED, BORROWED } State;
+        typedef enum { NONE, TRANSFERRED, BORROWED } State;
         State state = NONE;
         Expr* e1 = NULL;
+
+        typedef struct { Stmt* s; int state; } Stack;
+        Stack stack[256];
+        int stack_n = 0;
 
         auto int fs2 (Stmt* s2);
         auto int fe2 (Expr* e2);
 
-        return exec(s1->seq, fs2, fe2);
+        return exec(s1->seqs[1], fs2, fe2);
 
         // ... n ...                // check all accesses to it
 
         int fs2 (Stmt* s2) {
             Stmt* decl = env_id_to_stmt(s2->env, s1->Var.id.val.s);
             if (decl!=NULL && decl==s1) {
-                return EXEC_CONTINUE;       // ok: s1 is still in scope
+                // ok: s1 is still in scope
             } else {
                 return EXEC_HALT;           // no: s1 is not in scope
             }
+
+            if (s2->sub == STMT_BLOCK) {        // enter block: push state
+                stack[stack_n].s = s2->seqs[0];
+                stack[stack_n].state = state;
+                stack_n++;
+            }
+
+            if (s2 == stack[stack_n-1].s) {
+                stack_n--;
+                if (state != TRANSFERRED) {
+                    state = stack[stack_n].state;   // leave block: pop state
+                }
+            }
+
+            return EXEC_CONTINUE;
         }
 
         int fe2 (Expr* e2) {
-            int is_alias = 0;
+            int isalias = 0;
             switch (e2->sub) {
                 case EXPR_UNIT:
                 case EXPR_NATIVE:
@@ -637,7 +656,7 @@ int check_owner_alias (Stmt* S) {
                     return fe2(e2->Pred.val);
 
                 case EXPR_ALIAS:
-                    is_alias = 1;
+                    isalias = 1;
                     e2 = e2->Alias;
                     assert(e2->sub == EXPR_VAR);
                     // continue to EXPR_VAR as an alias
@@ -652,12 +671,11 @@ int check_owner_alias (Stmt* S) {
                     assert(decl!=NULL && decl==s1);
 
                     // if already moved, it doesn't matter, any access is invalid
-//printf(">>> [%ld] %s isalias=%d state=%d\n", e2->Var.id.lin, e2->Var.id.val.s, is_alias, state);
 
                     switch (state) {
                         case NONE:
                             break;
-                        case TRANSFERED: {  // Rule 6
+                        case TRANSFERRED: {  // Rule 6
                             assert(e1 != NULL);
                             char err[1024];
                             sprintf(err, "invalid access to \"%s\" : ownership was transferred (ln %ld)",
@@ -667,7 +685,7 @@ int check_owner_alias (Stmt* S) {
                         }
                         case BORROWED: {    // Rule 5
                             assert(e1 != NULL);
-                            if (!is_alias) {
+                            if (!isalias) {
                                 char err[1024];
                                 sprintf(err, "invalid transfer of \"%s\" : active alias in scope (ln %ld)",
                                         e2->Var.id.val.s, e1->Var.id.lin);
@@ -677,11 +695,12 @@ int check_owner_alias (Stmt* S) {
                         }
                     }
                     e1 = e2;
-                    state = (is_alias ? BORROWED : TRANSFERED);
-
-                    if (is_alias) {
+                    if (isalias) {
+                        assert(state != TRANSFERRED && "bug found");
+                        state = BORROWED;
                         return EXEC_BREAK;      // do not visit EXPR_VAR again
                     } else {
+                        state = TRANSFERRED;
                         return EXEC_CONTINUE;
                     }
             }

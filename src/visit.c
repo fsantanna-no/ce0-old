@@ -142,7 +142,7 @@ int exec_expr (Exec_State* est, Expr* e, F_Expr fe) {
             case EXEC_CONTINUE:         // continue to children
                 break;
             case EXEC_BREAK:            // continue skip children
-                return EXEC_CONTINUE;
+                return 1;
             case EXEC_HALT:             // no error stop all
                 return EXEC_HALT;
         }
@@ -199,13 +199,15 @@ int exec_stmt (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe) {
             }
         }
 
-        int ret;
+        int ret = EXEC_CONTINUE;
         switch (s->sub) {
             case STMT_USER:
             case STMT_SEQ:
             case STMT_BLOCK:
             case STMT_FUNC:
+                break;
             case STMT_IF:   // handle in separate b/c of if/else
+                ret = exec_expr(est,&s->If.cond,fe);
                 break;
             case STMT_VAR:
                 ret = exec_expr(est, &s->Var.init, fe);
@@ -218,17 +220,16 @@ int exec_stmt (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe) {
                 ret = exec_expr(est, &s->Return, fe);
                 break;
         }
-        if (s->sub != STMT_IF) {
-            if (ret != EXEC_CONTINUE) {
-                return ret;
-            };
-            s = s->seq;
-        } else {
-            int ret = exec_expr(est,&s->If.cond,fe);
-            if (ret != EXEC_CONTINUE) {
-                return ret;
-            };
 
+        if (ret != EXEC_CONTINUE) {
+            return ret;
+        }
+
+        // PATH
+
+        if (s->sub != STMT_IF) {
+            s = s->seqs[1];
+        } else {   // STMT_IF
             // ainda nao explorei esse galho
             if (est->cur == est->size) {
                 est->cur++;

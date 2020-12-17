@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DEBUG
+//#define DEBUG
 
 #include "../all.h"
 
@@ -1068,7 +1068,6 @@ void t_all (void) {
         "var y_: &Nat = &y\n"
         "call output(y_)\n"
     ));
-puts("-=-=-=-=-");
     assert(all(
         "Succ (Succ (Succ ($)))\n",
         "type Bool {\n"
@@ -1125,17 +1124,17 @@ puts("-=-=-=-=-");
         "var y: Nat = x      -- error: transfer while borrow is active\n"
     ));
     assert(all(
-        "(ln 6, col 14): invalid transfer of \"x\" : active alias in scope (ln 5)",
+        "Succ ($)\n",
         "type rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
-        "var x: Nat = $Nat    -- owner\n"
+        "var x: Nat = Succ($Nat)    -- owner\n"
         "{\n"
         "    var z: &Nat = &x -- borrow\n"
         "}\n"
         "var y: Nat = x       -- ok: borrow is inactive\n"
-        "var x_: &Nat = &x\n"
-        "call output(x_)\n"
+        "var y_: &Nat = &y\n"
+        "call output(y_)\n"
     ));
     assert(all(
         "TODO",
