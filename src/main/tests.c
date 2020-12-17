@@ -288,7 +288,6 @@ void t_parser_expr (void) {
         assert(e.sub == EXPR_VAR); assert(!strcmp(e.Var.id.val.s,"x"));
         fclose(ALL.inp);
     }
-#if 0
     // EXPR_NATIVE
     {
         all_init(NULL, stropen("r", 0, "_x"));
@@ -297,7 +296,6 @@ void t_parser_expr (void) {
         assert(e.sub == EXPR_NATIVE); assert(!strcmp(e.Nat.val.s,"x"));
         fclose(ALL.inp);
     }
-#endif
     // EXPR_TUPLE
     {
         all_init(NULL, stropen("r", 0, "((),x,"));
@@ -504,7 +502,6 @@ void t_parser_stmt (void) {
         assert(!strcmp(s.Call.Call.func->Var.id.val.s,"f"));
         fclose(ALL.inp);
     }
-#if 0
     {
         all_init(NULL, stropen("r", 0, "call _printf()"));
         Stmt s;
@@ -515,7 +512,6 @@ void t_parser_stmt (void) {
         assert(!strcmp(s.Call.Call.func->Nat.val.s,"printf"));
         fclose(ALL.inp);
     }
-#endif
     {
         all_init(NULL, stropen("r", 0, "call f() ; call g()"));
         Stmt s;
@@ -728,24 +724,16 @@ void t_all (void) {
         "call output x\n"
     ));
     // NATIVE
-#if 0
     assert(all(
         "A",
         "var x: _char = _65\n"
-        "call _putchar(x)\n"
+        "call _putchar x\n"
     ));
     assert(all(
         "()\n",
-        "var x: ((),()) = (((),()))\n"
+        "var x: ((),()) = ((),())\n"
         "var y: () = x.1\n"
-        "call _output_Unit(y)\n"
-    ));
-    assert(all(
-        "(ln 1, col 30): unexpected `,´ : cannot nest tuple expressions",
-        "var x: ((),((),())) = ((),((),()))\n"
-        "var y: ((),()) = x.2\n"
-        "var z: () = y.2\n"
-        "call _output_Unit(z)\n"
+        "call _output_Unit y\n"
     ));
     assert(all(
         "()\n",
@@ -753,9 +741,16 @@ void t_all (void) {
         "var x: ((),((),())) = ((),v)\n"
         "var y: ((),()) = x.2\n"
         "var z: () = y.2\n"
-        "call _output_Unit(z)\n"
+        "call _output_Unit z\n"
     ));
-#endif
+    assert(all(
+        "()\n",
+        "var v: ((),()) = ((),())\n"
+        "var x: ((),((),())) = ((),v)\n"
+        "var y: ((),()) = x.2\n"
+        "var z: () = y.2\n"
+        "call _output_Unit z\n"
+    ));
     // OUTPUT
     assert(all(
         "()\n",

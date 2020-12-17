@@ -208,7 +208,7 @@ int parser_expr_1 (Expr* ret) {
         *ret = (Expr) { _N_++, EXPR_CONS, NULL, { .Cons={subtype,arg} } };
 
 // EXPR_INDEX / EXPR_PRED / EXPR_DISC / EXPR_CALL
-    } else if (check(TX_LOWER)) {
+    } else if (check(TX_LOWER) || check(TX_NATIVE)) {
         assert(parser_expr_0(ret));
 
 // EXPR_INDEX / EXPR_PRED / EXPR_DISC

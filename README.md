@@ -381,18 +381,20 @@ Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: ()
 -- mudar EXPR_*/STMT_* simplificar onde nao precisa de ptr
 
 Exp0 ::= `(´ `)´                        -- unit value               ()
+      |  NATIVE                         -- native expression        _printf
       |  VAR                            -- variable identifier      i
       |  `$´ USER                       -- null constructor         $List
 
 Exp1 ::= `&´ VAR                        -- alias                    &x
       |  `(´ Exp0 {`,´ Exp0} `)´        -- tuple                    (x,())
       |  USER Exp0                      -- constructor              True ()
-      |  VAR Exp0                       -- call                     f x
+      |  (VAR|NATIVE) Exp0              -- call                     f x
       |  VAR `.´ NUM                    -- tuple index              x.1
       |  VAR `.´ [`$´] USER `?´         -- predicate                x.False?
       |  VAR `.´ [`$´] USER `!´         -- discriminator            x.True!
 
 Type ::= `(´ `)´                        -- unit                     ()
+      |  NATIVE                         -- native type              _char
       |  USER                           -- user type                Bool
       |  `(´ Type {`,´ Type} `)´        -- tuple                    ((),())
       |  Type `->´ Type                 -- function                 () -> ()
