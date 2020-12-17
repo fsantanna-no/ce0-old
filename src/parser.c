@@ -3,7 +3,7 @@
 
 #include "all.h"
 
-int _N_ = 1;    // TODO: see env.c _N_=0
+int _N_ = 2;    // TODO: see env.c _N_
 
 int err_expected (const char* v) {
     sprintf(ALL.err, "(ln %ld, col %ld): expected %s : have %s",
@@ -113,51 +113,20 @@ int parser_type (Type* ret) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int parser_expr_0 (Expr* ret, int isnested) {
+int parser_expr_0 (Expr* ret) {
     // EXPR_UNIT
     if (accept('(')) {
-        if (accept(')')) {
-            *ret = (Expr) { _N_++, EXPR_UNIT, NULL };
-        } else {
-            if (!parser_expr_0(ret, 0)) {
-                return 0;
-            }
-
-    // EXPR_TUPLE
-            if (check(',')) {
-                if (isnested) {
-                    return err_unexpected("cannot nest tuple expressions");
-                }
-                int n = 1;
-                Expr* vec = malloc(n*sizeof(Expr));
-                assert(vec != NULL);
-                vec[n-1] = *ret;
-                while (accept(',')) {
-                    Expr e;
-                    if (!parser_expr_0(&e, 1)) {
-                        return 0;
-                    }
-                    n++;
-                    vec = realloc(vec, n*sizeof(Expr));
-                    vec[n-1] = e;
-                }
-                if (!accept_err(')')) {
-                    return 0;
-                }
-                *ret = (Expr) { _N_++, EXPR_TUPLE, NULL, .Tuple={n,vec} };
-
-    // EXPR_PARENS
-            } else if (!accept_err(')')) {
-                return 0;
-            }
+        if (!accept_err(')')) {
+            return 0;
         }
+        *ret = (Expr) { _N_++, EXPR_UNIT, NULL };
 
     // EXPR_NATIVE
     } else if (accept(TX_NATIVE)) {
         *ret = (Expr) { _N_++, EXPR_NATIVE, NULL, .Nat=ALL.tk0 };
 
     // EXPR_VAR
-    } else if (accept(TK_ARG) || accept(TK_OUTPUT) || accept(TX_LOWER)) {
+    } else if (accept(TX_LOWER)) {
         *ret = (Expr) { _N_++, EXPR_VAR, NULL, .Var={ALL.tk0,0} };
 
     // $ EXPR_CONS
@@ -181,114 +150,115 @@ int parser_expr_0 (Expr* ret, int isnested) {
 }
 
 int parser_expr_1 (Expr* ret) {
-    if (parser_expr_0(ret, 0)) {
-        if (ret->sub==EXPR_VAR || ret->sub==EXPR_NATIVE) {
-    // EXPR_CALL
-            if (check('(')) {                // only checks, arg will accept
-                Expr* arg = malloc(sizeof(Expr));
-                assert(arg != NULL);
-                if (!parser_expr_0(arg, 0)) {   // f().() and not f.()()
-                    return 0;
-                }
-
-                Expr* func = malloc(sizeof(Expr));
-                assert(func != NULL);
-                *func = *ret;
-                *ret  = (Expr) { _N_++, EXPR_CALL, NULL, .Call={func,arg} };
-            } else if (ret->sub==EXPR_VAR && accept('.')) {
-    // EXPR_INDEX
-                if (!accept_err(TX_NUM)) {
-                    return 0;
-                }
-                Expr* tup = malloc(sizeof(Expr));
-                assert(tup != NULL);
-                *tup = *ret;
-                *ret = (Expr) { _N_++, EXPR_INDEX, NULL, .Index={tup,ALL.tk0.val.n} };
-            } else {
-                // ok: Exp0
-            }
-        } else {
-            // ok: Exp0
-        }
-
-    // EXPR_ALIAS
-    } else if (accept('&')) {
-        if (!check(TX_LOWER) && !check(TK_ARG)) {
+// EXPR_ALIAS
+    if (accept('&')) {
+        if (!check(TX_LOWER)) {
             return 0;
         }
         Expr* e = malloc(sizeof(Expr));
         assert(e != NULL);
-        if (!parser_expr_0(e, 0)) {
+        if (!parser_expr_0(e)) {
             return 0;
         }
         *ret = (Expr) { _N_++, EXPR_ALIAS, .Alias=e };
 
-    // EXPR_CONS
-    } else if (accept(TX_UPPER)) {  // True, $Nat
-        Tk sub = ALL.tk0;
+// EXPR_TUPLE
+    } else if (check('(')) {
+        if (parser_expr_0(ret)) {
+            return 1;   // found ()
+        }
+        assert(ALL.tk0.enu == '(');
 
+        if (!parser_expr_0(ret)) {
+            return 0;
+        }
+
+        int n = 1;
+        Expr* vec = malloc(n*sizeof(Expr));
+        assert(vec != NULL);
+        vec[n-1] = *ret;
+
+        if (!accept_err(',')) {
+            return 0;
+        }
+
+        do {
+            Expr e;
+            if (!parser_expr_0(&e)) {
+                return 0;
+            }
+            n++;
+            vec = realloc(vec, n*sizeof(Expr));
+            vec[n-1] = e;
+        } while (accept(','));
+
+        if (!accept_err(')')) {
+            return 0;
+        }
+        *ret = (Expr) { _N_++, EXPR_TUPLE, NULL, .Tuple={n,vec} };
+
+// EXPR_CONS
+    } else if (accept(TX_UPPER)) {  // True
+        Tk subtype = ALL.tk0;
         Expr* arg = malloc(sizeof(Expr));
         assert(arg != NULL);
-        if (!parser_expr_0(arg, 0)) {   // ()
+        if (!parser_expr_0(arg)) { // ()
             return 0;
         }
+        *ret = (Expr) { _N_++, EXPR_CONS, NULL, { .Cons={subtype,arg} } };
 
-        *ret = (Expr) { _N_++, EXPR_CONS, NULL, { .Cons={sub,arg} } };
+// EXPR_INDEX / EXPR_PRED / EXPR_DISC / EXPR_CALL
+    } else if (check(TX_LOWER)) {
+        assert(parser_expr_0(ret));
 
-    // EXPR_PRED
-    } else if (accept('?')) {
-        if (!accept(TK_ARG) && !accept_err(TX_LOWER)) {
-            return 0;
-        }
-        Tk tk_val = ALL.tk0;
-        if (!accept_err('.')) {
-            return 0;
-        }
-        if (!accept('$') && !accept_err(TX_UPPER)) {
-            return 0;
-        }
-        if (ALL.tk0.enu == '$') {
-            if (!accept_err(TX_UPPER)) {
-                return 0;
+// EXPR_INDEX / EXPR_PRED / EXPR_DISC
+        if (accept('.')) {
+
+            Expr* var = malloc(sizeof(Expr));
+            assert(var != NULL);
+            *var = *ret;
+
+// EXPR_INDEX
+            if (accept_err(TX_NUM)) {
+                *ret = (Expr) { _N_++, EXPR_INDEX, NULL, .Index={var,ALL.tk0.val.n} };
+
+// EXPR_PRED / EXPR_DISC
+            } else if (accept('$') || accept_err(TX_UPPER)) {
+                if (ALL.tk0.enu == '$') {
+                    if (!accept_err(TX_UPPER)) {
+                        return 0;
+                    }
+                    ALL.tk0.enu = TX_NIL;   // TODO: move to lexer
+                }
+                Tk sub = ALL.tk0;
+
+                if (accept('?')) {
+                    *ret = (Expr) { _N_++, EXPR_PRED, NULL, .Disc={var,sub} };
+                } else if (accept('!')) {
+                    *ret = (Expr) { _N_++, EXPR_DISC, NULL, .Disc={var,sub} };
+                } else {
+                    return err_expected("`?´ or `!´");
+                }
+            } else {
+                return err_expected("index or subtype");
             }
-            ALL.tk0.enu = TX_NIL;   // TODO: move to lexer
-        }
-        Tk tk_sub = ALL.tk0;
 
-        Expr* val = malloc(sizeof(Expr));
-        assert(val != NULL);
-        *val = (Expr) { _N_++, EXPR_VAR, NULL, .Var={tk_val,0} };
-
-        *ret = (Expr) { _N_++, EXPR_PRED, NULL, .Disc={val,tk_sub} };
-
-    // EXPR_DISC
-    } else if (accept('!')) {
-        if (!accept(TK_ARG) && !accept_err(TX_LOWER)) {
-            return 0;
-        }
-        Tk tk_val = ALL.tk0;
-        if (!accept_err('.')) {
-            return 0;
-        }
-        if (!accept('$') && !accept_err(TX_UPPER)) {
-            return 0;
-        }
-        if (ALL.tk0.enu == '$') {
-            if (!accept_err(TX_UPPER)) {
-                return 0;
+// EXPR_CALL
+        } else {
+            Expr* arg = malloc(sizeof(Expr));
+            assert(arg != NULL);
+            if (!parser_expr_0(arg)) {
+                free(arg);
+            } else {
+                Expr* func = malloc(sizeof(Expr));
+                assert(func != NULL);
+                *func = *ret;
+                *ret  = (Expr) { _N_++, EXPR_CALL, NULL, .Call={func,arg} };
             }
-            ALL.tk0.enu = TX_NIL;   // TODO: move to lexer
         }
-        Tk tk_sub = ALL.tk0;
-
-        Expr* val = malloc(sizeof(Expr));
-        assert(val != NULL);
-        *val = (Expr) { _N_++, EXPR_VAR, NULL, .Var={tk_val,0} };
-
-        *ret = (Expr) { _N_++, EXPR_DISC, NULL, .Disc={val,tk_sub} };
 
     } else {
-        return 0;
+        return parser_expr_0(ret);
     }
 
     return 1;
@@ -420,7 +390,7 @@ int parser_stmt (Stmt* ret) {
     } else if (accept(TK_IF)) {         // if
         Tk tk = ALL.tk0;
         Expr e;
-        if (!parser_expr_0(&e, 0)) {         // x
+        if (!parser_expr_0(&e)) {         // x
             return 0;
         }
 
@@ -474,7 +444,7 @@ int parser_stmt (Stmt* ret) {
     } else if (accept(TK_RETURN)) {
         Tk tk = ALL.tk0;
         Expr e;
-        if (!parser_expr_0(&e, 0)) {
+        if (!parser_expr_0(&e)) {
             return 0;
         }
         *ret = (Stmt) { _N_++, STMT_RETURN, NULL, {NULL,NULL}, tk, .Return=e };

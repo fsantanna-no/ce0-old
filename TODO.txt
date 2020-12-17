@@ -1,3 +1,4 @@
+- plains: clone
 - Tirar &Exp0, ficar &var, voltar com DSIC pra Exp1
 - voltar para book
     - programar um pouco mais
@@ -33,7 +34,6 @@
 - check_txs nao avalia funcoes que acessam ambiente externo
     - talvez já sim, pois EXPR_CALL chama body
 
-- plains: copy
 - references:
     - root / owner / strong
     - alias / borrow / weak

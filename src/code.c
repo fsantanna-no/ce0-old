@@ -187,7 +187,10 @@ int fe_1 (Expr* e) {
             } else {
                 assert(e->Call.func->sub == EXPR_VAR);
 
-                if (!strcmp(e->Call.func->Var.id.val.s,"output")) {
+                if (!strcmp(e->Call.func->Var.id.val.s,"clone")) {
+                    out("clone_");
+                    code_to_ce(env_expr_to_type(e->Call.arg));
+                } else if (!strcmp(e->Call.func->Var.id.val.s,"output")) {
                     out("output_");
                     code_to_ce(env_expr_to_type(e->Call.arg));
                 } else {

@@ -219,9 +219,19 @@ void env_dump (Env* env) {
 ///////////////////////////////////////////////////////////////////////////////
 
 void set_envs (Stmt* S) {
-    // TODO: _N_=0
-    // predeclare function `output`
-    static Env env_;
+    // TODO: _N_
+    // predeclare functions `clone`, `output`
+    static Type user  = { TYPE_USER, NULL, 0, .User={TK_ERR,{},0,0} };
+    static Type alias = { TYPE_USER, NULL, 1, .User={TK_ERR,{},0,0} };
+    static Env clone, output;
+    {
+        static Stmt s_out = {
+            0, STMT_VAR, NULL, {NULL,NULL},
+            .Var={ {TX_LOWER,{.s="clone"},0,0},
+                   {TYPE_FUNC,NULL,.Func={&alias,&user}},{EXPR_UNIT} }
+        };
+        clone = (Env) { &s_out, NULL };
+    }
     {
         static Type alias = { TYPE_USER, NULL, 0, .User={TK_ERR,{},0,0} };
         static Stmt s_out = {
@@ -229,10 +239,10 @@ void set_envs (Stmt* S) {
             .Var={ {TX_LOWER,{.s="output"},0,0},
                    {TYPE_FUNC,NULL,.Func={&alias,&Type_Unit}},{EXPR_UNIT} }
         };
-        env_ = (Env) { &s_out, NULL };
+        output = (Env) { &s_out, &clone };
     }
 
-    Env* env = &env_;
+    Env* env = &output;
 
     int ft (Type* tp) {
         tp->env = env;
@@ -381,8 +391,12 @@ int check_types (Stmt* S) {
         }
         switch (sup->sub) {
             case TYPE_USER:
-                return (!strcmp(sup->User.val.s,sub->User.val.s) &&
-                        sup->isalias == sub->isalias);
+                //printf("%s vs %s\n", sup->User.val.s, sub->User.val.s);
+                return (
+                    (sup->isalias == sub->isalias) &&
+                    (sub->User.enu==TK_ERR || !strcmp(sup->User.val.s,sub->User.val.s))
+                        // TODO: clone
+                );
 
             case TYPE_TUPLE:
                 if (sup->Tuple.size != sub->Tuple.size) {
@@ -426,6 +440,8 @@ int check_types (Stmt* S) {
 
                 if (e->Call.func->sub == EXPR_NATIVE) {
                     TODO("TODO [check_types]: _f(...)\n");
+                } else if (!strcmp(e->Call.func->Var.id.val.s,"clone")) {
+                    TODO("TODO [check_types]: clone(...)\n");
                 } else if (!strcmp(e->Call.func->Var.id.val.s,"output")) {
                     TODO("TODO [check_types]: output(...)\n");
                 } else if (!type_is_sup_sub(func->Func.inp, arg)) {
@@ -657,10 +673,11 @@ int check_owner_alias (Stmt* S) {
                                 var = s2->Var.init.Disc.val;
                                 assert(var->sub == EXPR_VAR);
                                 break;
+                            case EXPR_CALL: // a:&Nat = smaller(&x,&y)  // must put both
+                                break;
                             default:
                                 break;  // assert below
                         }
-printf(">>> %ld\n", s2->tk.lin);
                         assert(var != NULL);
 
                         decl = env_id_to_stmt(s2->env, var->Var.id.val.s, NULL);

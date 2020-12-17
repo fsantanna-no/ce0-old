@@ -22,6 +22,7 @@ The following keywords are reserved:
 ```
     arg         -- function argument
     call        -- function call
+    clone       -- clone function
     else        -- conditional statement
     func        -- function declaration
     if          -- conditional statement
@@ -212,6 +213,13 @@ False                   -- () is optional
 Car (True,())           -- subtype Car holds a tuple
 ```
 
+The special function `clone` reconstructs a value of a user type to make a copy
+of it:
+
+```
+clone(Node($Tree))      -- re-execute the same constructors
+```
+
 ### Discriminator
 
 A discriminator accesses the value of a [user type](TODO) as one of its
@@ -369,23 +377,22 @@ Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: ()
       |  { Stmt [`;´] }                 -- sequence                 call f() ; call g()
       |  `{´ Stmt `}´                   -- block                    { call f() ; call g() }
 
+-- mudar pra struct s/ ponteiro
+-- mudar EXPR_*/STMT_* simplificar onde nao precisa de ptr
+
 Exp0 ::= `(´ `)´                        -- unit value               ()
-      |  `(´ Exp0 {`,´ Exp0} `)´        -- tuple                    (x,())
-      |  `(´ Exp0 `)´                   -- group                    (x)
-      |  NATIVE                         -- native expression        _printf
-      |  `arg´                          -- function argument        arg
       |  VAR                            -- variable identifier      i
       |  `$´ USER                       -- null constructor         $List
 
 Exp1 ::= `&´ VAR                        -- alias                    &x
+      |  `(´ Exp0 {`,´ Exp0} `)´        -- tuple                    (x,())
+      |  USER Exp0                      -- constructor              True ()
+      |  VAR Exp0                       -- call                     f x
       |  VAR `.´ NUM                    -- tuple index              x.1
-      |  (VAR | NATIVE) `(´ Exp0 `)´    -- call                     f(x)
-      |  USER `(´ Exp0 `)´              -- constructor              True ()
-      |  `?´ VAR `.´ [`$´] USER         -- predicate                ?x.False
-      |  `!´ VAR `.´ [`$´] USER         -- discriminator            !x.True
+      |  VAR `.´ [`$´] USER `?´         -- predicate                x.False?
+      |  VAR `.´ [`$´] USER `!´         -- discriminator            x.True!
 
 Type ::= `(´ `)´                        -- unit                     ()
-      |  NATIVE                         -- native type              _char
       |  USER                           -- user type                Bool
       |  `(´ Type {`,´ Type} `)´        -- tuple                    ((),())
       |  Type `->´ Type                 -- function                 () -> ()
