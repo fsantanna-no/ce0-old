@@ -71,6 +71,7 @@ const char* lexer_tk2str (Tk* tk) {
             break;
         case TX_VAR:
         case TX_USER:
+        case TX_NULL:
         case TK_ERR:
             sprintf(str, "\"%s\"", tk->val.s);
             break;
@@ -101,7 +102,6 @@ static TK lx_token (TK_val* val) {
         case ',':
         case '.':
         case '&':
-        case '$':
         case '!':
         case '?':
             return c;
@@ -150,9 +150,14 @@ static TK lx_token (TK_val* val) {
             return TX_NATIVE;
         }
 
-        default:
+        default: {
+            char isdollar = (c == '$');
+            if (isdollar) {
+                c = fgetc(ALL.inp);
+            }
+
             // TX_NUM
-            if (isdigit(c)) {
+            if (!isdollar && isdigit(c)) {
                 int i = 0;
                 while (isalnum(c)) {
                     if (isdigit(c)) {
@@ -166,15 +171,17 @@ static TK lx_token (TK_val* val) {
                 val->n = atoi(val->s);
                 ungetc(c, ALL.inp);
                 return TX_NUM;
-            } else if (isalpha(c)) {
-                // var,user
+            } else if (!isdollar && islower(c)) {
+                // var
+            } else if (isupper(c)) {
+                // user,null
             } else {
                 val->s[0] = c;
                 val->s[1] = '\0';
                 return TK_ERR;
             }
 
-            // TK_VAR, TK_TYPE
+            // TX_VAR, TX_USER
             int i = 0;
             while (isalnum(c) || c=='_') {
                 val->s[i++] = c;
@@ -188,13 +195,16 @@ static TK lx_token (TK_val* val) {
                 return key;
             }
 
-            if (islower(val->s[0])) {
+            if (isdollar) {
+                return TX_NULL;
+            } else if (islower(val->s[0])) {
                 return TX_VAR;
             } else if (isupper(val->s[0])) {
                 return TX_USER;
             } else {
-                // impossible case
+                assert(0 && "bug found: impossible case");
             }
+        }
     }
     assert(0 && "bug found");
 }

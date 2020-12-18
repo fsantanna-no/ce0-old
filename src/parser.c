@@ -124,19 +124,12 @@ int parser_expr_0 (Expr* ret) {
     } else if (accept(TX_VAR)) {
         *ret = (Expr) { _N_++, EXPR_VAR, NULL, .Var={ALL.tk0,0} };
 
-    // $ EXPR_CONS
-    } else if (accept('$')) {  // $Nat
-        if (!accept_err(TX_USER)) {
-            return 0;
-        }
-        Tk sub = ALL.tk0;
-        sub.enu = TX_NULL;   // TODO: move to lexer
-
+    // EXPR_NULL
+    } else if (accept(TX_NULL)) {  // $Nat
         Expr* arg = malloc(sizeof(Expr));
         assert(arg != NULL);
         *arg = (Expr) { _N_++, EXPR_UNIT, NULL };
-
-        *ret = (Expr) { _N_++, EXPR_CONS, NULL, { .Cons={sub,arg} } };
+        *ret = (Expr) { _N_++, EXPR_CONS, NULL, { .Cons={ALL.tk0,arg} } };
 
     } else {
         return err_expected("simple expression");
@@ -208,19 +201,12 @@ int parser_expr_1 (Expr* ret) {
             *var = *ret;
 
 // EXPR_INDEX
-            if (accept_err(TX_NUM)) {
+            if (accept(TX_NUM)) {
                 *ret = (Expr) { _N_++, EXPR_INDEX, NULL, .Index={var,ALL.tk0.val.n} };
 
 // EXPR_PRED / EXPR_DISC
-            } else if (accept('$') || accept_err(TX_USER)) {
-                if (ALL.tk0.enu == '$') {
-                    if (!accept_err(TX_USER)) {
-                        return 0;
-                    }
-                    ALL.tk0.enu = TX_NULL;   // TODO: move to lexer
-                }
+            } else if (accept(TX_USER) || accept(TX_NULL)) {
                 Tk sub = ALL.tk0;
-
                 if (accept('?')) {
                     *ret = (Expr) { _N_++, EXPR_PRED, NULL, .Disc={var,sub} };
                 } else if (accept('!')) {

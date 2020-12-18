@@ -913,7 +913,7 @@ void t_all (void) {
         "call output l\n"
     ));
     assert(all(
-        "(ln 1, col 14): undeclared type \"List\"",
+        "(ln 1, col 13): undeclared type \"List\"",
         "call output $List\n"
     ));
     assert(all(
