@@ -177,19 +177,6 @@ void ftk_0 (Tk* tk) {
     );
 }
 
-// var, recursive, !alias
-int istx (Env* env, Tk* tk) {
-    if (tk->enu != TX_VAR) {
-        return 0;
-    }
-    Stmt* user = env_tk_to_type_to_user_stmt(env, tk);
-    if (user == NULL) {
-        return 0;
-    }
-    int isalias = env_tk_to_type(env,tk)->isalias;
-    return (user->User.isrec && !isalias);
-}
-
 void ftk_1 (Tk* tk, int istx);
 
 void fe_0 (Env* env, Expr* e) {
@@ -203,7 +190,7 @@ void fe_0 (Env* env, Expr* e) {
             return;
 
         case EXPR_VAR:
-            if (istx(env, &e->tk)) {
+            if (env_tk_istx(env, &e->tk)) {
                 ftk_0(&e->tk);
             }
             return;
@@ -211,7 +198,7 @@ void fe_0 (Env* env, Expr* e) {
         case EXPR_TUPLE:
             for (int i=0; i<e->Tuple.size; i++) {
                 Tk* tk = &e->Tuple.vec[i];
-                if (istx(env, tk)) {
+                if (env_tk_istx(env, tk)) {
                     ftk_0(tk);
                 }
             }
@@ -224,7 +211,7 @@ void fe_0 (Env* env, Expr* e) {
             char* sup = user->User.id.val.s;
             char* sub = e->Cons.subtype.val.s;
 
-            int arg_istx = istx(env, &e->Cons.arg);
+            int arg_istx = env_tk_istx(env, &e->Cons.arg);
             if (arg_istx) {
                 ftk_0(&e->Cons.arg);
             }
@@ -252,7 +239,7 @@ void fe_0 (Env* env, Expr* e) {
         }
 
         case EXPR_CALL:
-            if (istx(env, &e->Call.arg)) {
+            if (env_tk_istx(env, &e->Call.arg)) {
                 ftk_0(&e->Call.arg);
             }
             return;
@@ -261,7 +248,7 @@ void fe_0 (Env* env, Expr* e) {
             Stmt* s = env_tk_to_type_to_user_stmt(env, &e->Disc.val);
             assert(s != NULL);
             out("assert(");
-            ftk_1(&e->Disc.val, istx(env,&e->Disc.val));
+            ftk_1(&e->Disc.val, env_tk_istx(env,&e->Disc.val));
             fprintf (ALL.out,
                 "%ssub == %s && \"discriminator failed\");\n",
                 (s->User.isrec ? "->" : "."), e->Disc.subtype.val.s
@@ -320,7 +307,7 @@ int fe_1 (Env* env, Expr* e) {
             if (e->Call.func.enu == TX_NATIVE) {
                 ftk_1(&e->Call.func, 0);
                 out("(");
-                ftk_1(&e->Call.arg, istx(env,&e->Call.arg));
+                ftk_1(&e->Call.arg, env_tk_istx(env,&e->Call.arg));
                 out(")");
             } else {
                 assert(e->Call.func.enu == TX_VAR);
@@ -336,7 +323,7 @@ int fe_1 (Env* env, Expr* e) {
                 }
 
                 out("(");
-                ftk_1(&e->Call.arg, istx(env,&e->Call.arg));
+                ftk_1(&e->Call.arg, env_tk_istx(env,&e->Call.arg));
                 out(")");
             }
             break;
@@ -351,7 +338,7 @@ int fe_1 (Env* env, Expr* e) {
                 if (i != 0) {
                     out(",");
                 }
-                ftk_1(&e->Tuple.vec[i], istx(env,&e->Tuple.vec[i]));
+                ftk_1(&e->Tuple.vec[i], env_tk_istx(env,&e->Tuple.vec[i]));
             }
             out(" })");
             break;
@@ -575,11 +562,11 @@ void code_stmt (Stmt* s) {
             break;
 
         case STMT_RETURN: {
-            if (istx(s->env,&s->Return)) {
+            if (env_tk_istx(s->env,&s->Return)) {
                 ftk_0(&s->Return);
             }
             out("return ");
-            ftk_1(&s->Return, istx(s->env,&s->Return));
+            ftk_1(&s->Return, env_tk_istx(s->env,&s->Return));
             out(";\n");
             break;
         }
