@@ -2,9 +2,9 @@
 
 #include "all.h"
 
-int visit_type (Type* tp, F_Type ft) {
+int visit_type (Type* tp, F_Type ft, void* arg) {
     if (ft != NULL) {
-        switch (ft(tp)) {
+        switch (ft(tp,arg)) {
             case VISIT_ERROR:
                 return 0;
             case VISIT_CONTINUE:
@@ -21,60 +21,20 @@ int visit_type (Type* tp, F_Type ft) {
             return 1;
         case TYPE_TUPLE:
             for (int i=0; i<tp->Tuple.size; i++) {
-                if (!visit_type(&tp->Tuple.vec[i],ft)) {
+                if (!visit_type(&tp->Tuple.vec[i],ft,arg)) {
                     return 0;
                 }
             }
             return 1;
         case TYPE_FUNC:
-            return (visit_type(tp->Func.inp, ft) && visit_type(tp->Func.out, ft));
-    }
-    assert(0 && "bug found");
-}
-
-int visit_expr (Expr* e, F_Expr fe) {
-    if (fe != NULL) {
-        switch (fe(e)) {
-            case VISIT_ERROR:
-                return 0;
-            case VISIT_CONTINUE:
-                break;
-            case VISIT_BREAK:
-                return 1;
-        }
-    }
-
-    switch (e->sub) {
-        case EXPR_UNIT:
-        case EXPR_NATIVE:
-        case EXPR_VAR:
-            return 1;
-        case EXPR_TUPLE:
-            for (int i=0; i<e->Tuple.size; i++) {
-                if (!visit_expr(&e->Tuple.vec[i], fe)) {
-                    return 0;
-                }
-            }
-            return 1;
-        case EXPR_INDEX:
-            return visit_expr(e->Index.tuple, fe);
-        case EXPR_CALL:
-            return (visit_expr(e->Call.func, fe) && visit_expr(e->Call.arg, fe));
-        case EXPR_ALIAS:
-            return visit_expr(e->Alias, fe);
-        case EXPR_CONS:
-            return visit_expr(e->Cons.arg, fe);
-        case EXPR_DISC:
-            return visit_expr(e->Disc.val, fe);
-        case EXPR_PRED:
-            return visit_expr(e->Disc.val, fe);
+            return (visit_type(tp->Func.inp,ft,arg) && visit_type(tp->Func.out,ft,arg));
     }
     assert(0 && "bug found");
 }
 
 // 0=error, 1=success
 
-int visit_stmt (Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
+int visit_stmt (Stmt* s, F_Stmt fs) {
     if (fs != NULL) {
         switch (fs(s)) {
             case VISIT_ERROR:
@@ -87,36 +47,28 @@ int visit_stmt (Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
     }
 
     switch (s->sub) {
-        case STMT_USER:
-            for (int i=0; i<s->User.size; i++) {
-                if (!visit_type(&s->User.vec[i].type, ft)) {
-                    return 0;
-                }
-            }
-            return 1;
-        case STMT_VAR:
-            return (visit_type(&s->Var.type, ft) && visit_expr(&s->Var.init, fe));
         case STMT_CALL:
-            return visit_expr(&s->Call, fe);
         case STMT_RETURN:
-            return visit_expr(&s->Return, fe);
+        case STMT_USER:
+        case STMT_VAR:
+            return 1;
+
         case STMT_SEQ:
             for (int i=0; i<s->Seq.size; i++) {
-                if (!visit_stmt(&s->Seq.vec[i], fs, fe, ft)) {
+                if (!visit_stmt(&s->Seq.vec[i], fs)) {
                     return 0;
                 }
             }
             return 1;
+
         case STMT_IF:
-            return (
-                visit_expr(&s->If.cond, fe)         &&
-                visit_stmt(s->If.true,  fs, fe, ft) &&
-                visit_stmt(s->If.false, fs, fe, ft)
-            );
+            return (visit_stmt(s->If.true,fs) && visit_stmt(s->If.false,fs));
+
         case STMT_FUNC:
-            return (visit_type(&s->Func.type, ft) && visit_stmt(s->Func.body, fs, fe, ft));
+            return visit_stmt(s->Func.body,fs);
+
         case STMT_BLOCK:
-            return visit_stmt(s->Block, fs, fe, ft);
+            return visit_stmt(s->Block, fs);
     }
     assert(0 && "bug found");
 }
@@ -134,57 +86,7 @@ void exec_init (Exec_State* est) {
 
 // 0=error, 1=success, EXEC_HALT=aborted
 
-int exec_expr (Exec_State* est, Expr* e, F_Expr fe) {
-    if (fe != NULL) {
-        switch (fe(e)) {
-            case EXEC_ERROR:            // error stop all
-                return 0;
-            case EXEC_CONTINUE:         // continue to children
-                break;
-            case EXEC_BREAK:            // continue skip children
-                return 1;
-            case EXEC_HALT:             // no error stop all
-                return EXEC_HALT;
-        }
-    }
-
-    switch (e->sub) {
-        case EXPR_UNIT:
-        case EXPR_NATIVE:
-        case EXPR_VAR:
-            return 1;
-        case EXPR_TUPLE:
-            for (int i=0; i<e->Tuple.size; i++) {
-                int ret = exec_expr(est, &e->Tuple.vec[i], fe);
-                if (ret != EXEC_CONTINUE) {
-                    return ret;
-                }
-            }
-            return 1;
-        case EXPR_INDEX:
-            return exec_expr(est, e->Index.tuple, fe);
-        case EXPR_CALL: {
-            int ret = exec_expr(est, e->Call.func, fe);
-            if (ret != EXEC_CONTINUE) {
-                return ret;
-            }
-            return exec_expr(est, e->Call.arg, fe);
-        }
-        case EXPR_ALIAS:
-            return exec_expr(est, e->Alias, fe);
-        case EXPR_CONS:
-            return exec_expr(est, e->Cons.arg, fe);
-        case EXPR_DISC:
-            return exec_expr(est, e->Disc.val, fe);
-        case EXPR_PRED:
-            return exec_expr(est, e->Disc.val, fe);
-    }
-    assert(0 && "bug found");
-}
-
-// 0=error, 1=success, EXEC_HALT=aborted
-
-int exec_stmt (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe) {
+int exec_stmt (Exec_State* est, Stmt* s, F_Stmt fs) {
     while (s != NULL) {
         if (fs != NULL) {
             switch (fs(s)) {
@@ -199,31 +101,21 @@ int exec_stmt (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe) {
             }
         }
 
+        // TODO: CALL
+#if 0
         int ret = EXEC_CONTINUE;
         switch (s->sub) {
-            case STMT_USER:
-            case STMT_SEQ:
-            case STMT_BLOCK:
-            case STMT_FUNC:
-                break;
             case STMT_IF:   // handle in separate b/c of if/else
-                ret = exec_expr(est,&s->If.cond,fe);
-                break;
-            case STMT_VAR:
-                ret = exec_expr(est, &s->Var.init, fe);
                 break;
             case STMT_CALL:
-                ret = exec_expr(est, &s->Call, fe);
-// TODO: exec_stmt do body
-                break;
-            case STMT_RETURN:
-                ret = exec_expr(est, &s->Return, fe);
+                break;      // TODO: exec_stmt do body
+            default:
                 break;
         }
-
         if (ret != EXEC_CONTINUE) {
             return ret;
         }
+#endif
 
         // PATH
 
@@ -254,11 +146,11 @@ int exec_stmt (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe) {
     return EXEC_CONTINUE;   // last statement?
 }
 
-// 1=more, 0=exhausted  //  fret (fs/fe): 0=error, 1=success
+// 1=more, 0=exhausted  //  fret fs: 0=error, 1=success
 
-int exec1 (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe, int* fret) {
+int exec1 (Exec_State* est, Stmt* s, F_Stmt fs, int* fret) {
     est->cur = 0;
-    *fret = exec_stmt(est, s, fs, fe);
+    *fret = exec_stmt(est, s, fs);
 
     switch (*fret) {
         case 0:         return 0;
@@ -279,7 +171,7 @@ int exec1 (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe, int* fret) {
     return 0;
 }
 
-int exec (Stmt* s, F_Pre pre, F_Stmt fs, F_Expr fe) {      // 0=error, 1=success
+int exec (Stmt* s, F_Pre pre, F_Stmt fs) {      // 0=error, 1=success
     Exec_State est;
     exec_init(&est);
     while (1) {
@@ -287,7 +179,7 @@ int exec (Stmt* s, F_Pre pre, F_Stmt fs, F_Expr fe) {      // 0=error, 1=success
             pre();
         }
         int ret2;
-        int ret1 = exec1(&est, s, fs, fe, &ret2);
+        int ret1 = exec1(&est, s, fs, &ret2);
         if (ret2 == 0) {            // user returned error
             return 0;               // so it's an error
         }

@@ -10,6 +10,8 @@ typedef enum {
     EXPR_UNIT = 1,
     EXPR_NATIVE,
     EXPR_VAR,
+    EXPR_NULL,
+    //
     EXPR_TUPLE,
     EXPR_INDEX,
     EXPR_CALL,
@@ -34,10 +36,9 @@ typedef enum {
 
 typedef struct Type {
     TYPE sub;
-    struct Env* env;    // see env.c
     int isalias;
     union {
-        Tk Nat;         // TYPE_NATIVE
+        Tk Native;      // TYPE_NATIVE
         Tk User;        // TYPE_USER
         struct {        // TYPE_TUPLE
             int size;                   // 2
@@ -50,43 +51,36 @@ typedef struct Type {
     };
 } Type;
 
-struct Env;
-
 extern int _N_;
 
 typedef struct Expr {
     int N;
     EXPR sub;
-    struct Env* env;    // see env.c
     union {
-        Tk Nat;         // EXPR_NATIVE
-        struct Expr* Alias;  // EXPR_ALIAS
-        struct {        // EXPR_VAR
-            Tk id;
-            int istx;
-        } Var;
+        Tk tk;          // EXPR_EXP0
+        Tk Alias;       // EXPR_ALIAS
         struct {        // EXPR_TUPLE
             int size;                   // 2
-            struct Expr* vec;           // (x,y)
+            Tk* vec;                    // (x,y)
         } Tuple;
-        struct {        // EXPR_INDEX
-            struct Expr* tuple;         // x
-            int index;                  // .3
-        } Index;
-        struct {        // EXPR_CALL
-            struct Expr* func;          // f
-            struct Expr* arg;           // (x,y)
-        } Call;
         struct {        // EXPR_CONS
             Tk subtype;                 // .True
-            struct Expr* arg;
+            Tk arg;                     // ()
         } Cons;
+        struct {        // EXPR_CALL
+            Tk func;                    // f
+            Tk arg;                     // x
+        } Call;
+        struct {        // EXPR_INDEX
+            Tk val;                     // x
+            Tk index;                   // .3
+        } Index;
         struct {        // EXPR_DISC
-            struct Expr* val;           // Bool.True
+            Tk val;                     // x
             Tk subtype;                 // .True!
         } Disc;
         struct {        // EXPR_PRED
-            struct Expr* val;           // Bool.True
+            Tk val;                     // x
             Tk subtype;                 // .True?
         } Pred;
     };
@@ -97,6 +91,8 @@ typedef struct {
     Type type;                          // ()
 } Sub;
 
+struct Env;
+
 typedef struct Stmt {
     int N;
     STMT sub;
@@ -105,25 +101,25 @@ typedef struct Stmt {
     Tk tk;
     union {
         Expr Call;          // STMT_CALL
-        Expr Return;        // STMT_RETURN
+        Tk   Return;        // STMT_RETURN
         struct Stmt* Block; // STMT_BLOCK
-        struct {
+        struct {            // STMT_VAR
             Tk   id;                    // ns
             Type type;                  // : Nat
             Expr init;                  // = n
-        } Var;              // STMT_VAR
-        struct {
+        } Var;
+        struct {           // STMT_USER
             int  isrec;                 // rec
             Tk   id;                    // Bool
             int  size;                  // 2 subs
             Sub* vec;                   // [True,False]
-        } User;             // STMT_USER
-        struct {
+        } User;
+        struct {           // STMT_SEQ
             int size;                   // 3
             struct Stmt* vec;           // a ; b ; c
-        } Seq;              // STMT_SEQ
+        } Seq;
         struct {            // STMT_IF
-            struct Expr  cond;          // if (tst)
+            Tk cond;                    // if (tst)
             struct Stmt* true;          // { ... }
             struct Stmt* false;         // else { ... }
         } If;

@@ -363,7 +363,7 @@ A block delimits, between curly braces `{` and `}`, the scope and visibility of
 
 ```
 Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: () = ()
-            `=´ Exp1
+            `=´ Expr
       |  `type´ [`rec´] USER `{`        -- user type declaration    type rec List {
             { USER `:´ Type [`;´] }     --    subtypes                 Cons: List
          `}´                                                        }
@@ -385,7 +385,7 @@ Exp0 ::= `(´ `)´                        -- unit value               ()
       |  VAR                            -- variable identifier      i
       |  `$´ USER                       -- null constructor         $List
 
-Exp1 ::= `&´ VAR                        -- alias                    &x
+Expr ::= `&´ VAR                        -- alias                    &x
       |  `(´ Exp0 {`,´ Exp0} `)´        -- tuple                    (x,())
       |  USER Exp0                      -- constructor              True ()
       |  (VAR|NATIVE) Exp0              -- call                     f x

@@ -32,6 +32,8 @@ typedef union {
     char s[256];
 } TK_val;
 
+struct Env;
+
 typedef struct {
     TK enu;
     TK_val val;

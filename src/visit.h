@@ -22,12 +22,10 @@ typedef struct Exec_State {
 } Exec_State;
 
 typedef int  (*F_Stmt) (Stmt* s);
-typedef int  (*F_Expr) (Expr* e);
-typedef int  (*F_Type) (Type* tp);
+typedef int  (*F_Type) (Type* tp, void* arg);
 typedef void (*F_Pre)  (void);
 
-int visit_type (Type* tp, F_Type f);
-int visit_expr (Expr* e,  F_Expr fe);
-int visit_stmt (Stmt* s,  F_Stmt fs, F_Expr fe, F_Type ft);
+int visit_type (Type* tp, F_Type f, void* arg);
+int visit_stmt (Stmt* s, F_Stmt fs);
 
-int exec (Stmt* s, F_Pre pre, F_Stmt fs, F_Expr fe);   // 0=error, 1=success
+int exec (Stmt* s, F_Pre pre, F_Stmt fs);   // 0=error, 1=success
