@@ -186,7 +186,6 @@ void fe_0 (Env* env, Expr* e) {
         case EXPR_NULL:
         case EXPR_INDEX:
         case EXPR_PRED:
-        case EXPR_ALIAS:
             return;
 
         case EXPR_VAR:
@@ -292,10 +291,6 @@ int fe_1 (Env* env, Expr* e) {
         case EXPR_NULL:
         case EXPR_VAR:
             ftk_1(&e->tk, 0);
-            break;
-
-        case EXPR_ALIAS:
-            ftk_1(&e->Alias, 0);
             break;
 
         case EXPR_CONS: {

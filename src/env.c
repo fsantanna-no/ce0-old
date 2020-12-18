@@ -113,24 +113,13 @@ printf(">>> %d\n", tk->enu);
     }
 }
 
-Type* env_expr_to_type (Env* env, Expr* e) {
+Type* env_expr_to_type_ (Env* env, Expr* e) {
     switch (e->sub) {
         case EXPR_UNIT:
         case EXPR_NATIVE:
         case EXPR_VAR:
         case EXPR_NULL:
             return env_tk_to_type(env, &e->tk);
-
-        case EXPR_ALIAS: {
-            Type* tp = env_tk_to_type(env, &e->Alias);
-            assert(tp->sub==TYPE_USER && !tp->isalias);
-
-            Type* ret = malloc(sizeof(Type));
-            assert(ret != NULL);
-            *ret = *tp;
-            ret->isalias = 1;
-            return ret;
-        }
 
         case EXPR_TUPLE: {
             Type* vec = malloc(e->Tuple.size*sizeof(Type));
@@ -197,6 +186,18 @@ Type* env_expr_to_type (Env* env, Expr* e) {
             return &Type_Bool;
     }
     assert(0 && "bug found");
+}
+
+Type* env_expr_to_type (Env* env, Expr* e) {
+    Type* ret = env_expr_to_type_(env,e);
+    if (e->isalias && !ret->isalias) {
+        Type* new = malloc(sizeof(Type));
+        assert(new != NULL);
+        *new = *ret;
+        new->isalias = 1;
+        ret = new;
+    }
+    return ret;
 }
 
 //  type Bool { ... }
@@ -348,7 +349,7 @@ void set_envs (Stmt* S) {
                     Stmt* arg = malloc(sizeof(Stmt));
                     *arg = (Stmt) {
                         0, STMT_VAR, env, {s->Func.body,s->Func.body},
-                        .Var={ {TX_VAR,{.s="arg"},0,0},*s->Func.type.Func.inp,{0,EXPR_UNIT,{}} }
+                        .Var={ {TX_VAR,{.s="arg"},0,0},*s->Func.type.Func.inp,{0,EXPR_UNIT,0,{}} }
                     };
                     Env* new = malloc(sizeof(Env));
                     *new = (Env) { arg, env };
@@ -408,9 +409,6 @@ int check_undeclareds (Stmt* s) {
 
             case EXPR_VAR:
                 return ftk(env, &e->tk, "variable");
-
-            case EXPR_ALIAS:
-                return ftk(env, &e->Alias, "variable");
 
             case EXPR_TUPLE:
                 for (int i=0; i<e->Tuple.size; i++) {
@@ -542,7 +540,6 @@ int check_types (Stmt* s) {
             case EXPR_NULL:
                 break;
 
-            case EXPR_ALIAS:
             case EXPR_DISC:
             case EXPR_PRED:
                 TODO("TODO [check_types]: EXPR_INDEX/EXPR_ALIAS/EXPR_DISC/EXPR_PRED\n");
@@ -781,11 +778,7 @@ int check_owner_alias (Stmt* S) {
                             return EXEC_CONTINUE;
 
                         case EXPR_VAR:
-                            return ftk(s->env, &e->Alias,
-                                       env_expr_to_type(s->env, e)->isalias);
-
-                        case EXPR_ALIAS:
-                            return ftk(s->env, &e->Alias, 1);
+                            return ftk(s->env, &e->tk, env_expr_to_type(s->env, e)->isalias);
 
                         case EXPR_TUPLE:
                             for (int i=0; i<e->Tuple.size; i++) {
@@ -833,9 +826,6 @@ int check_owner_alias (Stmt* S) {
                         Type* tp = env_expr_to_type(s->env, &s->Var.init);
                         assert(tp->isalias);
                         switch (s->Var.init.sub) {
-                            case EXPR_ALIAS:
-                                var = &s->Var.init.Alias;
-                                break;
                             case EXPR_VAR:
                                 var = &s->Var.init.tk;
                                 break;

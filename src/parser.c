@@ -124,13 +124,25 @@ int parser_expr_0 (void) {
             || err_expected("simple expression");
 }
 
+EXPR tk_to_expr (Tk* tk) {
+    switch (tk->enu) {
+        case TK_UNIT:   return EXPR_UNIT;
+        case TX_NATIVE: return EXPR_NATIVE;
+        case TX_VAR:    return EXPR_VAR;
+        case TX_NULL:   return EXPR_NULL;
+        default: assert(0);
+    }
+}
+
 int parser_expr_1 (Expr* ret) {
 // EXPR_ALIAS
     if (accept('&')) {
-        if (!check_err(TX_VAR) || !parser_expr_0()) {
+        if (!check_err(TX_VAR) || !parser_expr_1(ret)) {
             return 0;
         }
-        *ret = (Expr) { _N_++, EXPR_ALIAS, .Alias=ALL.tk0 };
+        assert(ret->sub==EXPR_VAR || ret->sub==EXPR_TUPLE || ret->sub==EXPR_INDEX || ret->sub==EXPR_DISC);
+        ret->isalias = 1;
+        return 1;
 
 // EXPR_TUPLE
     } else if (accept('(')) {
@@ -159,7 +171,8 @@ int parser_expr_1 (Expr* ret) {
         if (!accept_err(')')) {
             return 0;
         }
-        *ret = (Expr) { _N_++, EXPR_TUPLE, .Tuple={n,vec} };
+        *ret = (Expr) { _N_++, EXPR_TUPLE, 0, .Tuple={n,vec} };
+        return 1;
 
 // EXPR_CONS
     } else if (accept(TX_USER)) {  // True
@@ -167,7 +180,8 @@ int parser_expr_1 (Expr* ret) {
         if (!parser_expr_0()) { // ()
             return 0;
         }
-        *ret = (Expr) { _N_++, EXPR_CONS, { .Cons={subtype,ALL.tk0} } };
+        *ret = (Expr) { _N_++, EXPR_CONS, 0, { .Cons={subtype,ALL.tk0} } };
+        return 1;
 
 // EXPR_INDEX / EXPR_PRED / EXPR_DISC / EXPR_CALL
     } else if (check(TX_VAR) || check(TX_NATIVE)) {
@@ -179,18 +193,20 @@ int parser_expr_1 (Expr* ret) {
 
 // EXPR_INDEX
             if (accept(TX_NUM)) {
-                *ret = (Expr) { _N_++, EXPR_INDEX, .Index={var,ALL.tk0} };
+                *ret = (Expr) { _N_++, EXPR_INDEX, 0, .Index={var,ALL.tk0} };
+                return 1;
 
 // EXPR_PRED / EXPR_DISC
             } else if (accept(TX_USER) || accept(TX_NULL)) {
                 Tk sub = ALL.tk0;
                 if (accept('?')) {
-                    *ret = (Expr) { _N_++, EXPR_PRED, .Disc={var,sub} };
+                    *ret = (Expr) { _N_++, EXPR_PRED, 0, .Disc={var,sub} };
                 } else if (accept('!')) {
-                    *ret = (Expr) { _N_++, EXPR_DISC, .Disc={var,sub} };
+                    *ret = (Expr) { _N_++, EXPR_DISC, 0, .Disc={var,sub} };
                 } else {
                     return err_expected("`?´ or `!´");
                 }
+                return 1;
             } else {
                 return err_expected("index or subtype");
             }
@@ -198,13 +214,15 @@ int parser_expr_1 (Expr* ret) {
 // EXPR_CALL
         } else {
             if (parser_expr_0()) {
-                *ret = (Expr) { _N_++, EXPR_CALL, .Call={var,ALL.tk0} };
+                *ret = (Expr) { _N_++, EXPR_CALL, 0, .Call={var,ALL.tk0} };
+                return 1;
 
 // EXP0
             } else {
                 assert(var.enu==TX_VAR || var.enu==TX_NATIVE);
                 int sub = (var.enu == TX_VAR ? EXPR_VAR : EXPR_NATIVE);
-                *ret = (Expr) { _N_++, sub, .tk=var };
+                *ret = (Expr) { _N_++, sub, 0, .tk=var };
+                return 1;
             }
         }
 
@@ -212,18 +230,10 @@ int parser_expr_1 (Expr* ret) {
         if (!parser_expr_0()) {
             return 0;
         }
-        int sub; {
-            switch (ALL.tk0.enu) {
-                case TK_UNIT:   sub=EXPR_UNIT;   break;
-                //case TX_NATIVE: sub=EXPR_NATIVE; break;  (above)
-                //case TX_VAR:    sub=EXPR_VAR;    break;  (above)
-                case TX_NULL:   sub=EXPR_NULL;   break;
-                default: assert(0);
-            }
-        }
-        *ret = (Expr) { _N_++, sub, .tk=ALL.tk0 };
+        *ret = (Expr) { _N_++, tk_to_expr(&ALL.tk0), 0, .tk=ALL.tk0 };
+        return 1;
     }
-    return 1;
+    assert(0);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

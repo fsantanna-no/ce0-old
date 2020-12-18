@@ -3,6 +3,7 @@
 #include <string.h>
 
 #define DEBUG
+//#define VALGRIND
 
 #include "../all.h"
 
@@ -54,7 +55,11 @@ int all (const char* xp, char* src) {
 
     // execute
     {
+#ifdef VALGRIND
+        FILE* f = popen("valgrind ./a.out", "r");
+#else
         FILE* f = popen("./a.out", "r");
+#endif
         assert(f != NULL);
         char* cur = out;
         cur[0] = '\0';
@@ -929,6 +934,24 @@ void t_all (void) {
         "}\n"
         "var n: Nat = $Nat\n"
         "call output n\n"
+    ));
+    assert(all(
+        "Succ ($)\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "var n: Nat = Succ $Nat\n"
+        "var n_: &Nat = &n\n"
+        "call output n_\n"
+    ));
+    assert(all(
+        "$\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "var a: (Nat,Nat) = ($Nat,$Nat)\n"
+        "var a_: &(Nat,Nat) = &a\n"
+        "call output a_\n"
     ));
     assert(all(
         "$\n",

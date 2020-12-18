@@ -15,7 +15,6 @@ typedef enum {
     EXPR_TUPLE,
     EXPR_INDEX,
     EXPR_CALL,
-    EXPR_ALIAS,
     EXPR_CONS,
     EXPR_DISC,
     EXPR_PRED
@@ -56,9 +55,9 @@ extern int _N_;
 typedef struct Expr {
     int N;
     EXPR sub;
+    int isalias;        // only for EXPR_VAR, EXPR_TUPLE, EXPR_INDEX, EXPR_DISC
     union {
         Tk tk;          // EXPR_EXP0
-        Tk Alias;       // EXPR_ALIAS
         struct {        // EXPR_TUPLE
             int size;                   // 2
             Tk* vec;                    // (x,y)

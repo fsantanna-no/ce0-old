@@ -377,15 +377,12 @@ Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: ()
       |  { Stmt [`;´] }                 -- sequence                 call f() ; call g()
       |  `{´ Stmt `}´                   -- block                    { call f() ; call g() }
 
--- mudar pra struct s/ ponteiro
--- mudar EXPR_*/STMT_* simplificar onde nao precisa de ptr
-
 Exp0 ::= `(´ `)´                        -- unit value               ()
       |  NATIVE                         -- native expression        _printf
       |  VAR                            -- variable identifier      i
       |  `$´ USER                       -- null constructor         $List
 
-Expr ::= `&´ VAR                        -- alias                    &x
+Expr ::= `&´ Expr                       -- alias                    &x
       |  `(´ Exp0 {`,´ Exp0} `)´        -- tuple                    (x,())
       |  USER Exp0                      -- constructor              True ()
       |  (VAR|NATIVE) Exp0              -- call                     f x
