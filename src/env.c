@@ -5,7 +5,7 @@
 #include "all.h"
 
 Type Type_Unit  = { TYPE_UNIT, NULL, 0 };
-Type Type_Bool  = { TYPE_USER, NULL, 0, .User={TX_UPPER,{.s="Bool"},0,0} };
+Type Type_Bool  = { TYPE_USER, NULL, 0, .User={TX_USER,{.s="Bool"},0,0} };
 
 int err_message (Tk tk, const char* v) {
     sprintf(ALL.err, "(ln %ld, col %ld): %s", tk.lin, tk.col, v);
@@ -128,7 +128,7 @@ Type* env_expr_to_type (Expr* e) { // static returns use env=NULL b/c no ids und
 
         case EXPR_CONS: {
             Tk tk;
-            if (e->Cons.subtype.enu == TX_NIL) {
+            if (e->Cons.subtype.enu == TX_NULL) {
                 Stmt* user = env_id_to_stmt(e->env, e->Cons.subtype.val.s, NULL);
                 assert(user != NULL);
                 tk = user->User.id;
@@ -227,7 +227,7 @@ void set_envs (Stmt* S) {
     {
         static Stmt s_out = {
             0, STMT_VAR, NULL, {NULL,NULL},
-            .Var={ {TX_LOWER,{.s="clone"},0,0},
+            .Var={ {TX_VAR,{.s="clone"},0,0},
                    {TYPE_FUNC,NULL,.Func={&alias,&user}},{EXPR_UNIT} }
         };
         clone = (Env) { &s_out, NULL };
@@ -236,7 +236,7 @@ void set_envs (Stmt* S) {
         static Type alias = { TYPE_USER, NULL, 0, .User={TK_ERR,{},0,0} };
         static Stmt s_out = {
             0, STMT_VAR, NULL, {NULL,NULL},
-            .Var={ {TX_LOWER,{.s="output"},0,0},
+            .Var={ {TX_VAR,{.s="output"},0,0},
                    {TYPE_FUNC,NULL,.Func={&alias,&Type_Unit}},{EXPR_UNIT} }
         };
         output = (Env) { &s_out, &clone };
@@ -303,7 +303,7 @@ void set_envs (Stmt* S) {
                     Stmt* arg = malloc(sizeof(Stmt));
                     *arg = (Stmt) {
                         0, STMT_VAR, env, {s->Func.body,s->Func.body},
-                        .Var={ {TX_LOWER,{.s="arg"},0,0},*s->Func.type.Func.inp,{0,EXPR_UNIT,env,{}} }
+                        .Var={ {TX_VAR,{.s="arg"},0,0},*s->Func.type.Func.inp,{0,EXPR_UNIT,env,{}} }
                     };
                     Env* new = malloc(sizeof(Env));
                     *new = (Env) { arg, env };
@@ -353,7 +353,7 @@ int check_undeclareds (Stmt* s) {
             case EXPR_PRED:
             case EXPR_CONS: {
                 Tk* sub = (e->sub==EXPR_DISC ? &e->Disc.subtype : (e->sub==EXPR_PRED ? &e->Pred.subtype : &e->Cons.subtype));
-                if (sub->enu == TX_NIL) {
+                if (sub->enu == TX_NULL) {
                     Stmt* decl = env_id_to_stmt(e->env, sub->val.s, NULL);
                     if (decl == NULL) {
                         char err[512];
@@ -455,7 +455,7 @@ int check_types (Stmt* S) {
 
             case EXPR_CONS: {
                 Type* subtype;
-                if (e->Cons.subtype.enu == TX_NIL) {
+                if (e->Cons.subtype.enu == TX_NULL) {
                     subtype = &Type_Unit;
                 } else {
                     Sub* sub = env_find_sub(e->env, e->Cons.subtype.val.s);

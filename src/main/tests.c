@@ -116,30 +116,30 @@ void t_lexer (void) {
     // KEYWORDS
     {
         all_init(NULL, stropen("r", 0, "xvar var else varx type"));
-        assert(ALL.tk1.enu == TX_LOWER);
+        assert(ALL.tk1.enu == TX_VAR);
         lexer(); assert(ALL.tk1.enu == TK_VAR);
         lexer(); assert(ALL.tk1.enu == TK_ELSE);
-        lexer(); assert(ALL.tk1.enu == TX_LOWER);
+        lexer(); assert(ALL.tk1.enu == TX_VAR);
         lexer(); assert(ALL.tk1.enu == TK_TYPE);
         fclose(ALL.inp);
     }
     // IDENTIFIERS
     {
         all_init(NULL, stropen("r", 0, "c1\nc2 c3  \n    \nc4"));
-        assert(ALL.tk1.enu == TX_LOWER); assert(!strcmp(ALL.tk1.val.s, "c1"));
-        lexer(); assert(ALL.tk1.enu == TX_LOWER); assert(!strcmp(ALL.tk1.val.s, "c2")); assert(ALL.tk1.lin == 2);
-        lexer(); assert(ALL.tk1.enu == TX_LOWER); assert(!strcmp(ALL.tk1.val.s, "c3")); assert(ALL.tk1.col == 4);
-        lexer(); assert(ALL.tk1.enu == TX_LOWER); assert(!strcmp(ALL.tk1.val.s, "c4"));
+        assert(ALL.tk1.enu == TX_VAR); assert(!strcmp(ALL.tk1.val.s, "c1"));
+        lexer(); assert(ALL.tk1.enu == TX_VAR); assert(!strcmp(ALL.tk1.val.s, "c2")); assert(ALL.tk1.lin == 2);
+        lexer(); assert(ALL.tk1.enu == TX_VAR); assert(!strcmp(ALL.tk1.val.s, "c3")); assert(ALL.tk1.col == 4);
+        lexer(); assert(ALL.tk1.enu == TX_VAR); assert(!strcmp(ALL.tk1.val.s, "c4"));
         lexer(); assert(ALL.tk1.enu == TK_EOF);
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "c1 C1 Ca a C"));
-        assert(ALL.tk1.enu == TX_LOWER);  assert(!strcmp(ALL.tk1.val.s, "c1"));
-        lexer(); assert(ALL.tk1.enu == TX_UPPER); assert(!strcmp(ALL.tk1.val.s, "C1"));
-        lexer(); assert(ALL.tk1.enu == TX_UPPER); assert(!strcmp(ALL.tk1.val.s, "Ca")); assert(ALL.tk1.lin == 1);
-        lexer(); assert(ALL.tk1.enu == TX_LOWER); assert(!strcmp(ALL.tk1.val.s, "a")); assert(ALL.tk1.col == 10);
-        lexer(); assert(ALL.tk1.enu == TX_UPPER); assert(!strcmp(ALL.tk1.val.s, "C"));
+        assert(ALL.tk1.enu == TX_VAR);  assert(!strcmp(ALL.tk1.val.s, "c1"));
+        lexer(); assert(ALL.tk1.enu == TX_USER); assert(!strcmp(ALL.tk1.val.s, "C1"));
+        lexer(); assert(ALL.tk1.enu == TX_USER); assert(!strcmp(ALL.tk1.val.s, "Ca")); assert(ALL.tk1.lin == 1);
+        lexer(); assert(ALL.tk1.enu == TX_VAR); assert(!strcmp(ALL.tk1.val.s, "a")); assert(ALL.tk1.col == 10);
+        lexer(); assert(ALL.tk1.enu == TX_USER); assert(!strcmp(ALL.tk1.val.s, "C"));
         lexer(); assert(ALL.tk1.enu == TK_EOF);
         fclose(ALL.inp);
     }
@@ -158,8 +158,8 @@ void t_lexer (void) {
     {
         all_init(NULL, stropen("r", 0, "var xvar varx"));
         assert(ALL.tk1.enu == TK_VAR);
-        lexer(); assert(ALL.tk1.enu == TX_LOWER); assert(!strcmp(ALL.tk1.val.s, "xvar")); assert(ALL.tk1.col == 5);
-        lexer(); assert(ALL.tk1.enu == TX_LOWER); assert(!strcmp(ALL.tk1.val.s, "varx"));
+        lexer(); assert(ALL.tk1.enu == TX_VAR); assert(!strcmp(ALL.tk1.val.s, "xvar")); assert(ALL.tk1.col == 5);
+        lexer(); assert(ALL.tk1.enu == TX_VAR); assert(!strcmp(ALL.tk1.val.s, "varx"));
         lexer(); assert(ALL.tk1.enu == TK_EOF);
         fclose(ALL.inp);
     }
@@ -259,10 +259,10 @@ void t_parser_expr (void) {
         fclose(ALL.inp);
     }
     {
-        all_init(NULL, stropen("r", 0, "( ( ) )"));
+        all_init(NULL, stropen("r", 0, "( () )"));
         Expr e;
         assert(!parser_expr_1(&e));
-        assert(!strcmp(ALL.err, "(ln 1, col 7): expected `,´ : have `)´"));
+        assert(!strcmp(ALL.err, "(ln 1, col 6): expected `,´ : have `)´"));
         assert(e.sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
@@ -270,14 +270,14 @@ void t_parser_expr (void) {
         all_init(NULL, stropen("r", 0, "(("));
         Expr e;
         assert(!parser_expr_1(&e));
-        assert(!strcmp(ALL.err, "(ln 1, col 3): expected `)´ : have end of file"));
+        assert(!strcmp(ALL.err, "(ln 1, col 2): expected simple expression : have `(´"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "(\n( \n"));
         Expr e;
         assert(!parser_expr_1(&e));
-        assert(!strcmp(ALL.err, "(ln 3, col 1): expected `)´ : have end of file"));
+        assert(!strcmp(ALL.err, "(ln 2, col 1): expected simple expression : have `(´"));
         fclose(ALL.inp);
     }
     // EXPR_VAR
@@ -330,7 +330,7 @@ void t_parser_expr (void) {
     }
     // EXPR_CALL
     {
-        all_init(NULL, stropen("r", 0, "xxx (  )"));
+        all_init(NULL, stropen("r", 0, "xxx ()"));
         Expr e;
         assert(parser_expr_1(&e));
         assert(e.sub == EXPR_CALL);
@@ -340,7 +340,7 @@ void t_parser_expr (void) {
         fclose(ALL.inp);
     }
     {
-        all_init(NULL, stropen("r", 0, "f()\n(  )\n()"));
+        all_init(NULL, stropen("r", 0, "f()\n()\n()"));
         Expr e;
         assert(parser_expr_1(&e));
         assert(e.sub == EXPR_CALL);
@@ -430,7 +430,7 @@ void t_parser_stmt (void) {
         Stmt s;
         assert(parser_stmt(&s));
         assert(s.sub == STMT_VAR);
-        assert(s.Var.id.enu == TX_LOWER);
+        assert(s.Var.id.enu == TX_VAR);
         assert(s.Var.type.sub == TYPE_UNIT);
         assert(s.Var.init.sub == EXPR_UNIT);
         fclose(ALL.inp);
@@ -440,12 +440,12 @@ void t_parser_stmt (void) {
         Stmt s;
         assert(parser_stmt(&s));
         assert(s.sub == STMT_VAR);
-        assert(s.Var.id.enu == TX_LOWER);
+        assert(s.Var.id.enu == TX_VAR);
         assert(s.Var.type.sub == TYPE_TUPLE);
         fclose(ALL.inp);
     }
     {
-        all_init(NULL, stropen("r", 0, "var a : (_char) = ()"));
+        all_init(NULL, stropen("r", 0, "var a : _char = ()"));
         Stmt s;
         assert(parser_stmt(&s));
         assert(s.Var.type.sub == TYPE_NATIVE);
@@ -525,7 +525,7 @@ void t_parser_stmt (void) {
         all_init(NULL, stropen("r", 0, "{ call () }"));
         Stmt s;
         assert(!parser_stmt(&s));
-        assert(!strcmp(ALL.err, "(ln 1, col 8): expected call expression : have `(´"));
+        assert(!strcmp(ALL.err, "(ln 1, col 8): expected call expression : have `()´"));
         fclose(ALL.inp);
     }
     // STMT_IF
@@ -578,7 +578,7 @@ void t_code (void) {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
         Expr e = { _N_++, EXPR_VAR, NULL, .Var={{},0} };
-            e.Var.id.enu = TX_LOWER;
+            e.Var.id.enu = TX_VAR;
             strcpy(e.Var.id.val.s, "xxx");
         code_expr_1(&e);
         fclose(ALL.out);
@@ -868,7 +868,7 @@ void t_all (void) {
         "    False: ()\n"
         "    True:  ()\n"
         "}\n"
-        "func inv : (Bool -> Bool) {\n"
+        "func inv : Bool -> Bool {\n"
         "    var tst: Bool = arg.True?\n"
         "    if tst {\n"
         "        var v: Bool = False()\n"

@@ -170,7 +170,7 @@ int fe_1 (Expr* e) {
             // same as e->alias
             break;
         case EXPR_CONS: {
-            if (e->Cons.subtype.enu == TX_NIL) {
+            if (e->Cons.subtype.enu == TX_NULL) {
                 out("NULL");
             } else {
                 fprintf(ALL.out, "_%d", e->N);
@@ -234,7 +234,7 @@ int fe_1 (Expr* e) {
         case EXPR_PRED: {
             Stmt* s = env_expr_to_type_to_user_stmt(e->Pred.val);
             assert(s != NULL);
-            int isnil = (e->Pred.subtype.enu == TX_NIL);
+            int isnil = (e->Pred.subtype.enu == TX_NULL);
             out("((");
             visit_expr(e->Pred.val, fe_1);
             fprintf(ALL.out, "%s == %s) ? (Bool){True,{._True=1}} : (Bool){False,{._False=1}})",
@@ -277,7 +277,7 @@ int fe_0 (Expr* e) {
         case EXPR_CONS: {
             visit_expr(e->Cons.arg, fe_0);          // first visit child
 
-            if (e->Cons.subtype.enu == TX_NIL) {
+            if (e->Cons.subtype.enu == TX_NULL) {
                 return VISIT_BREAK;                 // out(NULL) in fe_1
             }
 

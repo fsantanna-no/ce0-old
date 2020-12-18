@@ -36,10 +36,10 @@ const char* lexer_tk2err (TK enu) {
         case TK_EOF:
             sprintf(str, "end of file");
             break;
-        case TX_LOWER:
+        case TX_VAR:
             sprintf(str, "variable identifier");
             break;
-        case TX_UPPER:
+        case TX_USER:
             sprintf(str, "type identifier");
             break;
         case TX_NUM:
@@ -63,11 +63,14 @@ const char* lexer_tk2str (Tk* tk) {
         case TK_EOF:
             sprintf(str, "end of file");
             break;
+        case TK_UNIT:
+            sprintf(str, "`()´");
+            break;
         case TX_NATIVE:
             sprintf(str, "\"_%s\"", tk->val.s);
             break;
-        case TX_LOWER:
-        case TX_UPPER:
+        case TX_VAR:
+        case TX_USER:
         case TK_ERR:
             sprintf(str, "\"%s\"", tk->val.s);
             break;
@@ -77,7 +80,6 @@ const char* lexer_tk2str (Tk* tk) {
            } else if (tk->enu > TK_RESERVED) {
                 sprintf(str, "`%s´", reserved[tk->enu-TK_RESERVED-1]);
             } else {
-//printf("%d\n", tk->enu);
                 assert(0 && "TODO");
             }
             break;
@@ -92,7 +94,6 @@ static TK lx_token (TK_val* val) {
     {
         case '{':
         case '}':
-        case '(':
         case ')':
         case ';':
         case ':':
@@ -107,6 +108,14 @@ static TK lx_token (TK_val* val) {
 
         case EOF:
             return TK_EOF;
+
+        case '(':
+            c = fgetc(ALL.inp);
+            if (c == ')') {
+                return TK_UNIT;
+            }
+            ungetc(c, ALL.inp);
+            return '(';
 
         case '-':
             c = fgetc(ALL.inp);
@@ -180,9 +189,9 @@ static TK lx_token (TK_val* val) {
             }
 
             if (islower(val->s[0])) {
-                return TX_LOWER;
+                return TX_VAR;
             } else if (isupper(val->s[0])) {
-                return TX_UPPER;
+                return TX_USER;
             } else {
                 // impossible case
             }

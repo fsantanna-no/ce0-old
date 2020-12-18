@@ -390,8 +390,8 @@ Exp1 ::= `&´ VAR                        -- alias                    &x
       |  USER Exp0                      -- constructor              True ()
       |  (VAR|NATIVE) Exp0              -- call                     f x
       |  VAR `.´ NUM                    -- tuple index              x.1
-      |  VAR `.´ [`$´] USER `?´         -- predicate                x.False?
       |  VAR `.´ [`$´] USER `!´         -- discriminator            x.True!
+      |  VAR `.´ [`$´] USER `?´         -- predicate                x.False?
 
 Type ::= `(´ `)´                        -- unit                     ()
       |  NATIVE                         -- native type              _char

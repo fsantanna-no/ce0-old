@@ -42,49 +42,47 @@ int check (TK enu) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int parser_type (Type* ret) {
-    // TYPE_UNIT
-    if (accept('(')) {
-        if (accept(')')) {
-            *ret = (Type) { TYPE_UNIT, NULL, 0 };
-        } else {
-            if (!parser_type(ret)) {
-                return 0;
-            }
+// TYPE_UNIT
+    if (accept(TK_UNIT)) {
+        *ret = (Type) { TYPE_UNIT, NULL, 0 };
 
-    // TYPE_TUPLE
-            if (check(',')) {
-                int n = 1;
-                Type* vec = malloc(n*sizeof(Type));
-                assert(vec != NULL);
-                vec[n-1] = *ret;
-                while (accept(',')) {
-                    Type tp;
-                    if (!parser_type(&tp)) {
-                        return 0;
-                    }
-                    n++;
-                    vec = realloc(vec, n*sizeof(Type));
-                    vec[n-1] = tp;
-                }
-                if (!accept_err(')')) {
-                    return 0;
-                }
-                *ret = (Type) { TYPE_TUPLE, NULL, 0, .Tuple={n,vec} };
-
-    // TYPE_PARENS
-            } else if (!accept_err(')')) {
-                return 0;
-            }
+// TYPE_TUPLE
+    } else if (accept('(')) {
+        if (!parser_type(ret)) {
+            return 0;
         }
+        if (!accept_err(',')) {
+            return 0;
+        }
+
+        int n = 1;
+        Type* vec = malloc(n*sizeof(Type));
+        assert(vec != NULL);
+        vec[n-1] = *ret;
+
+        do {
+            Type tp;
+            if (!parser_type(&tp)) {
+                return 0;
+            }
+            n++;
+            vec = realloc(vec, n*sizeof(Type));
+            vec[n-1] = tp;
+        } while (accept(','));
+
+        if (!accept_err(')')) {
+            return 0;
+        }
+        *ret = (Type) { TYPE_TUPLE, NULL, 0, .Tuple={n,vec} };
 
     // TYPE_NATIVE
     } else if (accept(TX_NATIVE)) {
         *ret = (Type) { TYPE_NATIVE, NULL, 0, .Nat=ALL.tk0 };
 
     // TYPE_USER
-    } else if (accept('&') || accept(TX_UPPER)) {
+    } else if (accept('&') || accept(TX_USER)) {
         int isalias = (ALL.tk0.enu == '&');
-        if (isalias && !accept_err(TX_UPPER)) {
+        if (isalias && !accept_err(TX_USER)) {
             return 0;
         }
         *ret = (Type) { TYPE_USER, NULL, isalias, .User=ALL.tk0 };
@@ -115,10 +113,7 @@ int parser_type (Type* ret) {
 
 int parser_expr_0 (Expr* ret) {
     // EXPR_UNIT
-    if (accept('(')) {
-        if (!accept_err(')')) {
-            return 0;
-        }
+    if (accept(TK_UNIT)) {
         *ret = (Expr) { _N_++, EXPR_UNIT, NULL };
 
     // EXPR_NATIVE
@@ -126,16 +121,16 @@ int parser_expr_0 (Expr* ret) {
         *ret = (Expr) { _N_++, EXPR_NATIVE, NULL, .Nat=ALL.tk0 };
 
     // EXPR_VAR
-    } else if (accept(TX_LOWER)) {
+    } else if (accept(TX_VAR)) {
         *ret = (Expr) { _N_++, EXPR_VAR, NULL, .Var={ALL.tk0,0} };
 
     // $ EXPR_CONS
     } else if (accept('$')) {  // $Nat
-        if (!accept_err(TX_UPPER)) {
+        if (!accept_err(TX_USER)) {
             return 0;
         }
         Tk sub = ALL.tk0;
-        sub.enu = TX_NIL;   // TODO: move to lexer
+        sub.enu = TX_NULL;   // TODO: move to lexer
 
         Expr* arg = malloc(sizeof(Expr));
         assert(arg != NULL);
@@ -152,7 +147,7 @@ int parser_expr_0 (Expr* ret) {
 int parser_expr_1 (Expr* ret) {
 // EXPR_ALIAS
     if (accept('&')) {
-        if (!check(TX_LOWER)) {
+        if (!check(TX_VAR)) {
             return 0;
         }
         Expr* e = malloc(sizeof(Expr));
@@ -163,13 +158,11 @@ int parser_expr_1 (Expr* ret) {
         *ret = (Expr) { _N_++, EXPR_ALIAS, .Alias=e };
 
 // EXPR_TUPLE
-    } else if (check('(')) {
-        if (parser_expr_0(ret)) {
-            return 1;   // found ()
-        }
-        assert(ALL.tk0.enu == '(');
-
+    } else if (accept('(')) {
         if (!parser_expr_0(ret)) {
+            return 0;
+        }
+        if (!accept_err(',')) {
             return 0;
         }
 
@@ -177,10 +170,6 @@ int parser_expr_1 (Expr* ret) {
         Expr* vec = malloc(n*sizeof(Expr));
         assert(vec != NULL);
         vec[n-1] = *ret;
-
-        if (!accept_err(',')) {
-            return 0;
-        }
 
         do {
             Expr e;
@@ -198,7 +187,7 @@ int parser_expr_1 (Expr* ret) {
         *ret = (Expr) { _N_++, EXPR_TUPLE, NULL, .Tuple={n,vec} };
 
 // EXPR_CONS
-    } else if (accept(TX_UPPER)) {  // True
+    } else if (accept(TX_USER)) {  // True
         Tk subtype = ALL.tk0;
         Expr* arg = malloc(sizeof(Expr));
         assert(arg != NULL);
@@ -208,7 +197,7 @@ int parser_expr_1 (Expr* ret) {
         *ret = (Expr) { _N_++, EXPR_CONS, NULL, { .Cons={subtype,arg} } };
 
 // EXPR_INDEX / EXPR_PRED / EXPR_DISC / EXPR_CALL
-    } else if (check(TX_LOWER) || check(TX_NATIVE)) {
+    } else if (check(TX_VAR) || check(TX_NATIVE)) {
         assert(parser_expr_0(ret));
 
 // EXPR_INDEX / EXPR_PRED / EXPR_DISC
@@ -223,12 +212,12 @@ int parser_expr_1 (Expr* ret) {
                 *ret = (Expr) { _N_++, EXPR_INDEX, NULL, .Index={var,ALL.tk0.val.n} };
 
 // EXPR_PRED / EXPR_DISC
-            } else if (accept('$') || accept_err(TX_UPPER)) {
+            } else if (accept('$') || accept_err(TX_USER)) {
                 if (ALL.tk0.enu == '$') {
-                    if (!accept_err(TX_UPPER)) {
+                    if (!accept_err(TX_USER)) {
                         return 0;
                     }
-                    ALL.tk0.enu = TX_NIL;   // TODO: move to lexer
+                    ALL.tk0.enu = TX_NULL;   // TODO: move to lexer
                 }
                 Tk sub = ALL.tk0;
 
@@ -267,7 +256,7 @@ int parser_expr_1 (Expr* ret) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int parser_stmt_sub (Sub* ret) {
-    if (!accept_err(TX_UPPER)) {
+    if (!accept_err(TX_USER)) {
         return 0;
     }
     Tk id = ALL.tk0;                // True
@@ -308,7 +297,7 @@ int parser_stmt (Stmt* ret) {
     // STMT_VAR
     if (accept(TK_VAR)) {
         Tk tk = ALL.tk0;
-        if (!accept_err(TX_LOWER)) {
+        if (!accept_err(TX_VAR)) {
             return 0;
         }
         Tk id = ALL.tk0;
@@ -336,7 +325,7 @@ int parser_stmt (Stmt* ret) {
         if (accept(TK_REC)) {           // rec
             isrec = 1;
         }
-        if (!accept_err(TX_UPPER)) {
+        if (!accept_err(TX_USER)) {
             return 0;
         }
         Tk id = ALL.tk0;                // Bool
@@ -420,7 +409,7 @@ int parser_stmt (Stmt* ret) {
     // STMT_FUNC
     } else if (accept(TK_FUNC)) {   // func
         Tk tk = ALL.tk0;
-        if (!accept(TX_LOWER)) {    // f
+        if (!accept(TX_VAR)) {    // f
             return 0;
         }
         Tk id = ALL.tk0;

@@ -1,21 +1,17 @@
+- istx -> ismoved (dentro de set_check_txs)
+    - ainda é necessario?
+- resurgar
 - plains: clone
-- Tirar &Exp0, ficar &var, voltar com DSIC pra Exp1
 - voltar para book
     - programar um pouco mais
     - trabalhar com desugar
     - quanto estiver confortavel, voltar pro sugar
     - ler sobre lifetimes
-
 - testar alias para discrs
-- f(g(x),2) ---> a=g(x) ; b=2 ; f(a,b)
-- verificar alias que sai de escopo e entao pode move novamente
-- verificar returno de alias p/ fora do escopo
 - refazer docs
-- clone
 - STMT_SET
     - var, ---swap--- move semantics
 
-- istx -> ismoved (dentro de set_check_txs)
 - posso passar uma REF onde espero um plain
 
 - descobri as diferencas
