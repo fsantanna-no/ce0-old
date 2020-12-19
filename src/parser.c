@@ -50,9 +50,11 @@ int check_err (TK enu) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int parser_type (Type* ret) {
+    int isalias = accept('&');
+
 // TYPE_UNIT
     if (accept(TK_UNIT)) {
-        *ret = (Type) { TYPE_UNIT, 0 };
+        *ret = (Type) { TYPE_UNIT, isalias };
 
 // TYPE_TUPLE
     } else if (accept('(')) {
@@ -81,18 +83,14 @@ int parser_type (Type* ret) {
         if (!accept_err(')')) {
             return 0;
         }
-        *ret = (Type) { TYPE_TUPLE, 0, .Tuple={n,vec} };
+        *ret = (Type) { TYPE_TUPLE, isalias, .Tuple={n,vec} };
 
     // TYPE_NATIVE
     } else if (accept(TX_NATIVE)) {
-        *ret = (Type) { TYPE_NATIVE, 0, .Native=ALL.tk0 };
+        *ret = (Type) { TYPE_NATIVE, isalias, .Native=ALL.tk0 };
 
     // TYPE_USER
-    } else if (accept('&') || accept(TX_USER)) {
-        int isalias = (ALL.tk0.enu == '&');
-        if (isalias && !accept_err(TX_USER)) {
-            return 0;
-        }
+    } else if (accept(TX_USER)) {
         *ret = (Type) { TYPE_USER, isalias, .User=ALL.tk0 };
 
     } else {

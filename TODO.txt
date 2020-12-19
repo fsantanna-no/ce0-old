@@ -1,6 +1,3 @@
-- pra todos os valores, usar tmp=val -> (val=null) -> tmp
-    - isso vai permitir &val em resugar
-    - eliminar fe_1, todo trabalho vai pra fe_0
 - alias p/ var, tuple, index, disc
 - tinha parado no Expr_call, avaliar os argumentos
     - decidir que tupla nao é Exp0
