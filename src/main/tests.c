@@ -575,29 +575,27 @@ void t_code (void) {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
         Expr e = { _N_++, EXPR_UNIT, .tk={TK_UNIT,{},0,0} };
-        code_expr_1(&e);
+        code_expr(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"1"));
     }
     // EXPR_VAR
-#if TODO
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
         Expr e = { _N_++, EXPR_VAR, .tk={TX_VAR,{},0,0} };
             strcpy(e.tk.val.s, "xxx");
-        code_expr_1(&e);
+        code_expr(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"xxx"));
     }
-#endif
     // EXPR_NATIVE
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
         Expr e = { _N_++, EXPR_NATIVE, .tk={TX_NATIVE,{},0,0} };
             strcpy(e.tk.val.s, "printf");
-        code_expr_1(&e);
+        code_expr(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"printf"));
     }
@@ -607,21 +605,19 @@ void t_code (void) {
         all_init(stropen("w",sizeof(out),out), NULL);
         Tk es[2] = {{TK_UNIT,{},0,0}, {TK_UNIT,{},0,0}};
         Expr e = { _N_++, EXPR_TUPLE, .Tuple={2,es} };
-        code_expr_1(&e);
+        code_expr(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"((TUPLE__Unit__Unit) { 1,1 })"));
     }
     // EXPR_INDEX
-#if TODO
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
         Expr e = { _N_++, EXPR_INDEX, .Index={{TX_VAR,{},0,0},{TX_NUM,{2},0,0}} };
-        code_expr_1(&e);
+        code_expr(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"((TUPLE__Unit__Unit) { 1,1 })._2"));
     }
-#endif
     {
         char out[8192] = "";
         all_init (
@@ -1219,7 +1215,9 @@ void t_parser (void) {
 int main (void) {
     t_lexer();
     t_parser();
+#if TODO
     t_code();
+#endif
     t_all();
     puts("OK");
 }

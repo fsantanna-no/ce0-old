@@ -9,8 +9,8 @@ typedef enum {
 typedef enum {
     EXPR_UNIT = 1,
     EXPR_NATIVE,
-    EXPR_VAR,
     EXPR_NULL,
+    EXPR_VAR,
     //
     EXPR_TUPLE,
     EXPR_INDEX,

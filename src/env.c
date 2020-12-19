@@ -108,7 +108,7 @@ Type* env_tk_to_type (Env* env, Tk* tk) { // static returns use env=NULL b/c no 
             return tp;
         }
         default:
-printf(">>> %d\n", tk->enu);
+//printf(">>> %d\n", tk->enu);
             assert(0);
     }
 }

@@ -379,8 +379,8 @@ Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: ()
 
 Exp0 ::= `(´ `)´                        -- unit value               ()
       |  NATIVE                         -- native expression        _printf
-      |  VAR                            -- variable identifier      i
       |  `$´ USER                       -- null constructor         $List
+      |  VAR                            -- variable identifier      i
 
 Expr ::= `&´ Expr                       -- alias                    &x
       |  `(´ Exp0 {`,´ Exp0} `)´        -- tuple                    (x,())
