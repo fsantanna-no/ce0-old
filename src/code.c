@@ -149,33 +149,17 @@ int ftp_0 (Type* tp, void* env_) {
     return 1;
 }
 
-// Set EXPR_VAR.istx=1 for root recursive and not alias/alias type.
-//      f(nat)          -- istx=1       -- root, recursive
-//      return nat      -- istx=1       -- root, recursive
-//      output(&nat)    -- istx=0       -- root, recursive, alias
-//      f(alias_nat)    -- istx=0       -- root, recursive, alias type
-//      nat.xxx         -- istx=0       -- not root, recursive
-#if 0
-            case EXPR_VAR: {
-                Type* tp = env_expr_to_type(e);
-                if (tp->sub==TYPE_USER && !tp->isalias) {
-                    Stmt* user = env_id_to_stmt(e->env, tp->User.val.s, NULL);
-                    if (user->User.isrec) {
-                        e->Var.istx = 1;
-                    }
-                }
-                break;
-            }
-#endif
-
-void tx_0 (Env* env, Tk* tk) {
+void tmp_tx_0 (Env* env, Tk* tk) {
+    char* id = tk->val.s;
     if (env_tk_istx(env, tk)) {
-        char* id = tk->val.s;
-        fprintf (ALL.out,
-            "typeof(%s) _%s = %s;\n"
-            "%s = NULL;\n",             // this prevents "double free"
-            id, id, id, id
-        );
+        fprintf(ALL.out, "typeof(%s) _tmp_%s = %s;\n", id, id, id);
+        fprintf(ALL.out, "%s = NULL;\n", id); // this prevents "double free"
+            // Set EXPR_VAR.istx=1 for root recursive and not alias/alias type.
+            //      f(nat)          -- istx=1       -- root, recursive
+            //      return nat      -- istx=1       -- root, recursive
+            //      output(&nat)    -- istx=0       -- root, recursive, alias
+            //      f(alias_nat)    -- istx=0       -- root, recursive, alias type
+            //      nat.xxx         -- istx=0       -- not root, recursive
     }
 }
 
@@ -191,12 +175,12 @@ void fe_0 (Env* env, Expr* e) {
             return;
 
         case EXPR_VAR:
-            tx_0(env, &e->tk);
+            tmp_tx_0(env, &e->tk);
             return;
 
         case EXPR_TUPLE:
             for (int i=0; i<e->Tuple.size; i++) {
-                tx_0(env, &e->Tuple.vec[i]);
+                tmp_tx_0(env, &e->Tuple.vec[i]);
             }
             return;
 
@@ -207,13 +191,14 @@ void fe_0 (Env* env, Expr* e) {
             char* sup = user->User.id.val.s;
             char* sub = e->Cons.subtype.val.s;
 
-            tx_0(env, &e->Cons.arg);
+            tmp_tx_0(env, &e->Cons.arg);
 
             // Bool __1 = (Bool) { False, {_False=1} };
             // Nat  __1 = (Nat)  { Succ,  {_Succ=&_2} };
             fprintf(ALL.out,
                 "%s %s_%d = ((%s) { %s, { ._%s=",
-                sup, (user->User.isrec ? "_" : ""), e->N, sup, sub, sub);
+                sup, (user->User.isrec ? "_" : ""), e->N, sup, sub, sub
+            );
             ftk_1(env, &e->Cons.arg, 1);
             out(" } });\n");
 
@@ -232,9 +217,7 @@ void fe_0 (Env* env, Expr* e) {
         }
 
         case EXPR_CALL:
-            if (env_tk_istx(env, &e->Call.arg)) {
-                tx_0(env, &e->Call.arg);
-            }
+            tmp_tx_0(env, &e->Call.arg);
             return;
 
         case EXPR_DISC: {
@@ -267,7 +250,7 @@ void ftk_1 (Env* env, Tk* tk, int istx) {
             break;
         case TX_VAR:
             if (istx && env_tk_istx(env,tk)) {
-                fprintf(ALL.out, "_");
+                fprintf(ALL.out, "_tmp_");
             }
             out(tk->val.s);
             break;
@@ -549,9 +532,7 @@ void code_stmt (Stmt* s) {
             break;
 
         case STMT_RETURN: {
-            if (env_tk_istx(s->env,&s->Return)) {
-                tx_0(s->env, &s->Return);
-            }
+            tmp_tx_0(s->env, &s->Return);
             out("return ");
             ftk_1(s->env, &s->Return, 1);
             out(";\n");

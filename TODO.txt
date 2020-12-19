@@ -1,3 +1,5 @@
+- pra todos os valores, usar tmp=val -> (val=null) -> tmp
+    - isso vai permitir &val em resugar
 - alias p/ var, tuple, index, disc
 - tinha parado no Expr_call, avaliar os argumentos
     - decidir que tupla nao é Exp0
