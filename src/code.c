@@ -59,6 +59,7 @@ void code_to_ce (Type* tp) {
 ///////////////////////////////////////////////////////////////////////////////
 
 void to_c_ (char* out, Env* env, Type* tp) {
+    int isrec = 0;
     switch (tp->sub) {
         case TYPE_UNIT:
             strcat(out, "int");
@@ -68,9 +69,10 @@ void to_c_ (char* out, Env* env, Type* tp) {
             break;
         case TYPE_USER: {
             Stmt* s = env_id_to_stmt(env, tp->User.val.s, NULL);
-            if (s!=NULL && s->User.isrec) strcat(out, "struct ");
+            isrec = (s!=NULL && s->User.isrec);
+            if (isrec) strcat(out, "struct ");
             strcat(out, tp->User.val.s);
-            if (s!=NULL && s->User.isrec) strcat(out, "*");
+            if (isrec) strcat(out, "*");
             break;
         }
         case TYPE_TUPLE:
@@ -82,6 +84,9 @@ void to_c_ (char* out, Env* env, Type* tp) {
             break;
         case TYPE_FUNC:
             assert(0 && "TODO");
+    }
+    if (tp->isalias && !isrec) {
+        strcat(out, "*");
     }
 }
 
@@ -172,7 +177,7 @@ char* ftk (Env* env, Tk* tk) {
             fprintf(ALL.out, "%s* %s = NULL;\n", tk->val.s, decl);
             break;
         default:
-printf(">>> %d\n", tk->enu);
+//printf(">>> %d\n", tk->enu);
             assert(0);
     }
 
@@ -196,6 +201,10 @@ void fe_tmp_set (Env* env, Expr* e, char* tp) {
     fprintf(ALL.out, "%s _tmp_%d = ", (tp!=NULL ? tp : to_c(env,env_expr_to_type(env,e))), e->N);
 }
 
+int isaddr (Env* env, Expr* e) {
+    return (e->isalias && !env_type_isrec(env,env_expr_to_type(env,e)));
+}
+
 void fe (Env* env, Expr* e) {
     switch (e->sub) {
         case EXPR_UNIT:
@@ -210,6 +219,10 @@ void fe (Env* env, Expr* e) {
                 tp = tp_;
             }
             fe_tmp_set(env, e, tp);
+//printf(">>> %s -> %d\n", e->tk.val.s, env_type_isrec(env,env_expr_to_type(env,e)));
+            if (isaddr(env,e)) {
+                out(" /* aqui */ &");
+            }
             out(tk);
             out(";\n");
             return;
@@ -233,7 +246,7 @@ void fe (Env* env, Expr* e) {
         case EXPR_INDEX: {
             char* val = ftk(env, &e->Index.val);
             fe_tmp_set(env, e, NULL);
-            fprintf(ALL.out, "%s._%d;\n", val, e->Index.index.val.n);
+            fprintf(ALL.out, "%s%s._%d;\n", (isaddr(env,e) ? "&":""), val, e->Index.index.val.n);
             return;
         }
 
@@ -310,7 +323,7 @@ void fe (Env* env, Expr* e) {
             );
 
             fe_tmp_set(env, e, NULL);
-            fprintf(ALL.out, "%s%s_%s\n;", val, (s->User.isrec ? "->" : "."), e->Disc.subtype.val.s);
+            fprintf(ALL.out, "%s%s%s_%s\n;", (isaddr(env,e) ? "&" : ""), val, (s->User.isrec ? "->" : "."), e->Disc.subtype.val.s);
             return;
         }
 

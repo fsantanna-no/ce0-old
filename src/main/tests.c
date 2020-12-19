@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DEBUG
-//#define VALGRIND
+//#define DEBUG
+#define VALGRIND
 
 #include "../all.h"
 
@@ -947,9 +947,30 @@ void t_all (void) {
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
+        "var d: Nat = Succ $Nat\n"
+        "var c: Nat = $Nat\n"
+        "var b: &Nat = &c\n"
+        "var a: (Nat,&Nat) = (d,b)\n"
+        "call output a\n"
+    ));
+    assert(all(
+        "$\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
         "var a: (Nat,Nat) = ($Nat,$Nat)\n"
-        "var a_: &(Nat,Nat) = &a\n"
-        "call output a_\n"
+        "var b: &Nat = &a._2\n"
+        "call output b\n"
+    ));
+    assert(all(
+        "$\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "var d: Nat = Succ $Nat\n"
+        "var c: Nat = Succ d\n"
+        "var b: &Nat = &c.Succ!\n"
+        "call output b\n"
     ));
     assert(all(
         "$\n",

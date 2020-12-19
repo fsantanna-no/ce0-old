@@ -138,7 +138,7 @@ int parser_expr_1 (Expr* ret) {
         if (!check_err(TX_VAR) || !parser_expr_1(ret)) {
             return 0;
         }
-        assert(ret->sub==EXPR_VAR || ret->sub==EXPR_TUPLE || ret->sub==EXPR_INDEX || ret->sub==EXPR_DISC);
+        assert(ret->sub==EXPR_VAR || ret->sub==EXPR_INDEX || ret->sub==EXPR_DISC);
         ret->isalias = 1;
         return 1;
 

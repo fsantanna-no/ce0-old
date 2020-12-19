@@ -229,7 +229,7 @@ void env_dump (Env* env) {
 }
 #endif
 
-int env_type_hasrec (Env* env, Type* tp) {
+int env_type_hasalloc (Env* env, Type* tp) {
     if (tp->isalias) {
         return 0;
     }
@@ -240,7 +240,7 @@ int env_type_hasrec (Env* env, Type* tp) {
             return 0;
         case TYPE_TUPLE:
             for (int i=0; i<tp->Tuple.size; i++) {
-                if (env_type_hasrec(env, &tp->Tuple.vec[i])) {
+                if (env_type_hasalloc(env, &tp->Tuple.vec[i])) {
                     return 1;
                 }
             }
@@ -252,11 +252,27 @@ int env_type_hasrec (Env* env, Type* tp) {
                 return 1;
             }
             for (int i=0; i<user->User.size; i++) {
-                if (env_type_hasrec(env,&user->User.vec[i].type)) {
+                if (env_type_hasalloc(env,&user->User.vec[i].type)) {
                     return 1;
                 }
             }
             return 0;
+        }
+    }
+    assert(0);
+}
+
+int env_type_isrec (Env* env, Type* tp) {
+    switch (tp->sub) {
+        case TYPE_UNIT:
+        case TYPE_NATIVE:
+        case TYPE_FUNC:
+        case TYPE_TUPLE:
+            return 0;
+        case TYPE_USER: {
+            Stmt* user = env_id_to_stmt(env, tp->User.val.s, NULL);
+            assert(user!=NULL && user->sub==STMT_USER);
+            return user->User.isrec;
         }
     }
     assert(0);
@@ -267,7 +283,7 @@ int env_tk_istx (Env* env, Tk* tk) {
     if (tk->enu == TX_VAR) {
         Type* tp = env_tk_to_type(env,tk);
         assert(tp != NULL);
-        return env_type_hasrec(env, tp);  // also checks isalias
+        return env_type_hasalloc(env, tp);  // also checks isalias
     } else {
         return 0;
     }
@@ -669,7 +685,7 @@ int check_owner_alias (Stmt* S) {
         return 1;               // not var declaration
     }
 
-    if (!env_type_hasrec(S->env, &S->Var.type)) {
+    if (!env_type_hasalloc(S->env, &S->Var.type)) {
         return 1;               // not recursive type
     }
 
