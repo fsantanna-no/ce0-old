@@ -172,6 +172,22 @@ char* ftk (Env* env, Tk* tk) {
         case TX_NATIVE:
         case TX_VAR:
             fprintf(ALL.out, "typeof(%s) %s = %s;\n", tk->val.s, decl, tk->val.s);
+
+            // var, recursive, !alias
+            {
+                Type* tp = env_tk_to_type(env,tk);
+                assert(tp != NULL);
+                if (env_type_hasalloc(env,tp)) { // also checks isalias
+                    // this prevents "double free"
+                    fprintf(ALL.out, "%s = NULL;\n", tk->val.s);
+                        // Set EXPR_VAR.istx=1 for root recursive and not alias/alias type.
+                        //      f(nat)          -- istx=1       -- root, recursive
+                        //      return nat      -- istx=1       -- root, recursive
+                        //      output(&nat)    -- istx=0       -- root, recursive, alias
+                        //      f(alias_nat)    -- istx=0       -- root, recursive, alias type
+                        //      nat.xxx         -- istx=0       -- not root, recursive
+                }
+            }
             break;
         case TX_NULL:
             fprintf(ALL.out, "%s* %s = NULL;\n", tk->val.s, decl);
@@ -179,17 +195,6 @@ char* ftk (Env* env, Tk* tk) {
         default:
 //printf(">>> %d\n", tk->enu);
             assert(0);
-    }
-
-    // this prevents "double free"
-    if (env_tk_istx(env, tk)) {
-        fprintf(ALL.out, "%s = NULL;\n", tk->val.s);
-            // Set EXPR_VAR.istx=1 for root recursive and not alias/alias type.
-            //      f(nat)          -- istx=1       -- root, recursive
-            //      return nat      -- istx=1       -- root, recursive
-            //      output(&nat)    -- istx=0       -- root, recursive, alias
-            //      f(alias_nat)    -- istx=0       -- root, recursive, alias type
-            //      nat.xxx         -- istx=0       -- not root, recursive
     }
 
     return decl;
@@ -221,7 +226,7 @@ void fe (Env* env, Expr* e) {
             fe_tmp_set(env, e, tp);
 //printf(">>> %s -> %d\n", e->tk.val.s, env_type_isrec(env,env_expr_to_type(env,e)));
             if (isaddr(env,e)) {
-                out(" /* aqui */ &");
+                out("&");
             }
             out(tk);
             out(";\n");

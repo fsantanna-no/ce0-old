@@ -278,17 +278,6 @@ int env_type_isrec (Env* env, Type* tp) {
     assert(0);
 }
 
-// var, recursive, !alias
-int env_tk_istx (Env* env, Tk* tk) {
-    if (tk->enu == TX_VAR) {
-        Type* tp = env_tk_to_type(env,tk);
-        assert(tp != NULL);
-        return env_type_hasalloc(env, tp);  // also checks isalias
-    } else {
-        return 0;
-    }
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 
 void set_envs (Stmt* S) {
