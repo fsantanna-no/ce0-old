@@ -1,3 +1,4 @@
+- tuplas com hasalloc, precisa desaloca-los
 - env_tk_istx: p/ tuplas/user que contem isrecs?
 - alias p/ var, tuple, index, disc
 - tinha parado no Expr_call, avaliar os argumentos

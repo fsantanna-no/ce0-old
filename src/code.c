@@ -172,22 +172,6 @@ char* ftk (Env* env, Tk* tk) {
         case TX_NATIVE:
         case TX_VAR:
             fprintf(ALL.out, "typeof(%s) %s = %s;\n", tk->val.s, decl, tk->val.s);
-
-            // var, recursive, !alias
-            {
-                Type* tp = env_tk_to_type(env,tk);
-                assert(tp != NULL);
-                if (env_type_hasalloc(env,tp)) { // also checks isalias
-                    // this prevents "double free"
-                    fprintf(ALL.out, "%s = NULL;\n", tk->val.s);
-                        // Set EXPR_VAR.istx=1 for root recursive and not alias/alias type.
-                        //      f(nat)          -- istx=1       -- root, recursive
-                        //      return nat      -- istx=1       -- root, recursive
-                        //      output(&nat)    -- istx=0       -- root, recursive, alias
-                        //      f(alias_nat)    -- istx=0       -- root, recursive, alias type
-                        //      nat.xxx         -- istx=0       -- not root, recursive
-                }
-            }
             break;
         case TX_NULL:
             fprintf(ALL.out, "%s* %s = NULL;\n", tk->val.s, decl);
@@ -217,6 +201,24 @@ void fe (Env* env, Expr* e) {
         case EXPR_NATIVE:
         case EXPR_VAR: {
             char* tk = ftk(env, &e->tk);
+
+            // var, recursive, !alias
+            if (!e->isalias) {
+                Type* tp = env_tk_to_type(env,&e->tk);
+                assert(tp != NULL);
+                if (env_type_isrec(env,tp) && !tp->isalias) { // also checks isalias
+puts("-=-=-=-=-");
+                    // this prevents "double free"
+                    fprintf(ALL.out, "%s = NULL;\n", e->tk.val.s);
+                        // Set EXPR_VAR.istx=1 for root recursive and not alias/alias type.
+                        //      f(nat)          -- istx=1       -- root, recursive
+                        //      return nat      -- istx=1       -- root, recursive
+                        //      output(&nat)    -- istx=0       -- root, recursive, alias
+                        //      f(alias_nat)    -- istx=0       -- root, recursive, alias type
+                        //      nat.xxx         -- istx=0       -- not root, recursive
+                }
+            }
+
             char* tp = NULL;
             char tp_[256];
             if (e->sub == EXPR_NATIVE) {
@@ -250,6 +252,16 @@ void fe (Env* env, Expr* e) {
 
         case EXPR_INDEX: {
             char* val = ftk(env, &e->Index.val);
+#if 0
+            // var, recursive, !alias
+            {
+                Type* tp = env_tk_to_type(env,tk);
+                assert(tp != NULL);
+                if (env_type_hasalloc(env,tp)) { // also checks isalias
+                    // this prevents "double free"
+                    fprintf(ALL.out, "%s = NULL;\n", tk->val.s);
+            }
+#endif
             fe_tmp_set(env, e, NULL);
             fprintf(ALL.out, "%s%s._%d;\n", (isaddr(env,e) ? "&":""), val, e->Index.index.val.n);
             return;

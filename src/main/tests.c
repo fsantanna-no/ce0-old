@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-//#define DEBUG
+#define DEBUG
 #define VALGRIND
 
 #include "../all.h"
@@ -933,6 +933,7 @@ void t_all (void) {
         "var n: Nat = $Nat\n"
         "call output n\n"
     ));
+puts("111111111111");
     assert(all(
         "Succ ($)\n",
         "type rec Nat {\n"
@@ -942,17 +943,19 @@ void t_all (void) {
         "var n_: &Nat = &n\n"
         "call output n_\n"
     ));
+puts("222222222222");
     assert(all(
-        "$\n",
+        "(Succ ($),$)\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var d: Nat = Succ $Nat\n"
         "var c: Nat = $Nat\n"
         "var b: &Nat = &c\n"
-        "var a: (Nat,&Nat) = (d,b)\n"
+        "var a: (Nat,&Nat) = (d,b)\n"       // precisa desalocar o d
         "call output a\n"
     ));
+assert(0);
     assert(all(
         "$\n",
         "type rec Nat {\n"
