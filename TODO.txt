@@ -2,10 +2,8 @@
 - tinha parado no Expr_call, avaliar os argumentos
     - decidir que tupla nao é Exp0
     - entao preciso tratar tupla com todos os subs
-- Exp0 -> Tk // Exp1 -> Expr
-- istx -> ismoved (dentro de set_check_txs)
-    - ainda é necessario?
-- resurgar
+
+- resugar
 - plains: clone
 - voltar para book
     - programar um pouco mais

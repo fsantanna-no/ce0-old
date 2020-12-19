@@ -580,6 +580,7 @@ void t_code (void) {
         assert(!strcmp(out,"1"));
     }
     // EXPR_VAR
+#if TODO
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
@@ -589,6 +590,7 @@ void t_code (void) {
         fclose(ALL.out);
         assert(!strcmp(out,"xxx"));
     }
+#endif
     // EXPR_NATIVE
     {
         char out[256];
