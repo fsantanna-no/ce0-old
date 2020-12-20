@@ -187,6 +187,10 @@ void code_free (Env* env, Type* tp) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+char* toptr (Env* env, Type* tp, char* op1, char* op2) {
+    return (!env_type_isrec(env,tp) && env_type_hasalloc(env,tp)) ? op1 : op2;
+}
+
 int ftp (Type* tp, void* env_) {
     Env* env = (Env*) env_;
 
@@ -219,26 +223,28 @@ int ftp (Type* tp, void* env_) {
 
         // OUTPUT
         fprintf(ALL.out,
-            "int output_%s_ (%s v) {\n"
+            "int output_%s_ (%s%s v) {\n"
             "    printf(\"(\");\n",
-            tp_ce, tp_c
+            tp_ce, tp_c, toptr(env,tp,"*","")
         );
         for (int i=0; i<tp->Tuple.size; i++) {
             if (i > 0) {
                 fprintf(ALL.out, "    printf(\",\");\n");
             }
-            fprintf(ALL.out, "    output_%s_(v._%d);\n", to_ce(&tp->Tuple.vec[i]), i+1);
+            Type* sub = &tp->Tuple.vec[i];
+            fprintf(ALL.out, "    output_%s_(%sv%s_%d);\n",
+                to_ce(sub), toptr(env,sub,"&",""), toptr(env,tp,"->","."), i+1);
         }
         fprintf(ALL.out,
             "    printf(\")\");\n"
             "    return 1;\n"
             "}\n"
-            "int output_%s (%s v) {\n"
+            "int output_%s (%s%s v) {\n"
             "    output_%s_(v);\n"
             "    puts(\"\");\n"
             "    return 1;\n"
             "}\n",
-            tp_ce, tp_c, tp_ce
+            tp_ce, tp_c, toptr(env,tp,"*",""), tp_ce
         );
 
         // IFDEF
@@ -467,6 +473,8 @@ void code_stmt (Stmt* s) {
             const char* sup = s->User.id.val.s;
             const char* SUP = strupper(s->User.id.val.s);
             int isrec    = s->User.isrec;
+
+            // output must receive & from hasalloc, otherwise it would receive ownership
             int hasalloc = env_user_hasalloc(s->env, s);
 
             // struct Bool;
@@ -564,12 +572,13 @@ void code_stmt (Stmt* s) {
                             break;
                         case TYPE_USER:
                             yes = par = 1;
-                            sprintf(arg, "output_%s_(v%s_%s)", sub->type.User.val.s, op, sub->id.val.s);
+                            sprintf(arg, "output_%s_(%sv%s_%s)",
+                                sub->type.User.val.s, toptr(s->env,&sub->type,"&",""), op, sub->id.val.s);
                             break;
                         case TYPE_TUPLE:
                             yes = 1;
                             par = 0;
-                            sprintf(arg, "output_%s_(v%s_%s)", to_ce(&sub->type), op, sub->id.val.s);
+                            sprintf(arg, "output_%s_(%sv%s_%s)", to_ce(&sub->type), toptr(s->env,&sub->type,"&",""), op, sub->id.val.s);
                             break;
                         default:
                             assert(0 && "bug found");

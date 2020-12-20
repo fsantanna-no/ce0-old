@@ -1,7 +1,7 @@
 - zerar após TX: a.2=NULL e a.X!=NULL
+    - #if TODO-set-null
     - testar tb comecando de nonrec User
-- nonrec users com hasalloc, precisa desaloca-los
-- env_tk_istx: p/ tuplas/user que contem isrecs?
+    - nonrec users com hasalloc, precisa desaloca-los
 
 - tinha parado no Expr_call, avaliar os argumentos
     - decidir que tupla nao é Exp0
