@@ -151,6 +151,25 @@ void code_free_user (Env* env, Stmt* user) {
 void code_free (Env* env, Type* tp) {
     switch (tp->sub) {
         case TYPE_TUPLE: {
+            if (!env_type_hasalloc(env,tp)) {
+                return;
+            }
+
+            char* tp_ = to_ce(tp);
+            fprintf (ALL.out,
+                "void %s_free (%s* p) {\n",
+                tp_, tp_
+            );
+            for (int i=0; i<tp->Tuple.size; i++) {
+                Type* sub = &tp->Tuple.vec[i];
+                if (env_type_hasalloc(env,sub)) {
+                    fprintf (ALL.out,
+                        "    %s_free(&p->_%d);\n",
+                        to_ce(sub), i+1
+                    );
+                }
+            }
+            out("}\n");
             break;
         }
         case TYPE_USER: {

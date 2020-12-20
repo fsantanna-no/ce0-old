@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DEBUG
-//#define VALGRIND
+//#define DEBUG
+#define VALGRIND
 
 #include "../all.h"
 
@@ -955,7 +955,6 @@ void t_all (void) {
         "var x_: &XNat = &x\n"
         "call output x_\n"
     ));
-puts("222222222222");
     assert(all(
         "(Succ ($),$)\n",
         "type rec Nat {\n"
