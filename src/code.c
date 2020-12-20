@@ -194,6 +194,22 @@ int isaddr (Env* env, Expr* e) {
     return (e->isalias && !env_type_isrec(env,env_expr_to_type(env,e)));
 }
 
+void tx_tk (Env* env, Tk* tk) {
+    Type* tp = env_tk_to_type(env,tk);
+    assert(tp != NULL);
+    if (env_type_isrec(env,tp) && !tp->isalias) { // also checks isalias
+puts("-=-=-=-=-");
+        // this prevents "double free"
+        fprintf(ALL.out, "%s = NULL;\n", tk->val.s);
+            // Set EXPR_VAR.istx=1 for root recursive and not alias/alias type.
+            //      f(nat)          -- istx=1       -- root, recursive
+            //      return nat      -- istx=1       -- root, recursive
+            //      output(&nat)    -- istx=0       -- root, recursive, alias
+            //      f(alias_nat)    -- istx=0       -- root, recursive, alias type
+            //      nat.xxx         -- istx=0       -- not root, recursive
+    }
+}
+
 void fe (Env* env, Expr* e) {
     switch (e->sub) {
         case EXPR_UNIT:
@@ -203,20 +219,8 @@ void fe (Env* env, Expr* e) {
             char* tk = ftk(env, &e->tk);
 
             // var, recursive, !alias
-            if (!e->isalias) {
-                Type* tp = env_tk_to_type(env,&e->tk);
-                assert(tp != NULL);
-                if (env_type_isrec(env,tp) && !tp->isalias) { // also checks isalias
-puts("-=-=-=-=-");
-                    // this prevents "double free"
-                    fprintf(ALL.out, "%s = NULL;\n", e->tk.val.s);
-                        // Set EXPR_VAR.istx=1 for root recursive and not alias/alias type.
-                        //      f(nat)          -- istx=1       -- root, recursive
-                        //      return nat      -- istx=1       -- root, recursive
-                        //      output(&nat)    -- istx=0       -- root, recursive, alias
-                        //      f(alias_nat)    -- istx=0       -- root, recursive, alias type
-                        //      nat.xxx         -- istx=0       -- not root, recursive
-                }
+            if (e->sub==EXPR_VAR && !e->isalias) {
+                tx_tk(env,&e->tk);
             }
 
             char* tp = NULL;
