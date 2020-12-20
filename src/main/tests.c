@@ -3,7 +3,7 @@
 #include <string.h>
 
 #define DEBUG
-#define VALGRIND
+//#define VALGRIND
 
 #include "../all.h"
 
@@ -933,7 +933,6 @@ void t_all (void) {
         "var n: Nat = $Nat\n"
         "call output n\n"
     ));
-puts("111111111111");
     assert(all(
         "Succ ($)\n",
         "type rec Nat {\n"

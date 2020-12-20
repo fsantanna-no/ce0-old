@@ -198,7 +198,6 @@ void tx_tk (Env* env, Tk* tk) {
     Type* tp = env_tk_to_type(env,tk);
     assert(tp != NULL);
     if (env_type_isrec(env,tp) && !tp->isalias) { // also checks isalias
-puts("-=-=-=-=-");
         // this prevents "double free"
         fprintf(ALL.out, "%s = NULL;\n", tk->val.s);
             // Set EXPR_VAR.istx=1 for root recursive and not alias/alias type.
@@ -242,6 +241,7 @@ void fe (Env* env, Expr* e) {
         case EXPR_TUPLE:
             for (int i=0; i<e->Tuple.size; i++) {
                 ftk(env, &e->Tuple.vec[i]);
+                tx_tk(env,&e->Tuple.vec[i]);
             }
             fe_tmp_set(env, e, NULL);
             fprintf(ALL.out, "((%s) {", to_c(env, env_expr_to_type(env,e)));
@@ -371,6 +371,46 @@ void fe (Env* env, Expr* e) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+void code_free_user (Env* env, Stmt* user) {
+    assert(user->sub == STMT_USER);
+    const char* sup = user->User.id.val.s;
+
+    if (user->User.isrec) {
+        // Nat_free
+        fprintf (ALL.out,
+            "void %s_free (struct %s** p) {\n"
+            "    if (*p == NULL) { return; }\n",
+            sup, sup
+        );
+        for (int i=0; i<user->User.size; i++) {
+            Sub sub = user->User.vec[i];
+            if (sub.type.sub==TYPE_USER && (!strcmp(sup,sub.type.User.val.s))) {
+                fprintf (ALL.out,
+                    "    %s_free(&(*p)->_%s);\n"
+                    "    free(*p);\n",
+                    sup, sub.id.val.s
+                );
+            }
+        }
+        out("}\n");
+    }
+}
+
+void code_free (Env* env, Type* tp) {
+    switch (tp->sub) {
+        case TYPE_USER: {
+            Stmt* user = env_id_to_stmt(env, tp->User.val.s, NULL);
+            assert(user != NULL);
+            code_free_user(env, user);
+            break;
+        }
+        default:
+            assert(0);
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 void code_stmt (Stmt* s) {
     switch (s->sub) {
         case STMT_USER: {
@@ -438,26 +478,7 @@ void code_stmt (Stmt* s) {
             }
             out("\n");
 
-            // CLEAN
-            if (isrec) {
-                // Nat_free
-                fprintf (ALL.out,
-                    "void %s_free (struct %s** p) {\n"
-                    "    if (*p == NULL) { return; }\n",
-                    sup, sup
-                );
-                for (int i=0; i<s->User.size; i++) {
-                    Sub sub = s->User.vec[i];
-                    if (sub.type.sub==TYPE_USER && (!strcmp(sup,sub.type.User.val.s))) {
-                        fprintf (ALL.out,
-                            "    %s_free(&(*p)->_%s);\n"
-                            "    free(*p);\n",
-                            sup, sub.id.val.s
-                        );
-                    }
-                }
-                out("}\n");
-            }
+            code_free_user(s->env, s);
 
             // OUTPUT
             {
@@ -528,23 +549,19 @@ void code_stmt (Stmt* s) {
             visit_type(&s->Var.type, ftp, s->env);
             fe(s->env, &s->Var.init);
 
-            char* id = s->Var.id.val.s;
-            char sup[256];
-            strcpy(sup, to_ce(&s->Var.type));
-
             out(to_c(s->env, &s->Var.type));
             out(" ");
-            out(id);
+            out(s->Var.id.val.s);
 
-            if (s->Var.type.sub==TYPE_USER && !s->Var.type.isalias) {
-                Stmt* user = env_id_to_stmt(s->env, s->Var.type.User.val.s, NULL);
-                assert(user!=NULL && user->sub==STMT_USER);
-                if (user->User.isrec) {
-                    fprintf (ALL.out,
-                        " __attribute__ ((__cleanup__(%s_free)))",
-                        sup
-                    );
-                }
+            //if (s->Var.type.sub==TYPE_USER && !s->Var.type.isalias) {
+                //Stmt* user = env_id_to_stmt(s->env, s->Var.type.User.val.s, NULL);
+                //assert(user!=NULL && user->sub==STMT_USER);
+                //if (user->User.isrec) {
+            if (env_type_hasalloc(s->env, &s->Var.type)) {
+                fprintf (ALL.out,
+                    " __attribute__ ((__cleanup__(%s_free)))",
+                    to_ce(&s->Var.type)
+                );
             }
 
             fprintf(ALL.out, " = _tmp_%d;\n", s->Var.init.N);
