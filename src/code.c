@@ -340,18 +340,16 @@ void fe (Env* env, Expr* e) {
 
         case EXPR_INDEX: {
             char* val = ftk(env, &e->Index.val, 0);
-#if 0
-            // var, recursive, !alias
-            {
-                Type* tp = env_tk_to_type(env,tk);
-                assert(tp != NULL);
-                if (env_type_hasalloc(env,tp)) { // also checks isalias
-                    // this prevents "double free"
-                    fprintf(ALL.out, "%s = NULL;\n", tk->val.s);
-            }
-#endif
             fe_tmp_set(env, e, NULL);
             fprintf(ALL.out, "%s%s._%d;\n", (isaddr(env,e) ? "&":""), val, e->Index.index.val.n);
+
+            // transfer ownership
+            Type* tp = env_expr_to_type(env,e);
+            assert(tp != NULL);
+            if (env_type_hasalloc(env,tp)) { // also checks isalias
+                // this prevents "double free"
+                fprintf(ALL.out, "%s._%d = NULL;\n", e->Index.val.val.s, e->Index.index.val.n);
+            }
             return;
         }
 

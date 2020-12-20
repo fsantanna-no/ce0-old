@@ -1025,7 +1025,8 @@ void t_all (void) {
         "var e: Nat = Succ $Nat\n"
         "var a: (Nat,Nat) = (e,c)\n"
         "var b: Nat = a.2\n"
-        "call output a.1\n"             // ok: e
+        "var d: &Nat = &a.1\n"
+        "call output d\n"             // ok: e
     ));
     assert(all(
         "Succ ($)\n",
