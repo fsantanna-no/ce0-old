@@ -943,7 +943,7 @@ void t_all (void) {
         "call output n_\n"
     ));
     assert(all(
-        "Succ ($)\n",
+        "XNat1 (Succ ($))\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"

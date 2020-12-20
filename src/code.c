@@ -195,6 +195,10 @@ int isaddr (Env* env, Expr* e) {
 }
 
 void tx_tk (Env* env, Tk* tk) {
+    if (tk->enu != TX_VAR) {
+        return;
+    }
+
     Type* tp = env_tk_to_type(env,tk);
     assert(tp != NULL);
     if (env_type_isrec(env,tp) && !tp->isalias) { // also checks isalias
@@ -273,6 +277,7 @@ void fe (Env* env, Expr* e) {
 
         case EXPR_CALL: {
             char* arg = ftk(env, &e->Call.arg);
+            tx_tk(env,&e->Call.arg);
 
             char* tp = NULL;
             char tp_[512];
@@ -303,6 +308,7 @@ void fe (Env* env, Expr* e) {
 
         case EXPR_CONS: {
             char* arg = ftk(env, &e->Cons.arg);
+            tx_tk(env,&e->Cons.arg);
             fe_tmp_set(env, e, NULL);
 
             Stmt* user = env_sub_id_to_user_stmt(env, e->Cons.subtype.val.s);
@@ -371,32 +377,37 @@ void fe (Env* env, Expr* e) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void code_free_user (Env* env, Stmt* user) {
+int env_user_hasalloc (Env* env, Stmt* user) {
     assert(user->sub == STMT_USER);
-
-    int hasalloc = user->User.isrec;
-    if (!hasalloc) {
-        for (int i=0; i<user->User.size; i++) {
-            Sub sub = user->User.vec[i];
-            if (env_type_hasalloc(env, &sub.type)) {
-                hasalloc = 1;
-                break;
-            }
+    if (user->User.isrec) {
+        return 1;
+    }
+    for (int i=0; i<user->User.size; i++) {
+        Sub sub = user->User.vec[i];
+        if (env_type_hasalloc(env, &sub.type)) {
+            return 1;
         }
     }
-    if (!hasalloc) {
+    return 0;
+}
+
+void code_free_user (Env* env, Stmt* user) {
+    assert(user->sub == STMT_USER);
+    if (!env_user_hasalloc(env,user)) {
         return;
     }
 
     // Nat_free
 
     const char* sup = user->User.id.val.s;
+    int isrec = user->User.isrec;
+
     fprintf (ALL.out,
-        "void %s_free (struct %s** p) {\n",
-        sup, sup
+        "void %s_free (struct %s%s* p) {\n",
+        sup, sup, (isrec ? "*" : "")
     );
 
-    if (user->User.isrec) {
+    if (isrec) {
         out("    if (*p == NULL) { return; }\n");
     }
 
@@ -404,13 +415,13 @@ void code_free_user (Env* env, Stmt* user) {
         Sub sub = user->User.vec[i];
         if (env_type_hasalloc(env, &sub.type)) {
             fprintf (ALL.out,
-                "    %s_free(&(*p)->_%s);\n",
-                to_ce(&sub.type), sub.id.val.s
+                "    %s_free(&(*p)%s_%s);\n",
+                to_ce(&sub.type), (isrec ? "->" : "."), sub.id.val.s
             );
         }
     }
 
-    if (user->User.isrec) {
+    if (isrec) {
         out("    free(*p);\n");
     }
 
@@ -437,7 +448,8 @@ void code_stmt (Stmt* s) {
         case STMT_USER: {
             const char* sup = s->User.id.val.s;
             const char* SUP = strupper(s->User.id.val.s);
-            int isrec = s->User.isrec;
+            int isrec    = s->User.isrec;
+            int hasalloc = env_user_hasalloc(s->env, s);
 
             // struct Bool;
             // typedef struct Bool Bool;
@@ -452,7 +464,7 @@ void code_stmt (Stmt* s) {
 
                 fprintf(ALL.out,
                     "auto int output_%s_ (%s%s v);\n", // auto: https://stackoverflow.com/a/7319417
-                    sup, sup, (isrec ? "*" : "")
+                    sup, sup, (hasalloc ? "*" : "")
                 );
             }
 
@@ -503,12 +515,12 @@ void code_stmt (Stmt* s) {
 
             // OUTPUT
             {
-                char* op = (isrec ? "->" : ".");
+                char* op = (hasalloc ? "->" : ".");
 
                 // _output_Bool (Bool v)
                 fprintf(ALL.out,
                     "int output_%s_ (%s%s v) {\n",
-                    sup, sup, (isrec ? "*" : "")
+                    sup, sup, (hasalloc ? "*" : "")
                 );
                 if (isrec) {
                     out (
@@ -560,7 +572,7 @@ void code_stmt (Stmt* s) {
                     "    puts(\"\");\n"
                     "    return 1;\n"
                     "}\n",
-                    sup, sup, (isrec ? "*" : ""), sup
+                    sup, sup, (hasalloc ? "*" : ""), sup
                 );
             }
             break;
