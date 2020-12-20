@@ -375,13 +375,28 @@ void code_free_user (Env* env, Stmt* user) {
     assert(user->sub == STMT_USER);
     const char* sup = user->User.id.val.s;
 
+    int hasalloc = user->User.isrec;
+    if (!hasalloc) {
+        for (int i=0; i<user->User.size; i++) {
+            Sub sub = user->User.vec[i];
+            if (env_type_hasalloc(env, &sub.type)) {
+                hasalloc = 1;
+                break;
+            }
+        }
+    }
+    if (!hasalloc) {
+        return;
+    }
+
+    // Nat_free
+    fprintf (ALL.out,
+        "void %s_free (struct %s** p) {\n"
+        "    if (*p == NULL) { return; }\n",
+        sup, sup
+    );
+
     if (user->User.isrec) {
-        // Nat_free
-        fprintf (ALL.out,
-            "void %s_free (struct %s** p) {\n"
-            "    if (*p == NULL) { return; }\n",
-            sup, sup
-        );
         for (int i=0; i<user->User.size; i++) {
             Sub sub = user->User.vec[i];
             if (sub.type.sub==TYPE_USER && (!strcmp(sup,sub.type.User.val.s))) {

@@ -942,6 +942,19 @@ void t_all (void) {
         "var n_: &Nat = &n\n"
         "call output n_\n"
     ));
+    assert(all(
+        "Succ ($)\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "type XNat {\n"
+        "   XNat1: Nat\n"
+        "}\n"
+        "var n: Nat = Succ $Nat\n"
+        "var x: XNat = XNat1 n\n"
+        "var x_: &XNat = &x\n"
+        "call output x_\n"
+    ));
 puts("222222222222");
     assert(all(
         "(Succ ($),$)\n",
