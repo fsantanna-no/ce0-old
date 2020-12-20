@@ -956,6 +956,16 @@ void t_all (void) {
         "call output x_\n"
     ));
     assert(all(
+        "Succ ($)\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "var d: Nat = Succ $Nat\n"
+        "var c: Nat = Succ d\n"
+        "var b: &Nat = &c.Succ!\n"
+        "call output b\n"
+    ));
+    assert(all(
         "(Succ ($),$)\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
@@ -966,18 +976,17 @@ void t_all (void) {
         "var a: (Nat,&Nat) = (d,b)\n"       // precisa desalocar o d
         "call output a\n"
     ));
-#if 0
     assert(all(
         "$\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var a: (Nat,Nat) = ($Nat,$Nat)\n"
-        "var b: &Nat = &a._2\n"
+        "var b: &Nat = &a.2\n"
         "call output b\n"
     ));
     assert(all(
-        "$\n",
+        "(ln 6, col 13): invalid access to \"c\" : ownership was transferred (ln 5)",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -986,27 +995,38 @@ void t_all (void) {
         "call output c\n"               // erro
     ));
     assert(all(
+        "(ln 7, col 16): invalid access to \"a\" : ownership was transferred (ln 6)",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "var c: Nat = Succ $Nat\n"
+        "var a: (Nat,Nat) = ($Nat,c)\n"
+        "var b: (Nat,Nat) = a\n"        // tx a
+        "var d: &Nat = &a.2\n"          // no: a is txed
+        "call output d\n"
+    ));
+    assert(all(
         "$\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var c: Nat = Succ $Nat\n"
         "var a: (Nat,Nat) = ($Nat,c)\n"
-        "var b: Nat = a._2\n"           // precisa transferir o a
-        "call output a\n"               // erro
+        "var b: Nat = a.2\n"            // zera a.2
+        "var d: &Nat = &a.2\n"
+        "call output d\n"               // ok: $Nat
     ));
-#endif
     assert(all(
         "Succ ($)\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "var d: Nat = Succ $Nat\n"
-        "var c: Nat = Succ d\n"
-        "var b: &Nat = &c.Succ!\n"
-        "call output b\n"
+        "var c: Nat = Succ $Nat\n"
+        "var e: Nat = Succ $Nat\n"
+        "var a: (Nat,Nat) = (e,c)\n"
+        "var b: Nat = a.2\n"
+        "call output a.1\n"             // ok: e
     ));
-#if 0
     assert(all(
         "Succ ($)\n",
         "type rec Nat {\n"
@@ -1017,7 +1037,6 @@ void t_all (void) {
         "var b: &Nat = &c.Succ!\n"      // precisa transferir o c
         "var e: Nat = c\n"              // erro
     ));
-#endif
     assert(all(
         "$\n",
         "type rec Nat {\n"
@@ -1069,16 +1088,6 @@ void t_all (void) {
         "var n_: &Nat = &n\n"
         "call output n_\n"
     ));
-#if TODO
-    assert(all(
-        "(ln 4, col 23): missing pool for constructor",
-        "type rec Nat {\n"
-        "   Succ: Nat\n"
-        "}\n"
-        "call _output_Nat(Succ(Succ($Nat)))\n"
-    ));
-#endif
-    // POOL
     assert(all(
         "$\n",
         "type rec Nat {\n"
@@ -1094,7 +1103,15 @@ void t_all (void) {
         "var n: Nat = Succ $Nat\n"
         "call output n\n"
     ));
-#if TODO
+#if TODO-POOL
+    // POOL
+    assert(all(
+        "(ln 4, col 23): missing pool for constructor",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "call _output_Nat(Succ(Succ($Nat)))\n"
+    ));
     assert(all(
         "(ln 5, col 13): missing pool for call",
         "type rec Nat {\n"
@@ -1271,7 +1288,7 @@ void t_all (void) {
         "    return b             -- error: cannot return alias to deallocated value\n"
         "}\n"
     ));
-#if 0   // TODO: set
+#if TODO-set
     assert(all(
         "TODO",
         "type rec List {\n"

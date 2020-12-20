@@ -749,7 +749,7 @@ int check_owner_alias (Stmt* S) {
 
         int rule_5_6 (void)
         {
-            int ftk (Env* env, Tk* tk, int isalias) {
+            int ftk (Env* env, Tk* tk, int istx) {
                 if (strcmp(S->Var.id.val.s,tk->val.s)) {
                     return 1;
                 }
@@ -758,8 +758,7 @@ int check_owner_alias (Stmt* S) {
                 Stmt* decl = env_id_to_stmt(env, tk->val.s, NULL);
                 assert(decl!=NULL && decl==S);
 
-                Type* tp = env_tk_to_type(env, tk);
-                isalias = isalias || tp->isalias;
+                int isalias = env_tk_to_type(env,tk)->isalias;
 
                 // if already moved, it doesn't matter, any access is invalid
 
@@ -789,7 +788,7 @@ int check_owner_alias (Stmt* S) {
                 if (isalias) {
                     assert(state != TRANSFERRED && "bug found");
                     state = BORROWED;
-                } else {
+                } else if (istx) {
                     state = TRANSFERRED;
                 }
                 return 1;
@@ -806,7 +805,7 @@ int check_owner_alias (Stmt* S) {
                             return EXEC_CONTINUE;
 
                         case EXPR_VAR:
-                            return ftk(s->env, &e->tk, env_expr_to_type(s->env, e)->isalias);
+                            return ftk(s->env, &e->tk, 1);
 
                         case EXPR_TUPLE:
                             for (int i=0; i<e->Tuple.size; i++) {
@@ -818,24 +817,25 @@ int check_owner_alias (Stmt* S) {
                             return EXEC_CONTINUE;
 
                         case EXPR_CONS:
-                            return ftk(s->env, &e->Cons.arg, 0);
+                            return ftk(s->env, &e->Cons.arg, 1);
 
                         case EXPR_CALL:
-                            return ftk(s->env, &e->Call.arg, 0);
+                            return ftk(s->env, &e->Call.arg, 1);
 
                         case EXPR_INDEX:
+                            return ftk(s->env, &e->Index.val, 0);
+
                         case EXPR_DISC:
-                            TODO("check if x.field is rec");
-                            return EXEC_CONTINUE;
+                            return ftk(s->env, &e->Index.val, 0);
                     }
                     assert(0 && "bug found");
                 }
 
                 case STMT_CALL:
-                    return ftk(s->env, &s->Call.Call.arg, 0);
+                    return ftk(s->env, &s->Call.Call.arg, 1);
 
                 case STMT_RETURN:
-                    return ftk(s->env, &s->Return, 0);
+                    return ftk(s->env, &s->Return, 1);
 
                 default:
                     return EXEC_CONTINUE;
