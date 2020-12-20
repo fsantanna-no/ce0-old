@@ -1,3 +1,4 @@
+- pq exemplo do len nao da erro?
 - zerar após TX: a.2=NULL e a.X!=NULL
     - #if TODO-set-null
     - testar tb comecando de nonrec User

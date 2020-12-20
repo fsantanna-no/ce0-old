@@ -3,7 +3,7 @@
 #include <string.h>
 
 //#define DEBUG
-//#define VALGRIND
+#define VALGRIND
 
 #include "../all.h"
 
@@ -931,7 +931,8 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "var n: Nat = $Nat\n"
-        "call output n\n"
+        "var n_: &Nat = &n\n"
+        "call output n_\n"
     ));
     assert(all(
         "Succ ($)\n",
@@ -987,13 +988,13 @@ void t_all (void) {
         "call output b\n"
     ));
     assert(all(
-        "(ln 6, col 13): invalid access to \"c\" : ownership was transferred (ln 5)",
+        "(ln 6, col 14): invalid access to \"c\" : ownership was transferred (ln 5)",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var c: Nat = Succ $Nat\n"
         "var a: (Nat,Nat) = ($Nat,c)\n" // precisa transferir o c
-        "call output c\n"               // erro
+        "var d: Nat = c\n"               // erro
     ));
     assert(all(
         "(ln 7, col 16): invalid access to \"a\" : ownership was transferred (ln 6)",
@@ -1094,7 +1095,8 @@ void t_all (void) {
         "var a: (Nat,Nat) = ($Nat,$Nat)\n"
         "var b: (Nat,(Nat,Nat)) = ($Nat,a)\n"
         "var c: Nat = b.1\n"
-        "call output c\n"
+        "var c_: &Nat = &c\n"
+        "call output c_\n"
     ));
     assert(all(
         "(ln 5, col 17): undeclared type \"Naty\"",
@@ -1150,7 +1152,8 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "var n: Nat = Succ $Nat\n"
-        "call output n\n"
+        "var n_: &Nat = &n\n"
+        "call output n_\n"
     ));
 #if TODO-POOL
     // POOL
@@ -1178,6 +1181,7 @@ void t_all (void) {
         "call f()\n"
     ));
 #endif
+
     assert(all(
         "$\n",
         "type rec Nat {\n"
@@ -1188,7 +1192,8 @@ void t_all (void) {
         "    return x\n"
         "}\n"
         "var v: Nat = f()\n"
-        "call output v\n"
+        "var v_: &Nat = &v\n"
+        "call output v_\n"
     ));
     assert(all(
         "Succ (Succ ($))\n",
@@ -1215,7 +1220,8 @@ void t_all (void) {
         "    return b\n"
         "}\n"
         "var y: Nat = f()\n"
-        "call output y\n"
+        "var y_: &Nat = &y\n"
+        "call output y_\n"
     ));
     assert(all(
         "Succ (Succ ($))\n",
@@ -1228,7 +1234,8 @@ void t_all (void) {
         "    return b\n"
         "}\n"
         "var y: Nat = f()\n"
-        "call output y\n"
+        "var y_: &Nat = &y\n"
+        "call output y_\n"
     ));
     assert(all(
         "Succ (Succ ($))\n",
@@ -1271,6 +1278,8 @@ void t_all (void) {
         "var y_: &Nat = &y\n"
         "call output y_\n"
     ));
+assert(0);
+
     // OWNERSHIP / BORROWING
     assert(all(
         "(ln 6, col 14): invalid access to \"i\" : ownership was transferred (ln 5)",
