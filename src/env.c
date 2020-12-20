@@ -686,7 +686,7 @@ int check_owner_alias (Stmt* S) {
     State state = NONE;
     Tk* tk1 = NULL;
 
-    typedef struct { Stmt* s; int state; } Stack;
+    typedef struct { Stmt* stop; int state; int aliases_n; } Stack;
     Stack stack[256];
     int stack_n = 0;
 
@@ -707,13 +707,36 @@ int check_owner_alias (Stmt* S) {
 
     // ... n ...                // check all accesses to it
 
-    int fs (Stmt* s) {
+    int fs (Stmt* s)
+    {
+        // stop when tracked STMT_VAR is out of scope
+
         Stmt* decl = env_id_to_stmt(s->env, S->Var.id.val.s, NULL);
         if (decl!=NULL && decl==S) {
             // ok: S is still in scope
         } else {
             return EXEC_HALT;           // no: S is not in scope
         }
+
+        // push/pop state/aliases stack
+
+        if (s->sub == STMT_BLOCK) {        // enter block: push state
+            stack[stack_n].stop      = s->seqs[0];
+            stack[stack_n].state     = state;
+            stack[stack_n].aliases_n = aliases_n;
+            assert(stack_n < 256);
+            stack_n++;
+        }
+
+        if (s == stack[stack_n-1].stop) {      // leave block: pop state
+            stack_n--;
+            aliases_n = stack[stack_n].aliases_n;
+            if (state != TRANSFERRED) {
+                state = stack[stack_n].state;
+            }
+        }
+
+        //
 
         auto int rule_5_6 (void);
         auto int rule_3 (void);
@@ -888,21 +911,6 @@ int check_owner_alias (Stmt* S) {
                 default:
                     break;
             }
-
-            if (s->sub == STMT_BLOCK) {        // enter block: push state
-                stack[stack_n].s = s->seqs[0];
-                stack[stack_n].state = state;
-                assert(stack_n < 256);
-                stack_n++;
-            }
-
-            if (s == stack[stack_n-1].s) {
-                stack_n--;
-                if (state != TRANSFERRED) {
-                    state = stack[stack_n].state;   // leave block: pop state
-                }
-            }
-
             return EXEC_CONTINUE;
         }
     }

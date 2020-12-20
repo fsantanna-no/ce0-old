@@ -1247,6 +1247,19 @@ void t_all (void) {
         "call output y_\n"
     ));
     assert(all(
+        "(ln 8, col 14): invalid access to \"x\" : ownership was transferred (ln 6)",
+        "type rec Nat {\n"
+        "    Succ: Nat\n"
+        "}\n"
+        "var x: Nat = Succ $Nat     -- owner\n"
+        "{\n"
+        "    var z: Nat = x         -- tx: new owner\n"
+        "}\n"
+        "var y: Nat = x             -- no: x->z\n"
+        "var y_: &Nat = &y\n"
+        "call output y_\n"
+    ));
+    assert(all(
         "(ln 8, col 12): invalid return : cannot return alias to local \"l\" (ln 5)",
         "type rec List {\n"
         "    Item: List\n"
