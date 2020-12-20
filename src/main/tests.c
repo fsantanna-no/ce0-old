@@ -1029,13 +1029,13 @@ void t_all (void) {
         "call output d\n"             // ok: e
     ));
     assert(all(
-        "Succ ($)\n",
+        "(ln 7, col 14): invalid transfer of \"c\" : active alias in scope (ln 6)",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var d: Nat = Succ $Nat\n"
         "var c: Nat = Succ d\n"
-        "var b: &Nat = &c.Succ!\n"      // precisa transferir o c
+        "var b: &Nat = &c.Succ!\n"      // borrow de c
         "var e: Nat = c\n"              // erro
     ));
     assert(all(

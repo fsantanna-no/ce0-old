@@ -1,4 +1,5 @@
 - zerar após TX: a.2=NULL e a.X!=NULL
+    - testar tb comecando de nonrec User
 - nonrec users com hasalloc, precisa desaloca-los
 - env_tk_istx: p/ tuplas/user que contem isrecs?
 

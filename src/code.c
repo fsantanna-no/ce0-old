@@ -427,6 +427,14 @@ void fe (Env* env, Expr* e) {
 
             fe_tmp_set(env, e, NULL);
             fprintf(ALL.out, "%s%s%s_%s\n;", (isaddr(env,e) ? "&" : ""), val, (s->User.isrec ? "->" : "."), e->Disc.subtype.val.s);
+
+            // transfer ownership
+            Type* tp = env_expr_to_type(env,e);
+            assert(tp != NULL);
+            if (env_type_hasalloc(env,tp)) { // also checks isalias
+                // this prevents "double free"
+                fprintf(ALL.out, "%s._%s = NULL;\n", e->Disc.val.val.s, e->Disc.subtype.val.s);
+            }
             return;
         }
 
