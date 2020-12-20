@@ -1039,6 +1039,51 @@ void t_all (void) {
         "var e: Nat = c\n"              // erro
     ));
     assert(all(
+        "Succ ($)\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "var d: Nat = Succ $Nat\n"
+        "var c: Nat = Succ d\n"
+        "var b: Nat = c.Succ!\n"
+        "var e: &Nat = &c\n"
+        "call output e\n"
+    ));
+    assert(all(
+        "XNat1 ($)\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "type XNat {\n"
+        "   XNat1: Nat\n"
+        "}\n"
+        "var d: Nat = Succ $Nat\n"
+        "var c: Nat = Succ d\n"
+        "var i: XNat = XNat1 c\n"
+        "var j: Nat = i.XNat1!\n"
+        "var k: &XNat = &i\n"
+        "call output k\n"
+    ));
+    assert(all(
+        "XNat1 ($)\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "type XNat {\n"
+        "   XNat1: Nat\n"
+        "}\n"
+        "type YNat {\n"
+        "   YNat1: XNat\n"
+        "}\n"
+        "var d: Nat = Succ $Nat\n"
+        "var c: Nat = Succ d\n"
+        "var i: XNat = XNat1 c\n"
+        "var j: YNat = YNat1 i\n"
+        "var k: XNat = j.YNat1!\n"
+        //"var k: &XNat = &i\n"
+        //"call output k\n"
+    ));
+    assert(all(
         "$\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"

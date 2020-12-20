@@ -18,6 +18,8 @@
 - refazer docs
 - STMT_SET
     - var, ---swap--- move semantics
+    - assert que destino é NULL atualmente
+        - melhor fazer free logo sem testar, senao vou ficar precisando da um NULL antes
 
 - posso passar uma REF onde espero um plain
 
