@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 
-//#define DEBUG
-#define VALGRIND
+#define DEBUG
+//#define VALGRIND
 
 #include "../all.h"
 
@@ -966,7 +966,7 @@ void t_all (void) {
         "var a: (Nat,&Nat) = (d,b)\n"       // precisa desalocar o d
         "call output a\n"
     ));
-assert(0);
+#if 0
     assert(all(
         "$\n",
         "type rec Nat {\n"
@@ -981,11 +981,43 @@ assert(0);
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
+        "var c: Nat = Succ $Nat\n"
+        "var a: (Nat,Nat) = ($Nat,c)\n" // precisa transferir o c
+        "call output c\n"               // erro
+    ));
+    assert(all(
+        "$\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "var c: Nat = Succ $Nat\n"
+        "var a: (Nat,Nat) = ($Nat,c)\n"
+        "var b: Nat = a._2\n"           // precisa transferir o a
+        "call output a\n"               // erro
+    ));
+#endif
+    assert(all(
+        "Succ ($)\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
         "var d: Nat = Succ $Nat\n"
         "var c: Nat = Succ d\n"
         "var b: &Nat = &c.Succ!\n"
         "call output b\n"
     ));
+#if 0
+    assert(all(
+        "Succ ($)\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "var d: Nat = Succ $Nat\n"
+        "var c: Nat = Succ d\n"
+        "var b: &Nat = &c.Succ!\n"      // precisa transferir o c
+        "var e: Nat = c\n"              // erro
+    ));
+#endif
     assert(all(
         "$\n",
         "type rec Nat {\n"
@@ -1103,7 +1135,8 @@ assert(0);
         "    return b\n"
         "}\n"
         "var y: Nat = f()\n"
-        "call output y\n"
+        "var y_: &Nat = &y\n"
+        "call output y_\n"
     ));
     assert(all(
         "Succ (Succ ($))\n",

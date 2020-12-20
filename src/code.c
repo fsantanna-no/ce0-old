@@ -631,6 +631,7 @@ void code_stmt (Stmt* s) {
 
         case STMT_RETURN: {
             char* ret = ftk(s->env, &s->Return);
+            tx_tk(s->env,&s->Return);
             fprintf(ALL.out, "return %s;\n", ret);
             break;
         }
