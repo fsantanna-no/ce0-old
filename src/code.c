@@ -253,7 +253,7 @@ char* ftk_ (Tk* tk) {
     return decl;
 }
 
-char* ftk (Env* env, Tk* tk) {
+char* ftk (Env* env, Tk* tk, int istx) {
     char* decl = ftk_(tk);
 
     switch (tk->enu) {
@@ -272,6 +272,21 @@ char* ftk (Env* env, Tk* tk) {
             assert(0);
     }
 
+    if (istx && tk->enu==TX_VAR) {
+        Type* tp = env_tk_to_type(env,tk);
+        assert(tp != NULL);
+        if (env_type_isrec(env,tp) && !tp->isalias) { // also checks isalias
+            // this prevents "double free"
+            fprintf(ALL.out, "%s = NULL;\n", tk->val.s);
+                // Set EXPR_VAR.istx=1 for root recursive and not alias/alias type.
+                //      f(nat)          -- istx=1       -- root, recursive
+                //      return nat      -- istx=1       -- root, recursive
+                //      output(&nat)    -- istx=0       -- root, recursive, alias
+                //      f(alias_nat)    -- istx=0       -- root, recursive, alias type
+                //      nat.xxx         -- istx=0       -- not root, recursive
+        }
+    }
+
     return decl;
 }
 
@@ -285,38 +300,13 @@ int isaddr (Env* env, Expr* e) {
     return (e->isalias && !env_type_isrec(env,env_expr_to_type(env,e)));
 }
 
-void tx_tk (Env* env, Tk* tk) {
-    if (tk->enu != TX_VAR) {
-        return;
-    }
-
-    Type* tp = env_tk_to_type(env,tk);
-    assert(tp != NULL);
-    if (env_type_isrec(env,tp) && !tp->isalias) { // also checks isalias
-        // this prevents "double free"
-        fprintf(ALL.out, "%s = NULL;\n", tk->val.s);
-            // Set EXPR_VAR.istx=1 for root recursive and not alias/alias type.
-            //      f(nat)          -- istx=1       -- root, recursive
-            //      return nat      -- istx=1       -- root, recursive
-            //      output(&nat)    -- istx=0       -- root, recursive, alias
-            //      f(alias_nat)    -- istx=0       -- root, recursive, alias type
-            //      nat.xxx         -- istx=0       -- not root, recursive
-    }
-}
-
 void fe (Env* env, Expr* e) {
     switch (e->sub) {
         case EXPR_UNIT:
         case EXPR_NULL:
         case EXPR_NATIVE:
         case EXPR_VAR: {
-            char* tk = ftk(env, &e->tk);
-
-            // var, recursive, !alias
-            if (e->sub==EXPR_VAR && !e->isalias) {
-                tx_tk(env,&e->tk);
-            }
-
+            char* tk = ftk(env, &e->tk, (e->sub==EXPR_VAR && !e->isalias));
             char* tp = NULL;
             char tp_[256];
             if (e->sub == EXPR_NATIVE) {
@@ -335,8 +325,7 @@ void fe (Env* env, Expr* e) {
 
         case EXPR_TUPLE:
             for (int i=0; i<e->Tuple.size; i++) {
-                ftk(env, &e->Tuple.vec[i]);
-                tx_tk(env,&e->Tuple.vec[i]);
+                ftk(env, &e->Tuple.vec[i], 1);
             }
             fe_tmp_set(env, e, NULL);
             fprintf(ALL.out, "((%s) {", to_c(env, env_expr_to_type(env,e)));
@@ -350,7 +339,7 @@ void fe (Env* env, Expr* e) {
             return;
 
         case EXPR_INDEX: {
-            char* val = ftk(env, &e->Index.val);
+            char* val = ftk(env, &e->Index.val, 0);
 #if 0
             // var, recursive, !alias
             {
@@ -367,8 +356,7 @@ void fe (Env* env, Expr* e) {
         }
 
         case EXPR_CALL: {
-            char* arg = ftk(env, &e->Call.arg);
-            tx_tk(env,&e->Call.arg);
+            char* arg = ftk(env, &e->Call.arg, 1);
 
             char* tp = NULL;
             char tp_[512];
@@ -398,8 +386,7 @@ void fe (Env* env, Expr* e) {
         }
 
         case EXPR_CONS: {
-            char* arg = ftk(env, &e->Cons.arg);
-            tx_tk(env,&e->Cons.arg);
+            char* arg = ftk(env, &e->Cons.arg, 1);
             fe_tmp_set(env, e, NULL);
 
             Stmt* user = env_sub_id_to_user_stmt(env, e->Cons.subtype.val.s);
@@ -433,7 +420,7 @@ void fe (Env* env, Expr* e) {
             Stmt* s = env_tk_to_type_to_user_stmt(env, &e->Disc.val);
             assert(s != NULL);
 
-            char* val = ftk(env, &e->Disc.val);
+            char* val = ftk(env, &e->Disc.val, 0);
 
             fprintf (ALL.out,
                 "assert(%s%ssub == %s && \"discriminator failed\");\n",
@@ -449,7 +436,7 @@ void fe (Env* env, Expr* e) {
             Stmt* s = env_tk_to_type_to_user_stmt(env, &e->Pred.val);
             assert(s != NULL);
 
-            char* val = ftk(env, &e->Disc.val);
+            char* val = ftk(env, &e->Disc.val, 0);
 
             fe_tmp_set(env, e, NULL);
 
@@ -630,8 +617,7 @@ void code_stmt (Stmt* s) {
             break;
 
         case STMT_RETURN: {
-            char* ret = ftk(s->env, &s->Return);
-            tx_tk(s->env,&s->Return);
+            char* ret = ftk(s->env, &s->Return, 1);
             fprintf(ALL.out, "return %s;\n", ret);
             break;
         }
@@ -643,7 +629,7 @@ void code_stmt (Stmt* s) {
             break;
 
         case STMT_IF: {
-            char* tst = ftk(s->env, &s->If.cond); // Bool.sub returns 0 or 1
+            char* tst = ftk(s->env, &s->If.cond, 0); // Bool.sub returns 0 or 1
             fprintf(ALL.out, "if (%s.sub) {\n", tst);
             code_stmt(s->If.true);
             out("} else {\n");
