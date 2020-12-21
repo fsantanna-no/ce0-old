@@ -32,14 +32,14 @@ int main (int argc, char* argv[]) {
         if (mode == MODE_CODE) {
             fout = fopen(out, "w");
         } else {
-            char gcc[128];
+            char gcc[256];
             sprintf(gcc, GCC " -o %s -xc -", out);
             fout = popen(gcc, "w");
         }
     }
     assert(finp!=NULL && fout!=NULL);
 
-    Stmt s;
+    Stmt* s;
 
     if (!all_init(fout, finp)) {
         fprintf(stderr, "%s\n", ALL.err);
@@ -52,12 +52,12 @@ int main (int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    if (!env(&s)) {
+    if (!env(s)) {
         fprintf(stderr, "%s\n", ALL.err);
         fputs("int main (void) {}", fout);
         exit(EXIT_FAILURE);
     }
-    code(&s);
+    code(s);
 
     return 0;
 }

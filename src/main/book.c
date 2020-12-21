@@ -6,7 +6,7 @@
 
 int all (const char* xp, char* src) {
     static char out[65000];
-    Stmt s;
+    Stmt* s;
     if (!all_init (
         stropen("w", sizeof(out), out),
         stropen("r", 0, src)
@@ -18,11 +18,11 @@ int all (const char* xp, char* src) {
         puts(ALL.err);
         return 0;
     }
-    if (!env(&s)) {
+    if (!env(s)) {
         puts(ALL.err);
         return 0;
     }
-    code(&s);
+    code(s);
     fclose(ALL.out);
 #if 1
 puts(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");

@@ -508,8 +508,11 @@ int parser_stmts (TK opt, Stmt* ret) {
     return 1;
 }
 
-int parser (Stmt* ret) {
-    if (!parser_stmts(TK_EOF,ret)) {
+int parser (Stmt** ret) {
+    *ret = malloc(sizeof(Stmt));
+    assert(*ret != NULL);
+
+    if (!parser_stmts(TK_EOF,*ret)) {
         return 0;
     }
     if (!accept_err(TK_EOF)) {

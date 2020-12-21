@@ -9,7 +9,7 @@
 
 int all (const char* xp, char* src) {
     static char out[65000];
-    Stmt s;
+    Stmt* s;
 
     if (!all_init (
         stropen("w", sizeof(out), out),
@@ -28,13 +28,13 @@ int all (const char* xp, char* src) {
         return !strcmp(ALL.err, xp);
     }
 
-    if (!env(&s)) {
+    if (!env(s)) {
 #ifdef DEBUG
         puts(ALL.err);
 #endif
         return !strcmp(ALL.err, xp);
     }
-    code(&s);
+    code(s);
     fclose(ALL.out);
 
 #ifdef DEBUG
