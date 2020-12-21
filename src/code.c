@@ -292,18 +292,44 @@ char* ftk (Env* env, Tk* tk, int istx) {
             assert(0);
     }
 
+    // Set EXPR_VAR.istx=1 for root recursive and not alias/alias type.
+    //      f(nat)          -- istx=1       -- root, recursive
+    //      return nat      -- istx=1       -- root, recursive
+    //      output(&nat)    -- istx=0       -- root, recursive, alias
+    //      f(alias_nat)    -- istx=0       -- root, recursive, alias type
+    //      nat.xxx         -- istx=0       -- not root, recursive
     if (istx && tk->enu==TX_VAR) {
         Type* tp = env_tk_to_type(env,tk);
         assert(tp != NULL);
-        if (env_type_isrec(env,tp) && !tp->isalias) { // also checks isalias
+        if (env_type_hasalloc(env,tp) && !tp->isalias) {
             // this prevents "double free"
-            fprintf(ALL.out, "%s = NULL;\n", tk->val.s);
-                // Set EXPR_VAR.istx=1 for root recursive and not alias/alias type.
-                //      f(nat)          -- istx=1       -- root, recursive
-                //      return nat      -- istx=1       -- root, recursive
-                //      output(&nat)    -- istx=0       -- root, recursive, alias
-                //      f(alias_nat)    -- istx=0       -- root, recursive, alias type
-                //      nat.xxx         -- istx=0       -- not root, recursive
+
+            if (env_type_isrec(env,tp)) {
+                fprintf(ALL.out, "%s = NULL;\n", tk->val.s);
+            } else {
+                switch (tp->sub) {
+                    case TYPE_TUPLE:
+                        for (int i=0; i<tp->Tuple.size; i++) {
+                            if (env_type_isrec(env,&tp->Tuple.vec[i])) {
+                                fprintf(ALL.out, "%s._%d = NULL;\n", tk->val.s, i+1);
+                            }
+                        }
+                        break;
+                    case TYPE_USER: {
+                        Stmt* decl = env_id_to_stmt(env, tp->User.val.s, NULL);
+                        assert(decl!=NULL && decl->sub==STMT_USER);
+                        for (int i=0; i<decl->User.size; i++) {
+                            Sub* sub = &decl->User.vec[i];
+                            if (env_type_isrec(env,&sub->type)) {
+                                fprintf(ALL.out, "%s._%s = NULL;\n", tk->val.s, sub->id.val.s);
+                            }
+                        }
+                        break;
+                    }
+                    default:
+                        assert(0);
+                }
+            }
         }
     }
 

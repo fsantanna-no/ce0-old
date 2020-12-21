@@ -270,7 +270,8 @@ void chap_pre (void) {
         "var y_: &Nat = &y\n"
         "var a: (Nat,&Nat) = (x,y_)\n"
         "var z: Nat = add a\n"
-        "call output z\n"
+        "var z_: &Nat = &z\n"
+        "call output z_\n"
     );
     assert(all("Succ ($)\n", INP));
 
@@ -282,7 +283,8 @@ void chap_pre (void) {
         "var y_: &Nat = &y\n"
         "var a: (Nat,&Nat) = (x,y_)\n"
         "var z: Nat = add a\n"
-        "call output z\n"
+        "var z_: &Nat = &z\n"
+        "call output z_\n"
     );
     assert(all("Succ ($)\n", INP));
 

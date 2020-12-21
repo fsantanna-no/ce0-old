@@ -1372,6 +1372,49 @@ void t_all (void) {
         "    return b             -- error: cannot return alias to deallocated value\n"
         "}\n"
     ));
+    assert(all(
+        "Succ ($)\n",
+        "type Bool {\n"
+        "    False: ()\n"
+        "    True:  ()\n"
+        "}\n"
+        "type rec Nat {\n"
+        "    Succ: Nat\n"
+        "}\n"
+        "func add: (Nat,&Nat) -> Nat {\n"
+        "        var x: Nat = arg.1\n"
+        "        return x\n"
+        "}\n"
+        "var x: Nat = Succ $Nat\n"
+        "var y: Nat = $Nat\n"
+        "var y_: &Nat = &y\n"
+        "var a: (Nat,&Nat) = (x,y_)\n"
+        "var z: Nat = add a\n"
+        "var z_: &Nat = &z\n"
+        "call output z_\n"
+    ));
+    assert(all(
+        "Succ ($)\n",
+        "type Bool {\n"
+        "    False: ()\n"
+        "    True:  ()\n"
+        "}\n"
+        "type rec Nat {\n"
+        "    Succ: Nat\n"
+        "}\n"
+        "type XNat {\n"
+        "    XNat1: Nat\n"
+        "}\n"
+        "func add: XNat -> Nat {\n"
+        "        var x: Nat = arg.XNat1!\n"
+        "        return x\n"
+        "}\n"
+        "var x: Nat = Succ $Nat\n"
+        "var a: XNat = XNat1 x\n"
+        "var z: Nat = add a\n"
+        "var z_: &Nat = &z\n"
+        "call output z_\n"
+    ));
 #if TODO-set
     assert(all(
         "TODO",
