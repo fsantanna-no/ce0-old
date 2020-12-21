@@ -1,18 +1,10 @@
 - book.c
+- plains: clone
 
-- tinha parado no Expr_call, avaliar os argumentos
-    - decidir que tupla nao é Exp0
-    - entao preciso tratar tupla com todos os subs
-
-- zerar após TX: a.2=NULL e a.X!=NULL
-    - #if TODO-set-null
-    - testar tb comecando de nonrec User
-    - nonrec users com hasalloc, precisa desaloca-los
-
-- botar clone/output em parser
+- TODO-set-null
+    - zerar após TX em multi-nivel: a.X!.Y!=NULL
 
 - resugar
-- plains: clone
 - voltar para book
     - programar um pouco mais
     - trabalhar com desugar

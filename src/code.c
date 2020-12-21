@@ -175,7 +175,7 @@ void code_free (Env* env, Type* tp) {
             out("}\n");
             break;
         }
-        case TYPE_USER: {
+        case TYPE_USER: { // TODO-set-null
             Stmt* user = env_id_to_stmt(env, tp->User.val.s, NULL);
             assert(user != NULL);
             if (env_user_hasalloc(env,user)) {

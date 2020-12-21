@@ -1091,8 +1091,8 @@ void t_all (void) {
         "var i: XNat = XNat1 c\n"
         "var j: YNat = YNat1 i\n"
         "var k: XNat = j.YNat1!\n"
-        //"var k: &XNat = &i\n"
-        //"call output k\n"
+        "var k_: &XNat = &k\n"
+        "call output k_\n"
     ));
 #endif
     assert(all(
