@@ -4,7 +4,6 @@
 
 #include "all.h"
 
-Type Type_Unit  = { TYPE_UNIT, 0 };
 Type Type_Bool  = { TYPE_USER, 0, .User={TX_USER,{.s="Bool"},0,0} };
 
 int err_message (Tk* tk, const char* v) {
@@ -281,30 +280,7 @@ int env_type_isrec (Env* env, Type* tp) {
 ///////////////////////////////////////////////////////////////////////////////
 
 void set_envs (Stmt* S) {
-    // TODO: _N_
-    // predeclare functions `clone`, `output`
-    static Type user  = { TYPE_USER, 0, .User={TK_ERR,{},0,0} };
-    static Type alias = { TYPE_USER, 1, .User={TK_ERR,{},0,0} };
-    static Env clone, output;
-    {
-        static Stmt s_out = {
-            0, STMT_VAR, NULL, {NULL,NULL},
-            .Var={ {TX_VAR,{.s="clone"},0,0},
-                   {TYPE_FUNC,.Func={&alias,&user}},{EXPR_UNIT} }
-        };
-        clone = (Env) { &s_out, NULL };
-    }
-    {
-        static Type alias = { TYPE_USER, 0, .User={TK_ERR,{},0,0} };
-        static Stmt s_out = {
-            0, STMT_VAR, NULL, {NULL,NULL},
-            .Var={ {TX_VAR,{.s="output"},0,0},
-                   {TYPE_FUNC,.Func={&alias,&Type_Unit}},{EXPR_UNIT} }
-        };
-        output = (Env) { &s_out, &clone };
-    }
-
-    Env* env = &output;
+    Env* env = NULL;
 
     int fs (Stmt* s) {
         s->env = env;
@@ -347,9 +323,11 @@ void set_envs (Stmt* S) {
                     env = new;
                 }
 
-                Env* save = env;
-                visit_stmt(s->Func.body, fs);
-                env = save;
+                if (s->Func.body != NULL) {
+                    Env* save = env;
+                    visit_stmt(s->Func.body, fs);
+                    env = save;
+                }
 
                 return VISIT_BREAK;                 // do not visit children, I just did that
             }

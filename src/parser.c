@@ -509,10 +509,39 @@ int parser_stmts (TK opt, Stmt* ret) {
 }
 
 int parser (Stmt** ret) {
-    *ret = malloc(sizeof(Stmt));
-    assert(*ret != NULL);
+    static Type Type_Unit  = { TYPE_UNIT, 0 };
 
-    if (!parser_stmts(TK_EOF,*ret)) {
+    Stmt* vec = malloc(3*sizeof(Stmt));
+        assert(vec != NULL);
+
+    Stmt* ss = malloc(sizeof(Stmt));
+        assert(ss != NULL);
+        *ss = (Stmt) { _N_++, STMT_SEQ, NULL, {NULL,NULL}, {}, { .Seq={3,vec} } };
+    *ret = ss;
+
+    // clone, output
+    {
+        static Type any   = { TYPE_NATIVE, 0, {.Native={TX_NATIVE,{.s="any"},0,0}} };
+        static Type alias = { TYPE_NATIVE, 1, {.Native={TX_NATIVE,{.s="any"},0,0}} };
+        vec[0] = (Stmt) {   // clone ()
+            0, STMT_FUNC, NULL, {NULL,NULL},
+            .Func = {
+                { TX_VAR,{.s="clone"},0,0 },
+                { TYPE_FUNC,.Func={&alias,&any} },
+                NULL
+            }
+        };
+        vec[1] = (Stmt) {   // output ()
+            0, STMT_FUNC, NULL, {NULL,NULL},
+            .Func = {
+                { TX_VAR,{.s="output"},0,0 },
+                { TYPE_FUNC,.Func={&alias,&Type_Unit} },
+                NULL
+            }
+        };
+    }
+
+    if (!parser_stmts(TK_EOF,&vec[2])) {
         return 0;
     }
     if (!accept_err(TK_EOF)) {

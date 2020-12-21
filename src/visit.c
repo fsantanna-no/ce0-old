@@ -65,7 +65,7 @@ int visit_stmt (Stmt* s, F_Stmt fs) {
             return (visit_stmt(s->If.true,fs) && visit_stmt(s->If.false,fs));
 
         case STMT_FUNC:
-            return visit_stmt(s->Func.body,fs);
+            return (s->Func.body==NULL) || visit_stmt(s->Func.body,fs);
 
         case STMT_BLOCK:
             return visit_stmt(s->Block, fs);

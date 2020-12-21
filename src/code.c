@@ -704,6 +704,10 @@ void code_stmt (Stmt* s) {
         }
 
         case STMT_FUNC: {
+            if (s->Func.body == NULL) {
+                break;
+            }
+
             assert(s->Func.type.sub == TYPE_FUNC);
             visit_type(&s->Func.type, ftp, s->env);
 
