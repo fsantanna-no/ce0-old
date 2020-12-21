@@ -1415,6 +1415,46 @@ void t_all (void) {
         "var z_: &Nat = &z\n"
         "call output z_\n"
     ));
+
+    // CLONE
+    assert(all(
+        "True\n",
+        "type Bool {\n"
+        "    False: ()\n"
+        "    True:  ()\n"
+        "}\n"
+        "var x: Bool = True ()\n"
+        "var y: Bool = clone x\n"
+        "call output y\n"
+    ));
+    assert(all(
+        "Succ ($)\n",
+        "type rec Nat {\n"
+        "    Succ: Nat\n"
+        "}\n"
+        "var x: Nat = Succ $Nat\n"
+        "var y: Nat = clone x\n"
+        "var y_: &Nat = &y\n"
+        "call output y_\n"
+    ));
+    assert(all(
+        "(Succ ($), False)\n",
+        "type Bool {\n"
+        "    False: ()\n"
+        "    True:  ()\n"
+        "}\n"
+        "type rec Nat {\n"
+        "    Succ: Nat\n"
+        "}\n"
+        "var x: Nat  = Succ $Nat\n"
+        "var y: Bool = False\n"
+        "var xy: (Nat,Bool) = (x,y)\n"
+        "var z: (Nat,Bool) = clone(xy)\n"
+        "var z_: &(Nat,Bool) = &z)\n"
+        "call output z_\n"
+    ));
+
+    // SET
 #if TODO-set
     assert(all(
         "TODO",

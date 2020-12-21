@@ -404,8 +404,11 @@ void fe (Env* env, Expr* e) {
 
             char* tp = NULL;
             char tp_[512];
-            if (e->Call.func.enu == TX_NATIVE) {
+            if (e->Call.func.enu==TX_NATIVE) {
                 sprintf(tp_, "typeof(%s(%s))", e->Call.func.val.s, arg);
+                tp = tp_;
+            } else if (e->Call.func.enu==TX_VAR && !strcmp(e->Call.func.val.s,"clone")) {
+                sprintf(tp_, "typeof(%s_%s(%s))", e->Call.func.val.s, to_ce(env_tk_to_type(env,&e->Call.arg)), arg);
                 tp = tp_;
             }
 
@@ -520,12 +523,20 @@ void code_stmt (Stmt* s) {
             // struct Bool;
             // typedef struct Bool Bool;
             // void output_Bool_ (Bool v);
+            // Bool clone_Bool_  (Bool v);
             {
                 // struct { BOOL sub; union { ... } } Bool;
                 fprintf(ALL.out,
                     "struct %s;\n"
                     "typedef struct %s %s;\n",
                     sup, sup, sup
+                );
+
+                fprintf(ALL.out,
+                    "auto %s%s clone_%s%s (%s%s v);\n",
+                    sup, (hasalloc ? "*" : ""),
+                    (hasalloc ? "x" : ""), sup,
+                    sup, (hasalloc ? "*" : "")
                 );
 
                 fprintf(ALL.out,
@@ -581,6 +592,18 @@ void code_stmt (Stmt* s) {
             // FREE
             if (env_user_hasalloc(s->env,s)) {
                 code_free_user(s->env, s);
+            }
+
+            // CLONE
+            {
+                fprintf(ALL.out,
+                    "%s%s clone_%s%s (%s%s v) {\n",
+                    sup, (hasalloc ? "*" : ""),
+                    (hasalloc ? "x" : ""), sup,
+                    sup, (hasalloc ? "*" : "")
+                );
+                out("return v;\n");
+                out("}\n");
             }
 
             // OUTPUT
