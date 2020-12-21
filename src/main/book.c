@@ -348,7 +348,6 @@ void chap_01 (void) {           // pg 1
     );
     assert(all("Succ (Succ (Succ (Succ ($))))\n", INP));
 
-// TODO: esse esta falhando pois nao consigo passar smaller() que retorna & para add que espera *
     strcpy(INP, _bool);         // pg 2
     strcat(INP, _nat);
     strcat (INP,
@@ -382,13 +381,13 @@ void chap_01 (void) {           // pg 1
         "call output n_\n"
     );
     assert(all("Succ (Succ (Succ (Succ (Succ (Succ ($))))))\n", INP));
-assert(0);
 
     strcpy(INP, _bool);         // pg 3
     strcat(INP, _nat);
     strcat (INP,
         "func square: Nat -> Nat {\n"
-        "    return mul(arg,arg)\n"
+        "    var n: Nat = mul(arg,arg)\n"
+        "    return n\n"
         "}\n"
         "func smaller: (Nat,Nat) -> Nat {\n"
         "    var x: Nat = arg.1\n"
@@ -399,8 +398,15 @@ assert(0);
         "        return y\n"
         "    }\n"
         "}\n"
-        "var n[]: Nat = square (smaller(four,two))\n"
-        "call output n\n"
+        "var a: Nat = four()\n"
+        "var b: Nat = two()\n"
+        "var a_: &Nat = &a\n"
+        "var b_: &Nat = &b\n"
+        "var c: &Nat = smaller(a_,b_)\n"
+        "var d: Nat = clone c\n"
+        "var n: Nat = square d\n"
+        "var n_: &Nat = n\n"
+        "call output n_\n"
     );
     assert(all("Succ (Succ (Succ (Succ ($))))\n", INP));
 
@@ -412,10 +418,12 @@ assert(0);
     strcat(INP, _nat);
     strcat (INP,
         "func fthree: () -> Nat {\n"
-        "    return three\n" // should not allocate since comes from outside
-        "}\n"                // but what if callee returns again?
-        "var x[]: Nat = fthree()\n" // no problem b/c outside will detect and allocate three in received pool
-        "call output x\n"
+        "    var n: Nat = three()\n"
+        "    return n\n"
+        "}\n"
+        "var x: Nat = fthree()\n"
+        "var x_: &Nat = &x\n"
+        "call output x_\n"
     );
     assert(all("Succ (Succ (Succ ($)))\n", INP));
 
