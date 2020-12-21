@@ -264,14 +264,14 @@ int parser_stmt (Stmt* ret) {
         }
         Tk tk = ALL.tk0;
 
-        Stmt* blk = malloc(sizeof(Stmt));
-        assert(blk != NULL);
-        if (!parser_stmts('}',blk)) {
+        Stmt* ss = malloc(sizeof(Stmt));
+        assert(ss != NULL);
+        if (!parser_stmts('}',ss)) {
             return 0;
         }
 
         if (!accept_err('}')) { return 0; }
-        *ret = (Stmt) { _N_++, STMT_BLOCK, NULL, {NULL,NULL}, tk, .Block=blk };
+        *ret = (Stmt) { _N_++, STMT_BLOCK, NULL, {NULL,NULL}, tk, .Block=ss };
         return 1;
     }
 
@@ -404,13 +404,32 @@ int parser_stmt (Stmt* ret) {
             return 0;
         }
 
-        Stmt* s = malloc(sizeof(Stmt)); // return ()
-        assert(s != NULL);
+        Stmt* vec = malloc(2*sizeof(Stmt));
+            assert(vec != NULL);
+
+        vec[0] = (Stmt) {
+            _N_++, STMT_VAR, NULL, {NULL,NULL},
+            .Var = {
+                { TX_VAR, {.s="arg"}, id.lin, id.col },
+                *tp.Func.inp,
+                { _N_++, EXPR_NATIVE, 0, {.tk={TX_NATIVE,{.s="_arg_"},id.lin,id.col}} }
+            }
+        };
+
         err_expected("{");
-        if (!parser_block(s)) {
+        if (!parser_block(&vec[1])) {
             return 0;
         }
-        *ret = (Stmt) { _N_++, STMT_FUNC, NULL, {NULL,NULL}, tk, .Func={id,tp,s} };
+
+        Stmt* ss = malloc(sizeof(Stmt));
+            assert(ss != NULL);
+            *ss = (Stmt) { _N_++, STMT_SEQ, NULL, {NULL,NULL}, tk, { .Seq={2,vec} } };
+
+        Stmt* blk1 = malloc(sizeof(Stmt)); // (arg)
+            assert(blk1 != NULL);
+            *blk1 = (Stmt) { _N_++, STMT_BLOCK, NULL, {NULL,NULL}, tk, .Block=ss };
+
+        *ret = (Stmt) { _N_++, STMT_FUNC, NULL, {NULL,NULL}, tk, .Func={id,tp,blk1} };
 
     // STMT_RETURN
     } else if (accept(TK_RETURN)) {

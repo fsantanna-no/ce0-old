@@ -666,7 +666,7 @@ void code_stmt (Stmt* s) {
             to_c_(tp_inp, s->env, s->Func.type.Func.inp);
 
             fprintf (ALL.out,
-                "%s %s (%s arg) {\n",
+                "%s %s (%s _arg_) {\n",
                 tp_out,
                 s->Func.id.val.s,
                 tp_inp
@@ -695,6 +695,8 @@ void code (Stmt* s) {
         "#include <stdlib.h>\n"
         "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
         "#define output_Unit(x)  (output_Unit_(x), puts(\"\"))\n"
+        "#define output_int_(x)  printf(\"%d\",x)\n"
+        "#define output_int(x)   (output_int_(x), puts(\"\"))\n"
         "int main (void) {\n"
         "\n"
     );

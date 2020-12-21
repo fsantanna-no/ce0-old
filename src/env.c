@@ -348,21 +348,7 @@ void set_envs (Stmt* S) {
                 }
 
                 Env* save = env;
-
-                // body depends on arg
-                {
-                    Stmt* arg = malloc(sizeof(Stmt));
-                    *arg = (Stmt) {
-                        0, STMT_VAR, env, {s->Func.body,s->Func.body},
-                        .Var={ {TX_VAR,{.s="arg"},0,0},*s->Func.type.Func.inp,{0,EXPR_UNIT,0,{}} }
-                    };
-                    Env* new = malloc(sizeof(Env));
-                    *new = (Env) { arg, env };
-                    env = new;
-                }
-
                 visit_stmt(s->Func.body, fs);
-
                 env = save;
 
                 return VISIT_BREAK;                 // do not visit children, I just did that
@@ -504,6 +490,9 @@ int check_undeclareds (Stmt* s) {
 
 int check_types (Stmt* s) {
     int type_is_sup_sub (Type* sup, Type* sub) {
+        if (sup->sub==TYPE_NATIVE || sub->sub==TYPE_NATIVE) {
+            return 1;
+        }
         if (sup->sub != sub->sub) {
             return 0;   // different TYPE_xxx
         }

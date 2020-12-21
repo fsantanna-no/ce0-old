@@ -564,7 +564,9 @@ void t_parser_stmt (void) {
         assert(!strcmp(s.Func.id.val.s, "f"));
         assert(s.Func.body->sub == STMT_BLOCK);
         assert(s.Func.body->Block->sub == STMT_SEQ);
-        assert(s.Func.body->Block->Seq.vec[0].sub == STMT_RETURN);
+        assert(s.Func.body->Block->Seq.vec[1].sub == STMT_BLOCK);
+        assert(s.Func.body->Block->Seq.vec[1].Block->sub == STMT_SEQ);
+        assert(s.Func.body->Block->Seq.vec[1].Block->Seq.vec[0].sub == STMT_RETURN);
         fclose(ALL.inp);
     }
 }
@@ -854,6 +856,12 @@ void t_all (void) {
         "(ln 2, col 6): invalid call to \"f\" : missing return assignment",
         "func f : () -> _x { return _x }\n"
         "call f ()\n"
+    ));
+    assert(all(
+        "1\n",
+        "func f : _int -> _int { return arg }\n"
+        "var v: _int = f _1\n"
+        "call output v\n"
     ));
     assert(all(
         "()\n",
@@ -1252,13 +1260,30 @@ void t_all (void) {
         "call output y_\n"
     ));
     assert(all(
+        "$\n",
+        "type Bool {\n"
+        "    False: ()\n"
+        "    True:  ()\n"
+        "}\n"
+        "type rec Nat {\n"
+        "    Succ: Nat\n"
+        "}\n"
+        "func len: Nat -> Nat {\n"
+        "    return $Nat\n"
+        "}\n"
+        "var a: Nat = Succ $Nat\n"
+        "var y: Nat = len a\n"
+        "var y_: &Nat = &y\n"
+        "call output y_\n"
+    ));
+    assert(all(
         "Succ (Succ (Succ ($)))\n",
         "type Bool {\n"
         "    False: ()\n"
         "    True:  ()\n"
         "}\n"
         "type rec Nat {\n"
-        "   Succ: Nat\n"
+        "    Succ: Nat\n"
         "}\n"
         "func len: Nat -> Nat {\n"
         "    var tst: Bool = arg.$Nat?\n"
@@ -1278,7 +1303,6 @@ void t_all (void) {
         "var y_: &Nat = &y\n"
         "call output y_\n"
     ));
-assert(0);
 
     // OWNERSHIP / BORROWING
     assert(all(
