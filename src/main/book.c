@@ -244,7 +244,8 @@ void chap_pre (void) {
         "}\n"
         "var a: Nat = Succ $Nat\n"
         "var n: (Nat,Nat) = ($Nat, a)\n"
-        "call output n\n"
+        "var n_: &(Nat,Nat) = &n\n"
+        "call output n_\n"
     );
     assert(all("($,Succ ($))\n", INP));
 

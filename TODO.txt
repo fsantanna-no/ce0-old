@@ -1,13 +1,13 @@
-- botar clone/output/arg em parser
-- pq exemplo do len tem leak? arg?
+- tinha parado no Expr_call, avaliar os argumentos
+    - decidir que tupla nao é Exp0
+    - entao preciso tratar tupla com todos os subs
+
 - zerar após TX: a.2=NULL e a.X!=NULL
     - #if TODO-set-null
     - testar tb comecando de nonrec User
     - nonrec users com hasalloc, precisa desaloca-los
 
-- tinha parado no Expr_call, avaliar os argumentos
-    - decidir que tupla nao é Exp0
-    - entao preciso tratar tupla com todos os subs
+- botar clone/output em parser
 
 - resugar
 - plains: clone
@@ -16,7 +16,7 @@
     - trabalhar com desugar
     - quanto estiver confortavel, voltar pro sugar
     - ler sobre lifetimes
-- testar alias para discrs
+
 - refazer docs
 - STMT_SET
     - var, ---swap--- move semantics
