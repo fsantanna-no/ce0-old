@@ -853,24 +853,25 @@ int check_owner_alias (Stmt* S) {
                                 var = &s->Var.init.Disc.val;
                                 break;
                             case EXPR_CALL:
-                                break;
-                            case EXPR_TUPLE: // (&x,&y)  // must put both
-                                break;
+                                break;          // TODO?
+                            case EXPR_TUPLE:
+                                break;          // TODO?
                             default:
-                                break;  // assert below
+                                assert(0);
                         }
-                        assert(var!=NULL && var->enu==TX_VAR);
+                        if (var != NULL) {
+                            assert(var!=NULL && var->enu==TX_VAR);
+                            Stmt* decl = env_id_to_stmt(s->env, var->val.s, NULL);
+                            assert(decl != NULL);
 
-                        decl = env_id_to_stmt(s->env, var->val.s, NULL);
-                        assert(decl != NULL);
-
-                        // check if y reaches S
-                        // if reaches, include s in the list
-                        for (int i=0; i<aliases_n; i++) {
-                            if (aliases[i] == decl) {
-                                assert(aliases_n < 256);
-                                aliases[aliases_n++] = s;
-                                break;
+                            // check if y reaches S
+                            // if reaches, include s in the list
+                            for (int i=0; i<aliases_n; i++) {
+                                if (aliases[i] == decl) {
+                                    assert(aliases_n < 256);
+                                    aliases[aliases_n++] = s;
+                                    break;
+                                }
                             }
                         }
                     }
