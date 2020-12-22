@@ -405,18 +405,21 @@ void t_parser_expr (void) {
         assert(!strcmp(s->Var.init.Cons.arg.val.s,"a"));
         fclose(ALL.inp);
     }
-assert(0);
-#if TODO-resugar
     // EXPR_INDEX
     {
         all_init(NULL, stropen("r", 0, "x.1"));
+        Stmt* s;
         Exp1 e;
-        assert(parser_expr(&e));
-        assert(e.sub == EXPR_INDEX);
-        assert(e.Index.val.enu == TX_VAR);
-        assert(e.Index.index.enu == TX_NUM);
+        assert(parser_expr(&s,&e));
+        assert(e.sub == EXPR_VAR);
+        assert(s->sub == STMT_VAR);
+        assert(s->Var.init.sub == EXPR_INDEX);
+        assert(!strcmp(s->Var.init.Index.val.val.s,"x"));
+        assert(s->Var.init.Index.index.val.n == 1);
         fclose(ALL.inp);
     }
+assert(0);
+#if TODO-resugar
     {
         all_init(NULL, stropen("r", 0, "x().1()"));
         Exp1 e;

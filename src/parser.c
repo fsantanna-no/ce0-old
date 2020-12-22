@@ -243,17 +243,15 @@ int parser_expr (Stmt** s, Exp1* e) {
         Exp1 arg;
         if (parser_expr_(&s2,&arg)) {
             *s = enseq(*s, s2);
-            Exp1 call = (Exp1) { _N_++, EXPR_CALL, 0, .Call={e->tk,arg.tk} };
+            Exp1 call = { _N_++, EXPR_CALL, 0, .Call={e->tk,arg.tk} };
             *s = enseq(*s, stmt_tmp(tk0,e,call));
 
-#if 0
         } else if (accept('.')) {
-    // EXPR_INDEX
+// EXPR_INDEX
             if (accept(TX_NUM)) {
-                Exp1* tup = malloc(sizeof(Exp1));
-                assert(tup != NULL);
-                *tup = *ret;
-                *ret = (Exp1) { _N_++, EXPR_INDEX, 0, .Index={tup,ALL.tk0.val.n} };
+                Exp1 idx = { _N_++, EXPR_INDEX, 0, .Index={e->tk,ALL.tk0} };
+                *s = enseq(*s, stmt_tmp(tk0,e,idx));
+#if 0
     // EXPR_DISC / EXPR_PRED
             } else if (accept(TX_USER) || accept('$')) {
                 if (ALL.tk0.enu == '$') {
@@ -274,10 +272,10 @@ int parser_expr (Stmt** s, Exp1* e) {
                 } else {
                     return err_expected("`?´ or `!´");
                 }
+#endif
             } else {
                 return err_expected("index or subtype");
             }
-#endif
         } else {
             break;
         }
