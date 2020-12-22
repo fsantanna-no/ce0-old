@@ -1438,6 +1438,7 @@ void t_all (void) {
         "var y_: &Nat = &y\n"
         "call output y_\n"
     ));
+#if TODO-clone-tuples
     assert(all(
         "(Succ ($), False)\n",
         "type Bool {\n"
@@ -1448,12 +1449,13 @@ void t_all (void) {
         "    Succ: Nat\n"
         "}\n"
         "var x: Nat  = Succ $Nat\n"
-        "var y: Bool = False\n"
+        "var y: Bool = False ()\n"
         "var xy: (Nat,Bool) = (x,y)\n"
         "var z: (Nat,Bool) = clone xy\n"
         "var z_: &(Nat,Bool) = &z\n"
         "call output z_\n"
     ));
+#endif
 
     // SET
 #if TODO-set

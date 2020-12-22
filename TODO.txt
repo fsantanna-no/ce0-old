@@ -1,5 +1,5 @@
+- clone tuples (TODO-clone-tuples
 - book.c
-- plains: clone
 
 - TODO-set-null
     - zerar após TX em multi-nivel: a.X!.Y!=NULL
