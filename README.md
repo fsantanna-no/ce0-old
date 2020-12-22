@@ -361,6 +361,44 @@ A block delimits, between curly braces `{` and `}`, the scope and visibility of
 
 # 5. Syntax
 
+Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: () = ()
+            `=´ Expr
+      |  `type´ [`rec´] USER `{`        -- user type declaration    type rec List {
+            { USER `:´ Type [`;´] }     --    subtypes                 Cons: List
+         `}´                                                        }
+      |  `call´ Expr                    -- call                     call f()
+      |  `if´ Expr `{´ Stmt `}´         -- conditional              if x { call f() } else { call g() }
+         [`else´ `{´ Stmt `}´]
+      |  `func´ VAR `:´ Type `{´        -- function                 func f : ()->() { return () }
+            Stmt
+         `}´
+      |  `return´ Expr                  -- function return          return ()
+      |  { Stmt [`;´] }                 -- sequence                 call f() ; call g()
+      |  `{´ Stmt `}´                   -- block                    { call f() ; call g() }
+
+Expr ::= `(´ `)´                        -- unit value               ()
+      |  NATIVE                         -- native expression        _printf
+      |  VAR                            -- variable identifier      i
+      |  `&´ VAR                        -- alias                    &x
+      |  `arg´                          -- function argument        arg
+      |  `(´ Expr {`,´ Expr} `)´        -- tuple                    (x,())
+      |  Expr `.´ NUM                   -- tuple index              x.1
+      |  Expr `(´ Expr `)´              -- call                     f(x)
+      |  `$´ USER                       -- null constructor         $List
+      |  USER [`(´ Expr `)´]            -- constructor              True ()
+      |  Expr `.´ [`$´] USER `!´        -- discriminator            x.True!
+      |  Expr `.´ [`$´] USER `?´        -- predicate                x.False?
+      |  `(´ Expr `)´                   -- group                    (x)
+
+Type ::= `(´ `)´                        -- unit                     ()
+      |  NATIVE                         -- native type              _char
+      |  USER                           -- user type                Bool
+      |  `(´ Type {`,´ Type} `)´        -- tuple                    ((),())
+      |  Type `->´ Type                 -- function                 () -> ()
+```
+
+- Desugared (internal representation):
+
 ```
 Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: () = ()
             `=´ Expr
