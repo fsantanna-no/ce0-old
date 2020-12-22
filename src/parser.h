@@ -52,7 +52,7 @@ typedef struct Type {
 
 extern int _N_;
 
-typedef struct Expr {
+typedef struct Exp1 {
     int N;
     EXPR sub;
     int isalias;        // only for EXPR_VAR, EXPR_TUPLE, EXPR_INDEX, EXPR_DISC
@@ -83,7 +83,7 @@ typedef struct Expr {
             Tk subtype;                 // .True?
         } Pred;
     };
-} Expr;
+} Exp1;
 
 typedef struct {
     Tk   id;                            // True:
@@ -99,13 +99,13 @@ typedef struct Stmt {
     struct Stmt* seqs[2];
     Tk tk;
     union {
-        Expr Call;          // STMT_CALL
+        Exp1 Call;          // STMT_CALL
         Tk   Return;        // STMT_RETURN
         struct Stmt* Block; // STMT_BLOCK
         struct {            // STMT_VAR
             Tk   id;                    // ns
             Type type;                  // : Nat
-            Expr init;                  // = n
+            Exp1 init;                  // = n
         } Var;
         struct {           // STMT_USER
             int  isrec;                 // rec
@@ -133,7 +133,7 @@ typedef struct Stmt {
 ///////////////////////////////////////////////////////////////////////////////
 
 int parser_type   (Type* ret);
-int parser_expr_1 (Expr* ret);
+int parser_exp1   (Exp1* ret);
 int parser_stmt   (Stmt* ret);
 int parser_stmts  (TK opt, Stmt* ret);
 int parser        (Stmt** ret);

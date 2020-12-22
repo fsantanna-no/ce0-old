@@ -112,7 +112,7 @@ Type* env_tk_to_type (Env* env, Tk* tk) { // static returns use env=NULL b/c no 
     }
 }
 
-Type* env_expr_to_type_ (Env* env, Expr* e) {
+Type* env_expr_to_type_ (Env* env, Exp1* e) {
     switch (e->sub) {
         case EXPR_UNIT:
         case EXPR_NATIVE:
@@ -187,7 +187,7 @@ Type* env_expr_to_type_ (Env* env, Expr* e) {
     assert(0 && "bug found");
 }
 
-Type* env_expr_to_type (Env* env, Expr* e) {
+Type* env_expr_to_type (Env* env, Exp1* e) {
     Type* ret = env_expr_to_type_(env,e);
     if (e->isalias && !ret->isalias) {
         Type* new = malloc(sizeof(Type));
@@ -367,7 +367,7 @@ int check_undeclareds (Stmt* s) {
         }
     }
 
-    int fe (Env* env, Expr* e) {
+    int fe (Env* env, Exp1* e) {
         switch (e->sub) {
             case EXPR_UNIT:
             case EXPR_NATIVE:
@@ -503,7 +503,7 @@ int check_types (Stmt* s) {
         return 1;
     }
 
-    int fe (Env* env, Expr* e) {
+    int fe (Env* env, Exp1* e) {
         switch (e->sub) {
             case EXPR_UNIT:
             case EXPR_NATIVE:
@@ -763,7 +763,7 @@ int check_owner_alias (Stmt* S) {
 
             switch (s->sub) {
                 case STMT_VAR: {
-                    Expr* e = &s->Var.init;
+                    Exp1* e = &s->Var.init;
                     switch (e->sub) {
                         case EXPR_UNIT:
                         case EXPR_NATIVE:

@@ -338,15 +338,15 @@ char* ftk (Env* env, Tk* tk, int istx) {
 
 // prepares _tmp_N
 
-void fe_tmp_set (Env* env, Expr* e, char* tp) {
+void fe_tmp_set (Env* env, Exp1* e, char* tp) {
     fprintf(ALL.out, "%s _tmp_%d = ", (tp!=NULL ? tp : to_c(env,env_expr_to_type(env,e))), e->N);
 }
 
-int isaddr (Env* env, Expr* e) {
+int isaddr (Env* env, Exp1* e) {
     return (e->isalias && !env_type_isrec(env,env_expr_to_type(env,e)));
 }
 
-void fe (Env* env, Expr* e) {
+void fe (Env* env, Exp1* e) {
     switch (e->sub) {
         case EXPR_UNIT:
         case EXPR_NULL:
@@ -790,7 +790,7 @@ void code_stmt (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void code_expr (Expr* e) {
+void code_exp1 (Exp1* e) {
     fe(NULL, e);
 }
 
