@@ -133,7 +133,7 @@ typedef struct Stmt {
 ///////////////////////////////////////////////////////////////////////////////
 
 int parser_type   (Type* ret);
-int parser_exp1   (Exp1* ret);
-int parser_stmt   (Stmt* ret);
-int parser_stmts  (TK opt, Stmt* ret);
+int parser_exp1   (Stmt** ss, Exp1* ret);
+int parser_stmt   (Stmt** ret);
+int parser_stmts  (TK opt, Stmt** ret);
 int parser        (Stmt** ret);
