@@ -152,6 +152,21 @@ int parser_expr_ (Stmt** s, Exp1* e)
         *e = (Exp1) { _N_++, EXPR_UNIT, 0, .tk=ALL.tk0 };
         *s = NULL;
 
+// EXPR_NULL
+    } else if (accept(TX_NULL)) {   // $Nat
+        *e = (Exp1) { _N_++, EXPR_NULL, 0, .tk=ALL.tk0 };
+        *s = NULL;
+
+// EXPR_NATIVE
+    } else if (accept(TX_NATIVE)) {
+        *s = NULL;
+        *e = (Exp1) { _N_++, EXPR_NATIVE, 0, .tk=ALL.tk0 };
+
+// EXPR_VAR
+    } else if (accept(TX_VAR)) {
+        *s = NULL;
+        *e = (Exp1) { _N_++, EXPR_VAR, 0, .tk=ALL.tk0 };
+
 // EXPR_PARENS / EXPR_TUPLE
     } else if (accept('(')) {
         Tk tk0 = ALL.tk0;
@@ -197,35 +212,17 @@ int parser_expr_ (Stmt** s, Exp1* e)
         Exp1 tuple = (Exp1) { _N_++, EXPR_TUPLE, 0, .Tuple={n,vec} };
         *s = enseq(*s, stmt_tmp(tk0,e,tuple));
 
-    // EXPR_NATIVE
-    } else if (accept(TX_NATIVE)) {
-        *s = NULL;
-        *e = (Exp1) { _N_++, EXPR_NATIVE, 0, .tk=ALL.tk0 };
-
-    // EXPR_VAR
-    } else if (accept(TX_VAR)) {
-        *s = NULL;
-        *e = (Exp1) { _N_++, EXPR_VAR, 0, .tk=ALL.tk0 };
-
-#if 0
-    // EXPR_CONS
-    } else if (accept(TX_USER) || accept('$')) {  // True, $Nat
-        if (ALL.tk0.enu == '$') {
-            if (!accept_err(TX_USER)) {
-                return 0;
-            }
-            ALL.tk0.enu = TX_NIL;   // TODO: move to lexer
-        }
+// EXPR_CONS
+    } else if (accept(TX_USER)) {  // True
         Tk sub = ALL.tk0;
 
-        Exp1* arg = malloc(sizeof(Exp1));
-        assert(arg != NULL);
-        if (sub.enu==TX_NIL || !parser_expr(arg)) {   // ()
-            *arg = (Exp1) { _N_++, EXPR_UNIT, 0 };
+        Exp1 arg;
+        if (!parser_expr(s,&arg)) {   // ()
+            return 0;
         }
 
-        *ret = (Exp1) { _N_++, EXPR_CONS, 0, { .Cons={sub,arg} } };
-#endif
+        Exp1 cons = (Exp1) { _N_++, EXPR_CONS, 0, .Cons={sub,arg.tk} };
+        *s = enseq(*s, stmt_tmp(sub,e,cons));
 
     } else {
         return err_expected("expression");

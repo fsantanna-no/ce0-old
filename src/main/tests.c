@@ -379,27 +379,34 @@ void t_parser_expr (void) {
         assert(s->Seq.s1->Seq.s1->Var.init.Call.arg.enu == TK_UNIT);
         fclose(ALL.inp);
     }
-assert(0);
-#if TODO-resugar
     // EXPR_CONS
     {
         all_init(NULL, stropen("r", 0, "True ()"));
+        Stmt* s;
         Exp1 e;
-        assert(parser_expr(&e));
-        assert(e.sub == EXPR_CONS);
-        assert(!strcmp(e.Cons.subtype.val.s,"True"));
-        assert(e.Cons.arg.enu == TK_UNIT);
+        assert(parser_expr(&s,&e));
+        assert(e.sub == EXPR_VAR);
+        assert(s->sub == STMT_VAR);
+        assert(s->Var.init.sub == EXPR_CONS);
+        assert(!strcmp(s->Var.init.Cons.subtype.val.s,"True"));
+        assert(s->Var.init.Cons.arg.enu == TK_UNIT);
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "Zz1 a"));
+        Stmt* s;
         Exp1 e;
-        assert(parser_expr(&e));
-        assert(e.sub == EXPR_CONS);
-        assert(!strcmp(e.Cons.subtype.val.s,"Zz1"));
-        assert(e.Cons.arg.enu == TX_VAR);
+        assert(parser_expr(&s,&e));
+        assert(e.sub == EXPR_VAR);
+        assert(s->sub == STMT_VAR);
+        assert(s->Var.init.sub == EXPR_CONS);
+        assert(!strcmp(s->Var.init.Cons.subtype.val.s,"Zz1"));
+        assert(s->Var.init.Cons.arg.enu == TX_VAR);
+        assert(!strcmp(s->Var.init.Cons.arg.val.s,"a"));
         fclose(ALL.inp);
     }
+assert(0);
+#if TODO-resugar
     // EXPR_INDEX
     {
         all_init(NULL, stropen("r", 0, "x.1"));
