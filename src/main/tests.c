@@ -339,34 +339,48 @@ void t_parser_expr (void) {
         Stmt* s;
         Exp1 e;
         assert(parser_expr(&s,&e));
-        assert(e.sub == EXPR_TUPLE);
-        assert(e.Tuple.size == 3);
-        assert(e.Tuple.vec[1].enu == TX_VAR);
-        assert(!strcmp(e.Tuple.vec[1].val.s,"x"));
-        assert(e.Tuple.vec[2].enu == TK_UNIT);
+        assert(e.sub == EXPR_VAR);
+        assert(s->sub == STMT_VAR);
+        assert(s->Var.init.sub == EXPR_TUPLE);
+        assert(s->Var.init.Tuple.size == 3);
+        assert(s->Var.init.Tuple.vec[1].enu == TX_VAR);
+        assert(!strcmp(s->Var.init.Tuple.vec[1].val.s,"x"));
+        assert(s->Var.init.Tuple.vec[2].enu == TK_UNIT);
         fclose(ALL.inp);
     }
-#if TODO-resugar
     // EXPR_CALL
     {
         all_init(NULL, stropen("r", 0, "xxx ()"));
+        Stmt* s;
         Exp1 e;
-        assert(parser_expr(&e));
-        assert(e.sub == EXPR_CALL);
-        assert(e.Call.func.enu == TX_VAR);
-        assert(!strcmp(e.Call.func.val.s, "xxx"));
-        assert(e.Call.arg.enu == TK_UNIT);
+        assert(parser_expr(&s,&e));
+        assert(e.sub == EXPR_VAR);
+        assert(s->sub == STMT_VAR);
+        assert(s->Var.init.sub == EXPR_CALL);
+        assert(s->Var.init.Call.func.enu == TX_VAR);
+        assert(!strcmp(s->Var.init.Call.func.val.s, "xxx"));
+        assert(s->Var.init.Call.arg.enu == TK_UNIT);
         fclose(ALL.inp);
     }
     {
-        all_init(NULL, stropen("r", 0, "f()\n()\n()"));
+        all_init(NULL, stropen("r", 0, "f()\n()\n()")); // x=f(); y=x(); z=y()
+        Stmt* s;
         Exp1 e;
-        assert(parser_expr(&e));
-        assert(e.sub == EXPR_CALL);
-        assert(e.Call.func.enu == TX_VAR);
-        assert(e.Call.arg.enu == TK_UNIT);
+        assert(parser_expr(&s,&e));
+        assert(s->sub == STMT_SEQ);
+        assert(s->Seq.s1->sub == STMT_SEQ);
+        assert(s->Seq.s1->Seq.s1->sub == STMT_VAR);
+        assert(s->Seq.s1->Seq.s2->sub == STMT_VAR);
+        assert(s->Seq.s2->sub == STMT_VAR);
+
+        assert(s->Seq.s1->Seq.s1->Var.init.sub == EXPR_CALL);
+        assert(s->Seq.s1->Seq.s1->Var.init.Call.func.enu == TX_VAR);
+        assert(!strcmp(s->Seq.s1->Seq.s1->Var.init.Call.func.val.s, "f"));
+        assert(s->Seq.s1->Seq.s1->Var.init.Call.arg.enu == TK_UNIT);
         fclose(ALL.inp);
     }
+assert(0);
+#if TODO-resugar
     // EXPR_CONS
     {
         all_init(NULL, stropen("r", 0, "True ()"));

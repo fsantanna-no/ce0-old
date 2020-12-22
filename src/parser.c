@@ -125,6 +125,24 @@ Stmt* enseq (Stmt* s1, Stmt* s2) {
     }
 }
 
+Stmt* stmt_tmp (Tk tk0, Exp1* e, Exp1 init) {
+    Tk tmp = tk0;
+    sprintf(tmp.val.s, "_tmp_%d", _N_);
+
+    static Type any = { TYPE_NATIVE, 0, {.Native={TX_NATIVE,{.s="any"},0,0}} };
+
+    Stmt* ret = malloc(sizeof(Stmt));
+    assert(ret != NULL);
+    *ret = (Stmt) {
+        _N_++, STMT_VAR, NULL, {NULL,NULL}, tk0,
+        .Var = { tmp, any, init }
+    };
+
+    *e = (Exp1) { _N_++, EXPR_VAR, 0, .tk=tmp };
+    return ret;
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 
 int parser_expr_ (Stmt** s, Exp1* e)
@@ -159,15 +177,15 @@ int parser_expr_ (Stmt** s, Exp1* e)
         vec[n-1] = e->tk;
 
         do {
-            Exp1 e;
+            Exp1 e2;
             Stmt* s2;
-            if (!parser_expr(&s2,&e)) {
+            if (!parser_expr(&s2,&e2)) {
                 return 0;
             }
 
             n++;
             vec = realloc(vec, n*sizeof(Tk));
-            vec[n-1] = e.tk;
+            vec[n-1] = e2.tk;
 
             *s = enseq(*s, s2);
         } while (accept(','));
@@ -176,19 +194,8 @@ int parser_expr_ (Stmt** s, Exp1* e)
             return 0;
         }
 
-        static Type any = { TYPE_NATIVE, 0, {.Native={TX_NATIVE,{.s="any"},0,0}} };
-        Tk tmp = tk0;
-            sprintf(tk0.val.s, "_tmp_%d", _N_);
-
-        Stmt* var = malloc(sizeof(Stmt));
-        assert(var != NULL);
-        *var = (Stmt) {
-            _N_++, STMT_VAR, NULL, {NULL,NULL}, tk0,
-            .Var = { tmp, any, { EXPR_TUPLE, 0, .Tuple={n,vec} } }
-        };
-
-        *s = enseq(*s, var);
-        *e = (Exp1) { _N_++, EXPR_VAR, 0, .tk=tmp };
+        Exp1 tuple = (Exp1) { _N_++, EXPR_TUPLE, 0, .Tuple={n,vec} };
+        *s = enseq(*s, stmt_tmp(tk0,e,tuple));
 
     // EXPR_NATIVE
     } else if (accept(TX_NATIVE)) {
@@ -231,20 +238,18 @@ int parser_expr (Stmt** s, Exp1* e) {
         return 0;
     }
 
-#if 0
-    while (1) {
-    // EXPR_CALL
-        if (check('(')) {                // only checks, arg will accept
-            Exp1* arg = malloc(sizeof(Exp1));
-            assert(arg != NULL);
-            if (!parser_expr(arg)) {   // f().() and not f.()()
-                return 0;
-            }
+    while (1)
+    {
+// EXPR_CALL
+        Tk tk0 = ALL.tk0;
+        Stmt* s2;
+        Exp1 arg;
+        if (parser_expr_(&s2,&arg)) {
+            *s = enseq(*s, s2);
+            Exp1 call = (Exp1) { _N_++, EXPR_CALL, 0, .Call={e->tk,arg.tk} };
+            *s = enseq(*s, stmt_tmp(tk0,e,call));
 
-            Exp1* func = malloc(sizeof(Exp1));
-            assert(func != NULL);
-            *func = *ret;
-            *ret  = (Exp1) { _N_++, EXPR_CALL, 0, .Call={func,arg} };
+#if 0
         } else if (accept('.')) {
     // EXPR_INDEX
             if (accept(TX_NUM)) {
@@ -275,11 +280,11 @@ int parser_expr (Stmt** s, Exp1* e) {
             } else {
                 return err_expected("index or subtype");
             }
+#endif
         } else {
             break;
         }
     }
-#endif
 
     return 1;
 }

@@ -1,3 +1,4 @@
+- Seq virar s1/s2
 - clone tuples (TODO-clone-tuples)
 - book.c
 
