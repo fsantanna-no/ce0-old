@@ -575,11 +575,11 @@ void code_stmt (Stmt* s) {
                     sup, SUP
                 );
                 for (int i=0; i<s->User.size; i++) {
-                    Sub sub = s->User.vec[i];
+                    Sub* sub = &s->User.vec[i];
                     out("        ");
-                    out(to_c(s->env, &sub.type));
+                    out(to_c(s->env, &sub->type));
                     out(" _");
-                    out(sub.id.val.s);      // int _True
+                    out(sub->id.val.s);      // int _True
                     out(";\n");
                 }
                 fprintf(ALL.out,
@@ -605,25 +605,33 @@ void code_stmt (Stmt* s) {
                 if (!hasalloc) {
                     out("return v;\n");
                 } else {
-#if 0
-                    "    switch (v->sub) {\n",
                     if (isrec) {
                         out (
-                            "    if (v == NULL) {\n"
-                            "        return v;\n"
-                            "    }\n"
+                            "if (v == NULL) {\n"
+                            "   return v;\n"
+                            "}\n"
                         );
                     }
+                    out("switch (v->sub) {\n");
                     for (int i=0; i<s->User.size; i++) {
-                        Sub sub = s->User.vec[i];
-                        out("        ");
-                        out(to_c(s->env, &sub.type));
-                        out(" _");
-                        out(sub.id.val.s);      // int _True
-                        out(";\n");
+                        Sub* sub = &s->User.vec[i];
+                        char* id = sub->id.val.s;
+                        fprintf (ALL.out,
+                            "case %s: {\n"
+                            "   %s* ret = malloc(sizeof(%s));\n"
+                            "   assert(ret!=NULL && \"not enough memory\");\n"
+                            "   *ret = (%s) { %s, {._%s=clone_%s%s(v->_%s)} };\n"
+                            "   return ret;\n"
+                            "}\n",
+                            id,
+                            sup, sup,
+                            sup, id, id,
+                            (hasalloc ? "x" : ""), to_ce(&sub->type), id
+                        );
                     }
-#endif
+                    out("}\n");
                 }
+                out("assert(0);\n");
                 out("}\n");
             }
 

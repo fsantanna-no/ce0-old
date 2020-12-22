@@ -1450,8 +1450,8 @@ void t_all (void) {
         "var x: Nat  = Succ $Nat\n"
         "var y: Bool = False\n"
         "var xy: (Nat,Bool) = (x,y)\n"
-        "var z: (Nat,Bool) = clone(xy)\n"
-        "var z_: &(Nat,Bool) = &z)\n"
+        "var z: (Nat,Bool) = clone xy\n"
+        "var z_: &(Nat,Bool) = &z\n"
         "call output z_\n"
     ));
 
