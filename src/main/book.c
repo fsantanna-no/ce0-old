@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 
+//#define VALGRIND
+
 #include "../all.h"
 
 int all (const char* xp, char* src) {
@@ -24,7 +26,7 @@ int all (const char* xp, char* src) {
     }
     code(s);
     fclose(ALL.out);
-#if 1
+#if 0
 puts(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 puts(out);
 puts("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
@@ -41,7 +43,11 @@ puts("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // execute
     {
+#ifdef VALGRIND
+        FILE* f = popen("valgrind ./a.out", "r");
+#else
         FILE* f = popen("./a.out", "r");
+#endif
         assert(f != NULL);
         char* cur = out;
         out[0] = '\0';

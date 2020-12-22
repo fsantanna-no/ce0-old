@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DEBUG
-//#define VALGRIND
+//#define DEBUG
+#define VALGRIND
 
 #include "../all.h"
 
