@@ -112,16 +112,33 @@ int parser_type (Type* ret) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int parser_expr_ (Stmt** ss, Exp1* e)
+Stmt* enseq (Stmt* s1, Stmt* s2) {
+    if (s1 == NULL) {
+        return s2;
+    } else if (s2 == NULL) {
+        return s1;
+    } else {
+        Stmt* ret = malloc(sizeof(Stmt));
+        assert(ret != NULL);
+        *ret = (Stmt) { _N_++, STMT_SEQ,   NULL, {NULL,NULL}, ALL.tk0, .Seq={s1,s2} };
+        return ret;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+int parser_expr_ (Stmt** s, Exp1* e)
 {
 // EXPR_UNIT
     if (accept(TK_UNIT)) {
         *e = (Exp1) { _N_++, EXPR_UNIT, 0, .tk=ALL.tk0 };
-        *ss = NULL;
+        *s = NULL;
 
 // EXPR_PARENS / EXPR_TUPLE
     } else if (accept('(')) {
-        if (!parser_expr(ss,e)) {
+        Tk tk0 = ALL.tk0;
+
+        if (!parser_expr(s,e)) {
             return 0;
         }
 
@@ -136,49 +153,54 @@ int parser_expr_ (Stmt** ss, Exp1* e)
         }
 
         int n = 1;
+
         Tk* vec = malloc(n*sizeof(Tk));
         assert(vec != NULL);
         vec[n-1] = e->tk;
 
-        Stmt* ss_ = &(*ss)->Seq.vec[(*ss)->Seq.size-1];
-
         do {
             Exp1 e;
-            if (!parser_expr(&ss_,&e)) {
+            Stmt* s2;
+            if (!parser_expr(&s2,&e)) {
                 return 0;
             }
 
             n++;
             vec = realloc(vec, n*sizeof(Tk));
             vec[n-1] = e.tk;
-            ss_ = &ss_->Seq.vec[ss_->Seq.size-1];
+
+            *s = enseq(*s, s2);
         } while (accept(','));
 
         if (!accept_err(')')) {
             return 0;
         }
-        *e = (Exp1) { EXPR_TUPLE, 0, .Tuple={n,vec} };
 
-#if 0
+        static Type any = { TYPE_NATIVE, 0, {.Native={TX_NATIVE,{.s="any"},0,0}} };
+        Tk tmp = tk0;
+            sprintf(tk0.val.s, "_tmp_%d", _N_);
+
+        Stmt* var = malloc(sizeof(Stmt));
+        assert(var != NULL);
+        *var = (Stmt) {
+            _N_++, STMT_VAR, NULL, {NULL,NULL}, tk0,
+            .Var = { tmp, any, { EXPR_TUPLE, 0, .Tuple={n,vec} } }
+        };
+
+        *s = enseq(*s, var);
+        *e = (Exp1) { _N_++, EXPR_VAR, 0, .tk=tmp };
+
     // EXPR_NATIVE
     } else if (accept(TX_NATIVE)) {
-        *ret = (Exp1) { _N_++, EXPR_NATIVE, 0, .Native=ALL.tk0 };
+        *s = NULL;
+        *e = (Exp1) { _N_++, EXPR_NATIVE, 0, .tk=ALL.tk0 };
 
     // EXPR_VAR
-    } else if (accept('&') || accept(TK_ARG) || accept(TK_OUTPUT) || accept(TX_VAR)) {
-        int isalias = (ALL.tk0.enu == '&');
-        if (isalias) {
-            if (!accept(TK_ARG) && !accept(TK_OUTPUT) && !accept_err(TX_VAR)) {
-                return 0;
-            }
-            Exp1* e = malloc(sizeof(Exp1));
-            assert(e != NULL);
-            *e = (Exp1) { _N_++, EXPR_VAR, 0, .Var={ALL.tk0,0} };
-            *ret = (Exp1) { _N_++, EXPR_ALIAS, .Alias=e };
-        } else {
-            *ret = (Exp1) { _N_++, EXPR_VAR, 0, .Var={ALL.tk0,0} };
-        }
+    } else if (accept(TX_VAR)) {
+        *s = NULL;
+        *e = (Exp1) { _N_++, EXPR_VAR, 0, .tk=ALL.tk0 };
 
+#if 0
     // EXPR_CONS
     } else if (accept(TX_USER) || accept('$')) {  // True, $Nat
         if (ALL.tk0.enu == '$') {
@@ -204,8 +226,8 @@ int parser_expr_ (Stmt** ss, Exp1* e)
     return 1;
 }
 
-int parser_expr (Stmt** ss, Exp1* e) {
-    if (!parser_expr_(ss, e)) {
+int parser_expr (Stmt** s, Exp1* e) {
+    if (!parser_expr_(s, e)) {
         return 0;
     }
 
@@ -326,13 +348,16 @@ int parser_stmt (Stmt** ret) {
         }
 
         Exp1 e;
-        Stmt* ss;
-        if (!parser_expr(&ss,&e)) {
+        Stmt* s;
+        if (!parser_expr(&s,&e)) {
             return 0;
         }
 
-        ss->Seq.vec[ss->Seq.size++] = (Stmt) { _N_++, STMT_VAR, NULL, {NULL,NULL}, tk, .Var={id,tp,e} };
-        *ret = ss;
+        Stmt* var = malloc(sizeof(Stmt));
+        assert(var != NULL);
+        *var = (Stmt) { _N_++, STMT_VAR, NULL, {NULL,NULL}, tk, .Var={id,tp,e} };
+
+        *ret = enseq(s, var);
 
     // STMT_USER
     } else if (accept(TK_TYPE)) {       // type
@@ -383,22 +408,25 @@ int parser_stmt (Stmt** ret) {
     } else if (accept(TK_CALL)) {
         Tk tk = ALL.tk0;
 
-        Stmt* ss;
+        Stmt* s;
         Exp1 e;
-        if (!parser_expr(&ss,&e)) {
+        if (!parser_expr(&s,&e)) {
             return 0;
         }
 
-        ss->Seq.vec[ss->Seq.size++] = (Stmt) { _N_++, STMT_CALL, NULL, {NULL,NULL}, tk, .Call=e };
-        *ret = ss;
+        Stmt* call = malloc(sizeof(Stmt));
+        assert(call != NULL);
+        *call = (Stmt) { _N_++, STMT_CALL, NULL, {NULL,NULL}, tk, .Call=e };
+
+        *ret = enseq(s, call);
 
     // STMT_IF
     } else if (accept(TK_IF)) {         // if
         Tk tk = ALL.tk0;
 
-        Stmt* ss;
+        Stmt* s;
         Exp1 e;
-        if (!parser_expr(&ss,&e)) {         // x
+        if (!parser_expr(&s,&e)) {         // x
             return 0;
         }
 
@@ -421,8 +449,11 @@ int parser_stmt (Stmt** ret) {
             *f   = (Stmt) { _N_++, STMT_BLOCK, NULL, {NULL,NULL}, ALL.tk0, .Block=seq };
         }
 
-        ss->Seq.vec[ss->Seq.size++] = (Stmt) { _N_++, STMT_IF, NULL, {NULL,NULL}, tk, .If={e.tk,t,f} };
-        *ret = ss;
+        Stmt* If = malloc(sizeof(Stmt));
+        assert(If != NULL);
+        *If = (Stmt) { _N_++, STMT_IF, NULL, {NULL,NULL}, tk, .If={e.tk,t,f} };
+
+        *ret = enseq(s, If);
 
     // STMT_FUNC
     } else if (accept(TK_FUNC)) {   // func
@@ -454,16 +485,17 @@ int parser_stmt (Stmt** ret) {
     } else if (accept(TK_RETURN)) {
         Tk tk = ALL.tk0;
 
-        Stmt* ss;
+        Stmt* s;
         Exp1 e;
-        if (!parser_expr(&ss,&e)) {
+        if (!parser_expr(&s,&e)) {
             return 0;
         }
 
         Stmt* Ret = malloc(sizeof(Stmt));
         assert(Ret != NULL);
         *Ret = (Stmt) { _N_++, STMT_RETURN, NULL, {NULL,NULL}, tk, .Return=e.tk };
-        *ret = Ret;
+
+        *ret = enseq(s, Ret);
 
     // STMT_BLOCK
     } else if (check('{')) {
@@ -477,9 +509,7 @@ int parser_stmt (Stmt** ret) {
 }
 
 int parser_stmts (TK opt, Stmt** ret) {
-    int n = 0;
-    Stmt* vec = NULL;
-
+    *ret = NULL;
     while (1) {
         accept(';');    // optional
         Stmt* q;
@@ -490,20 +520,13 @@ int parser_stmts (TK opt, Stmt** ret) {
                 return 0;
             }
         }
-        n++;
-        vec = realloc(vec, n*sizeof(Stmt));
-        vec[n-1] = *q;
-        free(q);
+        *ret = enseq(*ret,q);
         accept(';');    // optional
     }
 
-    Stmt* ss = malloc(sizeof(Stmt));
-    assert(ss != NULL);
-    *ss = (Stmt) { _N_++, STMT_SEQ, NULL, {NULL,NULL}, ALL.tk0, { .Seq={n,vec} } };
-    *ret = ss;
-
     // STMT_SEQ.seq of its children
 
+#if 0
     void set_seq (Stmt* cur, Stmt* nxt) {
         cur->seqs[0] = nxt;
         switch (cur->sub) {
@@ -534,6 +557,7 @@ int parser_stmts (TK opt, Stmt** ret) {
         Stmt* nxt = &ss->Seq.vec[i+1];
         set_seq(cur, nxt);                          // Stmt[i] -> Stmt[i+1]
     }
+#endif
 
     return 1;
 }
@@ -541,19 +565,16 @@ int parser_stmts (TK opt, Stmt** ret) {
 int parser (Stmt** ret) {
     static Type Type_Unit  = { TYPE_UNIT, 0 };
 
-    Stmt* vec = malloc(3*sizeof(Stmt));
-        assert(vec != NULL);
-
-    Stmt* ss = malloc(sizeof(Stmt));
-        assert(ss != NULL);
-        *ss = (Stmt) { _N_++, STMT_SEQ, NULL, {NULL,NULL}, {}, { .Seq={3,vec} } };
-    *ret = ss;
+    *ret = NULL;
 
     // clone, output
     {
         static Type any   = { TYPE_NATIVE, 0, {.Native={TX_NATIVE,{.s="any"},0,0}} };
         static Type alias = { TYPE_NATIVE, 1, {.Native={TX_NATIVE,{.s="any"},0,0}} };
-        vec[0] = (Stmt) {   // clone ()
+
+        Stmt* clone = malloc(sizeof(Stmt));
+        assert(clone != NULL);
+        *clone = (Stmt) {   // clone ()
             0, STMT_FUNC, NULL, {NULL,NULL},
             .Func = {
                 { TX_VAR,{.s="clone"},0,0 },
@@ -561,7 +582,12 @@ int parser (Stmt** ret) {
                 NULL
             }
         };
-        vec[1] = (Stmt) {   // output ()
+
+        *ret = enseq(*ret, clone);
+
+        Stmt* output = malloc(sizeof(Stmt));
+        assert(output != NULL);
+        *output = (Stmt) {   // output ()
             0, STMT_FUNC, NULL, {NULL,NULL},
             .Func = {
                 { TX_VAR,{.s="output"},0,0 },
@@ -569,13 +595,17 @@ int parser (Stmt** ret) {
                 NULL
             }
         };
+
+        *ret = enseq(*ret, output);
     }
 
     Stmt* tmp;
     if (!parser_stmts(TK_EOF,&tmp)) {
         return 0;
     }
-    vec[2] = *tmp;
+
+    *ret = enseq(*ret, tmp);
+
     if (!accept_err(TK_EOF)) {
         return 0;
     }

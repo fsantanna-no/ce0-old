@@ -114,8 +114,8 @@ typedef struct Stmt {
             Sub* vec;                   // [True,False]
         } User;
         struct {           // STMT_SEQ
-            int size;                   // 3
-            struct Stmt* vec;           // a ; b ; c
+            struct Stmt* s1;
+            struct Stmt* s2;
         } Seq;
         struct {            // STMT_IF
             Tk cond;                    // if (tst)
@@ -133,7 +133,7 @@ typedef struct Stmt {
 ///////////////////////////////////////////////////////////////////////////////
 
 int parser_type   (Type* ret);
-int parser_expr   (Stmt** ss, Exp1* e);
+int parser_expr   (Stmt** s, Exp1* e);
 int parser_stmt   (Stmt** ret);
 int parser_stmts  (TK opt, Stmt** ret);
 int parser        (Stmt** ret);

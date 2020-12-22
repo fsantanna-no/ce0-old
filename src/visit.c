@@ -54,12 +54,7 @@ int visit_stmt (Stmt* s, F_Stmt fs) {
             return 1;
 
         case STMT_SEQ:
-            for (int i=0; i<s->Seq.size; i++) {
-                if (!visit_stmt(&s->Seq.vec[i], fs)) {
-                    return 0;
-                }
-            }
-            return 1;
+            return visit_stmt(s->Seq.s1,fs) && visit_stmt(s->Seq.s2,fs);
 
         case STMT_IF:
             return (visit_stmt(s->If.true,fs) && visit_stmt(s->If.false,fs));

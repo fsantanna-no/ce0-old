@@ -740,9 +740,8 @@ void code_stmt (Stmt* s) {
         }
 
         case STMT_SEQ:
-            for (int i=0; i<s->Seq.size; i++) {
-                code_stmt(&s->Seq.vec[i]);
-            }
+            code_stmt(s->Seq.s1);
+            code_stmt(s->Seq.s2);
             break;
 
         case STMT_IF: {
