@@ -1433,7 +1433,8 @@ void t_all (void) {
         "    Succ: Nat\n"
         "}\n"
         "var x: Nat = Succ $Nat\n"
-        "var y: Nat = clone x\n"
+        "var x_: &Nat = &x\n"
+        "var y: Nat = clone x_\n"
         "var y_: &Nat = &y\n"
         "call output y_\n"
     ));

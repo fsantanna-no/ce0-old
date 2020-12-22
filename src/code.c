@@ -602,7 +602,28 @@ void code_stmt (Stmt* s) {
                     (hasalloc ? "x" : ""), sup,
                     sup, (hasalloc ? "*" : "")
                 );
-                out("return v;\n");
+                if (!hasalloc) {
+                    out("return v;\n");
+                } else {
+#if 0
+                    "    switch (v->sub) {\n",
+                    if (isrec) {
+                        out (
+                            "    if (v == NULL) {\n"
+                            "        return v;\n"
+                            "    }\n"
+                        );
+                    }
+                    for (int i=0; i<s->User.size; i++) {
+                        Sub sub = s->User.vec[i];
+                        out("        ");
+                        out(to_c(s->env, &sub.type));
+                        out(" _");
+                        out(sub.id.val.s);      // int _True
+                        out(";\n");
+                    }
+#endif
+                }
                 out("}\n");
             }
 
