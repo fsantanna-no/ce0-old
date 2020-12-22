@@ -64,13 +64,11 @@ int parser_type (Type* ret) {
         vec[n-1] = *ret;
 
         do {
-            Type tp;
-            if (!parser_type(&tp)) {
-                return 0;
-            }
             n++;
             vec = realloc(vec, n*sizeof(Type));
-            vec[n-1] = tp;
+            if (!parser_type(&vec[n-1])) {
+                return 0;
+            }
         } while (accept(','));
 
         if (!accept_err(')')) {
@@ -114,48 +112,54 @@ int parser_type (Type* ret) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int parser_exp0 (Stmt** ss, Tk* ret) { return 0; }
-int parser_exp1 (Stmt** ss, Exp1* ret) { return 0; }
+int parser_expr_ (Stmt** ss, Exp1* e)
+{
+// EXPR_UNIT
+    if (accept(TK_UNIT)) {
+        *e = (Exp1) { _N_++, EXPR_UNIT, 0, .tk=ALL.tk0 };
+        *ss = NULL;
 
-#if 0
-int parser_expr_to_exp1 (Exp1* ret);
-
-int parser_expr_one (Exp1* ret) {
-    // EXPR_UNIT
-    if (accept('(')) {
-        if (accept(')')) {
-            *ret = (Exp1) { _N_++, EXPR_UNIT, 0 };
-        } else {
-            if (!parser_exp1(ret)) {
-                return 0;
-            }
-
-    // EXPR_TUPLE
-            if (check(',')) {
-                int n = 1;
-                Exp1* vec = malloc(n*sizeof(Exp1));
-                assert(vec != NULL);
-                vec[n-1] = *ret;
-                while (accept(',')) {
-                    Exp1 e;
-                    if (!parser_exp1(&e)) {
-                        return 0;
-                    }
-                    n++;
-                    vec = realloc(vec, n*sizeof(Exp1));
-                    vec[n-1] = e;
-                }
-                if (!accept_err(')')) {
-                    return 0;
-                }
-                *ret = (Exp1) { _N_++, EXPR_TUPLE, 0, .Tuple={n,vec} };
-
-    // EXPR_PARENS
-            } else if (!accept_err(')')) {
-                return 0;
-            }
+// EXPR_PARENS / EXPR_TUPLE
+    } else if (accept('(')) {
+        if (!parser_expr(ss,e)) {
+            return 0;
         }
 
+// EXPR_PARENS
+        if (accept(')')) {
+            return 1;
+        }
+
+// EXPR_TUPLE
+        if (!accept_err(',')) {
+            return 0;
+        }
+
+        int n = 1;
+        Tk* vec = malloc(n*sizeof(Tk));
+        assert(vec != NULL);
+        vec[n-1] = e->tk;
+
+        Stmt* ss_ = &(*ss)->Seq.vec[(*ss)->Seq.size-1];
+
+        do {
+            Exp1 e;
+            if (!parser_expr(&ss_,&e)) {
+                return 0;
+            }
+
+            n++;
+            vec = realloc(vec, n*sizeof(Tk));
+            vec[n-1] = e.tk;
+            ss_ = &ss_->Seq.vec[ss_->Seq.size-1];
+        } while (accept(','));
+
+        if (!accept_err(')')) {
+            return 0;
+        }
+        *e = (Exp1) { EXPR_TUPLE, 0, .Tuple={n,vec} };
+
+#if 0
     // EXPR_NATIVE
     } else if (accept(TX_NATIVE)) {
         *ret = (Exp1) { _N_++, EXPR_NATIVE, 0, .Native=ALL.tk0 };
@@ -187,11 +191,12 @@ int parser_expr_one (Exp1* ret) {
 
         Exp1* arg = malloc(sizeof(Exp1));
         assert(arg != NULL);
-        if (sub.enu==TX_NIL || !parser_expr_one(arg)) {   // ()
+        if (sub.enu==TX_NIL || !parser_expr(arg)) {   // ()
             *arg = (Exp1) { _N_++, EXPR_UNIT, 0 };
         }
 
         *ret = (Exp1) { _N_++, EXPR_CONS, 0, { .Cons={sub,arg} } };
+#endif
 
     } else {
         return err_expected("expression");
@@ -199,17 +204,18 @@ int parser_expr_one (Exp1* ret) {
     return 1;
 }
 
-int parser_exp1 (Exp1* ret) {
-    if (!parser_expr_one(ret)) {
+int parser_expr (Stmt** ss, Exp1* e) {
+    if (!parser_expr_(ss, e)) {
         return 0;
     }
 
+#if 0
     while (1) {
     // EXPR_CALL
         if (check('(')) {                // only checks, arg will accept
             Exp1* arg = malloc(sizeof(Exp1));
             assert(arg != NULL);
-            if (!parser_expr_one(arg)) {   // f().() and not f.()()
+            if (!parser_expr(arg)) {   // f().() and not f.()()
                 return 0;
             }
 
@@ -251,10 +257,10 @@ int parser_exp1 (Exp1* ret) {
             break;
         }
     }
+#endif
 
     return 1;
 }
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -321,7 +327,7 @@ int parser_stmt (Stmt** ret) {
 
         Exp1 e;
         Stmt* ss;
-        if (!parser_exp1(&ss,&e)) {
+        if (!parser_expr(&ss,&e)) {
             return 0;
         }
 
@@ -379,7 +385,7 @@ int parser_stmt (Stmt** ret) {
 
         Stmt* ss;
         Exp1 e;
-        if (!parser_exp1(&ss,&e)) {
+        if (!parser_expr(&ss,&e)) {
             return 0;
         }
 
@@ -391,8 +397,8 @@ int parser_stmt (Stmt** ret) {
         Tk tk = ALL.tk0;
 
         Stmt* ss;
-        Tk e0;
-        if (!parser_exp0(&ss, &e0)) {         // x
+        Exp1 e;
+        if (!parser_expr(&ss,&e)) {         // x
             return 0;
         }
 
@@ -415,7 +421,7 @@ int parser_stmt (Stmt** ret) {
             *f   = (Stmt) { _N_++, STMT_BLOCK, NULL, {NULL,NULL}, ALL.tk0, .Block=seq };
         }
 
-        ss->Seq.vec[ss->Seq.size++] = (Stmt) { _N_++, STMT_IF, NULL, {NULL,NULL}, tk, .If={e0,t,f} };
+        ss->Seq.vec[ss->Seq.size++] = (Stmt) { _N_++, STMT_IF, NULL, {NULL,NULL}, tk, .If={e.tk,t,f} };
         *ret = ss;
 
     // STMT_FUNC
@@ -449,14 +455,14 @@ int parser_stmt (Stmt** ret) {
         Tk tk = ALL.tk0;
 
         Stmt* ss;
-        Tk e0;
-        if (!parser_exp0(&ss, &e0)) {
+        Exp1 e;
+        if (!parser_expr(&ss,&e)) {
             return 0;
         }
 
         Stmt* Ret = malloc(sizeof(Stmt));
         assert(Ret != NULL);
-        *Ret = (Stmt) { _N_++, STMT_RETURN, NULL, {NULL,NULL}, tk, .Return=e0 };
+        *Ret = (Stmt) { _N_++, STMT_RETURN, NULL, {NULL,NULL}, tk, .Return=e.tk };
         *ret = Ret;
 
     // STMT_BLOCK
