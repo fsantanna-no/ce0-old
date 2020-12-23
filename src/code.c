@@ -714,9 +714,11 @@ void code_stmt (Stmt* s) {
             visit_type(&s->Var.type, ftp, s->env);
             fe(s->env, &s->Var.init);
 
-            out(to_c(s->env, &s->Var.type));
-            out(" ");
-            out(s->Var.id.val.s);
+            if (s->Var.type.sub==TYPE_NATIVE && !strcmp(s->Var.type.Native.val.s,"any")) {
+                fprintf(ALL.out, "typeof(_tmp_%d) %s", s->Var.init.N, s->Var.id.val.s);
+            } else {
+                fprintf(ALL.out, "%s %s", to_c(s->env, &s->Var.type), s->Var.id.val.s);
+            }
 
             if (env_type_hasalloc(s->env, &s->Var.type)) {
                 fprintf (ALL.out,

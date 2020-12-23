@@ -3,7 +3,7 @@
 #include <string.h>
 
 #define DEBUG
-#define VALGRIND
+//#define VALGRIND
 
 #include "../all.h"
 
@@ -580,25 +580,24 @@ void t_parser_stmt (void) {
         assert(!strcmp(ALL.err, "(ln 1, col 8): expected call expression : have `()´"));
         fclose(ALL.inp);
     }
-#if TODO-resugar
     // STMT_IF
     {
         all_init(NULL, stropen("r", 0, "if () { } else { call f() }"));
         Stmt* s;
         assert(parser_stmt(&s));
-        assert(s.sub == STMT_IF);
-        assert(s.If.cond.enu == TK_UNIT);
-        assert(s.If.true->sub==STMT_BLOCK && s.If.false->sub==STMT_BLOCK);
-        assert(s.If.true ->Block->sub==STMT_SEQ && s.If.true ->Block->Seq.size==0);
-        assert(s.If.false->Block->sub==STMT_SEQ && s.If.false->Block->Seq.size==1);
+        assert(s->sub == STMT_IF);
+        assert(s->If.cond.enu == TK_UNIT);
+        assert(s->If.true->sub==STMT_BLOCK && s->If.false->sub==STMT_BLOCK);
+        assert(s->If.true->Block==NULL);
+        assert(s->If.false->Block->sub==STMT_VAR);
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "if () { call f() } "));
         Stmt* s;
         assert(parser_stmt(&s));
-        assert(s.sub==STMT_IF && s.If.false->sub==STMT_BLOCK);
-        assert(s.If.false->Block->sub==STMT_SEQ && s.If.false->Block->Seq.size==0);
+        assert(s->sub==STMT_IF && s->If.false->sub==STMT_BLOCK);
+        assert(s->If.false->Block==NULL);
         fclose(ALL.inp);
     }
     // STMT_FUNC
@@ -606,17 +605,14 @@ void t_parser_stmt (void) {
         all_init(NULL, stropen("r", 0, "func f : () -> () { return () }"));
         Stmt* s;
         assert(parser_stmt(&s));
-        assert(s.sub == STMT_FUNC);
-        assert(s.Func.type.sub == TYPE_FUNC);
-        assert(!strcmp(s.Func.id.val.s, "f"));
-        assert(s.Func.body->sub == STMT_BLOCK);
-        assert(s.Func.body->Block->sub == STMT_SEQ);
-        assert(s.Func.body->Block->Seq.vec[1].sub == STMT_BLOCK);
-        assert(s.Func.body->Block->Seq.vec[1].Block->sub == STMT_SEQ);
-        assert(s.Func.body->Block->Seq.vec[1].Block->Seq.vec[0].sub == STMT_RETURN);
+        assert(s->sub == STMT_FUNC);
+        assert(s->Func.type.sub == TYPE_FUNC);
+        assert(!strcmp(s->Func.id.val.s, "f"));
+        assert(s->Func.body->sub == STMT_BLOCK);
+        assert(s->Func.body->Block->sub == STMT_RETURN);
+        assert(s->Func.body->Block->Return.enu == TK_UNIT);
         fclose(ALL.inp);
     }
-#endif
 }
 
 void t_code (void) {
@@ -626,7 +622,7 @@ void t_code (void) {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
         Exp1 e = { _N_++, EXPR_UNIT, .tk={TK_UNIT,{},0,0} };
-        code_expr(&e);
+        code_exp1(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"1"));
     }
@@ -636,7 +632,7 @@ void t_code (void) {
         all_init(stropen("w",sizeof(out),out), NULL);
         Exp1 e = { _N_++, EXPR_VAR, .tk={TX_VAR,{},0,0} };
             strcpy(e.tk.val.s, "xxx");
-        code_expr(&e);
+        code_exp1(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"xxx"));
     }
@@ -646,7 +642,7 @@ void t_code (void) {
         all_init(stropen("w",sizeof(out),out), NULL);
         Exp1 e = { _N_++, EXPR_NATIVE, .tk={TX_NATIVE,{},0,0} };
             strcpy(e.tk.val.s, "printf");
-        code_expr(&e);
+        code_exp1(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"printf"));
     }
@@ -656,7 +652,7 @@ void t_code (void) {
         all_init(stropen("w",sizeof(out),out), NULL);
         Tk es[2] = {{TK_UNIT,{},0,0}, {TK_UNIT,{},0,0}};
         Exp1 e = { _N_++, EXPR_TUPLE, .Tuple={2,es} };
-        code_expr(&e);
+        code_exp1(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"((TUPLE__Unit__Unit) { 1,1 })"));
     }
@@ -665,7 +661,7 @@ void t_code (void) {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
         Exp1 e = { _N_++, EXPR_INDEX, .Index={{TX_VAR,{},0,0},{TX_NUM,{2},0,0}} };
-        code_expr(&e);
+        code_exp1(&e);
         fclose(ALL.out);
         assert(!strcmp(out,"((TUPLE__Unit__Unit) { 1,1 })._2"));
     }
@@ -791,6 +787,7 @@ void t_all (void) {
         "var y: () = x.1\n"
         "call _output_Unit y\n"
     ));
+assert(0);
     assert(all(
         "()\n",
         "var v: ((),()) = ((),())\n"
@@ -1533,9 +1530,7 @@ void t_parser (void) {
 int main (void) {
     t_lexer();
     t_parser();
-#if TODO
     t_code();
-#endif
     t_all();
     puts("OK");
 }
