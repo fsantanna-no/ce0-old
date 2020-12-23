@@ -356,7 +356,7 @@ int set_seqs (Stmt* s) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int set_anys (Stmt* s) {
-    if (s->sub!=STMT_VAR || s->Var.type.sub==TYPE_UNIT) {
+    if (s->sub!=STMT_VAR || s->Var.type.sub!=TYPE_UNIT) {
         return VISIT_CONTINUE;
     }
     s->Var.type = *env_expr_to_type(s->env, &s->Var.init);

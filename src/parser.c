@@ -76,11 +76,11 @@ int parser_type (Type* ret) {
         }
         *ret = (Type) { TYPE_TUPLE, isalias, .Tuple={n,vec} };
 
-    // TYPE_NATIVE
+// TYPE_NATIVE
     } else if (accept(TX_NATIVE)) {
         *ret = (Type) { TYPE_NATIVE, 0, .Native=ALL.tk0 };
 
-    // TYPE_USER
+// TYPE_USER
     } else if (accept('&') || accept(TX_USER)) {
         int isalias = (ALL.tk0.enu == '&');
         if (isalias && !accept_err(TX_USER)) {
@@ -92,7 +92,7 @@ int parser_type (Type* ret) {
         return err_expected("type");
     }
 
-    // TYPE_FUNC
+// TYPE_FUNC
     if (accept(TK_ARROW)) {
         Type tp;
         if (!parser_type(&tp)) {
