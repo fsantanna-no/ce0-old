@@ -250,28 +250,21 @@ int parser_expr (Stmt** s, Exp1* e) {
             if (accept(TX_NUM)) {
                 Exp1 idx = { _N_++, EXPR_INDEX, 0, .Index={e->tk,ALL.tk0} };
                 *s = enseq(*s, stmt_tmp(tk0,e,idx));
-#if 0
-    // EXPR_DISC / EXPR_PRED
-            } else if (accept(TX_USER) || accept('$')) {
-                if (ALL.tk0.enu == '$') {
-                    if (!accept_err(TX_USER)) {
-                        return 0;
-                    }
-                    ALL.tk0.enu = TX_NIL;   // TODO: move to lexer
-                }
+
+// EXPR_DISC / EXPR_PRED
+            } else if (accept(TX_USER)) {
                 Tk tk = ALL.tk0;
 
-                Exp1* val = malloc(sizeof(Exp1));
-                assert(val != NULL);
-                *val = *ret;
+                Exp1 val;
                 if (accept('?')) {
-                    *ret = (Exp1) { _N_++, EXPR_PRED, 0, .Pred={val,tk} };
+                    val = (Exp1) { _N_++, EXPR_PRED, 0, .Pred={e->tk,tk} };
                 } else if (accept('!')) {
-                    *ret = (Exp1) { _N_++, EXPR_DISC, 0, .Disc={val,tk} };
+                    val = (Exp1) { _N_++, EXPR_DISC, 0, .Disc={e->tk,tk} };
                 } else {
                     return err_expected("`?´ or `!´");
                 }
-#endif
+
+                *s = enseq(*s, stmt_tmp(tk,e,val));
             } else {
                 return err_expected("index or subtype");
             }

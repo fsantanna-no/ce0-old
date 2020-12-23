@@ -18,6 +18,7 @@ typedef struct {
     char  err[256];
     long  lin,col;
     Tk    tk0,tk1;
+    Env*  env;
 } All;
 
 extern All ALL;

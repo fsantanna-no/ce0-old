@@ -15,7 +15,8 @@ int all_init (FILE* out, FILE* inp) {
         out, inp,
         {},                         // err
         1, 1,                       // lin, col
-        {}, { TK_ERR, {}, 1, 1 }    // tk0, tk1
+        {}, { TK_ERR, {}, 1, 1 },   // tk0, tk1
+        NULL                        // env
     };
     if (inp != NULL) {
         lexer();

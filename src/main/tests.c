@@ -825,7 +825,6 @@ void t_all (void) {
         "var b : Bool = False()\n"
         "call output b\n"
     ));
-puts("-=-=-=-");
     assert(all(
         "Zz1\n",
         "type Zz { Zz1:() }\n"
@@ -838,7 +837,6 @@ puts("-=-=-=-");
         "var zz: Zz = yy.Yy1!\n"
         "call output zz\n"
     ));
-assert(0);
     assert(all(
         "Zz1 ((),())\n",
         "type Zz { Zz1:((),()) }\n"

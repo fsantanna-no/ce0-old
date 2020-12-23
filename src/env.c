@@ -30,7 +30,6 @@ Stmt* env_id_to_stmt (Env* env, const char* id, int* scope) {
             default:
                 assert(0 && "bug found");
         }
-//puts(cur);
         if (scope!=NULL && !strcmp("arg",cur)) {
             *scope = *scope + 1;
         }
@@ -355,10 +354,8 @@ int set_seqs (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Env* ENV = NULL;
-
 int set_envs (Stmt* s) {
-    s->env = ENV;
+    s->env = ALL.env;
     switch (s->sub) {
         case STMT_RETURN:
         case STMT_SEQ:
@@ -367,25 +364,25 @@ int set_envs (Stmt* s) {
 
         case STMT_VAR: {
             Env* new = malloc(sizeof(Env));     // visit stmt after expr above
-            *new = (Env) { s, ENV };
-            ENV = new;
+            *new = (Env) { s, ALL.env };
+            ALL.env = new;
             return VISIT_BREAK;                 // do not visit expr again
         }
 
         case STMT_USER: {
             Env* new = malloc(sizeof(Env));
-            *new = (Env) { s, ENV };
-            ENV = new;
+            *new = (Env) { s, ALL.env };
+            ALL.env = new;
             if (s->User.isrec) {
-                s->env = ENV;
+                s->env = ALL.env;
             }
             break;
         }
 
         case STMT_BLOCK: {
-            Env* save = ENV;
+            Env* save = ALL.env;
             visit_stmt(s->Block, set_envs);
-            ENV = save;
+            ALL.env = save;
             return VISIT_BREAK;                 // do not re-visit children, I just did them
         }
 
@@ -393,14 +390,14 @@ int set_envs (Stmt* s) {
             // body of recursive function depends on myself
             {
                 Env* new = malloc(sizeof(Env));
-                *new = (Env) { s, ENV };        // put myself
-                ENV = new;
+                *new = (Env) { s, ALL.env };        // put myself
+                ALL.env = new;
             }
 
             if (s->Func.body != NULL) {
-                Env* save = ENV;
+                Env* save = ALL.env;
                 visit_stmt(s->Func.body, set_envs);
-                ENV = save;
+                ALL.env = save;
             }
 
             return VISIT_BREAK;                 // do not visit children, I just did that
@@ -423,8 +420,8 @@ int set_anys (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int check_undeclareds (Stmt* s) {
-
+int check_undeclareds (Stmt* s)
+{
     int ftk (Env* env, Tk* tk, char* var_type) {
         switch (tk->enu) {
             case TK_UNIT:
