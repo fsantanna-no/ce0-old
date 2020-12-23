@@ -533,6 +533,12 @@ int parser_stmts (TK opt, Stmt** ret) {
         *ret = enseq(*ret,q);
         accept(';');    // optional
     }
+    if (*ret == NULL) {
+        Stmt* none = malloc(sizeof(Stmt));
+        assert(none != NULL);
+        *none = (Stmt) { _N_++, STMT_NONE, NULL, {NULL,NULL} };
+        *ret = none;
+    }
     return 1;
 }
 

@@ -588,7 +588,7 @@ void t_parser_stmt (void) {
         assert(s->sub == STMT_IF);
         assert(s->If.cond.enu == TK_UNIT);
         assert(s->If.true->sub==STMT_BLOCK && s->If.false->sub==STMT_BLOCK);
-        assert(s->If.true->Block==NULL);
+        assert(s->If.true->Block->sub==STMT_NONE);
         assert(s->If.false->Block->sub==STMT_VAR);
         fclose(ALL.inp);
     }
