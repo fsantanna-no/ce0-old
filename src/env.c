@@ -291,11 +291,11 @@ int set_seqs (Stmt* s) {
             void aux (Stmt* cur, Stmt* nxt) {
                 switch (cur->sub) {
                     case STMT_SEQ:
-                        aux(s->Seq.s2, nxt);
+                        aux(cur->Seq.s2, nxt);
                         break;
                     case STMT_IF:
-                        aux(s->If.true,  nxt);
-                        aux(s->If.false, nxt);
+                        aux(cur->If.true,  nxt);
+                        aux(cur->If.false, nxt);
                         break;
                     default:
                         cur->seqs[1] = nxt;
@@ -356,13 +356,11 @@ int set_seqs (Stmt* s) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int set_anys (Stmt* s) {
-#if 0
-    if (s->sub!=STMT_VAR || s->Var.type.sub!=TYPE_NATIVE || strcmp(s->Var.type.Native.val.s,"any")) {
+    if (s->sub!=STMT_VAR || s->Var.type.sub==TYPE_UNIT) {
         return VISIT_CONTINUE;
     }
-    assert(0);
-#endif
-    return 1;
+    s->Var.type = *env_expr_to_type(s->env, &s->Var.init);
+    return VISIT_CONTINUE;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

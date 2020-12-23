@@ -134,7 +134,7 @@ Stmt* stmt_tmp (Tk tk0, Exp1* e, Exp1 init) {
     assert(ret != NULL);
     *ret = (Stmt) {
         _N_++, STMT_VAR, NULL, {NULL,NULL}, tk0,
-        .Var = { tmp, {0,0,{}}, init }
+        .Var = { tmp, {TYPE_UNIT,0}, init }
     };
 
     *e = (Exp1) { _N_++, EXPR_VAR, 0, .tk=tmp };
