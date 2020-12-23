@@ -23,7 +23,6 @@ typedef enum {
 typedef enum {
     STMT_VAR = 1,
     STMT_USER,
-    STMT_CALL,
     STMT_SEQ,
     STMT_IF,
     STMT_FUNC,
@@ -99,8 +98,7 @@ typedef struct Stmt {
     struct Stmt* seqs[2];
     Tk tk;
     union {
-        Exp1 Call;          // STMT_CALL
-        Tk   Return;        // STMT_RETURN
+        Tk Return;          // STMT_RETURN
         struct Stmt* Block; // STMT_BLOCK
         struct {            // STMT_VAR
             Tk   id;                    // ns

@@ -286,7 +286,6 @@ void set_envs (Stmt* S) {
         s->env = env;
         switch (s->sub) {
             case STMT_RETURN:
-            case STMT_CALL:
             case STMT_SEQ:
             case STMT_IF:
                 break;
@@ -452,9 +451,6 @@ int check_undeclareds (Stmt* s) {
         case STMT_FUNC:
             return visit_type(&s->Func.type, ftp, s->env);
 
-        case STMT_CALL:
-            return fe(s->env, &s->Call);
-
         case STMT_IF:
             return ftk(s->env, &s->If.cond, "variable");
 
@@ -573,22 +569,6 @@ int check_types (Stmt* s) {
                 return err_message(&s->Var.id, err);
             }
             return 1;
-
-        case STMT_CALL: {
-            Type* tp = env_expr_to_type(s->env, &s->Call);
-            if (tp->sub != TYPE_UNIT) {
-                assert(s->Call.sub == EXPR_CALL);
-                Tk* func = &s->Call.Call.func;
-                assert(func->enu==TX_VAR || func->enu==TX_NATIVE);
-                if (func->enu == TX_VAR) {
-                    char err[512];
-                    sprintf(err, "invalid call to \"%s\" : missing return assignment",
-                            func->val.s);
-                    return err_message(&s->tk, err);
-                }
-            }
-            return fe(s->env, &s->Call);
-        }
 
         case STMT_IF:
             if (!type_is_sup_sub(&Type_Bool, env_tk_to_type(s->env, &s->If.cond))) {
@@ -797,9 +777,6 @@ int check_owner_alias (Stmt* S) {
                     }
                     assert(0 && "bug found");
                 }
-
-                case STMT_CALL:
-                    return ftk(s->env, &s->Call.Call.arg, 0, 1);
 
                 case STMT_RETURN:
                     return ftk(s->env, &s->Return, 0, 1);

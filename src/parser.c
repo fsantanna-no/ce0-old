@@ -406,19 +406,26 @@ int parser_stmt (Stmt** ret) {
 
     // STMT_CALL
     } else if (accept(TK_CALL)) {
-        Tk tk = ALL.tk0;
-
         Stmt* s;
         Exp1 e;
         if (!parser_expr(&s,&e)) {
             return 0;
         }
+        if (s == NULL) {
+            ALL.tk1.enu = TK_ERR;  // workaround to fail enclosing '}'/EOF
+            sprintf(ALL.err, "(ln %ld, col %ld): expected call expression : have %s",
+                ALL.tk0.lin, ALL.tk0.col, lexer_tk2str(&ALL.tk0));
+            return 0;
+        }
 
-        Stmt* call = malloc(sizeof(Stmt));
-        assert(call != NULL);
-        *call = (Stmt) { _N_++, STMT_CALL, NULL, {NULL,NULL}, tk, .Call=e };
+        Stmt* tmp = s;
+        while (tmp->sub == STMT_SEQ) {
+            tmp = tmp->Seq.s2;
+        }
+        assert(tmp->sub == STMT_VAR);
+        assert(tmp->Var.init.sub == EXPR_CALL);
 
-        *ret = enseq(s, call);
+        *ret = s;
 
     // STMT_IF
     } else if (accept(TK_IF)) {         // if
