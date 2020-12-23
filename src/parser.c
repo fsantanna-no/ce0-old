@@ -127,6 +127,7 @@ Stmt* enseq (Stmt* s1, Stmt* s2) {
 
 Stmt* stmt_tmp (Tk tk0, Exp1* e, Exp1 init) {
     Tk tmp = tk0;
+    tmp.enu = TX_VAR;
     sprintf(tmp.val.s, "_tmp_%d", _N_);
 
     static Type any = { TYPE_NATIVE, 0, {.Native={TX_NATIVE,{.s="any"},0,0}} };
@@ -353,11 +354,19 @@ int parser_stmt (Stmt** ret) {
             return 0;
         }
 
-        Stmt* var = malloc(sizeof(Stmt));
-        assert(var != NULL);
-        *var = (Stmt) { _N_++, STMT_VAR, NULL, {NULL,NULL}, tk, .Var={id,tp,e} };
-
-        *ret = enseq(s, var);
+        // reuse STMT_VAR from inner expression
+        if (s!=NULL && s->sub==STMT_VAR) {
+            s->Var.id = id;
+            s->Var.type = tp;
+            //s->Var.init = keep old;
+            *ret = s;
+        } else {
+            assert(s == NULL);
+            Stmt* var = malloc(sizeof(Stmt));
+            assert(var != NULL);
+            *var = (Stmt) { _N_++, STMT_VAR, NULL, {NULL,NULL}, tk, .Var={id,tp,e} };
+            *ret = enseq(s, var);
+        }
 
     // STMT_USER
     } else if (accept(TK_TYPE)) {       // type
