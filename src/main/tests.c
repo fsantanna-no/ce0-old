@@ -787,6 +787,10 @@ void t_all (void) {
         "var y: () = x.1\n"
         "call _output_Unit y\n"
     ));
+    assert(all(
+        "()\n",
+        "call _output_Unit (((),()).1)\n"
+    ));
 assert(0);
     assert(all(
         "()\n",

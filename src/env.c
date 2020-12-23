@@ -279,62 +279,146 @@ int env_type_isrec (Env* env, Type* tp) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void set_envs (Stmt* S) {
-    Env* env = NULL;
+int set_seqs (Stmt* s) {
+    switch (s->sub) {
+        case STMT_BLOCK:
+            s->seqs[1] = s->Block;
+            break;
 
-    int fs (Stmt* s) {
-        s->env = env;
-        switch (s->sub) {
-            case STMT_RETURN:
-            case STMT_SEQ:
+        case STMT_SEQ:
+            s->Seq.s1->seqs[0] = s->Seq.s2;
+
+            void aux (Stmt* cur, Stmt* nxt) {
+                switch (cur->sub) {
+                    case STMT_SEQ:
+                        aux(s->Seq.s2, nxt);
+                        break;
+                    case STMT_IF:
+                        aux(s->If.true,  nxt);
+                        aux(s->If.false, nxt);
+                        break;
+                    default:
+                        cur->seqs[1] = nxt;
+                        break;
+                }
+            }
+
+            aux(s->Seq.s1, s->Seq.s2);
+            break;
+
+        case STMT_IF:
+            s->seqs[1] = NULL;  // undetermined: left to user code
+            break;
+
+        case STMT_FUNC:
+            s->seqs[1] = s->Func.body;
+            break;
+
+        default:
+            break;
+    }
+    return 1;
+}
+
+#if 0
+    void set_seq (Stmt* cur, Stmt* nxt) {
+        cur->seqs[0] = nxt;
+        switch (cur->sub) {
             case STMT_IF:
+                set_seq(cur->If.true, nxt);
+                set_seq(cur->If.false, nxt);
+                cur->seqs[1] = NULL; // undetermined: user code has to determine
                 break;
-
-            case STMT_VAR: {
-                Env* new = malloc(sizeof(Env));     // visit stmt after expr above
-                *new = (Env) { s, env };
-                env = new;
-                return VISIT_BREAK;                 // do not visit expr again
-            }
-
-            case STMT_USER: {
-                Env* new = malloc(sizeof(Env));
-                *new = (Env) { s, env };
-                env = new;
-                if (s->User.isrec) {
-                    s->env = env;
+            case STMT_SEQ:
+                if (cur->Seq.size == 0) {
+                    cur->seqs[1] = nxt;                             // Stmt -> nxt
+                } else {
+                    cur->seqs[1] = &cur->Seq.vec[0];                // Stmt    -> Stmt[0]
+                    cur->Seq.vec[cur->Seq.size-1].seqs[1] = nxt;    // Stmt[n] -> nxt
                 }
                 break;
-            }
-
-            case STMT_BLOCK: {
-                Env* save = env;
-                visit_stmt(s->Block, fs);
-                env = save;
-                return VISIT_BREAK;                 // do not re-visit children, I just did them
-            }
-
-            case STMT_FUNC: {
-                // body of recursive function depends on myself
-                {
-                    Env* new = malloc(sizeof(Env));
-                    *new = (Env) { s, env };        // put myself
-                    env = new;
-                }
-
-                if (s->Func.body != NULL) {
-                    Env* save = env;
-                    visit_stmt(s->Func.body, fs);
-                    env = save;
-                }
-
-                return VISIT_BREAK;                 // do not visit children, I just did that
-            }
+            case STMT_BLOCK:
+                set_seq(cur->Block, nxt);
+                cur->seqs[1] = cur->Block;
+                break;
+            default:
+                cur->seqs[1] = nxt;
         }
-        return 1;
     }
 
-    visit_stmt(S, fs);
+    for (int i=0; i<ss->Seq.size-1; i++) {
+        Stmt* cur = &ss->Seq.vec[i];
+        Stmt* nxt = &ss->Seq.vec[i+1];
+        set_seq(cur, nxt);                          // Stmt[i] -> Stmt[i+1]
+    }
+#endif
+
+///////////////////////////////////////////////////////////////////////////////
+
+int set_anys (Stmt* s) {
+#if 0
+    if (s->sub!=STMT_VAR || s->Var.type.sub!=TYPE_NATIVE || strcmp(s->Var.type.Native.val.s,"any")) {
+        return VISIT_CONTINUE;
+    }
+    assert(0);
+#endif
+    return 1;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+Env* ENV = NULL;
+
+int set_envs (Stmt* s) {
+    s->env = ENV;
+    switch (s->sub) {
+        case STMT_RETURN:
+        case STMT_SEQ:
+        case STMT_IF:
+            break;
+
+        case STMT_VAR: {
+            Env* new = malloc(sizeof(Env));     // visit stmt after expr above
+            *new = (Env) { s, ENV };
+            ENV = new;
+            return VISIT_BREAK;                 // do not visit expr again
+        }
+
+        case STMT_USER: {
+            Env* new = malloc(sizeof(Env));
+            *new = (Env) { s, ENV };
+            ENV = new;
+            if (s->User.isrec) {
+                s->env = ENV;
+            }
+            break;
+        }
+
+        case STMT_BLOCK: {
+            Env* save = ENV;
+            visit_stmt(s->Block, set_envs);
+            ENV = save;
+            return VISIT_BREAK;                 // do not re-visit children, I just did them
+        }
+
+        case STMT_FUNC: {
+            // body of recursive function depends on myself
+            {
+                Env* new = malloc(sizeof(Env));
+                *new = (Env) { s, ENV };        // put myself
+                ENV = new;
+            }
+
+            if (s->Func.body != NULL) {
+                Env* save = ENV;
+                visit_stmt(s->Func.body, set_envs);
+                ENV = save;
+            }
+
+            return VISIT_BREAK;                 // do not visit children, I just did that
+        }
+    }
+    return 1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -361,7 +445,6 @@ int check_undeclareds (Stmt* s) {
             }
 
             default:
-//printf(">>> %d\n", tk->enu);
                 assert(0 && "TODO");
         }
     }
@@ -864,7 +947,9 @@ int check_owner_alias (Stmt* S) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int env (Stmt* s) {
-    set_envs(s);
+    assert(visit_stmt(s,set_seqs));
+    assert(visit_stmt(s,set_anys));
+    assert(visit_stmt(s,set_envs));
     if (!visit_stmt(s,check_undeclareds)) {
         return 0;
     }

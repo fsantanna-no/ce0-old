@@ -95,7 +95,7 @@ typedef struct Stmt {
     int N;
     STMT sub;
     struct Env* env;        // see env.c
-    struct Stmt* seqs[2];
+    struct Stmt* seqs[2];   // {outer,inner}
     Tk tk;
     union {
         Tk Return;          // STMT_RETURN

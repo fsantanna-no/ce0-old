@@ -130,13 +130,11 @@ Stmt* stmt_tmp (Tk tk0, Exp1* e, Exp1 init) {
     tmp.enu = TX_VAR;
     sprintf(tmp.val.s, "_tmp_%d", _N_);
 
-    static Type any = { TYPE_NATIVE, 0, {.Native={TX_NATIVE,{.s="any"},0,0}} };
-
     Stmt* ret = malloc(sizeof(Stmt));
     assert(ret != NULL);
     *ret = (Stmt) {
         _N_++, STMT_VAR, NULL, {NULL,NULL}, tk0,
-        .Var = { tmp, any, init }
+        .Var = { tmp, {0,0,{}}, init }
     };
 
     *e = (Exp1) { _N_++, EXPR_VAR, 0, .tk=tmp };
@@ -536,42 +534,6 @@ int parser_stmts (TK opt, Stmt** ret) {
         *ret = enseq(*ret,q);
         accept(';');    // optional
     }
-
-    // STMT_SEQ.seq of its children
-
-#if 0
-    void set_seq (Stmt* cur, Stmt* nxt) {
-        cur->seqs[0] = nxt;
-        switch (cur->sub) {
-            case STMT_IF:
-                set_seq(cur->If.true, nxt);
-                set_seq(cur->If.false, nxt);
-                cur->seqs[1] = NULL; // undetermined: user code has to determine
-                break;
-            case STMT_SEQ:
-                if (cur->Seq.size == 0) {
-                    cur->seqs[1] = nxt;                             // Stmt -> nxt
-                } else {
-                    cur->seqs[1] = &cur->Seq.vec[0];                // Stmt    -> Stmt[0]
-                    cur->Seq.vec[cur->Seq.size-1].seqs[1] = nxt;    // Stmt[n] -> nxt
-                }
-                break;
-            case STMT_BLOCK:
-                set_seq(cur->Block, nxt);
-                cur->seqs[1] = cur->Block;
-                break;
-            default:
-                cur->seqs[1] = nxt;
-        }
-    }
-
-    for (int i=0; i<ss->Seq.size-1; i++) {
-        Stmt* cur = &ss->Seq.vec[i];
-        Stmt* nxt = &ss->Seq.vec[i+1];
-        set_seq(cur, nxt);                          // Stmt[i] -> Stmt[i+1]
-    }
-#endif
-
     return 1;
 }
 
