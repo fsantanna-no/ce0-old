@@ -457,6 +457,8 @@ int parser_stmt (Stmt** ret) {
                 return 0;
             }
         } else {
+            f = malloc(sizeof(Stmt));
+            assert(f != NULL);
             *f = (Stmt) { _N_++, STMT_BLOCK, NULL, {NULL,NULL}, ALL.tk0, .Block=NULL };
         }
 

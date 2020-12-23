@@ -339,7 +339,10 @@ char* ftk (Env* env, Tk* tk, int istx) {
 // prepares _tmp_N
 
 void fe_tmp_set (Env* env, Exp1* e, char* tp) {
-    fprintf(ALL.out, "%s _tmp_%d = ", (tp!=NULL ? tp : to_c(env,env_expr_to_type(env,e))), e->N);
+    if (tp == NULL) {
+        tp = to_c(env,env_expr_to_type(env,e));
+    }
+    fprintf(ALL.out, "%s _tmp_%d = ", tp, e->N);
 }
 
 int isaddr (Env* env, Exp1* e) {
@@ -714,11 +717,7 @@ void code_stmt (Stmt* s) {
             visit_type(&s->Var.type, ftp, s->env);
             fe(s->env, &s->Var.init);
 
-            if (s->Var.type.sub==TYPE_NATIVE && !strcmp(s->Var.type.Native.val.s,"any")) {
-                fprintf(ALL.out, "typeof(_tmp_%d) %s", s->Var.init.N, s->Var.id.val.s);
-            } else {
-                fprintf(ALL.out, "%s %s", to_c(s->env, &s->Var.type), s->Var.id.val.s);
-            }
+            fprintf(ALL.out, "%s %s", to_c(s->env,&s->Var.type), s->Var.id.val.s);
 
             if (env_type_hasalloc(s->env, &s->Var.type)) {
                 fprintf (ALL.out,

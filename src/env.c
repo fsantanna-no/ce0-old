@@ -946,8 +946,8 @@ int check_owner_alias (Stmt* S) {
 
 int env (Stmt* s) {
     assert(visit_stmt(s,set_seqs));
-    assert(visit_stmt(s,set_anys));
     assert(visit_stmt(s,set_envs));
+    assert(visit_stmt(s,set_anys));
     if (!visit_stmt(s,check_undeclareds)) {
         return 0;
     }
