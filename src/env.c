@@ -89,8 +89,10 @@ Type* env_tk_to_type (Env* env, Tk* tk) { // static returns use env=NULL b/c no 
             return &tp;
         }
         case TX_NATIVE: {
-            static Type tp = { TYPE_NATIVE, 0 };
-            return &tp;
+            Type* tp = malloc(sizeof(Type));
+            assert(tp != NULL);
+            *tp = (Type) { TYPE_NATIVE, 0, .Native=*tk };
+            return tp;
         }
         case TX_VAR: {
             Stmt* s = env_id_to_stmt(env, tk->val.s, NULL);

@@ -68,7 +68,9 @@ void to_c_ (char* out, Env* env, Type* tp) {
             strcat(out, "int");
             break;
         case TYPE_NATIVE:
+            strcat(out, "typeof(");
             strcat(out, tp->Native.val.s);
+            strcat(out, ")");
             break;
         case TYPE_USER: {
             Stmt* s = env_id_to_stmt(env, tp->User.val.s, NULL);

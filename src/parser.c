@@ -78,14 +78,10 @@ int parser_type (Type* ret) {
 
 // TYPE_NATIVE
     } else if (accept(TX_NATIVE)) {
-        *ret = (Type) { TYPE_NATIVE, 0, .Native=ALL.tk0 };
+        *ret = (Type) { TYPE_NATIVE, isalias, .Native=ALL.tk0 };
 
 // TYPE_USER
-    } else if (accept('&') || accept(TX_USER)) {
-        int isalias = (ALL.tk0.enu == '&');
-        if (isalias && !accept_err(TX_USER)) {
-            return 0;
-        }
+    } else if (accept(TX_USER)) {
         *ret = (Type) { TYPE_USER, isalias, .User=ALL.tk0 };
 
     } else {
@@ -165,6 +161,15 @@ int parser_expr_ (Stmt** s, Exp1* e)
     } else if (accept(TX_VAR)) {
         *s = NULL;
         *e = (Exp1) { _N_++, EXPR_VAR, 0, .tk=ALL.tk0 };
+
+// ALIAS
+    } else if (accept('&')) {
+        if (!parser_expr(s,e)) {
+            return 0;
+        }
+        e->isalias = 1;
+        return 1;
+
 
 // EXPR_PARENS / EXPR_TUPLE
     } else if (accept('(')) {
@@ -480,15 +485,30 @@ int parser_stmt (Stmt** ret) {
             return 0;
         }
 
-        Stmt* blk;
+        Stmt* blk2;
         err_expected("{");
-        if (!parser_block(&blk)) {
+        if (!parser_block(&blk2)) {
             return 0;
         }
 
+        Stmt* blk1 = malloc(sizeof(Stmt));
+        Stmt* seq1 = malloc(sizeof(Stmt));
+        Stmt* arg  = malloc(sizeof(Stmt));
+        assert(blk1!=NULL && seq1!=NULL && arg!=NULL);
+
+        *blk1 = (Stmt) { _N_++, STMT_BLOCK, NULL, {NULL,NULL}, tk, .Block=seq1 };
+        *seq1 = (Stmt) { _N_++, STMT_SEQ,   NULL, {NULL,NULL}, tk, .Seq={arg,blk2} };
+        *arg  = (Stmt) { _N_++, STMT_VAR,   NULL, {NULL,NULL}, tk,
+            .Var = {
+                { TX_VAR, {.s="arg"}, id.lin, id.col },
+                *tp.Func.inp,
+                { _N_++, EXPR_NATIVE, 0, {.tk={TX_NATIVE,{.s="_arg_"},id.lin,id.col}} }
+            }
+        };
+
         Stmt* func = malloc(sizeof(Stmt));
         assert(func != NULL);
-        *func = (Stmt) { _N_++, STMT_FUNC, NULL, {NULL,NULL}, tk, .Func={id,tp,blk} };
+        *func = (Stmt) { _N_++, STMT_FUNC, NULL, {NULL,NULL}, tk, .Func={id,tp,blk1} };
         *ret = func;
 
     // STMT_RETURN

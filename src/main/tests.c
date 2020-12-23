@@ -609,8 +609,11 @@ void t_parser_stmt (void) {
         assert(s->Func.type.sub == TYPE_FUNC);
         assert(!strcmp(s->Func.id.val.s, "f"));
         assert(s->Func.body->sub == STMT_BLOCK);
-        assert(s->Func.body->Block->sub == STMT_RETURN);
-        assert(s->Func.body->Block->Return.enu == TK_UNIT);
+        assert(s->Func.body->Block->sub == STMT_SEQ);
+        assert(s->Func.body->Block->Seq.s1->sub == STMT_VAR);
+        assert(s->Func.body->Block->Seq.s2->sub == STMT_BLOCK);
+        assert(s->Func.body->Block->Seq.s2->Block->sub == STMT_RETURN);
+        assert(s->Func.body->Block->Seq.s2->Block->Return.enu == TK_UNIT);
         fclose(ALL.inp);
     }
 }
@@ -903,8 +906,9 @@ void t_all (void) {
     ));
     // FUNC
     assert(all(
-        "(ln 2, col 6): invalid call to \"f\" : missing return assignment",
-        "func f : () -> _x { return _x }\n"
+        //"(ln 2, col 6): invalid call to \"f\" : missing return assignment",
+        "",
+        "func f : () -> _int { return _1 }\n"
         "call f ()\n"
     ));
     assert(all(
@@ -992,6 +996,8 @@ void t_all (void) {
         "var n_: &Nat = &n\n"
         "call output n_\n"
     ));
+//puts("-=-=-=");
+//assert(0);
     assert(all(
         "Succ ($)\n",
         "type rec Nat {\n"
