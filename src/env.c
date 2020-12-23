@@ -147,8 +147,8 @@ Type* env_expr_to_type_ (Env* env, Exp1* e) {
                 tp = env_tk_to_type(env, &e->Call.func);
             } else {
                 assert(e->Call.func.enu == TX_NATIVE);
-                static Type nat = { TYPE_NATIVE, 0 };
-                static Type tp_ = { TYPE_FUNC, 0, .Func={&nat,&nat} };
+                static Type unit = { TYPE_UNIT, 0 };
+                static Type tp_ = { TYPE_FUNC, 0, .Func={&unit,&unit} };
                 tp = &tp_;
             }
             assert(tp->sub == TYPE_FUNC);
