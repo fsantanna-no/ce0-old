@@ -355,16 +355,6 @@ int set_seqs (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int set_anys (Stmt* s) {
-    if (s->sub!=STMT_VAR || s->Var.type.sub!=TYPE_UNIT) {
-        return VISIT_CONTINUE;
-    }
-    s->Var.type = *env_expr_to_type(s->env, &s->Var.init);
-    return VISIT_CONTINUE;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
 Env* ENV = NULL;
 
 int set_envs (Stmt* s) {
@@ -417,6 +407,18 @@ int set_envs (Stmt* s) {
         }
     }
     return 1;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+int set_anys (Stmt* s) {
+    if (s->sub!=STMT_VAR || s->Var.type.sub!=TYPE_UNIT) {
+        return VISIT_CONTINUE;
+    }
+    Type* tp = env_expr_to_type(s->env, &s->Var.init);
+    assert(tp != NULL);
+    s->Var.type = *tp;
+    return VISIT_CONTINUE;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
