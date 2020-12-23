@@ -351,13 +351,21 @@ int parser_stmt (Stmt** ret) {
         }
 
         // reuse STMT_VAR from inner expression
-        if (s!=NULL && s->sub==STMT_VAR) {
-            s->Var.id = id;
-            s->Var.type = tp;
-            //s->Var.init = keep old;
-            *ret = s;
+        if (s != NULL) {
+            Stmt* var;
+            if (s->sub == STMT_VAR) {
+                var = s;
+            } else {
+                assert(s->sub == STMT_SEQ);
+                assert(s->Seq.s2->sub == STMT_VAR);
+                var = s->Seq.s2;
+            }
+            var->Var.id = id;
+            var->Var.type = tp;
+            //var->Var.init = keep old;
+            *ret = var;
         } else {
-            assert(s == NULL);
+if (s) printf("---> %d\n", s->sub);
             Stmt* var = malloc(sizeof(Stmt));
             assert(var != NULL);
             *var = (Stmt) { _N_++, STMT_VAR, NULL, {NULL,NULL}, tk, .Var={id,tp,e} };
