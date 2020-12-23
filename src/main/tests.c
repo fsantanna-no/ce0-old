@@ -597,7 +597,7 @@ void t_parser_stmt (void) {
         Stmt* s;
         assert(parser_stmt(&s));
         assert(s->sub==STMT_IF && s->If.false->sub==STMT_BLOCK);
-        assert(s->If.false->Block==NULL);
+        assert(s->If.false->Block->sub==STMT_NONE);
         fclose(ALL.inp);
     }
     // STMT_FUNC

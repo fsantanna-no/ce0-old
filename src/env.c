@@ -357,6 +357,7 @@ int set_seqs (Stmt* s) {
 int set_envs (Stmt* s) {
     s->env = ALL.env;
     switch (s->sub) {
+        case STMT_NONE:
         case STMT_RETURN:
         case STMT_SEQ:
         case STMT_IF:
@@ -513,6 +514,7 @@ int check_undeclareds (Stmt* s)
     }
 
     switch (s->sub) {
+        case STMT_NONE:
         case STMT_SEQ:
         case STMT_BLOCK:
             return 1;
@@ -633,6 +635,7 @@ int check_types (Stmt* s) {
     }
 
     switch (s->sub) {
+        case STMT_NONE:
         case STMT_USER:
         case STMT_FUNC:
         case STMT_SEQ:

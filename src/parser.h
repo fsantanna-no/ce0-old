@@ -21,7 +21,8 @@ typedef enum {
 } EXPR;
 
 typedef enum {
-    STMT_VAR = 1,
+    STMT_NONE = 0,
+    STMT_VAR,
     STMT_USER,
     STMT_SEQ,
     STMT_IF,

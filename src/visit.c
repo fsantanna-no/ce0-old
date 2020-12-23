@@ -47,6 +47,7 @@ int visit_stmt (Stmt* s, F_Stmt fs) {
     }
 
     switch (s->sub) {
+        case STMT_NONE:
         case STMT_RETURN:
         case STMT_USER:
         case STMT_VAR:

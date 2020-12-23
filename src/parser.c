@@ -450,9 +450,13 @@ int parser_stmt (Stmt** ret) {
                 return 0;
             }
         } else {
+            Stmt* none = malloc(sizeof(Stmt));
+            assert(none != NULL);
+            *none = (Stmt) { _N_++, STMT_NONE, NULL, {NULL,NULL} };
+
             f = malloc(sizeof(Stmt));
             assert(f != NULL);
-            *f = (Stmt) { _N_++, STMT_BLOCK, NULL, {NULL,NULL}, ALL.tk0, .Block=NULL };
+            *f = (Stmt) { _N_++, STMT_BLOCK, NULL, {NULL,NULL}, ALL.tk0, .Block=none };
         }
 
         Stmt* If = malloc(sizeof(Stmt));

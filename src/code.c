@@ -515,6 +515,9 @@ void fe (Env* env, Exp1* e) {
 
 void code_stmt (Stmt* s) {
     switch (s->sub) {
+        case STMT_NONE:
+            break;
+
         case STMT_USER: {
             const char* sup = s->User.id.val.s;
             const char* SUP = strupper(s->User.id.val.s);
