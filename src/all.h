@@ -19,7 +19,7 @@ typedef struct {
     long  lin,col;
     Tk    tk0,tk1;
     Env*  env;
-    int   n;
+    int   nn;
 } All;
 
 extern All ALL;
