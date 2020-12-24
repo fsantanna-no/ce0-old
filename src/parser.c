@@ -128,7 +128,7 @@ Stmt* stmt_tmp (Tk tk0, Exp1* e, Exp1 init) {
     assert(ret != NULL);
     *ret = (Stmt) {
         ALL.nn++, STMT_VAR, NULL, {NULL,NULL}, tk0,
-        .Var = { tmp, {TYPE_UNIT,0}, init }
+        .Var = { tmp, {TYPE_UNIT,0}, init } // TYPE_UNIT will be susbtituted (see env.set_tmps)
     };
 
     *e = (Exp1) { ALL.nn++, EXPR_VAR, 0, .tk=tmp };
@@ -162,10 +162,12 @@ int parser_expr_ (Stmt** s, Exp1* e)
 
 // ALIAS
     } else if (accept('&')) {
+        Tk tk = ALL.tk0;
         if (!parser_expr(s,e)) {
             return 0;
         }
         e->isalias = 1;
+        *s = enseq(*s, stmt_tmp(tk,e,*e));
         return 1;
 
 
