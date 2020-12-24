@@ -862,12 +862,24 @@ void t_all (void) {
         "var x: Xx = Xx1 a\n"
         "call output x\n"
     ));
+    assert(all(
+        "Xx1 (Yy1,Zz1)\n",
+        "type Zz { Zz1:() }\n"
+        "type Yy { Yy1:() }\n"
+        "type Xx { Xx1:(Yy,Zz) }\n"
+        "call output (Xx1 (Yy1,Zz1))\n"
+    ));
     // IF
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
         "var b : Bool = False()\n"
         "if b { } else { call output() }\n"
+    ));
+    assert(all(
+        "()\n",
+        "type Bool { False: () ; True: () }\n"
+        "if False { } else { call output() }\n"
     ));
     assert(all(
         "()\n",
@@ -889,6 +901,12 @@ void t_all (void) {
         "var b : Bool = True()\n"
         "var tst: Bool = b.False?\n"
         "if tst {} else { call output() }\n"
+    ));
+    assert(all(
+        "()\n",
+        "type Bool { False: () ; True: () }\n"
+        "var b : Bool = True()\n"
+        "if b.False? {} else { call output() }\n"
     ));
     // DISCRIMINATOR
     assert(all(
@@ -996,8 +1014,6 @@ void t_all (void) {
         "var n_: &Nat = &n\n"
         "call output n_\n"
     ));
-//puts("-=-=-=");
-//assert(0);
     assert(all(
         "Succ ($)\n",
         "type rec Nat {\n"
@@ -1020,6 +1036,15 @@ void t_all (void) {
         "var x_: &XNat = &x\n"
         "call output x_\n"
     ));
+puts("-=-=-=");
+    assert(all(
+        "Succ ($)\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "var c: Nat = Succ Succ $Nat\n"
+        "call output &c.Succ!\n"
+    ));
     assert(all(
         "Succ ($)\n",
         "type rec Nat {\n"
@@ -1030,6 +1055,7 @@ void t_all (void) {
         "var b: &Nat = &c.Succ!\n"
         "call output b\n"
     ));
+assert(0);
     assert(all(
         "(Succ ($),$)\n",
         "type rec Nat {\n"
