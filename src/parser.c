@@ -119,22 +119,41 @@ Stmt* enseq (Stmt* s1, Stmt* s2) {
     }
 }
 
-Stmt* stmt_tmp (Tk tk0, Exp1* e, Exp1 init) {
+// tk0:  base token for return statement
+// tmp:  token for tmp variable
+// init: expression to assign
+// *e:   return VAR expression with tmp token
+Stmt* stmt_tmp (Tk tk0, Exp1* init, Exp1* e) {
+    if (init->sub<=EXPR_VAR && !init->isalias) {
+        *e = *init;
+        return NULL;
+    }
+
     Tk tmp = tk0;
     tmp.enu = TX_VAR;
     sprintf(tmp.val.s, "_tmp_%d", ALL.nn++);
+printf("%d, %s\n", init->sub, tmp.val.s);
 
     Stmt* ret = malloc(sizeof(Stmt));
     assert(ret != NULL);
     *ret = (Stmt) {
         ALL.nn++, STMT_VAR, NULL, {NULL,NULL}, tk0,
-        .Var = { tmp, {TYPE_UNIT,0}, init } // TYPE_UNIT will be susbtituted (see env.set_tmps)
+        .Var = { tmp, {TYPE_UNIT,0}, *init } // TYPE_UNIT will be susbtituted (see env.set_tmps)
     };
 
     *e = (Exp1) { ALL.nn++, EXPR_VAR, 0, .tk=tmp };
     return ret;
 }
 
+Stmt* stmt_var_last (Stmt* s) {
+    if (s->sub == STMT_VAR) {
+        return s;
+    } else {
+        assert(s->sub == STMT_SEQ);
+        assert(s->Seq.s2->sub == STMT_VAR);
+        return s->Seq.s2;
+    }
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -166,8 +185,14 @@ int parser_expr_ (Stmt** s, Exp1* e)
         if (!parser_expr(s,e)) {
             return 0;
         }
-        e->isalias = 1;
-        *s = enseq(*s, stmt_tmp(tk,e,*e));
+        if (*s == NULL) {
+            e->isalias = 1;
+        } else {
+            Stmt* var = stmt_var_last(*s);
+            var->Var.type.isalias = 1;
+            var->Var.init.isalias = 1;
+        }
+        *s = enseq(*s, stmt_tmp(tk,e,e));
         return 1;
 
 
@@ -214,7 +239,7 @@ int parser_expr_ (Stmt** s, Exp1* e)
         }
 
         Exp1 tuple = (Exp1) { ALL.nn++, EXPR_TUPLE, 0, .Tuple={n,vec} };
-        *s = enseq(*s, stmt_tmp(tk0,e,tuple));
+        *s = enseq(*s, stmt_tmp(tk0,&tuple,e));
 
 // EXPR_CONS
     } else if (accept(TX_USER)) {  // True
@@ -225,9 +250,18 @@ int parser_expr_ (Stmt** s, Exp1* e)
         if (!parser_expr(s,&arg)) {   // ()
             arg = (Exp1) { ALL.nn++, EXPR_UNIT, 0, .tk={TK_UNIT,{},0,ALL.nn++} };
         }
+dump_exp1(&arg);
+        *s = enseq(*s, stmt_tmp(ALL.tk0,&arg,e));
 
-        Exp1 cons = (Exp1) { ALL.nn++, EXPR_CONS, 0, .Cons={sub,arg.tk} };
-        *s = enseq(*s, stmt_tmp(sub,e,cons));
+puts(">1>");
+if (*s) { dump_stmt(*s); } else { puts("zzz"); }
+puts("<1<");
+
+        Exp1 cons = (Exp1) { ALL.nn++, EXPR_CONS, 0, .Cons={sub,e->tk} };
+        *s = enseq(*s, stmt_tmp(sub,&cons,e));
+puts(">2>");
+if (*s) { dump_stmt(*s); } else { puts("zzz"); }
+puts("<2<");
 
     } else {
         return err_expected("expression");
@@ -249,13 +283,13 @@ int parser_expr (Stmt** s, Exp1* e) {
         if (parser_expr_(&s2,&arg)) {
             *s = enseq(*s, s2);
             Exp1 call = { ALL.nn++, EXPR_CALL, 0, .Call={e->tk,arg.tk} };
-            *s = enseq(*s, stmt_tmp(tk0,e,call));
+            *s = enseq(*s, stmt_tmp(tk0,&call,e));
 
         } else if (accept('.')) {
 // EXPR_INDEX
             if (accept(TX_NUM)) {
                 Exp1 idx = { ALL.nn++, EXPR_INDEX, 0, .Index={e->tk,ALL.tk0} };
-                *s = enseq(*s, stmt_tmp(tk0,e,idx));
+                *s = enseq(*s, stmt_tmp(tk0,&idx,e));
 
 // EXPR_DISC / EXPR_PRED
             } else if (accept(TX_USER)) {
@@ -270,7 +304,7 @@ int parser_expr (Stmt** s, Exp1* e) {
                     return err_expected("`?´ or `!´");
                 }
 
-                *s = enseq(*s, stmt_tmp(tk,e,val));
+                *s = enseq(*s, stmt_tmp(tk,&val,e));
             } else {
                 return err_expected("index or subtype");
             }
@@ -353,19 +387,13 @@ int parser_stmt (Stmt** ret) {
 
         // reuse STMT_VAR from inner expression
         if (s != NULL) {
-            Stmt* var;
-            if (s->sub == STMT_VAR) {
-                var = s;
-            } else {
-                assert(s->sub == STMT_SEQ);
-                assert(s->Seq.s2->sub == STMT_VAR);
-                var = s->Seq.s2;
-            }
+            Stmt* var = stmt_var_last(s);
             var->Var.id = id;
             var->Var.type = tp;
             //var->Var.init = keep old;
-            *ret = var;
-        } else {
+            *ret = s;
+        } else
+        {
             Stmt* var = malloc(sizeof(Stmt));
             assert(var != NULL);
             *var = (Stmt) { ALL.nn++, STMT_VAR, NULL, {NULL,NULL}, tk, .Var={id,tp,e} };

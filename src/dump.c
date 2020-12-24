@@ -33,7 +33,7 @@ void dump_exp1 (Exp1* e) {
             printf("(...)\n");
             break;
         case EXPR_INDEX:
-            printf("(...)\n");
+            printf("%s.%d\n", e->Index.val.val.s, e->Index.index.val.n);
             break;
         case EXPR_CALL:
             printf("%s(%s)\n", e->Call.func.val.s, e->Call.arg.val.s);
