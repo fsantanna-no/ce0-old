@@ -132,7 +132,6 @@ Stmt* stmt_tmp (Tk tk0, Exp1* init, Exp1* e) {
     Tk tmp = tk0;
     tmp.enu = TX_VAR;
     sprintf(tmp.val.s, "_tmp_%d", ALL.nn++);
-printf("%d, %s\n", init->sub, tmp.val.s);
 
     Stmt* ret = malloc(sizeof(Stmt));
     assert(ret != NULL);
@@ -250,18 +249,10 @@ int parser_expr_ (Stmt** s, Exp1* e)
         if (!parser_expr(s,&arg)) {   // ()
             arg = (Exp1) { ALL.nn++, EXPR_UNIT, 0, .tk={TK_UNIT,{},0,ALL.nn++} };
         }
-dump_exp1(&arg);
         *s = enseq(*s, stmt_tmp(ALL.tk0,&arg,e));
-
-puts(">1>");
-if (*s) { dump_stmt(*s); } else { puts("zzz"); }
-puts("<1<");
 
         Exp1 cons = (Exp1) { ALL.nn++, EXPR_CONS, 0, .Cons={sub,e->tk} };
         *s = enseq(*s, stmt_tmp(sub,&cons,e));
-puts(">2>");
-if (*s) { dump_stmt(*s); } else { puts("zzz"); }
-puts("<2<");
 
     } else {
         return err_expected("expression");

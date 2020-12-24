@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DEBUG
+//#define DEBUG
 //#define VALGRIND
 
 #include "../all.h"
@@ -28,7 +28,9 @@ int all (const char* xp, char* src) {
         return !strcmp(ALL.err, xp);
     }
 
+#ifdef DEBUG
     dump_stmt(s);
+#endif
 
     if (!env(s)) {
 #ifdef DEBUG
@@ -1449,7 +1451,6 @@ void t_all (void) {
         "var y_: &Nat = &y\n"
         "call output y_\n"
     ));
-puts("-=-=-=");
     assert(all(
         "(ln 8, col 14): invalid access to \"x\" : ownership was transferred (ln 6)",
         "type rec Nat {\n"
@@ -1463,7 +1464,6 @@ puts("-=-=-=");
         "var y_: &Nat = &y\n"
         "call output y_\n"
     ));
-assert(0);
     assert(all(
         "(ln 8, col 12): invalid return : cannot return alias to local \"l\" (ln 5)",
         "type rec List {\n"

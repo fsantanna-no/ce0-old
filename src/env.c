@@ -276,7 +276,11 @@ int set_seqs (Stmt* s) {
             s->Seq.s1->seqs[0] = s->Seq.s2;
 
             void aux (Stmt* cur, Stmt* nxt) {
+                cur->seqs[0] = nxt;
                 switch (cur->sub) {
+                    case STMT_BLOCK:
+                        aux(cur->Block, nxt);
+                        break;
                     case STMT_SEQ:
                         aux(cur->Seq.s2, nxt);
                         break;
@@ -306,39 +310,6 @@ int set_seqs (Stmt* s) {
     }
     return 1;
 }
-
-#if 0
-    void set_seq (Stmt* cur, Stmt* nxt) {
-        cur->seqs[0] = nxt;
-        switch (cur->sub) {
-            case STMT_IF:
-                set_seq(cur->If.true, nxt);
-                set_seq(cur->If.false, nxt);
-                cur->seqs[1] = NULL; // undetermined: user code has to determine
-                break;
-            case STMT_SEQ:
-                if (cur->Seq.size == 0) {
-                    cur->seqs[1] = nxt;                             // Stmt -> nxt
-                } else {
-                    cur->seqs[1] = &cur->Seq.vec[0];                // Stmt    -> Stmt[0]
-                    cur->Seq.vec[cur->Seq.size-1].seqs[1] = nxt;    // Stmt[n] -> nxt
-                }
-                break;
-            case STMT_BLOCK:
-                set_seq(cur->Block, nxt);
-                cur->seqs[1] = cur->Block;
-                break;
-            default:
-                cur->seqs[1] = nxt;
-        }
-    }
-
-    for (int i=0; i<ss->Seq.size-1; i++) {
-        Stmt* cur = &ss->Seq.vec[i];
-        Stmt* nxt = &ss->Seq.vec[i+1];
-        set_seq(cur, nxt);                          // Stmt[i] -> Stmt[i+1]
-    }
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 

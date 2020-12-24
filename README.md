@@ -361,6 +361,7 @@ A block delimits, between curly braces `{` and `}`, the scope and visibility of
 
 # 5. Syntax
 
+```
 Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: () = ()
             `=´ Expr
       |  `type´ [`rec´] USER `{`        -- user type declaration    type rec List {
@@ -378,14 +379,13 @@ Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: ()
 
 Expr ::= `(´ `)´                        -- unit value               ()
       |  NATIVE                         -- native expression        _printf
-      |  VAR                            -- variable identifier      i
-      |  `&´ VAR                        -- alias                    &x
-      |  `arg´                          -- function argument        arg
-      |  `(´ Expr {`,´ Expr} `)´        -- tuple                    (x,())
-      |  Expr `.´ NUM                   -- tuple index              x.1
-      |  Expr `(´ Expr `)´              -- call                     f(x)
       |  `$´ USER                       -- null constructor         $List
-      |  USER [`(´ Expr `)´]            -- constructor              True ()
+      |  VAR                            -- variable identifier      i
+      |  `&´ Expr                       -- alias                    &x
+      |  `(´ Expr {`,´ Expr} `)´        -- tuple                    (x,())
+      |  USER [Expr]                    -- constructor              True ()
+      |  Expr Expr                      -- call                     f(x)
+      |  Expr `.´ NUM                   -- tuple index              x.1
       |  Expr `.´ [`$´] USER `!´        -- discriminator            x.True!
       |  Expr `.´ [`$´] USER `?´        -- predicate                x.False?
       |  `(´ Expr `)´                   -- group                    (x)
@@ -401,7 +401,7 @@ Type ::= `(´ `)´                        -- unit                     ()
 
 ```
 Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: () = ()
-            `=´ Expr
+            `=´ Exp1
       |  `type´ [`rec´] USER `{`        -- user type declaration    type rec List {
             { USER `:´ Type [`;´] }     --    subtypes                 Cons: List
          `}´                                                        }
@@ -420,7 +420,7 @@ Exp0 ::= `(´ `)´                        -- unit value               ()
       |  `$´ USER                       -- null constructor         $List
       |  VAR                            -- variable identifier      i
 
-Expr ::= `&´ Expr                       -- alias                    &x
+Exp1 ::= `&´ Exp1                       -- alias                    &x
       |  `(´ Exp0 {`,´ Exp0} `)´        -- tuple                    (x,())
       |  USER Exp0                      -- constructor              True ()
       |  (VAR|NATIVE) Exp0              -- call                     f x
