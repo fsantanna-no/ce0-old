@@ -215,20 +215,6 @@ Stmt* env_tk_to_type_to_user_stmt (Env* env, Tk* tk) {
     }
 }
 
-#if 0
-void env_dump (Env* env) {
-    while (env != NULL) {
-        if (env->stmt->sub == STMT_USER) {
-            puts(env->stmt->User.id.val.s);
-        } else {
-            assert(env->stmt->sub == STMT_VAR);
-            puts(env->stmt->Var.id.val.s);
-        }
-        env = env->prev;
-    }
-}
-#endif
-
 int env_type_hasalloc (Env* env, Type* tp) {
     if (tp->isalias) {
         return 0;
@@ -411,7 +397,7 @@ int set_envs (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int set_anys (Stmt* s) {
+int set_tmps (Stmt* s) {
     if (s->sub!=STMT_VAR || s->Var.type.sub!=TYPE_UNIT) {
         return VISIT_CONTINUE;
     }
@@ -951,7 +937,7 @@ int check_owner_alias (Stmt* S) {
 int env (Stmt* s) {
     assert(visit_stmt(s,set_seqs));
     assert(visit_stmt(s,set_envs));
-    assert(visit_stmt(s,set_anys));
+    assert(visit_stmt(s,set_tmps));
     if (!visit_stmt(s,check_undeclareds)) {
         return 0;
     }
