@@ -143,17 +143,23 @@ Type* env_expr_to_type_ (Env* env, Exp1* e) {
         }
 
         case EXPR_CALL: {
-            Type* tp = NULL;
             if (e->Call.func.enu == TX_VAR) {
-                tp = env_tk_to_type(env, &e->Call.func);
+                Type* tp = env_tk_to_type(env, &e->Call.func);
+                assert(tp->sub == TYPE_FUNC);
+                if (!strcmp(e->Call.func.val.s,"clone")) {
+                    Type* ret = malloc(sizeof(Type));
+                    assert(ret != NULL);
+                    *ret = *env_tk_to_type(env, &e->Call.arg);
+                    ret->isalias = 0;
+                    return ret;
+                } else {
+                    return tp->Func.out;
+                }
             } else {
                 assert(e->Call.func.enu == TX_NATIVE);
                 static Type unit = { TYPE_UNIT, 0 };
-                static Type tp_ = { TYPE_FUNC, 0, .Func={&unit,&unit} };
-                tp = &tp_;
+                return &unit;   // TODO: should be typeof(f(arg))
             }
-            assert(tp->sub == TYPE_FUNC);
-            return tp->Func.out;
         }
 
         case EXPR_INDEX:    // x.1
@@ -919,7 +925,7 @@ int env (Stmt* s) {
     assert(visit_stmt(s,set_seqs));
     assert(visit_stmt(s,set_envs));
     assert(visit_stmt(s,set_tmps));
-dump_stmt(s);
+//dump_stmt(s);
     if (!visit_stmt(s,check_undeclareds)) {
         return 0;
     }
