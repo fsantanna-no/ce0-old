@@ -508,9 +508,13 @@ int check_undeclareds (Stmt* s)
 
 int check_types (Stmt* s) {
     int type_is_sup_sub (Type* sup, Type* sub) {
+#if 1
+        assert(sup->sub!=TYPE_AUTO && sub->sub!=TYPE_AUTO);
+#else
         if (sup->sub==TYPE_AUTO || sub->sub==TYPE_AUTO) {
             return 1;
         }
+#endif
         if (sup->sub==TYPE_NATIVE || sub->sub==TYPE_NATIVE) {
             return 1;
         }
@@ -915,6 +919,7 @@ int env (Stmt* s) {
     assert(visit_stmt(s,set_seqs));
     assert(visit_stmt(s,set_envs));
     assert(visit_stmt(s,set_tmps));
+dump_stmt(s);
     if (!visit_stmt(s,check_undeclareds)) {
         return 0;
     }
