@@ -322,8 +322,7 @@ void chap_pre (void) {
     strcat (INP,
         "var a: Nat = two()\n"
         "var b: Nat = three()\n"
-        "var c: (Nat,Nat) = (a,b)\n"
-        "var n: Nat = rem c\n"
+        "var n: Nat = rem (&a,&b)\n"
         "var n_: &Nat = &n\n"
         "call output n_\n"
     );
