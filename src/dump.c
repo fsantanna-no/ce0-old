@@ -16,7 +16,8 @@ void dump_type (Type* tp) {
     }
     switch (tp->sub) {
         case TYPE_AUTO:
-            assert(0);
+            printf("?");
+            break;
         case TYPE_UNIT:
             printf("()");
             break;

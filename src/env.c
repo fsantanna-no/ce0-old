@@ -508,6 +508,9 @@ int check_undeclareds (Stmt* s)
 
 int check_types (Stmt* s) {
     int type_is_sup_sub (Type* sup, Type* sub) {
+        if (sup->sub==TYPE_AUTO || sub->sub==TYPE_AUTO) {
+            return 1;
+        }
         if (sup->sub==TYPE_NATIVE || sub->sub==TYPE_NATIVE) {
             return 1;
         }
