@@ -220,9 +220,10 @@ int parser_expr_ (Stmt** s, Exp1* e)
     } else if (accept(TX_USER)) {  // True
         Tk sub = ALL.tk0;
 
+        *s = NULL;
         Exp1 arg;
         if (!parser_expr(s,&arg)) {   // ()
-            return 0;
+            arg = (Exp1) { _N_++, EXPR_UNIT, 0, .tk={TK_UNIT,{},0,0} };
         }
 
         Exp1 cons = (Exp1) { _N_++, EXPR_CONS, 0, .Cons={sub,arg.tk} };
