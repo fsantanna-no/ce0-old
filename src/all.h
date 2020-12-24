@@ -5,6 +5,7 @@
 #include "visit.h"
 #include "env.h"
 #include "code.h"
+#include "dump.h"
 
 #define GCC "gcc -Wall -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-local-typedefs -Wno-unused-function -Wno-format-zero-length"
 
