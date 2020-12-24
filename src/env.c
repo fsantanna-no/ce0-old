@@ -4,7 +4,7 @@
 
 #include "all.h"
 
-Type Type_Bool  = { TYPE_USER, 0, .User={TX_USER,{.s="Bool"},0,0} };
+Type Type_Bool = { TYPE_USER, 0, .User={TX_USER,{.s="Bool"},0,0} };
 
 int err_message (Tk* tk, const char* v) {
     sprintf(ALL.err, "(ln %ld, col %ld): %s", tk->lin, tk->col, v);

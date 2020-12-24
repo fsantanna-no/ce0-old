@@ -28,6 +28,8 @@ int all (const char* xp, char* src) {
         return !strcmp(ALL.err, xp);
     }
 
+    dump_stmt(s);
+
     if (!env(s)) {
 #ifdef DEBUG
         puts(ALL.err);
@@ -1036,7 +1038,22 @@ void t_all (void) {
         "var x_: &XNat = &x\n"
         "call output x_\n"
     ));
-puts("-=-=-=");
+    assert(all(
+        "Succ ($)\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "var c: Nat = Succ $Nat\n"
+        "call output &c\n"
+    ));
+    assert(all(
+        "Succ (Succ ($))\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "var c: Nat = Succ Succ $Nat\n"
+        "call output &c\n"
+    ));
     assert(all(
         "Succ ($)\n",
         "type rec Nat {\n"
@@ -1055,7 +1072,6 @@ puts("-=-=-=");
         "var b: &Nat = &c.Succ!\n"
         "call output b\n"
     ));
-assert(0);
     assert(all(
         "(Succ ($),$)\n",
         "type rec Nat {\n"
@@ -1189,7 +1205,11 @@ assert(0);
         "call output c_\n"
     ));
     assert(all(
-        "(ln 5, col 17): undeclared type \"Naty\"",
+        "(ln 9, col 17): undeclared type \"Naty\"",
+        "type Bool {\n"
+        "    False: ()\n"
+        "    True:  ()\n"
+        "}\n"
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -1429,6 +1449,7 @@ assert(0);
         "var y_: &Nat = &y\n"
         "call output y_\n"
     ));
+puts("-=-=-=");
     assert(all(
         "(ln 8, col 14): invalid access to \"x\" : ownership was transferred (ln 6)",
         "type rec Nat {\n"
@@ -1442,6 +1463,7 @@ assert(0);
         "var y_: &Nat = &y\n"
         "call output y_\n"
     ));
+assert(0);
     assert(all(
         "(ln 8, col 12): invalid return : cannot return alias to local \"l\" (ln 5)",
         "type rec List {\n"

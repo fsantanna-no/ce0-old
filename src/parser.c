@@ -292,7 +292,7 @@ int parser_expr (Stmt** s, Exp1* e) {
                 *s = enseq(*s, stmt_tmp(tk0,&idx,e));
 
 // EXPR_DISC / EXPR_PRED
-            } else if (accept(TX_USER)) {
+            } else if (accept(TX_USER) || accept(TX_NULL)) {
                 Tk tk = ALL.tk0;
 
                 Exp1 val;
