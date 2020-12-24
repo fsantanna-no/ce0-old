@@ -220,6 +220,8 @@ int env_type_hasalloc (Env* env, Type* tp) {
         return 0;
     }
     switch (tp->sub) {
+        case TYPE_AUTO:
+            assert(0);
         case TYPE_UNIT:
         case TYPE_NATIVE:
         case TYPE_FUNC:
@@ -250,6 +252,8 @@ int env_type_hasalloc (Env* env, Type* tp) {
 
 int env_type_isrec (Env* env, Type* tp) {
     switch (tp->sub) {
+        case TYPE_AUTO:
+            assert(0);
         case TYPE_UNIT:
         case TYPE_NATIVE:
         case TYPE_FUNC:
@@ -369,12 +373,11 @@ int set_envs (Stmt* s) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int set_tmps (Stmt* s) {
-    if (s->sub!=STMT_VAR || s->Var.type.sub!=TYPE_UNIT) {
-        return VISIT_CONTINUE;
+    if (s->sub==STMT_VAR && s->Var.type.sub==TYPE_AUTO) {
+        Type* tp = env_expr_to_type(s->env, &s->Var.init);
+        assert(tp != NULL);
+        s->Var.type = *tp;
     }
-    Type* tp = env_expr_to_type(s->env, &s->Var.init);
-    assert(tp != NULL);
-    s->Var.type = *tp;
     return VISIT_CONTINUE;
 }
 

@@ -137,7 +137,7 @@ Stmt* stmt_tmp (Tk tk0, Exp1* init, Exp1* e) {
     assert(ret != NULL);
     *ret = (Stmt) {
         ALL.nn++, STMT_VAR, NULL, {NULL,NULL}, tk0,
-        .Var = { tmp, {TYPE_UNIT,0}, *init } // TYPE_UNIT will be susbtituted (see env.set_tmps)
+        .Var = { tmp, {TYPE_AUTO,0}, *init } // TYPE_AUTO will be susbtituted (see env.set_tmps)
     };
 
     *e = (Exp1) { ALL.nn++, EXPR_VAR, 0, .tk=tmp };
@@ -280,7 +280,7 @@ int parser_expr (Stmt** s, Exp1* e) {
 // EXPR_INDEX
             if (accept(TX_NUM)) {
                 Exp1 idx = { ALL.nn++, EXPR_INDEX, 0, .Index={e->tk,ALL.tk0} };
-                *s = enseq(*s, stmt_tmp(tk0,&idx,e));
+                *s = enseq(*s, stmt_tmp(ALL.tk0,&idx,e));
 
 // EXPR_DISC / EXPR_PRED
             } else if (accept(TX_USER) || accept(TX_NULL)) {
@@ -596,8 +596,8 @@ int parser (Stmt** ret) {
 
     // clone, output
     {
-        static Type any   = { TYPE_NATIVE, 0, {.Native={TX_NATIVE,{.s="any"},0,0}} };
-        static Type alias = { TYPE_NATIVE, 1, {.Native={TX_NATIVE,{.s="any"},0,0}} };
+        static Type any   = { TYPE_AUTO, 0 };
+        static Type alias = { TYPE_AUTO, 1 };
 
         Stmt* clone = malloc(sizeof(Stmt));
         assert(clone != NULL);
@@ -606,7 +606,7 @@ int parser (Stmt** ret) {
             .Func = {
                 { TX_VAR,{.s="clone"},0,ALL.nn++ },
                 { TYPE_FUNC,.Func={&alias,&any} },
-                NULL
+                NULL    // TODO: STMT_NONE
             }
         };
 
@@ -619,7 +619,7 @@ int parser (Stmt** ret) {
             .Func = {
                 { TX_VAR,{.s="output"},0,ALL.nn++ },
                 { TYPE_FUNC,.Func={&alias,&Type_Unit} },
-                NULL
+                NULL    // TODO: STMT_NONE
             }
         };
 

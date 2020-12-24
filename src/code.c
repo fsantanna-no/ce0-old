@@ -26,6 +26,8 @@ void to_ce_ (char* out, Type* tp) {
         strcat(out, "x");
     }
     switch (tp->sub) {
+        case TYPE_AUTO:
+            assert(0);
         case TYPE_UNIT:
             strcat(out, "Unit");
             break;
@@ -64,6 +66,8 @@ void code_to_ce (Type* tp) {
 void to_c_ (char* out, Env* env, Type* tp) {
     int isrec = 0;
     switch (tp->sub) {
+        case TYPE_AUTO:
+            assert(0);
         case TYPE_UNIT:
             strcat(out, "int");
             break;

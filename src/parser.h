@@ -1,5 +1,6 @@
 typedef enum {
-    TYPE_UNIT = 1,
+    TYPE_AUTO = 0,
+    TYPE_UNIT,
     TYPE_NATIVE,
     TYPE_USER,
     TYPE_TUPLE,

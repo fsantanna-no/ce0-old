@@ -57,6 +57,7 @@ int main (int argc, char* argv[]) {
         fputs("int main (void) {}", fout);
         exit(EXIT_FAILURE);
     }
+//dump_stmt(s);
     code(s);
 
     return 0;

@@ -1,1 +1,7 @@
-call output ()
+type rec Nat {
+   Succ: Nat
+}
+
+func rem: (&Nat,&Nat) -> Nat {
+    return clone(arg.1)
+}

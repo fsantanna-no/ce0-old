@@ -1,11 +1,10 @@
-- Seq virar s1/s2
-- clone tuples (TODO-clone-tuples)
 - book.c
+
+- clone tuples (TODO-clone-tuples)
 
 - TODO-set-null
     - zerar após TX em multi-nivel: a.X!.Y!=NULL
 
-- resugar
 - voltar para book
     - programar um pouco mais
     - trabalhar com desugar

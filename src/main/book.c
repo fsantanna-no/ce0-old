@@ -16,6 +16,7 @@ int all (const char* xp, char* src) {
         puts(ALL.err);
         return 0;
     };
+//puts(src);
     if (!parser(&s)) {
         puts(ALL.err);
         return 0;
@@ -213,21 +214,16 @@ const char _nat[] =
     "    }\n"
     "}\n"
     "\n"
-    "func rem: (Nat,Nat) -> Nat {\n"
-    "    var x: Nat = arg.1\n"                  // 80
-    "    var y: Nat = arg.2\n"
-    "    var x_: &Nat = &x\n"
-    "    var y_: &Nat = &y\n"
-    "    var z: (&Nat,&Nat) = (x_,y_)\n"
-    "    var tst: Bool = lt z\n"
-    "    if tst {\n"
-    "        return x\n"
+    "func rem: (&Nat,&Nat) -> Nat {\n"  // 79
+    "    var x: &Nat = arg.1\n"
+    "    var y: &Nat = arg.2\n"
+    "    if lt (x,y) {\n"
+    "        return clone(x)\n"
     "    } else {\n"
-    "        var c: (Nat,Nat) = (x,y)\n"
-    "        var a: Nat = sub c\n"              // 90
-    "        var d: (Nat,Nat) = (a,y)\n"
-    "        var b: Nat = rem d\n"
-    "        return b\n"
+    "        var x_: Nat = clone x\n"
+    "        var y_: Nat = clone y\n"
+    "        var xy: Nat = sub (x_,y_)\n"
+    "        return rem (&xy, y)\n"
     "    }\n"
     "}\n"
     "\n"

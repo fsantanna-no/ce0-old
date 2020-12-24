@@ -15,6 +15,7 @@ int visit_type (Type* tp, F_Type ft, void* arg) {
     }
 
     switch (tp->sub) {
+        case TYPE_AUTO:
         case TYPE_UNIT:
         case TYPE_NATIVE:
         case TYPE_USER:

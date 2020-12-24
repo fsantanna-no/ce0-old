@@ -10,9 +10,34 @@ void dump_spc (void) {
     }
 }
 
+void dump_type (Type* tp) {
+    if (tp->isalias) {
+        putchar('&');
+    }
+    switch (tp->sub) {
+        case TYPE_AUTO:
+            assert(0);
+        case TYPE_UNIT:
+            printf("()");
+            break;
+        case TYPE_NATIVE:
+            printf("%s", tp->Native.val.s);
+            break;
+        case TYPE_USER:
+            printf("%s", tp->User.val.s);
+            break;
+        case TYPE_TUPLE:
+            printf("(...)");
+            break;
+        case TYPE_FUNC:
+            printf("a -> b");
+            break;
+    }
+}
+
 void dump_exp1 (Exp1* e) {
-    dump_spc();
-    //printf("[%d] %d (%d/%s) %d\n", e->N, e->sub, e->tk.enu,e->tk.val.s, e->isalias);
+    //dump_spc();
+    //printf("[%s] ", e->tk.val.s);
     if (e->isalias) {
         putchar('&');
     }
@@ -51,17 +76,18 @@ void dump_exp1 (Exp1* e) {
 }
 
 void dump_stmt (Stmt* s) {
-    dump_spc();
     switch (s->sub) {
         case STMT_NONE:
             break;
         case STMT_VAR:
-            printf("var %s:\n", s->Var.id.val.s);
-            _SPC_ += 4;
+            dump_spc();
+            printf("var %s: ", s->Var.id.val.s);
+            dump_type(&s->Var.type);
+            printf(" = ");
             dump_exp1(&s->Var.init);
-            _SPC_ -= 4;
             break;
         case STMT_USER:
+            dump_spc();
             printf("type %s:\n", s->User.id.val.s);
             break;
         case STMT_SEQ:
@@ -69,6 +95,7 @@ void dump_stmt (Stmt* s) {
             dump_stmt(s->Seq.s2);
             break;
         case STMT_IF:
+            dump_spc();
             printf("if:\n");
             _SPC_ += 4;
             dump_stmt(s->If.true);
@@ -80,15 +107,26 @@ void dump_stmt (Stmt* s) {
             _SPC_ -= 4;
             break;
         case STMT_FUNC:
+            dump_spc();
             printf("func %s:\n", s->Func.id.val.s);
+            if (s->Func.body != NULL) {
+                _SPC_ += 4;
+                dump_stmt(s->Func.body);
+                _SPC_ -= 4;
+            }
             break;
         case STMT_BLOCK:
+            dump_spc();
             printf("{\n");
             _SPC_ += 4;
             dump_stmt(s->Block);
             _SPC_ -= 4;
             dump_spc();
             printf("}\n");
+            break;
+        case STMT_RETURN:
+            dump_spc();
+            printf("return %s\n", s->Return.val.s);
             break;
         default:
             printf("ERR: %d\n", s->sub);
