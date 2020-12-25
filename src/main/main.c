@@ -12,7 +12,7 @@ enum {
 
 int main (int argc, char* argv[]) {
     char* inp = NULL;
-    char* out = "ce0.out";
+    char* out = "ce.out";
     int mode  = MODE_EXE;
     char* cc  = "";
 

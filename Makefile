@@ -10,7 +10,7 @@ book: $(SRC) src/main/book.c
 	gcc -g -o $@ $^ $(CFLAGS) $(LIBS)
 
 repl: $(SRC) src/main/repl.c
-	gcc -g -o ce0i $^ $(CFLAGS) $(LIBS)
+	gcc -g -o cei $^ $(CFLAGS) $(LIBS)
 
 main: $(SRC) src/main/main.c
-	gcc -g -o ce0 $^ $(CFLAGS) $(LIBS)
+	gcc -g -o ce $^ $(CFLAGS) $(LIBS)

@@ -1,3 +1,7 @@
+native pre _{
+    #include <SDL2/SDL.h>
+}
+
 type rec Nat {
    Succ: Nat
 }

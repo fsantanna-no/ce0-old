@@ -1,0 +1,2 @@
+call f()
+var z: Nat = add(x,&y)
