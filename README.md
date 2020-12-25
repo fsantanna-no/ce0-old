@@ -68,10 +68,12 @@ digits, and underscores:
 Int    U32    Tree              -- type identifiers
 ```
 
-A tuple index is a numeric value:
+## Integer numbers
+
+Numbers are used in values of [type `Int`](TODO) and in [tuple indexes](TODO):
 
 ```
-1    2    3                     -- tuple indexes
+1    2    3                     -- tuple indexes / Int values
 ```
 
 ## Native token
@@ -119,8 +121,10 @@ A user type identifier starts with an uppercase letter and might be prefixed
 with an ampersand `&` if an alias:
 
 ```
-List    Nat     Tree     &List
+List    Int     Tree     &List
 ```
+
+The type `Int` is a primitive type that holds [integer values](#TODO).
 
 ## Tuple
 

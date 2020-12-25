@@ -782,6 +782,11 @@ void t_all (void) {
         "var x: () = ()\n"
         "call output x\n"
     ));
+    assert(all(
+        "10\n",
+        "var x: Int = 10\n"
+        "call output x\n"
+    ));
     // NATIVE
     assert(all(
         "(ln 4, col 1): expected statement : have \"x\"",
@@ -995,7 +1000,7 @@ void t_all (void) {
     assert(all(
         "1\n",
         "func f : _int -> _int { return arg }\n"
-        "var v: _int = f _1\n"
+        "var v: Int = f 1\n"
         "call output v\n"
     ));
     assert(all(

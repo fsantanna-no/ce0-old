@@ -107,6 +107,10 @@ Type* env_tk_to_type (Env* env, Tk* tk) { // static returns use env=NULL b/c no 
             *tp = (Type){ TYPE_USER, 0, .User=user->User.id };
             return tp;
         }
+        case TX_NUM: {
+            static Type tp = { TYPE_USER, 0, .User={TX_USER,{.s="Int"},0,0} };
+            return &tp;
+        }
         default:
 //printf(">>> %d\n", tk->enu);
             assert(0);
@@ -119,6 +123,7 @@ Type* env_expr_to_type_ (Env* env, Exp1* e) {
         case EXPR_NATIVE:
         case EXPR_VAR:
         case EXPR_NULL:
+        case EXPR_INT:
             return env_tk_to_type(env, &e->tk);
 
         case EXPR_TUPLE: {
@@ -396,6 +401,7 @@ int check_undeclareds (Stmt* s)
         switch (tk->enu) {
             case TK_UNIT:
             case TX_NATIVE:
+            case TX_NUM:
                 return 1;
 
             case TX_NULL:
@@ -420,6 +426,7 @@ int check_undeclareds (Stmt* s)
         switch (e->sub) {
             case EXPR_UNIT:
             case EXPR_NATIVE:
+            case EXPR_INT:
                 return 1;
 
             case EXPR_NULL:
@@ -565,6 +572,7 @@ int check_types (Stmt* s) {
             case EXPR_VAR:
             case EXPR_TUPLE:
             case EXPR_NULL:
+            case EXPR_INT:
                 break;
 
             case EXPR_DISC:
@@ -809,6 +817,7 @@ int check_owner_alias (Stmt* S) {
                         case EXPR_UNIT:
                         case EXPR_NATIVE:
                         case EXPR_NULL:
+                        case EXPR_INT:
                         case EXPR_PRED:
                             return EXEC_CONTINUE;
 

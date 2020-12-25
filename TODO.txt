@@ -1,3 +1,4 @@
+- add Int
 - resolver istx antes da expressao pra simplificar
     - isso vai ferrar com f(&1)
 - SDL?

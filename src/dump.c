@@ -52,6 +52,9 @@ void dump_exp1 (Exp1* e) {
         case EXPR_NULL:
             printf("null\n");
             break;
+        case EXPR_INT:
+            printf("%d\n", e->tk.val.n);
+            break;
         case EXPR_VAR:
             printf("%s\n", e->tk.val.s);
             break;

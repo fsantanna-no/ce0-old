@@ -168,6 +168,11 @@ int parser_expr_ (Stmt** s, Exp1* e)
         *e = (Exp1) { ALL.nn++, EXPR_NULL, 0, .tk=ALL.tk0 };
         *s = NULL;
 
+// EXPR_INT
+    } else if (accept(TX_NUM)) {    // 10
+        *e = (Exp1) { ALL.nn++, EXPR_INT, 0, .tk=ALL.tk0 };
+        *s = NULL;
+
 // EXPR_NATIVE
     } else if (accept(TX_NATIVE)) {
         *s = NULL;
@@ -607,10 +612,19 @@ int parser (Stmt** ret) {
 
     *ret = NULL;
 
-    // clone, output
+    // Int, clone, output
     {
         static Type any   = { TYPE_AUTO, 0 };
         static Type alias = { TYPE_AUTO, 1 };
+
+        Stmt* Int = malloc(sizeof(Stmt));
+        assert(Int != NULL);
+        *Int = (Stmt) {   // Int
+            0, STMT_USER, NULL, {NULL,NULL},
+            .User = { 0, {TX_USER,{.s="Int"},0,ALL.nn++}, 0, NULL }
+        };
+
+        *ret = enseq(*ret, Int);
 
         Stmt* clone = malloc(sizeof(Stmt));
         assert(clone != NULL);

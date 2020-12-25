@@ -297,6 +297,9 @@ char* ftk (Env* env, Tk* tk, int istx) {
         case TX_NULL:
             fprintf(ALL.out, "%s* %s = NULL;\n", tk->val.s, decl);
             break;
+        case TX_NUM:
+            fprintf(ALL.out, "int %s = %d;\n", decl, tk->val.n);
+            break;
         default:
 //printf(">>> %d\n", tk->enu);
             assert(0);
@@ -363,6 +366,7 @@ void fe (Env* env, Exp1* e) {
     switch (e->sub) {
         case EXPR_UNIT:
         case EXPR_NULL:
+        case EXPR_INT:
         case EXPR_NATIVE:
         case EXPR_VAR: {
             char* tk = ftk(env, &e->tk, (e->sub==EXPR_VAR && !e->isalias));
@@ -539,9 +543,13 @@ void code_stmt (Stmt* s) {
             break;
 
         case STMT_USER: {
+            if (!strcmp(s->User.id.val.s,"Int")) {
+                return;
+            }
+
             const char* sup = s->User.id.val.s;
             const char* SUP = strupper(s->User.id.val.s);
-            int isrec    = s->User.isrec;
+            int isrec = s->User.isrec;
 
             // output must receive & from hasalloc, otherwise it would receive ownership
             int hasalloc = env_user_hasalloc(s->env, s);
@@ -839,10 +847,11 @@ void code (Stmt* s) {
         "#include <assert.h>\n"
         "#include <stdio.h>\n"
         "#include <stdlib.h>\n"
+        "typedef int Int;\n"
         "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
         "#define output_Unit(x)  (output_Unit_(x), puts(\"\"))\n"
-        "#define output_int_(x)  printf(\"%d\",x)\n"
-        "#define output_int(x)   (output_int_(x), puts(\"\"))\n"
+        "#define output_Int_(x)  printf(\"%d\",x)\n"
+        "#define output_Int(x)   (output_Int_(x), puts(\"\"))\n"
         "int main (void) {\n"
         "\n"
     );

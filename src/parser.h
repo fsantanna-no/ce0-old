@@ -11,6 +11,7 @@ typedef enum {
     EXPR_UNIT = 1,
     EXPR_NATIVE,
     EXPR_NULL,
+    EXPR_INT,
     EXPR_VAR,
     //
     EXPR_TUPLE,
