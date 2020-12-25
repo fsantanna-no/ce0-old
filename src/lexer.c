@@ -135,15 +135,24 @@ static TK lx_token (TK_val* val) {
 
         case '_': {
             c = fgetc(ALL.inp);
-            char delim = 0;
+            char open  = 0;
+            char close = 0;
+            int  open_close = 0;
             if (c=='(' || c=='{') {
-                delim = (c == '(' ? ')' : '}');
+                open  = c;
+                close = (c == '(' ? ')' : '}');
                 c = fgetc(ALL.inp);
+                open_close++;
             }
             int i = 0;
-            while (delim || isalnum(c) || c=='_') {
-                if (c == delim) {
-                    break;
+            while (close || isalnum(c) || c=='_') {
+                if (c == open) {
+                    open_close++;
+                } else if (c == close) {
+                    open_close--;
+                    if (open_close == 0) {
+                        break;
+                    }
                 }
                 val->s[i++] = c;
                 if (c == '\n') {
@@ -153,7 +162,7 @@ static TK lx_token (TK_val* val) {
                 assert(i < 256);
             }
             val->s[i] = '\0';
-            if (!delim) {
+            if (!close) {
                 ungetc(c, ALL.inp);
             }
             return TX_NATIVE;
