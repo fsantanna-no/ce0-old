@@ -247,10 +247,14 @@ int ftp (Type* tp, void* env_) {
                     fprintf(ALL.out, "    printf(\",\");\n");
                 }
                 Type* sub = &tp->Tuple.vec[i];
-                int hasalloc = env_type_hasalloc(env, sub);
-                fprintf(ALL.out, "    output_%s%s_(%sv%s_%d);\n",
-                    ((/*sub->isalias ||*/ hasalloc) ? "x" : ""),
-                    to_ce(sub), toptr(env,sub,"&",""), toptr(env,tp,"->","."), i+1);
+                if (sub->sub == TYPE_NATIVE) {
+                    fprintf(ALL.out, "    putchar('?');\n");
+                } else {
+                    int hasalloc = env_type_hasalloc(env, sub);
+                    fprintf(ALL.out, "    output_%s%s_(%sv%s_%d);\n",
+                        ((/*sub->isalias ||*/ hasalloc) ? "x" : ""),
+                        to_ce(sub), toptr(env,sub,"&",""), toptr(env,tp,"->","."), i+1);
+                }
             }
             fprintf(ALL.out,
                 "    printf(\")\");\n"
@@ -677,6 +681,9 @@ void code_stmt (Stmt* s) {
                     switch (sub->type.sub) {
                         case TYPE_UNIT:
                             yes = par = 0;
+                            break;
+                        case TYPE_NATIVE:
+                            strcpy(arg,"putchar('?');");
                             break;
                         case TYPE_USER:
                             yes = par = 1;

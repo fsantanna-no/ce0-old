@@ -857,6 +857,39 @@ void t_all (void) {
         "call output zz\n"
     ));
     assert(all(
+        "(ln 6, col 13): undeclared subtype \"Set_\"",
+        "type Set_ {\n"
+        "    Size:     (_int,_int,_int,_int)\n"
+        "    Color_BG: _int\n"
+        "    Color_FG: _int\n"
+        "}\n"
+        "call output(Set_(_1,_2,_3,_4))\n"
+    ));
+    assert(all(
+        "Size (?,?,?,?)\n",
+        "type Set_ {\n"
+        "    Size:     (_int,_int,_int,_int)\n"
+        "    Color_BG: _int\n"
+        "    Color_FG: _int\n"
+        "}\n"
+        "var x: _int = _1\n"
+        "var y: _int = _2\n"
+        "var w: _int = _3\n"
+        "var z: _int = _4\n"
+        "call output(Size (x,y,w,x))\n"
+    ));
+#if TODO-anon-tuples // infer from destiny
+    assert(all(
+        "Zz1\n",
+        "type Set_ {\n"
+        "    Size:     (_int,_int,_int,_int)\n"
+        "    Color_BG: _int\n"
+        "    Color_FG: _int\n"
+        "}\n"
+        "call output(Size(_1,_2,_3,_4))\n"
+    ));
+#endif
+    assert(all(
         "Zz1 ((),())\n",
         "type Zz { Zz1:((),()) }\n"
         "var a : ((),()) = ((),())\n"

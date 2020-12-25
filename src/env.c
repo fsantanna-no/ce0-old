@@ -927,11 +927,11 @@ int check_owner_alias (Stmt* S) {
 int env (Stmt* s) {
     assert(visit_stmt(s,set_seqs));
     assert(visit_stmt(s,set_envs));
-    assert(visit_stmt(s,set_tmps));
 //dump_stmt(s);
     if (!visit_stmt(s,check_undeclareds)) {
         return 0;
     }
+    assert(visit_stmt(s,set_tmps));
     if (!visit_stmt(s,check_types)) {
         return 0;
     }
