@@ -1,4 +1,3 @@
-- _{...}
 - SDL?
     - set / loop / traverse / vector / string
 - docs

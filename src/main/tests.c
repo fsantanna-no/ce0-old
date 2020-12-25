@@ -28,16 +28,16 @@ int all (const char* xp, char* src) {
         return !strcmp(ALL.err, xp);
     }
 
-#ifdef DEBUG
-    dump_stmt(s);
-#endif
-
     if (!env(s)) {
 #ifdef DEBUG
         puts(ALL.err);
 #endif
         return !strcmp(ALL.err, xp);
     }
+#ifdef DEBUG
+    dump_stmt(s);
+#endif
+
     code(s);
     fclose(ALL.out);
 
@@ -832,6 +832,13 @@ void t_all (void) {
         "var y: ((),()) = x.2\n"
         "var z: () = y.2\n"
         "call _output_Unit z\n"
+    ));
+    assert(all(
+        "a",
+        "native _{\n"
+        "   void f (void) { putchar('a'); }\n"
+        "}\n"
+        "call _f ()\n"
     ));
     // OUTPUT
     assert(all(

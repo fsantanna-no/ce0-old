@@ -71,6 +71,7 @@ typedef struct Exp1 {
         struct {        // EXPR_CALL
             Tk func;                    // f
             Tk arg;                     // x
+            int isstmt;
         } Call;
         struct {        // EXPR_INDEX
             Tk val;                     // x

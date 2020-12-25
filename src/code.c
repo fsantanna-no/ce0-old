@@ -417,15 +417,21 @@ void fe (Env* env, Exp1* e) {
 
             char* tp = NULL;
             char tp_[512];
-            if (e->Call.func.enu==TX_NATIVE) {
-                sprintf(tp_, "typeof(%s(%s))", e->Call.func.val.s, arg);
+            if (e->Call.func.enu == TX_NATIVE) {
+                if (e->Call.arg.enu == TK_UNIT) {
+                    sprintf(tp_, "typeof(%s())", e->Call.func.val.s);
+                } else {
+                    sprintf(tp_, "typeof(%s(%s))", e->Call.func.val.s, arg);
+                }
                 tp = tp_;
             } else if (e->Call.func.enu==TX_VAR && !strcmp(e->Call.func.val.s,"clone")) {
                 sprintf(tp_, "typeof(%s_%s(%s))", e->Call.func.val.s, to_ce(env_tk_to_type(env,&e->Call.arg)), arg);
                 tp = tp_;
             }
 
-            fe_tmp_set(env, e, tp);
+            if (!e->Call.isstmt) {
+                fe_tmp_set(env, e, tp);
+            }
 
             if (e->Call.func.enu == TX_VAR) {
                 if (!strcmp(e->Call.func.val.s,"clone")) {
@@ -441,7 +447,11 @@ void fe (Env* env, Exp1* e) {
                 out(e->Call.func.val.s);
             }
 
-            fprintf(ALL.out, "(%s);\n", arg);
+            if (e->Call.func.enu==TX_NATIVE && e->Call.arg.enu==TK_UNIT) {
+                out("();\n");
+            } else {
+                fprintf(ALL.out, "(%s);\n", arg);
+            }
             return;
         }
 
@@ -733,6 +743,9 @@ void code_stmt (Stmt* s) {
             visit_type(&s->Var.type, ftp, s->env);
             fe(s->env, &s->Var.init);
 
+            if (s->Var.init.sub==EXPR_CALL && s->Var.init.Call.isstmt) {
+            } else {
+
             fprintf(ALL.out, "%s %s", to_c(s->env,&s->Var.type), s->Var.id.val.s);
 
             if (env_type_hasalloc(s->env, &s->Var.type)) {
@@ -743,6 +756,8 @@ void code_stmt (Stmt* s) {
             }
 
             fprintf(ALL.out, " = _tmp_%d;\n", s->Var.init.N);
+
+            }
             break;
         }
 

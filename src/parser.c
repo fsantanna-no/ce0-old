@@ -273,7 +273,7 @@ int parser_expr (Stmt** s, Exp1* e) {
         Exp1 arg;
         if (parser_expr_(&s2,&arg)) {
             *s = enseq(*s, s2);
-            Exp1 call = { ALL.nn++, EXPR_CALL, 0, .Call={e->tk,arg.tk} };
+            Exp1 call = { ALL.nn++, EXPR_CALL, 0, .Call={e->tk,arg.tk,0} };
             *s = enseq(*s, stmt_tmp(tk0,&call,e));
 
         } else if (accept('.')) {
@@ -456,6 +456,7 @@ int parser_stmt (Stmt** ret) {
         }
         assert(tmp->sub == STMT_VAR);
         assert(tmp->Var.init.sub == EXPR_CALL);
+        tmp->Var.init.Call.isstmt = 1;
 
         *ret = s;
 
