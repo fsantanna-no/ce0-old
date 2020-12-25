@@ -419,7 +419,7 @@ void fe (Env* env, Exp1* e) {
             char tp_[512];
             if (e->Call.func.enu == TX_NATIVE) {
                 if (e->Call.arg.enu == TK_UNIT) {
-                    sprintf(tp_, "typeof(%s())", e->Call.func.val.s);
+                    sprintf(tp_, "typeof(%s())", e->Call.func.val.s);   // _f() instead of _f(1)
                 } else {
                     sprintf(tp_, "typeof(%s(%s))", e->Call.func.val.s, arg);
                 }
@@ -448,7 +448,7 @@ void fe (Env* env, Exp1* e) {
             }
 
             if (e->Call.func.enu==TX_NATIVE && e->Call.arg.enu==TK_UNIT) {
-                out("();\n");
+                out("();\n");   // _f() instead of _f(1)
             } else {
                 fprintf(ALL.out, "(%s);\n", arg);
             }
@@ -744,19 +744,18 @@ void code_stmt (Stmt* s) {
             fe(s->env, &s->Var.init);
 
             if (s->Var.init.sub==EXPR_CALL && s->Var.init.Call.isstmt) {
+                // no assignment (prevents x:void=_f())
             } else {
+                fprintf(ALL.out, "%s %s", to_c(s->env,&s->Var.type), s->Var.id.val.s);
 
-            fprintf(ALL.out, "%s %s", to_c(s->env,&s->Var.type), s->Var.id.val.s);
+                if (env_type_hasalloc(s->env, &s->Var.type)) {
+                    fprintf (ALL.out,
+                        " __attribute__ ((__cleanup__(%s_free)))",
+                        to_ce(&s->Var.type)
+                    );
+                }
 
-            if (env_type_hasalloc(s->env, &s->Var.type)) {
-                fprintf (ALL.out,
-                    " __attribute__ ((__cleanup__(%s_free)))",
-                    to_ce(&s->Var.type)
-                );
-            }
-
-            fprintf(ALL.out, " = _tmp_%d;\n", s->Var.init.N);
-
+                fprintf(ALL.out, " = _tmp_%d;\n", s->Var.init.N);
             }
             break;
         }
