@@ -1,0 +1,56 @@
+native pre _{
+    #include <assert.h>
+    #include <SDL2/SDL.h>
+}
+
+type Set_ {
+    Size:     (_int,_int,_int,_int)
+    Color_BG: (_char,_char,_char,_char)
+    Color_FG: (_char,_char,_char,_char)
+}
+
+type Draw_ {
+    Pixel: (_int,_int)
+}
+
+type Output_ {
+    Set:    Set_
+    Clear:  ()
+    Draw:   Draw_
+    Update: ()
+}
+
+type Input_ {
+    Delay: _int
+}
+
+func output_: Output_ -> () {
+    native _{
+        output(*(Output*)&arg);
+    }
+    return ()
+}
+
+func input_: Input_ -> () {
+    native _{
+        input(*(Input*)&arg);
+    }
+    return ()
+}
+
+call _init();
+
+-- CLEAR
+var oo: _char = _(0x00)
+var ff: _char = _(0xFF)
+call output_ Set Color_BG (ff,ff,ff,oo)
+call output_ Clear
+call input_  Delay _2000
+
+-- DRAW_PIXEL
+call output_ Set Color_BG (oo,oo,oo,oo)
+call output_ Set Color_FG (ff,ff,ff,oo)
+call output_ Clear
+var ioo: _int = _(0x00)
+call output_ Draw Pixel (ioo,ioo)
+call input_  Delay _2000

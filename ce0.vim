@@ -12,10 +12,9 @@ set cpo&vim
 
 let s:ft = matchstr(&ft, '^\([^.]\)\+')
 
-syn keyword Statement   set call return
-syn keyword Statement   if else
-syn keyword Statement   var type rec func
-syn keyword Statement   arg output
+syn keyword Statement   arg call clone else func if
+syn keyword Statement   native output pre rec return
+syn keyword Statement   type var
 
 syn keyword cTodo contained TODO FIXME XXX
 
