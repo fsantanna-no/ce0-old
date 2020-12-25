@@ -52,6 +52,7 @@ int visit_stmt (Stmt* s, F_Stmt fs) {
         case STMT_RETURN:
         case STMT_USER:
         case STMT_VAR:
+        case STMT_NATIVE:
             return 1;
 
         case STMT_SEQ:

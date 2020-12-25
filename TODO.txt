@@ -1,4 +1,7 @@
-- book.c
+- _{...}
+- SDL?
+    - set / loop / traverse / vector / string
+- docs
 
 - clone tuples (TODO-clone-tuples)
 
@@ -11,7 +14,6 @@
     - quanto estiver confortavel, voltar pro sugar
     - ler sobre lifetimes
 
-- refazer docs
 - STMT_SET
     - var, ---swap--- move semantics
     - assert que destino é NULL atualmente

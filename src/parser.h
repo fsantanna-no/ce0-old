@@ -29,7 +29,8 @@ typedef enum {
     STMT_IF,
     STMT_FUNC,
     STMT_RETURN,
-    STMT_BLOCK
+    STMT_BLOCK,
+    STMT_NATIVE
 } STMT;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -101,6 +102,7 @@ typedef struct Stmt {
     Tk tk;
     union {
         Tk Return;          // STMT_RETURN
+        Tk Native;          // STMT_NATIVE
         struct Stmt* Block; // STMT_BLOCK
         struct {            // STMT_VAR
             Tk   id;                    // ns

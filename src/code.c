@@ -790,6 +790,10 @@ void code_stmt (Stmt* s) {
         case STMT_BLOCK:
             code_stmt(s->Block);
             break;
+
+        case STMT_NATIVE:
+            out(s->Native.val.s);
+            break;
     }
 }
 

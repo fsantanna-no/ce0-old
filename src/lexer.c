@@ -13,6 +13,7 @@ static char* reserved[] = {
     "else",
     "func",
     "if",
+    "native",
     //"output",
     "rec",
     "return",
@@ -35,6 +36,9 @@ const char* lexer_tk2err (TK enu) {
     switch (enu) {
         case TK_EOF:
             sprintf(str, "end of file");
+            break;
+        case TX_NATIVE:
+            sprintf(str, "`_{...}´");
             break;
         case TX_VAR:
             sprintf(str, "variable identifier");

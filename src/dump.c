@@ -129,6 +129,10 @@ void dump_stmt (Stmt* s) {
             dump_spc();
             printf("return %s\n", s->Return.val.s);
             break;
+        case STMT_NATIVE:
+            dump_spc();
+            printf("_{ ... }\n");
+            break;
         default:
             printf("ERR: %d\n", s->sub);
             assert(0);

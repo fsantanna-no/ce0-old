@@ -26,6 +26,7 @@ The following keywords are reserved:
     else        -- conditional statement
     func        -- function declaration
     if          -- conditional statement
+    native      -- native statement
     output      -- output function
     rec         -- type, function recursive declaration
     return      -- function return
@@ -359,6 +360,16 @@ A block delimits, between curly braces `{` and `}`, the scope and visibility of
 ... x ...               -- `x` is not visible here
 ```
 
+## Native
+
+A native statement executes a [native token](TODO) in the host language:
+
+```
+native _{
+    printf("Hello World!");
+}
+```
+
 # 5. Syntax
 
 ```
@@ -376,6 +387,7 @@ Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: ()
       |  `return´ Expr                  -- function return          return ()
       |  { Stmt [`;´] }                 -- sequence                 call f() ; call g()
       |  `{´ Stmt `}´                   -- block                    { call f() ; call g() }
+      |  `native´ `{´ ... `}´           -- native                   native { printf("hi"); }
 
 Expr ::= `(´ `)´                        -- unit value               ()
       |  NATIVE                         -- native expression        _printf
@@ -414,6 +426,7 @@ Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: ()
       |  `return´ Exp0                  -- function return          return ()
       |  { Stmt [`;´] }                 -- sequence                 call f() ; call g()
       |  `{´ Stmt `}´                   -- block                    { call f() ; call g() }
+      |  `native´ NATIVE                -- native                   native _{ printf("hi"); }
 
 Exp0 ::= `(´ `)´                        -- unit value               ()
       |  NATIVE                         -- native expression        _printf

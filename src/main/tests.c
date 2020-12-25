@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-//#define DEBUG
+#define DEBUG
 //#define VALGRIND
 
 #include "../all.h"
@@ -783,6 +783,18 @@ void t_all (void) {
         "call output x\n"
     ));
     // NATIVE
+    assert(all(
+        "(ln 1, col 8): expected `_{...}´ : have `{´",
+        "native {\n"
+        "   putchar('A');\n"
+        "}\n"
+    ));
+    assert(all(
+        "A",
+        "native _{\n"
+        "   putchar('A');\n"
+        "}\n"
+    ));
     assert(all(
         "A",
         "var x: _char = _65\n"

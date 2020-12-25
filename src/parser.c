@@ -558,6 +558,17 @@ int parser_stmt (Stmt** ret) {
     } else if (check('{')) {
         return parser_block(ret);
 
+    // STMT_NATIVE
+    } else if (accept(TK_NATIVE)) {
+        Tk tk = ALL.tk0;
+        if (!accept_err(TX_NATIVE)) {
+            return 0;
+        }
+        Stmt* nat = malloc(sizeof(Stmt));
+        assert(nat != NULL);
+        *nat = (Stmt) { ALL.nn++, STMT_NATIVE, NULL, {NULL,NULL}, tk, .Native=ALL.tk0 };
+        *ret = nat;
+
     } else {
         return err_expected("statement");
     }

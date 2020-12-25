@@ -330,6 +330,7 @@ int set_envs (Stmt* s) {
         case STMT_RETURN:
         case STMT_SEQ:
         case STMT_IF:
+        case STMT_NATIVE:
             break;
 
         case STMT_VAR: {
@@ -485,6 +486,7 @@ int check_undeclareds (Stmt* s)
         case STMT_NONE:
         case STMT_SEQ:
         case STMT_BLOCK:
+        case STMT_NATIVE:
             return 1;
 
         case STMT_VAR:
@@ -615,6 +617,7 @@ int check_types (Stmt* s) {
         case STMT_FUNC:
         case STMT_SEQ:
         case STMT_BLOCK:
+        case STMT_NATIVE:
             return 1;
 
         case STMT_VAR:
