@@ -1,4 +1,6 @@
-- add Int
+- funcoes, tipos CE
+- ‘output_xEvent__’; did you mean ‘output_Event__
+    - se o evento !hasalloc, entao gero sem o X e qd encontrar um &v, chamo *v
 - resolver istx antes da expressao pra simplificar
     - isso vai ferrar com f(&1)
 - SDL?

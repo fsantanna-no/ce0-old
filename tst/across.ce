@@ -1,0 +1,102 @@
+type Bool {
+    False: ()
+    True:  ()
+}
+
+type Set_ {
+    Color_BG: (Int,Int,Int,Int)
+    Color_FG: (Int,Int,Int,Int)
+    Size:     (Int,Int,Int,Int)
+    Title:    _(char*)
+}
+
+type Draw_ {
+    Pixel: (Int,Int)
+}
+
+type Output_ {
+    Clear:  ()
+    Draw:   Draw_
+    Set:    Set_
+    Update: ()
+}
+
+type Event_ {
+    KeyDown: Int
+}
+
+type Input_ {
+    Delay: Int
+    Event: (&Event_,Int)
+}
+
+func output_: Output_ -> () {
+    native _{
+        output(*(Output*)&arg);
+    }
+    return ()
+}
+
+func input_: Input_ -> Bool {
+    native _{
+        SDL_Event e;
+        Input inp = {EVENT,.Event={0,arg._Event._2,&e}};
+    }
+    native _{
+        // inp.type = ...
+        switch (arg._Event._1->sub) {
+            case KeyDown:
+                inp.Event.type = SDL_KEYDOWN;
+                break;
+            default:
+                assert(0);
+        }
+    }
+    native _{
+        int ret = input(inp);
+        if (!ret) {
+            return (Bool){False};
+        }
+    }
+    native _{
+        switch (arg._Event._1->sub) {
+            case KeyDown:
+                arg._Event._1->_KeyDown = 10;
+                break;
+            default:
+                assert(0);
+        }
+        return (Bool){True};
+    }
+}
+
+call _init()
+
+-------------------------------------------------------------------------------
+
+func check: Bool -> () {
+    if arg {
+    } else {
+        call _assert 0
+    }
+}
+
+call output_ Set Title _("pico-Ce: Across")
+
+var e: Event_ = KeyDown 2000
+var ok: Bool = input_ Event (&e,0)
+call check ok
+
+call output ()
+
+--emit SOUND_PLAY("res/click1.wav");  // plays a starting sound
+--
+--var integer i;
+--loop i in [-25 -> 25] do            // executes 51 times, varying i from -25 to 25
+--    emit GRAPHICS_DRAW_PIXEL(i,i);  //   draws a pixel at (i,i)
+--    await 100ms;                    //   waits for 100 milliseconds
+--end
+--
+--emit SOUND_PLAY("res/click1.wav");  // plays a terminating sound
+--await KEY_PRESS;                    // waits for a key press (any key)
+

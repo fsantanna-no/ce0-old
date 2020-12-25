@@ -17,7 +17,7 @@ type Output_ {
 }
 
 type Input_ {
-    Delay: _int
+    Delay: Int
 }
 
 func output_: Output_ -> () {
