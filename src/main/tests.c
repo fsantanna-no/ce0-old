@@ -784,6 +784,13 @@ void t_all (void) {
     ));
     // NATIVE
     assert(all(
+        "(ln 4, col 1): expected statement : have \"x\"",
+        "native _{\n"
+        "   putchar('A');\n"
+        "}\n"
+        "x\n"
+    ));
+    assert(all(
         "(ln 1, col 8): expected `_{...}´ : have `{´",
         "native {\n"
         "   putchar('A');\n"

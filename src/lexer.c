@@ -146,6 +146,9 @@ static TK lx_token (TK_val* val) {
                     break;
                 }
                 val->s[i++] = c;
+                if (c == '\n') {
+                    ALL.lin++;
+                }
                 c = fgetc(ALL.inp);
                 assert(i < 256);
             }
