@@ -561,12 +561,13 @@ int parser_stmt (Stmt** ret) {
     // STMT_NATIVE
     } else if (accept(TK_NATIVE)) {
         Tk tk = ALL.tk0;
+        int ispre = accept(TK_PRE);
         if (!accept_err(TX_NATIVE)) {
             return 0;
         }
         Stmt* nat = malloc(sizeof(Stmt));
         assert(nat != NULL);
-        *nat = (Stmt) { ALL.nn++, STMT_NATIVE, NULL, {NULL,NULL}, tk, .Native=ALL.tk0 };
+        *nat = (Stmt) { ALL.nn++, STMT_NATIVE, NULL, {NULL,NULL}, tk, .Native={ispre,ALL.tk0} };
         *ret = nat;
 
     } else {

@@ -22,6 +22,7 @@ typedef enum {
     TK_IF,
     TK_NATIVE,
     //TK_OUTPUT,
+    TK_PRE,
     TK_REC,
     TK_RETURN,
     TK_TYPE,

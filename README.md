@@ -28,6 +28,7 @@ The following keywords are reserved:
     if          -- conditional statement
     native      -- native statement
     output      -- output function
+    pre         -- native pre declaration
     rec         -- type, function recursive declaration
     return      -- function return
     type        -- new type declaration
@@ -367,6 +368,15 @@ A native statement executes a [native token](TODO) in the host language:
 ```
 native _{
     printf("Hello World!");
+}
+```
+
+The modifier `pre` makes the native block to be included before the main
+program:
+
+```
+native pre _{
+    #include <math.h>
 }
 ```
 

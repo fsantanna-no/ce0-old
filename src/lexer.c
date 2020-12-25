@@ -15,6 +15,7 @@ static char* reserved[] = {
     "if",
     "native",
     //"output",
+    "pre",
     "rec",
     "return",
     "type",

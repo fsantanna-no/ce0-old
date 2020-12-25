@@ -102,7 +102,6 @@ typedef struct Stmt {
     Tk tk;
     union {
         Tk Return;          // STMT_RETURN
-        Tk Native;          // STMT_NATIVE
         struct Stmt* Block; // STMT_BLOCK
         struct {            // STMT_VAR
             Tk   id;                    // ns
@@ -129,6 +128,10 @@ typedef struct Stmt {
             Type type;                  // : () -> ()
             struct Stmt* body;          // { ... }
         } Func;
+        struct {            // STMT_NATIVE
+            int ispre;
+            Tk  tk;
+        } Native;
     };
 } Stmt;
 

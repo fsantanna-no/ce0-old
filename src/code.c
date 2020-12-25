@@ -792,7 +792,9 @@ void code_stmt (Stmt* s) {
             break;
 
         case STMT_NATIVE:
-            out(s->Native.val.s);
+            if (!s->Native.ispre) {
+                out(s->Native.tk.val.s);
+            }
             break;
     }
 }
@@ -803,7 +805,15 @@ void code_exp1 (Exp1* e) {
     fe(NULL, e);
 }
 
+int native_pre (Stmt* s) {
+    if (s->sub==STMT_NATIVE && s->Native.ispre) {
+        out(s->Native.tk.val.s);
+    }
+    return VISIT_CONTINUE;
+}
+
 void code (Stmt* s) {
+    assert(visit_stmt(s,native_pre));
     out (
         "#include <assert.h>\n"
         "#include <stdio.h>\n"
