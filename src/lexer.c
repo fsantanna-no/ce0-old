@@ -147,6 +147,7 @@ static TK lx_token (TK_val* val) {
                 }
                 val->s[i++] = c;
                 c = fgetc(ALL.inp);
+                assert(i < 256);
             }
             val->s[i] = '\0';
             if (!delim) {
@@ -167,6 +168,7 @@ static TK lx_token (TK_val* val) {
                 while (isalnum(c)) {
                     if (isdigit(c)) {
                         val->s[i++] = c;
+                        assert(i < 256);
                     } else {
                         val->s[i] = '\0';
                         return TK_ERR;
@@ -190,6 +192,7 @@ static TK lx_token (TK_val* val) {
             int i = 0;
             while (isalnum(c) || c=='_') {
                 val->s[i++] = c;
+                assert(i < 256);
                 c = fgetc(ALL.inp);
             }
             val->s[i] = '\0';

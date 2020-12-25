@@ -13,13 +13,16 @@ enum {
 int main (int argc, char* argv[]) {
     char* inp = NULL;
     char* out = "ce0.out";
-    int mode = MODE_EXE;
+    int mode  = MODE_EXE;
+    char* cc  = "";
 
     for (int i=1; i<argc; i++) {
         if (!strcmp(argv[i], "-o")) {
             out = argv[++i];
         } else if (!strcmp(argv[i], "-c")) {
             mode = MODE_CODE;
+        } else if (!strcmp(argv[i], "-cc")) {
+            cc = argv[++i];
         } else {
             inp = argv[i];
         }
@@ -33,7 +36,8 @@ int main (int argc, char* argv[]) {
             fout = fopen(out, "w");
         } else {
             char gcc[256];
-            sprintf(gcc, GCC " -o %s -xc -", out);
+            sprintf(gcc, GCC " -o %s -xc - %s", out, cc);
+            //puts(gcc);
             fout = popen(gcc, "w");
         }
     }

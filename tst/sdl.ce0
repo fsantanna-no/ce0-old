@@ -1,0 +1,27 @@
+native pre _{
+    #include <assert.h>
+    #include <SDL2/SDL.h>
+}
+
+native _{
+    assert(SDL_Init(SDL_INIT_VIDEO) == 0);
+
+    SDL_Window* win = SDL_CreateWindow("Hello Ce!",
+        SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 600, 400, SDL_WINDOW_SHOWN
+    );
+    assert(win != NULL);
+}
+
+native _{
+    SDL_Surface* sfc = SDL_GetWindowSurface(win);
+    assert(sfc != NULL);
+
+    SDL_FillRect(sfc, NULL, SDL_MapRGB(sfc->format, 0xFF,0xFF,0xFF));
+    SDL_UpdateWindowSurface(win);
+    SDL_Delay(2000);
+}
+
+native _{
+    SDL_DestroyWindow(win);
+    SDL_Quit();
+}
