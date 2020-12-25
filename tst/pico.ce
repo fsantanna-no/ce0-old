@@ -1,12 +1,8 @@
-native pre _{
-    #include <assert.h>
-    #include <SDL2/SDL.h>
-}
-
 type Set_ {
-    Size:     (Int,Int,Int,Int)
     Color_BG: (Int,Int,Int,Int)
     Color_FG: (Int,Int,Int,Int)
+    Size:     (Int,Int,Int,Int)
+    Title:    _(char*)
 }
 
 type Draw_ {
@@ -14,9 +10,9 @@ type Draw_ {
 }
 
 type Output_ {
-    Set:    Set_
     Clear:  ()
     Draw:   Draw_
+    Set:    Set_
     Update: ()
 }
 
@@ -39,6 +35,11 @@ func input_: Input_ -> () {
 }
 
 call _init();
+
+-------------------------------------------------------------------------------
+
+-- TITLE
+call output_ Set Title _("pico-Ce")
 
 -- CLEAR
 call output_ Set Color_BG (255,255,255,0)
