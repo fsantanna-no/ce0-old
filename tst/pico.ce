@@ -4,13 +4,13 @@ native pre _{
 }
 
 type Set_ {
-    Size:     (_int,_int,_int,_int)
-    Color_BG: (_char,_char,_char,_char)
-    Color_FG: (_char,_char,_char,_char)
+    Size:     (Int,Int,Int,Int)
+    Color_BG: (Int,Int,Int,Int)
+    Color_FG: (Int,Int,Int,Int)
 }
 
 type Draw_ {
-    Pixel: (_int,_int)
+    Pixel: (Int,Int)
 }
 
 type Output_ {
@@ -41,16 +41,13 @@ func input_: Input_ -> () {
 call _init();
 
 -- CLEAR
-var oo: _char = _(0x00)
-var ff: _char = _(0xFF)
-call output_ Set Color_BG (ff,ff,ff,oo)
+call output_ Set Color_BG (255,255,255,0)
 call output_ Clear
 call input_  Delay _2000
 
 -- DRAW_PIXEL
-call output_ Set Color_BG (oo,oo,oo,oo)
-call output_ Set Color_FG (ff,ff,ff,oo)
+call output_ Set Color_BG (0,0,0,0)
+call output_ Set Color_FG (255,255,255,0)
 call output_ Clear
-var ioo: _int = _(0x00)
-call output_ Draw Pixel (ioo,ioo)
-call input_  Delay _2000
+call output_ Draw Pixel (0,0)
+call input_  Delay 2000
