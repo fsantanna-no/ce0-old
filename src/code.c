@@ -491,33 +491,29 @@ void fe (Env* env, Exp1* e) {
         }
 
         case EXPR_DISC: {
-            Stmt* s = env_tk_to_type_to_user_stmt(env, &e->Disc.val);
-            assert(s != NULL);
-
+            int isptr = env_tk_isptr(env, &e->Disc.val);
             char* val = ftk(env, &e->Disc.val, 0);
 
             fprintf (ALL.out,
                 "assert(%s%ssub == %s && \"discriminator failed\");\n",
-                val, (s->User.isrec ? "->" : "."), e->Disc.subtype.val.s
+                val, (isptr ? "->" : "."), e->Disc.subtype.val.s
             );
 
             fe_tmp_set(env, e, NULL);
-            fprintf(ALL.out, "%s%s%s_%s;\n", (isaddr(env,e) ? "&" : ""), val, (s->User.isrec ? "->" : "."), e->Disc.subtype.val.s);
+            fprintf(ALL.out, "%s%s%s_%s;\n", (isaddr(env,e) ? "&" : ""), val, (isptr ? "->" : "."), e->Disc.subtype.val.s);
 
             // transfer ownership
             Type* tp = env_expr_to_type(env,e);
             assert(tp != NULL);
             if (env_type_hasalloc(env,tp)) { // also checks isalias
                 // this prevents "double free"
-                fprintf(ALL.out, "%s%s_%s = NULL;\n", e->Disc.val.val.s, (s->User.isrec ? "->" : "."), e->Disc.subtype.val.s);
+                fprintf(ALL.out, "%s%s_%s = NULL;\n", e->Disc.val.val.s, (isptr ? "->" : "."), e->Disc.subtype.val.s);
             }
             return;
         }
 
         case EXPR_PRED: {
-            Stmt* s = env_tk_to_type_to_user_stmt(env, &e->Pred.val);
-            assert(s != NULL);
-
+            int isptr = env_tk_isptr(env, &e->Disc.val);
             char* val = ftk(env, &e->Disc.val, 0);
 
             fe_tmp_set(env, e, NULL);
@@ -525,7 +521,7 @@ void fe (Env* env, Exp1* e) {
             int isnil = (e->Pred.subtype.enu == TX_NULL);
             fprintf(ALL.out, "((%s%s == %s) ? (Bool){True,{._True=1}} : (Bool){False,{._False=1}});\n",
                 val,
-                (isnil ? "" : (s->User.isrec ? "->sub" : ".sub")),
+                (isnil ? "" : (isptr ? "->sub" : ".sub")),
                 (isnil ? "NULL" : e->Pred.subtype.val.s)
             );
             return;

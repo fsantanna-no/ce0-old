@@ -991,6 +991,28 @@ void t_all (void) {
         "(ln 1, col 16): undeclared subtype \"Event\"",
         "call check arg.Event?\n"
     ));
+    assert(all(
+        "()\n",
+        "type Bool { False: () ; True: () }\n"
+        "var b : Bool = True()\n"
+        "var c : &Bool = &b\n"
+        "if c.False? {} else { call show() }\n"
+    ));
+    assert(all(
+        "()\n",
+        "type Bool { False: () ; True: () }\n"
+        "var b : Bool = True()\n"
+        "var c : &Bool = &b\n"
+        "var d : () = c.True!\n"
+        "call show d\n"
+    ));
+    assert(all(
+        "()\n",
+        "type Bool { False: () ; True: () }\n"
+        "var b : Bool = True()\n"
+        "var c : &Bool = &b\n"
+        "call show c.True!\n"
+    ));
     // DISCRIMINATOR
     assert(all(
         "()\n",

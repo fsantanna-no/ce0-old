@@ -200,7 +200,12 @@ Type* env_expr_to_type_ (Env* env, Exp1* e) {
                     assert(!tp->isalias && "bug found : `&´ inside subtype");
                     if (!val->isalias) {
                         return tp;
-                    } else {
+                    } else if (!env_type_hasalloc(env,tp)) {
+                        // only keep & if sub hasalloc:
+                        //  &x -> x.True
+                        return tp;
+                    } else if (env_type_hasalloc(env,tp)) {
+                        //  &x -> &x.Cons
                         Type* ret = malloc(sizeof(Type));
                         assert(ret != NULL);
                         *ret = *tp;
@@ -296,6 +301,19 @@ int env_type_isrec (Env* env, Type* tp) {
         }
     }
     assert(0);
+}
+
+int env_tk_isptr (Env* env, Tk* tk) {
+    Type* tp = env_tk_to_type(env, tk);
+    if (tp->isalias) {
+        return 1;
+    }
+
+    Stmt* s = env_tk_to_type_to_user_stmt(env, tk);
+    if (s == NULL) {
+        return 0;
+    }
+    return s->User.isrec;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
