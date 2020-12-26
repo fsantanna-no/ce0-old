@@ -1,3 +1,5 @@
+- type Set_ {
+    Color: Color_
 - return () in unit funcs
 - cpp
 - funcoes, tipos CE

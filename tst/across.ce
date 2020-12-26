@@ -3,11 +3,32 @@ type Bool {
     True:  ()
 }
 
+func not: Bool -> Bool {
+    if arg {
+        return False
+    } else {
+        return True
+    }
+}
+
+func check: Bool -> () {
+    if not arg {
+        call _assert 0
+    }
+    return ()
+}
+
+-------------------------------------------------------------------------------
+
+type Color_ {
+    Color_Clear: (Int,Int,Int,Int)
+    Color_Draw:  (Int,Int,Int,Int)
+}
+
 type Set_ {
-    Color_BG: (Int,Int,Int,Int)
-    Color_FG: (Int,Int,Int,Int)
-    Size:     (Int,Int,Int,Int)
-    Title:    _(char*)
+    Color: Color_
+    Size:  (Int,Int,Int,Int)
+    Title: _(char*)
 }
 
 type Draw_ {
@@ -38,12 +59,19 @@ func output: Output -> () {
 }
 
 func input: Input -> Bool {
-    native _{
+    native _(
+        if (arg.sub == Delay) {
+            int ret = pico_input(*(Pico_Input*)&arg);
+            return (ret ? (Bool){True} : (Bool){False});
+        }
+    )
+    native _(
+        // inp.Event.type = ...
+        assert(arg.sub == Event);
         SDL_Event e;
         Pico_Input inp = {PICO_EVENT,.Event={0,arg._Event._2,&e}};
-    }
-    native _{
-        // inp.type = ...
+    )
+    native _(
         switch (arg._Event._1->sub) {
             case KeyDown:
                 inp.Event.type = SDL_KEYDOWN;
@@ -51,14 +79,14 @@ func input: Input -> Bool {
             default:
                 assert(0);
         }
-    }
-    native _{
+    )
+    native _(
         int ret = pico_input(inp);
         if (!ret) {
             return (Bool){False};
         }
-    }
-    native _{
+    )
+    native _(
         switch (arg._Event._1->sub) {
             case KeyDown:
                 arg._Event._1->_KeyDown = 10;
@@ -67,27 +95,13 @@ func input: Input -> Bool {
                 assert(0);
         }
         return (Bool){True};
-    }
+    )
 }
 
 call _pico_init()
 
 -------------------------------------------------------------------------------
-
-func not: Bool -> Bool {
-    if arg {
-        return False
-    } else {
-        return True
-    }
-}
-
-func check: Bool -> () {
-    if not arg {
-        call _assert 0
-    }
-    return ()
-}
+-------------------------------------------------------------------------------
 
 call output Set Title _("pico-Ce: Across")
 
@@ -107,4 +121,3 @@ call show ()
 --
 --emit SOUND_PLAY("res/click1.wav");  // plays a terminating sound
 --await KEY_PRESS;                    // waits for a key press (any key)
-
