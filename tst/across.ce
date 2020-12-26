@@ -14,7 +14,7 @@ type Draw_ {
     Pixel: (Int,Int)
 }
 
-type Output_ {
+type Output {
     Clear:  ()
     Draw:   Draw_
     Set:    Set_
@@ -25,22 +25,22 @@ type Event_ {
     KeyDown: Int
 }
 
-type Input_ {
+type Input {
     Delay: Int
     Event: (&Event_,Int)
 }
 
-func output_: Output_ -> () {
+func output_: Output -> () {
     native _{
-        output(*(Output*)&arg);
+        pico_output(*(Pico_Output*)&arg);
     }
     return ()
 }
 
-func input_: Input_ -> Bool {
+func input: Input -> Bool {
     native _{
         SDL_Event e;
-        Input inp = {EVENT,.Event={0,arg._Event._2,&e}};
+        Pico_Input inp = {PICO_EVENT,.Event={0,arg._Event._2,&e}};
     }
     native _{
         // inp.type = ...
@@ -53,7 +53,7 @@ func input_: Input_ -> Bool {
         }
     }
     native _{
-        int ret = input(inp);
+        int ret = pico_input(inp);
         if (!ret) {
             return (Bool){False};
         }
@@ -70,7 +70,7 @@ func input_: Input_ -> Bool {
     }
 }
 
-call _init()
+call _pico_init()
 
 -------------------------------------------------------------------------------
 
@@ -83,8 +83,8 @@ func check: Bool -> () {
 
 call output_ Set Title _("pico-Ce: Across")
 
-var e: Event_ = KeyDown 2000
-var ok: Bool = input_ Event (&e,0)
+var e: Event_ = KeyDown 0
+var ok: Bool = input Event (&e,2000)
 call check ok
 
 call output ()

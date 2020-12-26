@@ -22,7 +22,7 @@ type Input_ {
 
 func output_: Output_ -> () {
     native _{
-        output(*(Output*)&arg);
+        pico_output(*(Output*)&arg);
     }
     return ()
 }
