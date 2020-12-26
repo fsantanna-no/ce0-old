@@ -162,8 +162,27 @@ Type* env_expr_to_type_ (Env* env, Exp1* e) {
                 }
             } else {
                 assert(e->Call.func.enu == TX_NATIVE);
-                static Type nat = { TYPE_NATIVE, 0 };
-                return &nat;   // TODO: should be typeof(f(arg))
+                Type* tp = malloc(sizeof(Type));
+                assert(tp != NULL);
+                *tp = (Type) { TYPE_NATIVE, 0, .Native={TX_NATIVE,{},0,0} };
+                switch (e->Call.arg.enu) {
+                    case TK_UNIT:
+                        sprintf(tp->Native.val.s, "%s()", e->Call.func.val.s);
+                        break;
+                    case TX_VAR:
+                    case TX_NATIVE:
+                        sprintf(tp->Native.val.s, "%s(%s)", e->Call.func.val.s, e->Call.arg.val.s);
+                        break;
+                    case TX_NULL:
+                        sprintf(tp->Native.val.s, "%s(NULL)", e->Call.func.val.s);
+                        break;
+                    case TX_NUM:
+                        sprintf(tp->Native.val.s, "%s(0)", e->Call.func.val.s);
+                        break;
+                    default:
+                        assert(0);
+                }
+                return tp;   // TODO: should be typeof(f(arg))
             }
         }
 
