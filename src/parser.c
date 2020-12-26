@@ -441,6 +441,30 @@ int parser_stmt (Stmt** ret) {
         *user = (Stmt) { ALL.nn++, STMT_USER, NULL, {NULL,NULL}, tk, .User={isrec,id,n,vec} };
         *ret = user;
 
+    // STMT_SET
+    } else if (accept(TK_SET)) {
+        Tk tk = ALL.tk0;
+
+        Stmt* s;
+        Exp1 dst;
+        if (!parser_expr(&s,&dst)) {
+            return 0;
+        }
+
+        if (!accept_err('=')) {
+            return 0;
+        }
+
+        Exp1 src;
+        if (!parser_expr(&s,&src)) {
+            return 0;
+        }
+
+        Stmt* set = malloc(sizeof(Stmt));
+        assert(set != NULL);
+        *set = (Stmt) { ALL.nn++, STMT_SET, NULL, {NULL,NULL}, tk, .Set={dst,src.tk} };
+        *ret = set;
+
     // STMT_CALL
     } else if (accept(TK_CALL)) {
         Stmt* s;

@@ -1578,6 +1578,16 @@ void t_all (void) {
         "}\n"
     ));
     assert(all(
+        "Item ()",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "var a: List = Item Item $List\n"
+        "var b: List = a.Item!.Item!\n"
+        "var c: List = a.Item!\n"
+        "call show &c\n"
+    ));
+    assert(all(
         "Succ ($)\n",
         "type Bool {\n"
         "    False: ()\n"

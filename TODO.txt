@@ -1,3 +1,6 @@
+- a = lst.Next!.Next!
+- set
+    - testar var, disc, tx owner
 - pico-open/close
 - type Set_ {
     Color: Color_

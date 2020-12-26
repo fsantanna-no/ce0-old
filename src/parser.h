@@ -26,6 +26,7 @@ typedef enum {
     STMT_NONE = 0,
     STMT_VAR,
     STMT_USER,
+    STMT_SET,
     STMT_SEQ,
     STMT_IF,
     STMT_FUNC,
@@ -116,6 +117,10 @@ typedef struct Stmt {
             int  size;                  // 2 subs
             Sub* vec;                   // [True,False]
         } User;
+        struct {           // STMT_SET
+            Exp1 dst;
+            Tk   src;
+        } Set;
         struct {           // STMT_SEQ
             struct Stmt* s1;
             struct Stmt* s2;

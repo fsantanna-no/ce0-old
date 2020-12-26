@@ -31,6 +31,7 @@ The following keywords are reserved:
     pre         -- native pre declaration
     rec         -- type, function recursive declaration
     return      -- function return
+    set         -- assignment statement
     type        -- new type declaration
     var         -- variable declaration
 ```
@@ -264,6 +265,8 @@ b = x.Professor?    -- yields True
 
 ### Alias
 
+`TODO: any value`
+
 An alias is a [reference](TODO) to a variable of a [user type](TODO).
 It prefixes the variable with an ampersand `&`:
 
@@ -305,6 +308,18 @@ var x : () = ()                  -- `x` of type `()` holds `()`
 var y : Bool = True              -- `y` of type `Bool` holds `True`
 var z : (Bool,()) = (False,())   -- `z` of given tuple type holds the given tuple
 var n : List = Cons(Cons($List)) -- `n` of recursive type `List` holds result of constructor
+```
+
+## Assignment
+
+An assignment changes the value of a variable, native identifier, tuple index,
+or discriminator:
+
+```
+set x = ()
+set _n = 1
+set tup.1 = n
+set x.Student! = ()
 ```
 
 ## Call
@@ -392,6 +407,7 @@ Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: ()
       |  `type´ [`rec´] USER `{`        -- user type declaration    type rec List {
             { USER `:´ Type [`;´] }     --    subtypes                 Cons: List
          `}´                                                        }
+      |  `set´ Expr `=´ Expr            -- assignment               set x = 1
       |  `call´ Expr                    -- call                     call f()
       |  `if´ Expr `{´ Stmt `}´         -- conditional              if x { call f() } else { call g() }
          [`else´ `{´ Stmt `}´]
@@ -431,6 +447,7 @@ Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: ()
       |  `type´ [`rec´] USER `{`        -- user type declaration    type rec List {
             { USER `:´ Type [`;´] }     --    subtypes                 Cons: List
          `}´                                                        }
+      |  `set´ Exp1 `=´ Exp0            -- call                     set x = 1
       |  `call´ VAR `(´ Exp0 `)´        -- call                     call f()
       |  `if´ Exp0 `{´ Stmt `}´         -- conditional              if x { call f() } else { call g() }
          [`else´ `{´ Stmt `}´]

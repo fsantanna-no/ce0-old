@@ -24,6 +24,7 @@ typedef enum {
     TK_PRE,
     TK_REC,
     TK_RETURN,
+    TK_SET,
     //TK_SHOW,
     TK_TYPE,
     TK_VAR

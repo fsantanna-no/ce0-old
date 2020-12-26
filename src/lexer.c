@@ -19,6 +19,7 @@ static char* reserved[] = {
     "rec",
     "return",
     //"show",
+    "set",
     "type",
     "var"
 };
