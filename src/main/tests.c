@@ -1577,6 +1577,7 @@ void t_all (void) {
         "    return b             -- error: cannot return alias to deallocated value\n"
         "}\n"
     ));
+#if TODO-xxx
     assert(all(
         "Item ()",
         "type rec List {\n"
@@ -1587,6 +1588,7 @@ void t_all (void) {
         "var c: List = a.Item!\n"
         "call show &c\n"
     ));
+#endif
     assert(all(
         "Succ ($)\n",
         "type Bool {\n"

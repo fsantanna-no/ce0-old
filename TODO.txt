@@ -1,4 +1,5 @@
 - a = lst.Next!.Next!
+    - TODO-xxx
 - set
     - testar var, disc, tx owner
 - pico-open/close
