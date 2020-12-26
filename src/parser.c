@@ -612,7 +612,7 @@ int parser (Stmt** ret) {
 
     *ret = NULL;
 
-    // Int, clone, output
+    // Int, clone, show
     {
         static Type any   = { TYPE_AUTO, 0 };
         static Type alias = { TYPE_AUTO, 1 };
@@ -639,18 +639,18 @@ int parser (Stmt** ret) {
 
         *ret = enseq(*ret, clone);
 
-        Stmt* output = malloc(sizeof(Stmt));
-        assert(output != NULL);
-        *output = (Stmt) {   // output ()
+        Stmt* show = malloc(sizeof(Stmt));
+        assert(show != NULL);
+        *show = (Stmt) {   // show ()
             0, STMT_FUNC, NULL, {NULL,NULL},
             .Func = {
-                { TX_VAR,{.s="output"},0,ALL.nn++ },
+                { TX_VAR,{.s="show"},0,ALL.nn++ },
                 { TYPE_FUNC,.Func={&alias,&Type_Unit} },
                 NULL    // TODO: STMT_NONE
             }
         };
 
-        *ret = enseq(*ret, output);
+        *ret = enseq(*ret, show);
     }
 
     Stmt* tmp;

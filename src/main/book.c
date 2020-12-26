@@ -247,7 +247,7 @@ void chap_pre (void) {
         "var a: Nat = Succ $Nat\n"
         "var n: (Nat,Nat) = ($Nat, a)\n"
         "var n_: &(Nat,Nat) = &n\n"
-        "call output n_\n"
+        "call show n_\n"
     );
     assert(all("($,Succ ($))\n", INP));
 
@@ -260,7 +260,7 @@ void chap_pre (void) {
         "var y_: &Nat = &y\n"
         "var a: (&Nat,&Nat) = (x_,y_)\n"
         "var l: Bool = lt a\n"
-        "call output l\n"
+        "call show l\n"
     );
     assert(all("True\n", INP));
 
@@ -273,7 +273,7 @@ void chap_pre (void) {
         "var a: (Nat,&Nat) = (x,y_)\n"
         "var z: Nat = add a\n"
         "var z_: &Nat = &z\n"
-        "call output z_\n"
+        "call show z_\n"
     );
     assert(all("Succ ($)\n", INP));
 
@@ -286,7 +286,7 @@ void chap_pre (void) {
         "var a: (Nat,&Nat) = (x,y_)\n"
         "var z: Nat = add a\n"
         "var z_: &Nat = &z\n"
-        "call output z_\n"
+        "call show z_\n"
     );
     assert(all("Succ ($)\n", INP));
 
@@ -299,7 +299,7 @@ void chap_pre (void) {
         "var a: (Nat,&Nat) = (x,y_)\n"
         "var z: Nat = add a\n"
         "var z_: &Nat = &z\n"
-        "call output z_\n"
+        "call show z_\n"
     );
     assert(all("Succ (Succ (Succ (Succ (Succ ($)))))\n", INP));
 
@@ -313,7 +313,7 @@ void chap_pre (void) {
         "var a: (&Nat,&Nat) = (tw_,th_)\n"
         "var n: Nat = mul a\n"
         "var n_: &Nat = &n\n"
-        "call output n_\n"
+        "call show n_\n"
     );
     assert(all("Succ (Succ (Succ (Succ (Succ (Succ ($))))))\n", INP));
 
@@ -324,7 +324,7 @@ void chap_pre (void) {
         "var b: Nat = three()\n"
         "var n: Nat = rem (&a,&b)\n"
         "var n_: &Nat = &n\n"
-        "call output n_\n"
+        "call show n_\n"
     );
     assert(all("Succ (Succ ($))\n", INP));
 }
@@ -345,7 +345,7 @@ void chap_01 (void) {           // pg 1
         "var a: Nat = two()\n"
         "var b: Nat = square a\n"
         "var b_: &Nat = &b\n"
-        "call output b_\n"
+        "call show b_\n"
     );
     assert(all("Succ (Succ (Succ (Succ ($))))\n", INP));
 
@@ -379,7 +379,7 @@ void chap_01 (void) {           // pg 1
         "var k: (Nat,&Nat) = (g, b)\n"
         "var n: Nat = add k\n"
         "var n_: &Nat = &n\n"
-        "call output n_\n"
+        "call show n_\n"
     );
     assert(all("Succ (Succ (Succ (Succ (Succ (Succ ($))))))\n", INP));
 
@@ -413,7 +413,7 @@ void chap_01 (void) {           // pg 1
         "var d: Nat = clone c\n"
         "var n: Nat = square d\n"
         "var n_: &Nat = &n\n"
-        "call output n_\n"
+        "call show n_\n"
     );
     assert(all("Succ (Succ (Succ (Succ ($))))\n", INP));
 
@@ -430,7 +430,7 @@ void chap_01 (void) {           // pg 1
         "}\n"
         "var x: Nat = fthree()\n"
         "var x_: &Nat = &x\n"
-        "call output x_\n"
+        "call show x_\n"
     );
     assert(all("Succ (Succ (Succ ($)))\n", INP));
 

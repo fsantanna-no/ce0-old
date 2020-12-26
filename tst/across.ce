@@ -30,7 +30,7 @@ type Input {
     Event: (&Event_,Int)
 }
 
-func output_: Output -> () {
+func output: Output -> () {
     native _{
         pico_output(*(Pico_Output*)&arg);
     }
@@ -81,13 +81,13 @@ func check: Bool -> () {
     }
 }
 
-call output_ Set Title _("pico-Ce: Across")
+call output Set Title _("pico-Ce: Across")
 
 var e: Event_ = KeyDown 0
 var ok: Bool = input Event (&e,2000)
 call check ok
 
-call output ()
+call show ()
 
 --emit SOUND_PLAY("res/click1.wav");  // plays a starting sound
 --

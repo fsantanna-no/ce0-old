@@ -15,10 +15,10 @@ static char* reserved[] = {
     "if",
     //"Int",
     "native",
-    //"output",
     "pre",
     "rec",
     "return",
+    //"show",
     "type",
     "var"
 };

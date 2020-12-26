@@ -228,16 +228,16 @@ int ftp (Type* tp, void* env_) {
 
         int hasalloc = env_type_hasalloc(env, tp);
 
-        // OUTPUT
+        // SHOW
         {
             fprintf (ALL.out,
-                "#ifndef __output_%s%s__\n"
-                "#define __output_%s%s__\n",
+                "#ifndef __show_%s%s__\n"
+                "#define __show_%s%s__\n",
                 ((!tp->isalias && hasalloc) ? "x" : ""), tp_ce,
                 ((!tp->isalias && hasalloc) ? "x" : ""), tp_ce
             );
             fprintf(ALL.out,
-                "int output_%s%s_ (%s%s v) {\n"
+                "int show_%s%s_ (%s%s v) {\n"
                 "    printf(\"(\");\n",
                 ((!tp->isalias && hasalloc) ? "x" : ""),
                 tp_ce, tp_c, toptr(env,tp,"*","")
@@ -251,7 +251,7 @@ int ftp (Type* tp, void* env_) {
                     fprintf(ALL.out, "    putchar('?');\n");
                 } else {
                     int hasalloc = env_type_hasalloc(env, sub);
-                    fprintf(ALL.out, "    output_%s%s_(%sv%s_%d);\n",
+                    fprintf(ALL.out, "    show_%s%s_(%sv%s_%d);\n",
                         ((/*sub->isalias ||*/ hasalloc) ? "x" : ""),
                         to_ce(sub), toptr(env,sub,"&",""), toptr(env,tp,"->","."), i+1);
                 }
@@ -260,8 +260,8 @@ int ftp (Type* tp, void* env_) {
                 "    printf(\")\");\n"
                 "    return 1;\n"
                 "}\n"
-                "int output_%s%s (%s%s v) {\n"
-                "    output_%s%s_(v);\n"
+                "int show_%s%s (%s%s v) {\n"
+                "    show_%s%s_(v);\n"
                 "    puts(\"\");\n"
                 "    return 1;\n"
                 "}\n",
@@ -308,7 +308,7 @@ char* ftk (Env* env, Tk* tk, int istx) {
     // Set EXPR_VAR.istx=1 for root recursive and not alias/alias type.
     //      f(nat)          -- istx=1       -- root, recursive
     //      return nat      -- istx=1       -- root, recursive
-    //      output(&nat)    -- istx=0       -- root, recursive, alias
+    //      show(&nat)    -- istx=0       -- root, recursive, alias
     //      f(alias_nat)    -- istx=0       -- root, recursive, alias type
     //      nat.xxx         -- istx=0       -- not root, recursive
     if (istx && tk->enu==TX_VAR) {
@@ -441,8 +441,8 @@ void fe (Env* env, Exp1* e) {
                 if (!strcmp(e->Call.func.val.s,"clone")) {
                     out("clone_");
                     code_to_ce(env_tk_to_type(env, &e->Call.arg));
-                } else if (!strcmp(e->Call.func.val.s,"output")) {
-                    out("output_");
+                } else if (!strcmp(e->Call.func.val.s,"show")) {
+                    out("show_");
                     code_to_ce(env_tk_to_type(env, &e->Call.arg));
                 } else {
                     out(e->Call.func.val.s);
@@ -551,12 +551,12 @@ void code_stmt (Stmt* s) {
             const char* SUP = strupper(s->User.id.val.s);
             int isrec = s->User.isrec;
 
-            // output must receive & from hasalloc, otherwise it would receive ownership
+            // show must receive & from hasalloc, otherwise it would receive ownership
             int hasalloc = env_user_hasalloc(s->env, s);
 
             // struct Bool;
             // typedef struct Bool Bool;
-            // void output_Bool_ (Bool v);
+            // void show_Bool_ (Bool v);
             // Bool clone_Bool_  (Bool v);
             {
                 // struct { BOOL sub; union { ... } } Bool;
@@ -574,7 +574,7 @@ void code_stmt (Stmt* s) {
                 );
 
                 fprintf(ALL.out,
-                    "auto int output_%s%s_ (%s%s v);\n", // auto: https://stackoverflow.com/a/7319417
+                    "auto int show_%s%s_ (%s%s v);\n", // auto: https://stackoverflow.com/a/7319417
                     (hasalloc ? "x" : ""),
                     sup, sup, (hasalloc ? "*" : "")
                 );
@@ -669,13 +669,13 @@ void code_stmt (Stmt* s) {
                 out("}\n");
             }
 
-            // OUTPUT
+            // SHOW
             {
                 char* op = (hasalloc ? "->" : ".");
 
-                // _output_Bool (Bool v)
+                // _show_Bool (Bool v)
                 fprintf(ALL.out,
-                    "int output_%s%s_ (%s%s v) {\n",
+                    "int show_%s%s_ (%s%s v) {\n",
                     (hasalloc ? "x" : ""),
                     sup, sup, (hasalloc ? "*" : "")
                 );
@@ -705,7 +705,7 @@ void code_stmt (Stmt* s) {
                             break;
                         case TYPE_USER:
                             yes = par = 1;
-                            sprintf(arg, "output_%s%s_(%sv%s_%s)",
+                            sprintf(arg, "show_%s%s_(%sv%s_%s)",
                                 (sub->type.isalias || sub_hasalloc ? "x" : ""),
                                 sub->type.User.val.s, toptr(s->env,&sub->type,"&",""),
                                 op, sub->id.val.s);
@@ -713,7 +713,7 @@ void code_stmt (Stmt* s) {
                         case TYPE_TUPLE:
                             yes = 1;
                             par = 0;
-                            sprintf(arg, "output_%s%s_(%sv%s_%s)",
+                            sprintf(arg, "show_%s%s_(%sv%s_%s)",
                                 (sub->type.isalias || sub_hasalloc ? "x" : ""),
                                 to_ce(&sub->type), toptr(s->env,&sub->type,"&",""),
                                 op, sub->id.val.s);
@@ -735,8 +735,8 @@ void code_stmt (Stmt* s) {
                 out("    return 1;\n");
                 out("}\n");
                 fprintf(ALL.out,
-                    "int output_%s%s (%s%s v) {\n"
-                    "    output_%s%s_(v);\n"
+                    "int show_%s%s (%s%s v) {\n"
+                    "    show_%s%s_(v);\n"
                     "    puts(\"\");\n"
                     "    return 1;\n"
                     "}\n",
@@ -848,10 +848,10 @@ void code (Stmt* s) {
         "#include <stdio.h>\n"
         "#include <stdlib.h>\n"
         "typedef int Int;\n"
-        "#define output_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
-        "#define output_Unit(x)  (output_Unit_(x), puts(\"\"))\n"
-        "#define output_Int_(x)  printf(\"%d\",x)\n"
-        "#define output_Int(x)   (output_Int_(x), puts(\"\"))\n"
+        "#define show_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
+        "#define show_Unit(x)  (show_Unit_(x), puts(\"\"))\n"
+        "#define show_Int_(x)  printf(\"%d\",x)\n"
+        "#define show_Int(x)   (show_Int_(x), puts(\"\"))\n"
         "int main (void) {\n"
         "\n"
     );

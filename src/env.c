@@ -595,8 +595,8 @@ int check_types (Stmt* s) {
                     assert(e->Call.func.enu == TX_VAR);
                     if (!strcmp(e->Call.func.val.s,"clone")) {
                         TODO("TODO [check_types]: clone(...)\n");
-                    } else if (!strcmp(e->Call.func.val.s,"output")) {
-                        TODO("TODO [check_types]: output(...)\n");
+                    } else if (!strcmp(e->Call.func.val.s,"show")) {
+                        TODO("TODO [check_types]: show(...)\n");
                     } else if (!type_is_sup_sub(func->Func.inp, arg)) {
                         char err[512];
                         sprintf(err, "invalid call to \"%s\" : type mismatch", e->Call.func.val.s);
