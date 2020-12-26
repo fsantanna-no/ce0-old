@@ -367,7 +367,7 @@ void t_parser_expr (void) {
         fclose(ALL.inp);
     }
     {
-        all_init(NULL, stropen("r", 0, "f()\n()\n()")); // x=f(); y=x(); z=y()
+        all_init(NULL, stropen("r", 0, "f g\nh\n()")); // x=h(); y=g x; z=f y
         Stmt* s;
         Exp1 e;
         assert(parser_expr(&s,&e));
@@ -379,7 +379,7 @@ void t_parser_expr (void) {
 
         assert(s->Seq.s1->Seq.s1->Var.init.sub == EXPR_CALL);
         assert(s->Seq.s1->Seq.s1->Var.init.Call.func.enu == TX_VAR);
-        assert(!strcmp(s->Seq.s1->Seq.s1->Var.init.Call.func.val.s, "f"));
+        assert(!strcmp(s->Seq.s1->Seq.s1->Var.init.Call.func.val.s, "h"));
         assert(s->Seq.s1->Seq.s1->Var.init.Call.arg.enu == TK_UNIT);
         fclose(ALL.inp);
     }
@@ -423,7 +423,10 @@ void t_parser_expr (void) {
         fclose(ALL.inp);
     }
     {
-        all_init(NULL, stropen("r", 0, "x().1()"));
+        //var _tmp_3: ? = ().1
+        //var _tmp_8: ? = _tmp_3(())
+        //var _tmp_13: ? = x(_tmp_8)
+        all_init(NULL, stropen("r", 0, "x () .1 ()"));
         Stmt* s;
         Exp1 e;
         assert(parser_expr(&s,&e));
@@ -433,13 +436,12 @@ void t_parser_expr (void) {
         assert(s->Seq.s1->Seq.s2->sub == STMT_VAR);
         assert(s->Seq.s2->sub == STMT_VAR);
 
-        assert(s->Seq.s1->Seq.s1->Var.init.sub == EXPR_CALL);
-        assert(s->Seq.s1->Seq.s1->Var.init.Call.func.enu == TX_VAR);
-        assert(!strcmp(s->Seq.s1->Seq.s1->Var.init.Call.func.val.s, "x"));
-        assert(s->Seq.s1->Seq.s1->Var.init.Call.arg.enu == TK_UNIT);
+        assert(s->Seq.s1->Seq.s1->Var.init.sub == EXPR_INDEX);
+        assert(s->Seq.s1->Seq.s1->Var.init.Index.val.enu == TK_UNIT);
+        assert(s->Seq.s1->Seq.s1->Var.init.Index.index.val.n == 1);
 
-        assert(s->Seq.s1->Seq.s2->Var.init.sub == EXPR_INDEX);
-        assert(s->Seq.s1->Seq.s2->Var.init.Index.index.val.n == 1);
+        assert(s->Seq.s1->Seq.s2->Var.init.sub == EXPR_CALL);
+        assert(s->Seq.s1->Seq.s2->Var.init.Call.func.enu == TX_VAR);
 
         fclose(ALL.inp);
     }
@@ -975,6 +977,10 @@ void t_all (void) {
         "type Bool { False: () ; True: () }\n"
         "var b : Bool = True()\n"
         "if b.False? {} else { call show() }\n"
+    ));
+    assert(all(
+        "(ln 1, col 16): undeclared subtype \"Event\"",
+        "call check arg.Event?\n"
     ));
     // DISCRIMINATOR
     assert(all(

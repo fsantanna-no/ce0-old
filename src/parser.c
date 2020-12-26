@@ -276,7 +276,7 @@ int parser_expr (Stmt** s, Exp1* e) {
         Tk tk0 = ALL.tk0;
         Stmt* s2;
         Exp1 arg;
-        if (parser_expr_(&s2,&arg)) {
+        if (parser_expr(&s2,&arg)) {
             *s = enseq(*s, s2);
             Exp1 call = { ALL.nn++, EXPR_CALL, 0, .Call={e->tk,arg.tk,0} };
             *s = enseq(*s, stmt_tmp(tk0,&call,e));

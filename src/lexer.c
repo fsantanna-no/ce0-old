@@ -118,6 +118,7 @@ static TK lx_token (TK_val* val) {
         case '(':
             c = fgetc(ALL.inp);
             if (c == ')') {
+                strcpy(val->s, "()");
                 return TK_UNIT;
             }
             ungetc(c, ALL.inp);

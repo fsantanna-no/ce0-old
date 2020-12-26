@@ -14,3 +14,6 @@ repl: $(SRC) src/main/repl.c
 
 main: $(SRC) src/main/main.c
 	gcc -g -o ce $^ $(CFLAGS) $(LIBS)
+
+install:
+	cp ce /usr/local/bin/
