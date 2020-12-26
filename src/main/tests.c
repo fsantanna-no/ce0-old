@@ -810,6 +810,11 @@ void t_all (void) {
         "}\n"
     ));
     assert(all(
+        "1\n",
+        "var x: Int = _abs(1)\n"
+        "call show x\n"
+    ));
+    assert(all(
         "A",
         "var x: _char = _65\n"
         "call _putchar x\n"

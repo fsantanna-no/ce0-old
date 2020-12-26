@@ -162,8 +162,8 @@ Type* env_expr_to_type_ (Env* env, Exp1* e) {
                 }
             } else {
                 assert(e->Call.func.enu == TX_NATIVE);
-                static Type unit = { TYPE_UNIT, 0 };
-                return &unit;   // TODO: should be typeof(f(arg))
+                static Type nat = { TYPE_NATIVE, 0 };
+                return &nat;   // TODO: should be typeof(f(arg))
             }
         }
 

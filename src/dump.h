@@ -1,3 +1,4 @@
+void dump_type (Type* tp);
 void dump_exp1 (Exp1* e);
 void dump_stmt (Stmt* s);
-void dump_env (Env* env);
+void dump_env  (Env* env);
