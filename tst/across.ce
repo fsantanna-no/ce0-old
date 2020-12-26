@@ -74,11 +74,19 @@ call _pico_init()
 
 -------------------------------------------------------------------------------
 
-func check: Bool -> () {
+func not: Bool -> Bool {
     if arg {
+        return False
     } else {
+        return True
+    }
+}
+
+func check: Bool -> () {
+    if not arg {
         call _assert 0
     }
+    return ()
 }
 
 call output Set Title _("pico-Ce: Across")

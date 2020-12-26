@@ -1,3 +1,5 @@
+- return () in unit funcs
+- cpp
 - funcoes, tipos CE
 - ‘output_xEvent__’; did you mean ‘output_Event__
     - se o evento !hasalloc, entao gero sem o X e qd encontrar um &v, chamo *v
