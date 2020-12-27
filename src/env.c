@@ -189,6 +189,12 @@ Type* env_expr_to_type (Env* env, Expr* e) {
             }
         }
 
+        case EXPR_INDEX: {  // x.1
+            Type* tp = env_expr_to_type(env,e->Index.val);
+            assert(tp!=NULL && tp->sub==TYPE_TUPLE);
+            return tp->Tuple.vec[e->Index.index.val.n-1];
+        }
+
 #if 0
         case EXPR_CONS: {
             Stmt* user = env_sub_id_to_user_stmt(env, e->Cons.subtype.val.s);
@@ -198,9 +204,6 @@ Type* env_expr_to_type (Env* env, Expr* e) {
             *tp = (Type){ TYPE_USER, 0, .User=user->User.id };
             return tp;
         }
-
-        case EXPR_INDEX:    // x.1
-            return &env_tk_to_type(env, &e->Index.val)->Tuple.vec[e->Index.index.val.n-1];
 
         case EXPR_DISC: {   // x.True
             Type* val = env_tk_to_type(env, &e->Disc.val);
