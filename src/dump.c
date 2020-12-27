@@ -36,9 +36,11 @@ void dump_type (Type* tp) {
     }
 }
 
-void dump_exp1 (Exp1* e) {
+void dump_expr (Expr* e) {
     //dump_spc();
     //printf("[%s] ", e->tk.val.s);
+assert(0);
+#if XXXXXX
     if (e->isalias) {
         putchar('&');
     }
@@ -62,10 +64,10 @@ void dump_exp1 (Exp1* e) {
             printf("(...)\n");
             break;
         case EXPR_INDEX:
-            printf("%s.%d\n", e->Index.val.val.s, e->Index.index.val.n);
+            printf("%s.%d\n", e->Index.val->val.s, e->Index.index->val.n);
             break;
         case EXPR_CALL:
-            printf("%s(%s)\n", e->Call.func.val.s, e->Call.arg.val.s);
+            printf("%s(%s)\n", e->Call.func->val.s, e->Call.arg->val.s);
             break;
         case EXPR_CONS:
             printf("cons\n");
@@ -77,6 +79,7 @@ void dump_exp1 (Exp1* e) {
             printf("pred\n");
             break;
     }
+#endif
 }
 
 void dump_stmt (Stmt* s) {
@@ -86,9 +89,9 @@ void dump_stmt (Stmt* s) {
         case STMT_VAR:
             dump_spc();
             printf("var %s: ", s->Var.id.val.s);
-            dump_type(&s->Var.type);
+            dump_type(s->Var.type);
             printf(" = ");
-            dump_exp1(&s->Var.init);
+            dump_expr(s->Var.init);
             break;
         case STMT_USER:
             dump_spc();
@@ -130,7 +133,9 @@ void dump_stmt (Stmt* s) {
             break;
         case STMT_RETURN:
             dump_spc();
-            printf("return %s\n", s->Return.val.s);
+            printf("return ");
+            dump_expr(s->Return);
+            puts("");
             break;
         case STMT_NATIVE:
             dump_spc();

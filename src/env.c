@@ -83,6 +83,8 @@ Sub* env_find_sub (Env* env, const char* sub) {
 }
 
 Type* env_tk_to_type (Env* env, Tk* tk) { // static returns use env=NULL b/c no ids underneath
+    assert(0);
+#if XXXXXX
     switch (tk->enu) {
         case TK_UNIT: {
             static Type tp = { TYPE_UNIT, 0 };
@@ -115,9 +117,12 @@ Type* env_tk_to_type (Env* env, Tk* tk) { // static returns use env=NULL b/c no 
 //printf(">>> %d\n", tk->enu);
             assert(0);
     }
+#endif
 }
 
-Type* env_expr_to_type_ (Env* env, Exp1* e) {
+Type* env_expr_to_type_ (Env* env, Expr* e) {
+    assert(0);
+#if XXXXXX
     switch (e->sub) {
         case EXPR_UNIT:
         case EXPR_NATIVE:
@@ -130,7 +135,7 @@ Type* env_expr_to_type_ (Env* env, Exp1* e) {
             Type* vec = malloc(e->Tuple.size*sizeof(Type));
             assert(vec != NULL);
             for (int i=0; i<e->Tuple.size; i++) {
-                vec[i] = *env_tk_to_type(env, &e->Tuple.vec[i]);
+                vec[i] = *env_expr_to_type(env, &e->Tuple.vec[i]);
             }
             Type* tp = malloc(sizeof(Type));
             assert(tp != NULL);
@@ -149,12 +154,12 @@ Type* env_expr_to_type_ (Env* env, Exp1* e) {
 
         case EXPR_CALL: {
             if (e->Call.func.enu == TX_VAR) {
-                Type* tp = env_tk_to_type(env, &e->Call.func);
+                Type* tp = env_expr_to_type(env, &e->Call.func);
                 assert(tp->sub == TYPE_FUNC);
                 if (!strcmp(e->Call.func.val.s,"clone")) {
                     Type* ret = malloc(sizeof(Type));
                     assert(ret != NULL);
-                    *ret = *env_tk_to_type(env, &e->Call.arg);
+                    *ret = *env_expr_to_type(env, &e->Call.arg);
                     ret->isalias = 0;
                     return ret;
                 } else {
@@ -221,9 +226,12 @@ Type* env_expr_to_type_ (Env* env, Exp1* e) {
             return &Type_Bool;
     }
     assert(0 && "bug found");
+#endif
 }
 
-Type* env_expr_to_type (Env* env, Exp1* e) {
+Type* env_expr_to_type (Env* env, Expr* e) {
+    assert(0);
+#if XXXXXX
     Type* ret = env_expr_to_type_(env,e);
     if (e->isalias && !ret->isalias) {
         Type* new = malloc(sizeof(Type));
@@ -233,6 +241,7 @@ Type* env_expr_to_type (Env* env, Exp1* e) {
         ret = new;
     }
     return ret;
+#endif
 }
 
 //  type Bool { ... }
@@ -263,7 +272,7 @@ int env_type_hasalloc (Env* env, Type* tp) {
             return 0;
         case TYPE_TUPLE:
             for (int i=0; i<tp->Tuple.size; i++) {
-                if (env_type_hasalloc(env, &tp->Tuple.vec[i])) {
+                if (env_type_hasalloc(env, tp->Tuple.vec[i])) {
                     return 1;
                 }
             }
@@ -275,7 +284,7 @@ int env_type_hasalloc (Env* env, Type* tp) {
                 return 1;
             }
             for (int i=0; i<user->User.size; i++) {
-                if (env_type_hasalloc(env,&user->User.vec[i].type)) {
+                if (env_type_hasalloc(env,user->User.vec[i].type)) {
                     return 1;
                 }
             }
@@ -422,10 +431,10 @@ int set_envs (Stmt* s) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int set_tmps (Stmt* s) {
-    if (s->sub==STMT_VAR && s->Var.type.sub==TYPE_AUTO) {
-        Type* tp = env_expr_to_type(s->env, &s->Var.init);
+    if (s->sub==STMT_VAR && s->Var.type->sub==TYPE_AUTO) {
+        Type* tp = env_expr_to_type(s->env, s->Var.init);
         assert(tp != NULL);
-        s->Var.type = *tp;
+        s->Var.type = tp;
     }
     return VISIT_CONTINUE;
 }
@@ -459,7 +468,9 @@ int check_undeclareds (Stmt* s)
         }
     }
 
-    int fe (Env* env, Exp1* e) {
+    int fe (Env* env, Expr* e) {
+        assert(0);
+#if XXXXXX
         switch (e->sub) {
             case EXPR_UNIT:
             case EXPR_NATIVE:
@@ -474,7 +485,7 @@ int check_undeclareds (Stmt* s)
 
             case EXPR_TUPLE:
                 for (int i=0; i<e->Tuple.size; i++) {
-                    if (!ftk(env, &e->Tuple.vec[i], "variable")) {
+                    if (!ftk(env, e->Tuple.vec[i], "variable")) {
                         return 0;
                     }
                 }
@@ -517,6 +528,7 @@ int check_undeclareds (Stmt* s)
             }
         }
         assert(0);
+#endif
     }
 
     int ftp (Type* tp, void* env) {
@@ -534,24 +546,26 @@ int check_undeclareds (Stmt* s)
             return 1;
 
         case STMT_VAR:
-            return (visit_type(&s->Var.type,ftp,s->env) && fe(s->env, &s->Var.init));
+            return (visit_type(s->Var.type,ftp,s->env) && fe(s->env,s->Var.init));
 
         case STMT_USER:
             for (int i=0; i<s->User.size; i++) {
-                if (!visit_type(&s->User.vec[i].type,ftp,s->env)) {
+                if (!visit_type(s->User.vec[i].type,ftp,s->env)) {
                     return 0;
                 }
             }
             return 1;
 
         case STMT_FUNC:
-            return visit_type(&s->Func.type, ftp, s->env);
+            return visit_type(s->Func.type, ftp, s->env);
 
+#if XXXXXX
         case STMT_IF:
-            return ftk(s->env, &s->If.cond, "variable");
+            return ftk(s->env, s->If.cond, "variable");
 
         case STMT_RETURN:
-            return ftk(s->env, &s->Return, "variable");
+            return ftk(s->env, s->Return, "variable");
+#endif
     }
     assert(0);
 }
@@ -590,7 +604,7 @@ int check_types (Stmt* s) {
                     return 0;
                 }
                 for (int i=0; i<sup->Tuple.size; i++) {
-                    if (!type_is_sup_sub(&sup->Tuple.vec[i], &sub->Tuple.vec[i])) {
+                    if (!type_is_sup_sub(sup->Tuple.vec[i], sub->Tuple.vec[i])) {
                         return 0;
                     }
                 }
@@ -602,7 +616,7 @@ int check_types (Stmt* s) {
         return 1;
     }
 
-    int fe (Env* env, Exp1* e) {
+    int fe (Env* env, Expr* e) {
         switch (e->sub) {
             case EXPR_UNIT:
             case EXPR_NATIVE:
@@ -623,9 +637,11 @@ int check_types (Stmt* s) {
                 break;
 
             case EXPR_CALL: {
-                Type* func = env_tk_to_type(env, &e->Call.func);
-                Type* arg  = env_tk_to_type(env, &e->Call.arg);
+                Type* func = env_expr_to_type(env, e->Call.func);
+                Type* arg  = env_expr_to_type(env, e->Call.arg);
 
+                assert(0);
+#if XXXXXX
                 if (e->Call.func.enu == TX_NATIVE) {
                     TODO("TODO [check_types]: _f(...)\n");
                 } else {
@@ -640,13 +656,14 @@ int check_types (Stmt* s) {
                         return err_message(&e->Call.func, err);
                     }
                 }
+#endif
                 break;
             }
 
             case EXPR_CONS: {
                 Sub* sub = env_find_sub(env, e->Cons.subtype.val.s);
                 assert(sub != NULL);
-                if (!type_is_sup_sub(&sub->type, env_tk_to_type(env, &e->Cons.arg))) {
+                if (!type_is_sup_sub(sub->type, env_expr_to_type(env,e->Cons.arg))) {
                     char err[512];
                     sprintf(err, "invalid constructor \"%s\" : type mismatch", e->Cons.subtype.val.s);
                     return err_message(&e->Cons.subtype, err);
@@ -666,10 +683,10 @@ int check_types (Stmt* s) {
             return 1;
 
         case STMT_VAR:
-            if (!fe(s->env, &s->Var.init)) {
+            if (!fe(s->env, s->Var.init)) {
                 return 0;
             }
-            if (!type_is_sup_sub(&s->Var.type, env_expr_to_type(s->env, &s->Var.init))) {
+            if (!type_is_sup_sub(s->Var.type, env_expr_to_type(s->env,s->Var.init))) {
                 char err[512];
                 sprintf(err, "invalid assignment to \"%s\" : type mismatch", s->Var.id.val.s);
                 return err_message(&s->Var.id, err);
@@ -677,7 +694,7 @@ int check_types (Stmt* s) {
             return 1;
 
         case STMT_IF:
-            if (!type_is_sup_sub(&Type_Bool, env_tk_to_type(s->env, &s->If.cond))) {
+            if (!type_is_sup_sub(&Type_Bool, env_expr_to_type(s->env,s->If.cond))) {
                 return err_message(&s->tk, "invalid condition : type mismatch");
             }
             return 1;
@@ -685,8 +702,8 @@ int check_types (Stmt* s) {
         case STMT_RETURN: {
             Stmt* func = env_stmt_to_func(s);
             assert(func != NULL);
-            assert(func->Func.type.sub == TYPE_FUNC);
-            if (!type_is_sup_sub(func->Func.type.Func.out, env_tk_to_type(s->env, &s->Return))) {
+            assert(func->Func.type->sub == TYPE_FUNC);
+            if (!type_is_sup_sub(func->Func.type->Func.out, env_expr_to_type(s->env,s->Return))) {
                 return err_message(&s->tk, "invalid return : type mismatch");
             }
             return 1;
@@ -727,7 +744,7 @@ int check_owner_alias (Stmt* S) {
         return 1;               // not var declaration
     }
 
-    if (!env_type_hasalloc(S->env, &S->Var.type)) {
+    if (!env_type_hasalloc(S->env, S->Var.type)) {
         return 1;               // not recursive type
     }
 
@@ -849,7 +866,7 @@ int check_owner_alias (Stmt* S) {
 
             switch (s->sub) {
                 case STMT_VAR: {
-                    Exp1* e = &s->Var.init;
+                    Expr* e = s->Var.init;
                     switch (e->sub) {
                         case EXPR_UNIT:
                         case EXPR_NATIVE:
@@ -859,6 +876,8 @@ int check_owner_alias (Stmt* S) {
                             return EXEC_CONTINUE;
 
                         case EXPR_VAR:
+                            assert(0);
+#if XXXXXX
                             return ftk(s->env, &e->tk, e->isalias, 1);
 
                         case EXPR_TUPLE:
@@ -881,12 +900,15 @@ int check_owner_alias (Stmt* S) {
 
                         case EXPR_DISC:
                             return ftk(s->env, &e->Disc.val, e->isalias, 0);
+#endif
                     }
                     assert(0 && "bug found");
                 }
 
+#if XXXXXX
                 case STMT_RETURN:
                     return ftk(s->env, &s->Return, 0, 1);
+#endif
 
                 default:
                     return EXEC_CONTINUE;
@@ -895,6 +917,8 @@ int check_owner_alias (Stmt* S) {
 
         int rule_3 (void)
         {
+assert(0);
+#if XXXXXX
             switch (s->sub) {
                 case STMT_VAR: {
                     // var S: T = ...
@@ -964,6 +988,7 @@ int check_owner_alias (Stmt* S) {
                     break;
             }
             return EXEC_CONTINUE;
+#endif
         }
     }
 }

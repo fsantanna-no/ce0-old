@@ -13,7 +13,7 @@ typedef enum {
     EXPR_NULL,
     EXPR_INT,
     EXPR_VAR,
-    //
+    EXPR_ALIAS,
     EXPR_TUPLE,
     EXPR_INDEX,
     EXPR_CALL,
@@ -27,6 +27,7 @@ typedef enum {
     STMT_VAR,
     STMT_USER,
     STMT_SET,
+    STMT_CALL,
     STMT_SEQ,
     STMT_IF,
     STMT_FUNC,
@@ -45,7 +46,7 @@ typedef struct Type {
         Tk User;        // TYPE_USER
         struct {        // TYPE_TUPLE
             int size;                   // 2
-            struct Type* vec;           // ((),())
+            struct Type** vec;          // ((),())
         } Tuple;
         struct {        // TYPE_FUNC
             struct Type* inp;           // : ()
@@ -56,43 +57,42 @@ typedef struct Type {
 
 extern int _N_;
 
-typedef struct Exp1 {
+typedef struct Expr {
     int N;
     EXPR sub;
-    int isalias;        // only for EXPR_VAR, EXPR_TUPLE, EXPR_INDEX, EXPR_DISC
     union {
         Tk tk;          // EXPR_EXP0
+        struct Expr* Alias;  // EXPR_ALIAS
         struct {        // EXPR_TUPLE
             int size;                   // 2
-            Tk* vec;                    // (x,y)
+            struct Expr** vec;          // (x,y)
         } Tuple;
-        struct {        // EXPR_CONS
-            Tk subtype;                 // .True
-            Tk arg;                     // ()
-        } Cons;
-        struct {        // EXPR_CALL
-            Tk func;                    // f
-            Tk arg;                     // x
-            int isstmt;
-        } Call;
         struct {        // EXPR_INDEX
-            Tk val;                     // x
+            struct Expr* val;           // x
             Tk index;                   // .3
         } Index;
+        struct {        // EXPR_CALL
+            struct Expr* func;          // f
+            struct Expr* arg;           // (x,y)
+        } Call;
+        struct {        // EXPR_CONS
+            Tk subtype;                 // .True
+            struct Expr* arg;
+        } Cons;
         struct {        // EXPR_DISC
-            Tk val;                     // x
+            struct Expr* val;           // x
             Tk subtype;                 // .True!
         } Disc;
         struct {        // EXPR_PRED
-            Tk val;                     // x
+            struct Expr* val;           // x
             Tk subtype;                 // .True?
         } Pred;
     };
-} Exp1;
+} Expr;
 
 typedef struct {
-    Tk   id;                            // True:
-    Type type;                          // ()
+    Tk    id;                           // True:
+    Type* type;                         // ()
 } Sub;
 
 struct Env;
@@ -104,35 +104,36 @@ typedef struct Stmt {
     struct Stmt* seqs[2];   // {outer,inner}
     Tk tk;
     union {
-        Tk Return;          // STMT_RETURN
+        Expr* Call;         // STMT_CALL
+        Expr* Return;       // STMT_RETURN
         struct Stmt* Block; // STMT_BLOCK
         struct {            // STMT_VAR
-            Tk   id;                    // ns
-            Type type;                  // : Nat
-            Exp1 init;                  // = n
+            Tk    id;                    // ns
+            Type* type;                  // : Nat
+            Expr* init;                  // = n
         } Var;
-        struct {           // STMT_USER
+        struct {            // STMT_USER
             int  isrec;                 // rec
             Tk   id;                    // Bool
             int  size;                  // 2 subs
             Sub* vec;                   // [True,False]
         } User;
-        struct {           // STMT_SET
-            Exp1 dst;
-            Tk   src;
+        struct {            // STMT_SET
+            Expr* dst;
+            Expr* src;
         } Set;
-        struct {           // STMT_SEQ
+        struct {            // STMT_SEQ
             struct Stmt* s1;
             struct Stmt* s2;
         } Seq;
         struct {            // STMT_IF
-            Tk cond;                    // if (tst)
+            Expr* cond;                  // if (tst)
             struct Stmt* true;          // { ... }
             struct Stmt* false;         // else { ... }
         } If;
         struct {            // STMT_FUNC
             Tk id;                      // func f
-            Type type;                  // : () -> ()
+            Type* type;                 // : () -> ()
             struct Stmt* body;          // { ... }
         } Func;
         struct {            // STMT_NATIVE
@@ -144,8 +145,8 @@ typedef struct Stmt {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int parser_type   (Type* ret);
-int parser_expr   (Stmt** s, Exp1* e);
+int parser_type   (Type** ret);
+int parser_expr   (Expr** ret);
 int parser_stmt   (Stmt** ret);
 int parser_stmts  (TK opt, Stmt** ret);
 int parser        (Stmt** ret);

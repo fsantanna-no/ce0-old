@@ -170,30 +170,20 @@ const char _nat[] =
     "func add: (Nat,&Nat) -> Nat {\n"
     "    var x: Nat  = arg.1\n"
     "    var y: &Nat = arg.2\n"
-    "    var tst: Bool = y.$Nat?\n"
-    "    if tst {\n"
+    "    if y.$Nat? {\n"
     "        return x\n"
     "    } else {\n"
-    "        var a: &Nat = y.Succ!\n"
-    "        var d: (Nat,&Nat) = (x,a)\n"       // 40
-    "        var b: Nat = add d\n"
-    "        var c: Nat = Succ b\n"
-    "        return c\n"
+    "        return Succ(add(x,y.Succ!))\n"     // 30
     "    }\n"
     "}\n"
     "\n"
     "func sub: (Nat,Nat) -> Nat {\n"
     "    var x: Nat = arg.1\n"
     "    var y: Nat = arg.2\n"
-    "    var tst: Bool = y.$Nat?\n"             // 50
-    "    if tst {\n"
+    "    if y.$Nat? {\n"
     "        return x\n"
     "    } else {\n"
-    "        var a: Nat = x.Succ!\n"
-    "        var b: Nat = y.Succ!\n"
-    "        var d: (Nat,Nat) = (a,b)\n"
-    "        var c: Nat = sub d\n"
-    "        return c\n"
+    "        return sub(x.Succ!,y.Succ!)\n"     // 40
     "    }\n"
     "}\n"                                       // 60
     "\n"
@@ -244,10 +234,8 @@ void chap_pre (void) {
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "var a: Nat = Succ $Nat\n"
-        "var n: (Nat,Nat) = ($Nat, a)\n"
-        "var n_: &(Nat,Nat) = &n\n"
-        "call show n_\n"
+        "var n: (Nat,Nat) = ($Nat, Succ($Nat))\n"
+        "call show n\n"
     );
     assert(all("($,Succ ($))\n", INP));
 
@@ -268,12 +256,9 @@ void chap_pre (void) {
     strcat(INP, _nat);
     strcat (INP,
         "var x: Nat = $Nat\n"
-        "var y: Nat = Succ $Nat\n"
-        "var y_: &Nat = &y\n"
-        "var a: (Nat,&Nat) = (x,y_)\n"
-        "var z: Nat = add a\n"
-        "var z_: &Nat = &z\n"
-        "call show z_\n"
+        "var y: Nat = Succ($Nat)\n"
+        "var z: Nat = add(x,&y)\n"
+        "call show z\n"
     );
     assert(all("Succ ($)\n", INP));
 
@@ -295,11 +280,8 @@ void chap_pre (void) {
     strcat (INP,
         "var x: Nat = two()\n"
         "var y: Nat = three()\n"
-        "var y_: &Nat = &y\n"
-        "var a: (Nat,&Nat) = (x,y_)\n"
-        "var z: Nat = add a\n"
-        "var z_: &Nat = &z\n"
-        "call show z_\n"
+        "var z: Nat = add(x,&y)\n"
+        "call show(z)\n"
     );
     assert(all("Succ (Succ (Succ (Succ (Succ ($)))))\n", INP));
 

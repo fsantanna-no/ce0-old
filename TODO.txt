@@ -1,3 +1,5 @@
+- voltar pra vec Seq?
+- preciso mesmo de Stmt.tk ??
 - a = lst.Next!.Next!
     - TODO-xxx
 - set

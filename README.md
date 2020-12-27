@@ -439,46 +439,6 @@ Type ::= `(´ `)´                        -- unit                     ()
       |  Type `->´ Type                 -- function                 () -> ()
 ```
 
-- Desugared (internal representation):
-
-```
-Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: () = ()
-            `=´ Exp1
-      |  `type´ [`rec´] USER `{`        -- user type declaration    type rec List {
-            { USER `:´ Type [`;´] }     --    subtypes                 Cons: List
-         `}´                                                        }
-      |  `set´ Exp1 `=´ Exp0            -- call                     set x = 1
-      |  `call´ VAR `(´ Exp0 `)´        -- call                     call f()
-      |  `if´ Exp0 `{´ Stmt `}´         -- conditional              if x { call f() } else { call g() }
-         [`else´ `{´ Stmt `}´]
-      |  `func´ VAR `:´ Type `{´        -- function                 func f : ()->() { return () }
-            Stmt
-         `}´
-      |  `return´ Exp0                  -- function return          return ()
-      |  { Stmt [`;´] }                 -- sequence                 call f() ; call g()
-      |  `{´ Stmt `}´                   -- block                    { call f() ; call g() }
-      |  `native´ NATIVE                -- native                   native _{ printf("hi"); }
-
-Exp0 ::= `(´ `)´                        -- unit value               ()
-      |  NATIVE                         -- native expression        _printf
-      |  `$´ USER                       -- null constructor         $List
-      |  VAR                            -- variable identifier      i
-
-Exp1 ::= `&´ Exp1                       -- alias                    &x
-      |  `(´ Exp0 {`,´ Exp0} `)´        -- tuple                    (x,())
-      |  USER Exp0                      -- constructor              True ()
-      |  (VAR|NATIVE) Exp0              -- call                     f x
-      |  VAR `.´ NUM                    -- tuple index              x.1
-      |  VAR `.´ [`$´] USER `!´         -- discriminator            x.True!
-      |  VAR `.´ [`$´] USER `?´         -- predicate                x.False?
-
-Type ::= `(´ `)´                        -- unit                     ()
-      |  NATIVE                         -- native type              _char
-      |  USER                           -- user type                Bool
-      |  `(´ Type {`,´ Type} `)´        -- tuple                    ((),())
-      |  Type `->´ Type                 -- function                 () -> ()
-```
-
 <!--
 # A. Pools and recursive types
 

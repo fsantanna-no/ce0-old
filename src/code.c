@@ -5,6 +5,8 @@
 
 #include "all.h"
 
+#if XXXXXX
+
 char* strupper (const char* src) {
     static char dst[256];
     assert(strlen(src) < sizeof(dst));
@@ -351,18 +353,18 @@ char* ftk (Env* env, Tk* tk, int istx) {
 
 // prepares _tmp_N
 
-void fe_tmp_set (Env* env, Exp1* e, char* tp) {
+void fe_tmp_set (Env* env, Expr* e, char* tp) {
     if (tp == NULL) {
         tp = to_c(env,env_expr_to_type(env,e));
     }
     fprintf(ALL.out, "%s _tmp_%d = ", tp, e->N);
 }
 
-int isaddr (Env* env, Exp1* e) {
+int isaddr (Env* env, Expr* e) {
     return (e->isalias && !env_type_isrec(env,env_expr_to_type(env,e)));
 }
 
-void fe (Env* env, Exp1* e) {
+void fe (Env* env, Expr* e) {
     switch (e->sub) {
         case EXPR_UNIT:
         case EXPR_NULL:
@@ -826,7 +828,7 @@ void code_stmt (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void code_exp1 (Exp1* e) {
+void code_expr (Expr* e) {
     fe(NULL, e);
 }
 
@@ -855,3 +857,5 @@ void code (Stmt* s) {
     fprintf(ALL.out, "\n");
     out("}\n");
 }
+
+#endif
