@@ -149,6 +149,46 @@ Type* env_expr_to_type (Env* env, Expr* e) {
             return tp;
         }
 
+        case EXPR_CALL: {
+            // special cases: clone(), any _f()
+            Type* tp = env_expr_to_type(env, e->Call.func);
+            if (tp->sub == TYPE_FUNC) {
+                assert(e->Call.func->sub == EXPR_VAR);
+                if (!strcmp(e->Call.func->Var.val.s,"clone")) {     // returns type of arg
+                    Type* ret = malloc(sizeof(Type));
+                    assert(ret != NULL);
+                    *ret = *env_expr_to_type(env, e->Call.arg);
+                    ret->isalias = 0;
+                    return ret;
+                } else {
+                    return tp->Func.out;
+                }
+            } else {
+                assert(e->Call.func->sub == EXPR_NATIVE);           // returns typeof _f(x)
+                Type* tp = malloc(sizeof(Type));
+                assert(tp != NULL);
+                *tp = (Type) { TYPE_NATIVE, 0, .Native={TX_NATIVE,{},0,0} };
+                switch (e->Call.arg->sub) {
+                    case EXPR_UNIT:
+                        sprintf(tp->Native.val.s, "%s()", e->Call.func->Native.val.s);
+                        break;
+                    case EXPR_VAR:
+                    case EXPR_NATIVE:
+                        sprintf(tp->Native.val.s, "%s(%s)", e->Call.func->Native.val.s, e->Call.arg->Var.val.s);
+                        break;
+                    case EXPR_NULL:
+                        sprintf(tp->Native.val.s, "%s(NULL)", e->Call.func->Native.val.s);
+                        break;
+                    case EXPR_INT:
+                        sprintf(tp->Native.val.s, "%s(0)", e->Call.func->Native.val.s);
+                        break;
+                    default:
+                        assert(0);
+                }
+                return tp;   // TODO: should be typeof(f(arg))
+            }
+        }
+
 #if 0
         case EXPR_CONS: {
             Stmt* user = env_sub_id_to_user_stmt(env, e->Cons.subtype.val.s);
@@ -157,45 +197,6 @@ Type* env_expr_to_type (Env* env, Expr* e) {
             assert(tp != NULL);
             *tp = (Type){ TYPE_USER, 0, .User=user->User.id };
             return tp;
-        }
-
-        case EXPR_CALL: {
-            if (e->Call.func.enu == TX_VAR) {
-                Type* tp = env_expr_to_type(env, &e->Call.func);
-                assert(tp->sub == TYPE_FUNC);
-                if (!strcmp(e->Call.func.val.s,"clone")) {
-                    Type* ret = malloc(sizeof(Type));
-                    assert(ret != NULL);
-                    *ret = *env_expr_to_type(env, &e->Call.arg);
-                    ret->isalias = 0;
-                    return ret;
-                } else {
-                    return tp->Func.out;
-                }
-            } else {
-                assert(e->Call.func.enu == TX_NATIVE);
-                Type* tp = malloc(sizeof(Type));
-                assert(tp != NULL);
-                *tp = (Type) { TYPE_NATIVE, 0, .Native={TX_NATIVE,{},0,0} };
-                switch (e->Call.arg.enu) {
-                    case TK_UNIT:
-                        sprintf(tp->Native.val.s, "%s()", e->Call.func.val.s);
-                        break;
-                    case TX_VAR:
-                    case TX_NATIVE:
-                        sprintf(tp->Native.val.s, "%s(%s)", e->Call.func.val.s, e->Call.arg.val.s);
-                        break;
-                    case TX_NULL:
-                        sprintf(tp->Native.val.s, "%s(NULL)", e->Call.func.val.s);
-                        break;
-                    case TX_NUM:
-                        sprintf(tp->Native.val.s, "%s(0)", e->Call.func.val.s);
-                        break;
-                    default:
-                        assert(0);
-                }
-                return tp;   // TODO: should be typeof(f(arg))
-            }
         }
 
         case EXPR_INDEX:    // x.1

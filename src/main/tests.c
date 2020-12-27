@@ -782,14 +782,12 @@ void t_all (void) {
         "   putchar('A');\n"
         "}\n"
     ));
-puts("-=-=-=-");
     assert(all(
         "A",
         "native _{\n"
         "   putchar('A');\n"
         "}\n"
     ));
-assert(0);
     assert(all(
         "1\n",
         "var x: Int = _abs(1)\n"
@@ -804,12 +802,14 @@ assert(0);
         "var x: _char = _65\n"
         "call _putchar x\n"
     ));
+puts("-=-=-=-");
     assert(all(
         "()\n",
         "var x: ((),()) = ((),())\n"
         "var y: () = x.1\n"
         "call _show_Unit y\n"
     ));
+assert(0);
     assert(all(
         "()\n",
         "call _show_Unit (((),()).1)\n"
