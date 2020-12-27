@@ -37,38 +37,40 @@ void dump_type (Type* tp) {
 }
 
 void dump_expr (Expr* e) {
-    //dump_spc();
     //printf("[%s] ", e->tk.val.s);
-assert(0);
-#if XXXXXX
-    if (e->isalias) {
-        putchar('&');
-    }
     switch (e->sub) {
         case EXPR_UNIT:
-            printf("()\n");
+            printf("()");
             break;
         case EXPR_NATIVE:
-            printf("%s\n", e->tk.val.s);
+            printf("%s", e->Native.val.s);
             break;
         case EXPR_NULL:
-            printf("null\n");
+            printf("$");
             break;
         case EXPR_INT:
-            printf("%d\n", e->tk.val.n);
+            printf("%d", e->Int.val.n);
             break;
         case EXPR_VAR:
-            printf("%s\n", e->tk.val.s);
+            printf("%s", e->Var.val.s);
+            break;
+        case EXPR_ALIAS:
+            putchar('&');
+            dump_expr(e->Alias);
             break;
         case EXPR_TUPLE:
-            printf("(...)\n");
+            printf("(...)");
             break;
         case EXPR_INDEX:
-            printf("%s.%d\n", e->Index.val->val.s, e->Index.index->val.n);
+            dump_expr(e->Index.val);
+            printf(".%d", e->Index.index.val.n);
             break;
         case EXPR_CALL:
-            printf("%s(%s)\n", e->Call.func->val.s, e->Call.arg->val.s);
+            dump_expr(e->Call.func);
+            putchar(' ');
+            dump_expr(e->Call.arg);
             break;
+#if XXXXXX
         case EXPR_CONS:
             printf("cons\n");
             break;
@@ -78,8 +80,8 @@ assert(0);
         case EXPR_PRED:
             printf("pred\n");
             break;
-    }
 #endif
+    }
 }
 
 void dump_stmt (Stmt* s) {

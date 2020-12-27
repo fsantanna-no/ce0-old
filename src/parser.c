@@ -121,23 +121,23 @@ int parser_expr_ (Expr** ret)
 
 // EXPR_UNIT
     if (accept(TK_UNIT)) {
-        *e = (Expr) { ALL.nn++, EXPR_UNIT, .tk=ALL.tk0 };
+        *e = (Expr) { ALL.nn++, EXPR_UNIT, .Unit=ALL.tk0 };
 
 // EXPR_NULL
     } else if (accept(TX_NULL)) {   // $Nat
-        *e = (Expr) { ALL.nn++, EXPR_NULL, .tk=ALL.tk0 };
+        *e = (Expr) { ALL.nn++, EXPR_NULL, .Null=ALL.tk0 };
 
 // EXPR_INT
     } else if (accept(TX_NUM)) {    // 10
-        *e = (Expr) { ALL.nn++, EXPR_INT, .tk=ALL.tk0 };
+        *e = (Expr) { ALL.nn++, EXPR_INT, .Int=ALL.tk0 };
 
 // EXPR_NATIVE
     } else if (accept(TX_NATIVE)) {
-        *e = (Expr) { ALL.nn++, EXPR_NATIVE, .tk=ALL.tk0 };
+        *e = (Expr) { ALL.nn++, EXPR_NATIVE, .Native=ALL.tk0 };
 
 // EXPR_VAR
     } else if (accept(TX_VAR)) {
-        *e = (Expr) { ALL.nn++, EXPR_VAR, .tk=ALL.tk0 };
+        *e = (Expr) { ALL.nn++, EXPR_VAR, .Var=ALL.tk0 };
 
 // ALIAS
     } else if (accept('&')) {
@@ -197,7 +197,7 @@ int parser_expr_ (Expr** ret)
         if (!parser_expr(&arg)) {   // ()
             arg = malloc(sizeof(Expr));
             assert(arg != NULL);
-            *arg = (Expr) { ALL.nn++, EXPR_UNIT, .tk={TK_UNIT,{},0,ALL.nn++} };
+            *arg = (Expr) { ALL.nn++, EXPR_UNIT, .Unit={TK_UNIT,{},0,ALL.nn++} };
         }
 
         *e = (Expr) { ALL.nn++, EXPR_CONS, .Cons={sub,arg} };
@@ -213,18 +213,18 @@ int parser_expr (Expr** ret) {
     if (!parser_expr_(&cur)) {
         return 0;
     }
+    *ret = cur;
 
     while (1)
     {
         Expr* new = malloc(sizeof(Expr));
         assert(new != NULL);
-
-// EXPR_CALL
         Expr* arg;
-        if (parser_expr(&arg)) {
-            *new = (Expr) { ALL.nn++, EXPR_CALL, .Call={cur,arg} };
 
-        } else if (accept('.')) {
+        int lin = ALL.tk0.lin;
+        int col = ALL.tk0.col;
+
+        if (accept('.')) {
 // EXPR_INDEX
             if (accept(TX_NUM)) {
                 *new = (Expr) { ALL.nn++, EXPR_INDEX, .Index={cur,ALL.tk0} };
@@ -244,9 +244,21 @@ int parser_expr (Expr** ret) {
             } else {
                 return err_expected("index or subtype");
             }
+
+// EXPR_CALL
+        } else if (parser_expr(&arg)) {
+            *new = (Expr) { ALL.nn++, EXPR_CALL, .Call={cur,arg} };
+
         } else {
             free(new);
-            break;
+
+            int lin_ = ALL.tk0.lin;
+            int col_ = ALL.tk0.col;
+            if (lin==lin_ && col==col_) {
+                break;
+            } else {
+                return 0;
+            }
         }
 
         *ret = new;
@@ -463,7 +475,7 @@ int parser_stmt (Stmt** ret) {
 
         *blk1 = (Stmt) { ALL.nn++, STMT_BLOCK, NULL, {NULL,NULL}, tk, .Block=seq1 };
         *seq1 = (Stmt) { ALL.nn++, STMT_SEQ,   NULL, {NULL,NULL}, tk, .Seq={arg,blk2} };
-        *expr = (Expr) { ALL.nn++, EXPR_NATIVE, {.tk={TX_NATIVE,{.s="_arg_"},id.lin,id.col}} };
+        *expr = (Expr) { ALL.nn++, EXPR_NATIVE, {.Native={TX_NATIVE,{.s="_arg_"},id.lin,id.col}} };
         *arg  = (Stmt) { ALL.nn++, STMT_VAR,   NULL, {NULL,NULL}, tk,
             .Var = {
                 { TX_VAR, {.s="arg"}, id.lin, id.col },

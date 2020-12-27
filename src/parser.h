@@ -61,7 +61,11 @@ typedef struct Expr {
     int N;
     EXPR sub;
     union {
-        Tk tk;          // EXPR_EXP0
+        Tk Unit;        // EXPR_UNIT
+        Tk Native;      // EXPR_NATIVE
+        Tk Null;        // EXPR_NULL
+        Tk Int;         // EXPR_INT
+        Tk Var;         // EXPR_VAR
         struct Expr* Alias;  // EXPR_ALIAS
         struct {        // EXPR_TUPLE
             int size;                   // 2

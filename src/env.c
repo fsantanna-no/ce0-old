@@ -469,14 +469,13 @@ int check_undeclareds (Stmt* s)
     }
 
     int fe (Env* env, Expr* e) {
-        assert(0);
-#if XXXXXX
         switch (e->sub) {
             case EXPR_UNIT:
             case EXPR_NATIVE:
             case EXPR_INT:
                 return 1;
 
+#if XXXXXX
             case EXPR_NULL:
                 return ftk(env, &e->tk, "type");
 
@@ -526,9 +525,9 @@ int check_undeclareds (Stmt* s)
                 }
                 return ftk(env, val, "variable");
             }
+#endif
         }
         assert(0);
-#endif
     }
 
     int ftp (Type* tp, void* env) {
