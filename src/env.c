@@ -167,7 +167,7 @@ Type* env_expr_to_type (Env* env, Expr* e) {
                 assert(e->Call.func->sub == EXPR_NATIVE);           // returns typeof _f(x)
                 Type* tp = malloc(sizeof(Type));
                 assert(tp != NULL);
-                *tp = (Type) { TYPE_NATIVE, 0, .Native={TX_NATIVE,{},0,0} };
+                *tp = (Type) { TYPE_NATIVE, 0, .Native={TX_NATIVE,{.s={"TODO"}},0,0} };
                 switch (e->Call.arg->sub) {
                     case EXPR_UNIT:
                         sprintf(tp->Native.val.s, "%s()", e->Call.func->Native.val.s);
@@ -182,6 +182,9 @@ Type* env_expr_to_type (Env* env, Expr* e) {
                     case EXPR_INT:
                         sprintf(tp->Native.val.s, "%s(0)", e->Call.func->Native.val.s);
                         break;
+                    case EXPR_CALL:
+                        // _f _g 1
+                        break;
                     default:
                         assert(0);
                 }
@@ -191,7 +194,11 @@ Type* env_expr_to_type (Env* env, Expr* e) {
 
         case EXPR_INDEX: {  // x.1
             Type* tp = env_expr_to_type(env,e->Index.val);
-            assert(tp!=NULL && tp->sub==TYPE_TUPLE);
+            assert(tp != NULL);
+            if (tp->sub == TYPE_NATIVE) {
+                return tp;
+            }
+            assert(tp->sub == TYPE_TUPLE);
             return tp->Tuple.vec[e->Index.index.val.n-1];
         }
 

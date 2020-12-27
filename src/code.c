@@ -250,6 +250,8 @@ int ftp_tuples (Env* env, Type* tp) {
             Type* sub = tp->Tuple.vec[i];
             if (sub->sub == TYPE_NATIVE) {
                 fprintf(ALL.out, "    putchar('?');\n");
+            } else if (sub->sub == TYPE_UNIT) {
+                fprintf(ALL.out, "    show_Unit_();\n");
             } else {
                 int hasalloc = env_type_hasalloc(env, sub);
                 fprintf(ALL.out, "    show_%s%s_(%sv%s_%d);\n",
@@ -536,7 +538,12 @@ void fe (Env* env, Expr* e) {
 }
 #endif
 
-void code_expr (Env* env, Expr* e) {
+int code_expr (Env* env, Expr* e) {
+    Type* tp = env_expr_to_type(env, e);
+    if (tp->sub==TYPE_UNIT && e->sub!=EXPR_CALL) {
+        return 1;     // no code to generate
+    }
+
     switch (e->sub) {
         case EXPR_UNIT:
             break;
@@ -550,10 +557,6 @@ void code_expr (Env* env, Expr* e) {
             break;
 
         case EXPR_VAR: {
-            Type* tp = env_expr_to_type(env, e);
-            if (tp->sub == TYPE_UNIT) {
-                break;
-            }
             out(e->Var.val.s);
             break;
         }
@@ -587,12 +590,12 @@ void code_expr (Env* env, Expr* e) {
             out(") { ");
             int first = 0;
             for (int i=0; i<e->Tuple.size; i++) {
-                if (e->Tuple.vec[i]->sub != EXPR_UNIT) {
+                int isunit = code_expr(env, e->Tuple.vec[i]);
+                if (!isunit) {
                     if (first) {
                         out(",");
                     }
                     first = 1;
-                    code_expr(env, e->Tuple.vec[i]);
                 }
             }
             out(" })");
@@ -606,6 +609,7 @@ void code_expr (Env* env, Expr* e) {
         default:
             assert(0);
     }
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -839,8 +843,8 @@ void code_stmt (Stmt* s) {
             if (s->Var.type->sub == TYPE_UNIT) {
                 break;
             }
+            visit_type(s->env, s->Var.type, ftp_tuples);
 #if XXXXXX
-            visit_type(&s->Var.type, ftp_tuples, s->env);
             fe(s->env, &s->Var.init);
 #endif
 

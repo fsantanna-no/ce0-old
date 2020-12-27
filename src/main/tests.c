@@ -802,18 +802,18 @@ void t_all (void) {
         "var x: _char = _65\n"
         "call _putchar x\n"
     ));
-puts("-=-=-=-");
     assert(all(
         "()\n",
         "var x: ((),()) = ((),())\n"
         "var y: () = x.1\n"
         "call _show_Unit y\n"
     ));
-assert(0);
+puts("-=-=-=-");
     assert(all(
         "()\n",
-        "call _show_Unit (((),()).1)\n"
+        "call show (((),()).1)\n"
     ));
+assert(0);
     assert(all(
         "()\n",
         "var v: ((),()) = ((),())\n"
