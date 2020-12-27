@@ -88,18 +88,7 @@ int visit_stmt (Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int visit_expr (Env* env, Expr* e, F_Expr fe) {
-    if (fe != NULL) {
-        switch (fe(env,e)) {
-            case VISIT_ERROR:
-                return 0;
-            case VISIT_CONTINUE:
-                break;
-            case VISIT_BREAK:
-                return 1;
-        }
-    }
-
+int visit_expr_ (Env* env, Expr* e, F_Expr fe) {
     switch (e->sub) {
         case EXPR_UNIT:
         case EXPR_NATIVE:
@@ -128,6 +117,24 @@ int visit_expr (Env* env, Expr* e, F_Expr fe) {
             return visit_expr(env, e->Disc.val, fe);
     }
     assert(0 && "bug found");
+}
+
+int visit_expr (Env* env, Expr* e, F_Expr fe) {
+    int ret = visit_expr_(env, e, fe);
+    if (ret != VISIT_CONTINUE) {
+        return ret;
+    }
+    if (fe != NULL) {
+        switch (fe(env,e)) {
+            case VISIT_ERROR:
+                return 0;
+            case VISIT_CONTINUE:
+                break;
+            case VISIT_BREAK:
+                return 1;
+        }
+    }
+    return 1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -872,7 +872,6 @@ void t_all (void) {
         "}\n"
         "call show(Set_(_1,_2,_3,_4))\n"
     ));
-puts("-=-=-=-");
     assert(all(
         "Size (?,?,?,?)\n",
         "type Set_ {\n"
@@ -886,7 +885,6 @@ puts("-=-=-=-");
         "var z: _int = _4\n"
         "call show(Size (x,y,w,x))\n"
     ));
-assert(0);
 #if TODO-anon-tuples // infer from destiny
     assert(all(
         "Zz1\n",
@@ -920,6 +918,7 @@ assert(0);
         "var x: Xx = Xx1 a\n"
         "call show x\n"
     ));
+puts("-=-=-=-");
     assert(all(
         "Xx1 (Yy1,Zz1)\n",
         "type Zz { Zz1:() }\n"
@@ -927,6 +926,7 @@ assert(0);
         "type Xx { Xx1:(Yy,Zz) }\n"
         "call show (Xx1 (Yy1,Zz1))\n"
     ));
+assert(0);
     // IF
     assert(all(
         "()\n",
