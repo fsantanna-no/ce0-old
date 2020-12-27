@@ -149,8 +149,6 @@ int parser_expr_ (Expr** ret)
 
 // EXPR_PARENS / EXPR_TUPLE
     } else if (accept('(')) {
-        Tk tk0 = ALL.tk0;
-
         if (!parser_expr(ret)) {
             return 0;
         }

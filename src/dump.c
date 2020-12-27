@@ -70,7 +70,6 @@ void dump_expr (Expr* e) {
             putchar(' ');
             dump_expr(e->Call.arg);
             break;
-#if XXXXXX
         case EXPR_CONS:
             printf("cons\n");
             break;
@@ -80,7 +79,6 @@ void dump_expr (Expr* e) {
         case EXPR_PRED:
             printf("pred\n");
             break;
-#endif
     }
 }
 

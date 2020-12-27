@@ -371,11 +371,15 @@ int set_seqs (Stmt* s) {
 int set_envs (Stmt* s) {
     s->env = ALL.env;
     switch (s->sub) {
+        case STMT_SET:
+            assert(0);
+
         case STMT_NONE:
         case STMT_RETURN:
         case STMT_SEQ:
         case STMT_IF:
         case STMT_NATIVE:
+        case STMT_CALL:
             break;
 
         case STMT_VAR: {
@@ -522,120 +526,121 @@ int check_decls_expr (Env* env, Expr* e) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int check_types (Stmt* s) {
-    int type_is_sup_sub (Type* sup, Type* sub) {
+int type_is_sup_sub (Type* sup, Type* sub) {
 #if 1
-        assert(sup->sub!=TYPE_AUTO && sub->sub!=TYPE_AUTO);
+    assert(sup->sub!=TYPE_AUTO && sub->sub!=TYPE_AUTO);
 #else
-        if (sup->sub==TYPE_AUTO || sub->sub==TYPE_AUTO) {
-            return 1;
-        }
+    if (sup->sub==TYPE_AUTO || sub->sub==TYPE_AUTO) {
+        return 1;
+    }
 #endif
-        if (sup->sub==TYPE_NATIVE || sub->sub==TYPE_NATIVE) {
-            return 1;
-        }
-        if (sup->sub != sub->sub) {
-            return 0;   // different TYPE_xxx
-        }
-        if (sup->isalias != sub->isalias) {
-            return 0;
-        }
-        switch (sup->sub) {
-            case TYPE_USER:
-                //printf("%s vs %s\n", sup->User.val.s, sub->User.val.s);
-                return (
-                    (sup->isalias == sub->isalias) &&
-                    (sub->User.enu==TK_ERR || !strcmp(sup->User.val.s,sub->User.val.s))
-                        // TODO: clone
-                );
+    if (sup->sub==TYPE_NATIVE || sub->sub==TYPE_NATIVE) {
+        return 1;
+    }
+    if (sup->sub != sub->sub) {
+        return 0;   // different TYPE_xxx
+    }
+    if (sup->isalias != sub->isalias) {
+        return 0;
+    }
+    switch (sup->sub) {
+        case TYPE_USER:
+            //printf("%s vs %s\n", sup->User.val.s, sub->User.val.s);
+            return (
+                (sup->isalias == sub->isalias) &&
+                (sub->User.enu==TK_ERR || !strcmp(sup->User.val.s,sub->User.val.s))
+                    // TODO: clone
+            );
 
-            case TYPE_TUPLE:
-                if (sup->Tuple.size != sub->Tuple.size) {
+        case TYPE_TUPLE:
+            if (sup->Tuple.size != sub->Tuple.size) {
+                return 0;
+            }
+            for (int i=0; i<sup->Tuple.size; i++) {
+                if (!type_is_sup_sub(sup->Tuple.vec[i], sub->Tuple.vec[i])) {
                     return 0;
                 }
-                for (int i=0; i<sup->Tuple.size; i++) {
-                    if (!type_is_sup_sub(sup->Tuple.vec[i], sub->Tuple.vec[i])) {
-                        return 0;
-                    }
-                }
-                break;
-
-            default:
-                break;
-        }
-        return 1;
-    }
-
-    int fe (Env* env, Expr* e) {
-        switch (e->sub) {
-            case EXPR_UNIT:
-            case EXPR_NATIVE:
-            case EXPR_VAR:
-            case EXPR_TUPLE:
-            case EXPR_NULL:
-            case EXPR_INT:
-                break;
-
-            case EXPR_DISC:
-            case EXPR_PRED:
-                TODO("TODO [check_types]: EXPR_INDEX/EXPR_ALIAS/EXPR_DISC/EXPR_PRED\n");
-                break;
-
-            case EXPR_INDEX:
-                // TODO: check if e->tuple is really a tuple and that e->index is in range
-                TODO("TODO [check_types]: (x,y,z).1\n");
-                break;
-
-            case EXPR_CALL: {
-                Type* func = env_expr_to_type(env, e->Call.func);
-                Type* arg  = env_expr_to_type(env, e->Call.arg);
-
-                if (e->Call.func->sub == EXPR_NATIVE) {
-                    TODO("TODO [check_types]: _f(...)\n");
-                } else {
-                    assert(e->Call.func->sub == EXPR_VAR);
-                    if (!strcmp(e->Call.func->Var.val.s,"clone")) {
-                        TODO("TODO [check_types]: clone(...)\n");
-                    } else if (!strcmp(e->Call.func->Var.val.s,"show")) {
-                        TODO("TODO [check_types]: show(...)\n");
-                    } else if (!type_is_sup_sub(func->Func.inp, arg)) {
-                        char err[512];
-                        sprintf(err, "invalid call to \"%s\" : type mismatch", e->Call.func->Var.val.s);
-                        return err_message(&e->Call.func->Var, err);
-                    }
-                }
-                break;
             }
+            break;
 
-            case EXPR_CONS: {
-                Sub* sub = env_find_sub(env, e->Cons.subtype.val.s);
-                assert(sub != NULL);
-                if (!type_is_sup_sub(sub->type, env_expr_to_type(env,e->Cons.arg))) {
+        default:
+            break;
+    }
+    return 1;
+}
+
+int check_types_expr (Env* env, Expr* e) {
+    switch (e->sub) {
+        case EXPR_UNIT:
+        case EXPR_NATIVE:
+        case EXPR_VAR:
+        case EXPR_TUPLE:
+        case EXPR_NULL:
+        case EXPR_INT:
+            break;
+
+        case EXPR_ALIAS:
+            assert(0);
+
+        case EXPR_DISC:
+        case EXPR_PRED:
+            TODO("TODO [check_types]: EXPR_INDEX/EXPR_ALIAS/EXPR_DISC/EXPR_PRED\n");
+            break;
+
+        case EXPR_INDEX:
+            // TODO: check if e->tuple is really a tuple and that e->index is in range
+            TODO("TODO [check_types]: (x,y,z).1\n");
+            break;
+
+        case EXPR_CALL: {
+            Type* func = env_expr_to_type(env, e->Call.func);
+            Type* arg  = env_expr_to_type(env, e->Call.arg);
+
+            if (e->Call.func->sub == EXPR_NATIVE) {
+                TODO("TODO [check_types]: _f(...)\n");
+            } else {
+                assert(e->Call.func->sub == EXPR_VAR);
+                if (!strcmp(e->Call.func->Var.val.s,"clone")) {
+                    TODO("TODO [check_types]: clone(...)\n");
+                } else if (!strcmp(e->Call.func->Var.val.s,"show")) {
+                    TODO("TODO [check_types]: show(...)\n");
+                } else if (!type_is_sup_sub(func->Func.inp, arg)) {
                     char err[512];
-                    sprintf(err, "invalid constructor \"%s\" : type mismatch", e->Cons.subtype.val.s);
-                    return err_message(&e->Cons.subtype, err);
+                    sprintf(err, "invalid call to \"%s\" : type mismatch", e->Call.func->Var.val.s);
+                    return err_message(&e->Call.func->Var, err);
                 }
             }
+            break;
         }
-        return 1;
-    }
 
+        case EXPR_CONS: {
+            Sub* sub = env_find_sub(env, e->Cons.subtype.val.s);
+            assert(sub != NULL);
+            if (!type_is_sup_sub(sub->type, env_expr_to_type(env,e->Cons.arg))) {
+                char err[512];
+                sprintf(err, "invalid constructor \"%s\" : type mismatch", e->Cons.subtype.val.s);
+                return err_message(&e->Cons.subtype, err);
+            }
+        }
+    }
+    return 1;
+}
+
+int check_types_stmt (Stmt* s) {
     switch (s->sub) {
+        case STMT_SET:
+            assert(0);
+
         case STMT_NONE:
         case STMT_USER:
         case STMT_FUNC:
         case STMT_SEQ:
         case STMT_BLOCK:
         case STMT_NATIVE:
+        case STMT_CALL:
             return 1;
 
-        case STMT_CALL:
-            return fe(s->env, s->Call);
-
         case STMT_VAR:
-            if (!fe(s->env, s->Var.init)) {
-                return 0;
-            }
             if (!type_is_sup_sub(s->Var.type, env_expr_to_type(s->env,s->Var.init))) {
                 char err[512];
                 sprintf(err, "invalid assignment to \"%s\" : type mismatch", s->Var.id.val.s);
@@ -953,7 +958,7 @@ int env (Stmt* s) {
         return 0;
     }
     assert(visit_stmt(s,set_tmps,NULL,NULL));
-    if (!visit_stmt(s,check_types,NULL,NULL)) {
+    if (!visit_stmt(s,check_types_stmt,check_types_expr,NULL)) {
         return 0;
     }
     if (!visit_stmt(s,check_owner_alias,NULL,NULL)) {

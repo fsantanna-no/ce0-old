@@ -460,6 +460,9 @@ void fe (Env* env, Expr* e) {
             return;
         }
 
+        default:
+            assert(0);
+#if XXXXXX
         case EXPR_CONS: {
             char* arg = ftk(env, &e->Cons.arg, 1);
             fe_tmp_set(env, e, NULL);
@@ -527,7 +530,7 @@ void fe (Env* env, Expr* e) {
             );
             return;
         }
-
+#endif
     }
     assert(0);
 }
@@ -809,6 +812,9 @@ void code_user (Stmt* s) {
 
 void code_stmt (Stmt* s) {
     switch (s->sub) {
+        case STMT_SET:
+            assert(0);
+
         case STMT_NONE:
             break;
 
@@ -852,7 +858,6 @@ void code_stmt (Stmt* s) {
             out(";\n");
             break;
         }
-#if XXXXXX
 
         case STMT_RETURN: {
             char* ret = ftk(s->env, s->Return, 1);
@@ -871,20 +876,16 @@ void code_stmt (Stmt* s) {
         }
 
         case STMT_FUNC: {
-            if (s->Func.body == NULL) {
-                break;
-            }
-
-            assert(s->Func.type.sub == TYPE_FUNC);
-            visit_type(&s->Func.type, ftp_tuples, s->env);
+            assert(s->Func.type->sub == TYPE_FUNC);
+            visit_type(s->env, s->Func.type, ftp_tuples);
 
             // f: a -> User
 
             char tp_out[256] = "";
-            to_c_(tp_out, s->env, s->Func.type.Func.out);
+            to_c_(tp_out, s->env, s->Func.type->Func.out);
 
             char tp_inp[256] = "";
-            to_c_(tp_inp, s->env, s->Func.type.Func.inp);
+            to_c_(tp_inp, s->env, s->Func.type->Func.inp);
 
             fprintf (ALL.out,
                 "%s %s (%s _arg_) {\n",
@@ -906,7 +907,6 @@ void code_stmt (Stmt* s) {
                 out(s->Native.tk.val.s);
             }
             break;
-#endif
     }
 }
 
