@@ -222,38 +222,31 @@ Type* env_expr_to_type (Env* env, Expr* e) {
             return tp;
         }
 
-#if 0
+        case EXPR_PRED:
+            return &Type_Bool;
+
         case EXPR_DISC: {   // x.True
-            Type* val = env_tk_to_type(env, &e->Disc.val);
+            Type* val = env_expr_to_type(env, e->Disc.val);
             assert(val->sub == TYPE_USER);
-            Stmt* decl = env_id_to_stmt(env, val->User.val.s, NULL);
-            assert(decl!=NULL && decl->sub==STMT_USER);
-            for (int i=0; i<decl->User.size; i++) {
-                if (!strcmp(decl->User.vec[i].id.val.s, e->Disc.subtype.val.s)) {
-                    Type* tp = &decl->User.vec[i].type;
-                    assert(!tp->isalias && "bug found : `&´ inside subtype");
-                    if (!val->isalias) {
-                        return tp;
-                    } else if (!env_type_hasalloc(env,tp)) {
-                        // only keep & if sub hasalloc:
-                        //  &x -> x.True
-                        return tp;
-                    } else if (env_type_hasalloc(env,tp)) {
-                        //  &x -> &x.Cons
-                        Type* ret = malloc(sizeof(Type));
-                        assert(ret != NULL);
-                        *ret = *tp;
-                        ret->isalias = 1;
-                        return ret;
-                    }
-                }
+            Type* tp = env_sub_id_to_user_type(env, e->Disc.subtype.val.s);
+            assert(!tp->isalias && "bug found : `&´ inside subtype");
+            if (!val->isalias) {
+                return tp;
+            } else if (!env_type_hasalloc(env,tp)) {
+                // only keep & if sub hasalloc:
+                //  &x -> x.True
+                return tp;
+            } else if (env_type_hasalloc(env,tp)) {
+                //  &x -> &x.Cons
+                Type* ret = malloc(sizeof(Type));
+                assert(ret != NULL);
+                *ret = *tp;
+                ret->isalias = 1;
+                return ret;
             }
             assert(0 && "bug found");
         }
 
-        case EXPR_PRED:
-            return &Type_Bool;
-#endif
         default:
             printf(">>> %d\n", e->sub);
     }
@@ -264,6 +257,7 @@ Type* env_expr_to_type (Env* env, Expr* e) {
 //  var x: Bool
 //  ... x ...           -- give "x" -> "var x" -> type Bool
 Stmt* env_tk_to_type_to_user_stmt (Env* env, Tk* tk) {
+    assert(0);
     Type* tp = env_tk_to_type(env, tk);
     assert(tp != NULL);
     if (tp->sub == TYPE_USER) {
@@ -329,6 +323,7 @@ int env_type_isrec (Env* env, Type* tp) {
 }
 
 int env_tk_isptr (Env* env, Tk* tk) {
+    assert(0);
     Type* tp = env_tk_to_type(env, tk);
     if (tp->isalias) {
         return 1;

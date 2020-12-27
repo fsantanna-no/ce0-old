@@ -468,28 +468,6 @@ void fe (Env* env, Expr* e) {
         default:
             assert(0);
 #if XXXXXX
-        case EXPR_DISC: {
-            int isptr = env_tk_isptr(env, &e->Disc.val);
-            char* val = ftk(env, &e->Disc.val, 0);
-
-            fprintf (ALL.out,
-                "assert(%s%ssub == %s && \"discriminator failed\");\n",
-                val, (isptr ? "->" : "."), e->Disc.subtype.val.s
-            );
-
-            fe_tmp_set(env, e, NULL);
-            fprintf(ALL.out, "%s%s%s_%s;\n", (isaddr(env,e) ? "&" : ""), val, (isptr ? "->" : "."), e->Disc.subtype.val.s);
-
-            // transfer ownership
-            Type* tp = env_expr_to_type(env,e);
-            assert(tp != NULL);
-            if (env_type_hasalloc(env,tp)) { // also checks isalias
-                // this prevents "double free"
-                fprintf(ALL.out, "%s%s_%s = NULL;\n", e->Disc.val.val.s, (isptr ? "->" : "."), e->Disc.subtype.val.s);
-            }
-            return;
-        }
-
         case EXPR_PRED: {
             int isptr = env_tk_isptr(env, &e->Disc.val);
             char* val = ftk(env, &e->Disc.val, 0);
@@ -546,7 +524,33 @@ int code_expr_pre (Env* env, Expr* e) {
             }
 
             out(" });\n");
+            break;
         }
+
+        case EXPR_DISC: {
+            out("assert(");
+            code_expr(env, e->Disc.val);
+            fprintf (ALL.out,
+                ".sub == %s && \"discriminator failed\");\n",
+                e->Disc.subtype.val.s
+            );
+
+#if XXXXXX
+            int isptr = 0; // TODO: env_tk_isptr(env, &e->Disc.val);
+            fe_tmp_set(env, e, NULL);
+            fprintf(ALL.out, "%s%s%s_%s;\n", (isaddr(env,e) ? "&" : ""), val, (isptr ? "->" : "."), e->Disc.subtype.val.s);
+
+            // transfer ownership
+            Type* tp = env_expr_to_type(env,e);
+            assert(tp != NULL);
+            if (env_type_hasalloc(env,tp)) { // also checks isalias
+                // this prevents "double free"
+                fprintf(ALL.out, "%s%s_%s = NULL;\n", e->Disc.val.val.s, (isptr ? "->" : "."), e->Disc.subtype.val.s);
+            }
+#endif
+            break;
+        }
+
         default:
             break;
     }
@@ -578,6 +582,11 @@ int code_expr (Env* env, Expr* e) {
 
         case EXPR_CONS:
             fprintf(ALL.out, "_tmp_%d", e->N);
+            break;
+
+        case EXPR_DISC:
+            code_expr(env, e->Disc.val);
+            fprintf (ALL.out, "._%s", e->Disc.subtype.val.s);
             break;
 
         case EXPR_CALL: {
