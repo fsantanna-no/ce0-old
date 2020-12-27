@@ -68,6 +68,17 @@ Stmt* env_sub_id_to_user_stmt (Env* env, const char* sub) {
     return NULL;
 }
 
+Type* env_sub_id_to_user_type (Env* env, const char* sub) {
+    Stmt* user = env_sub_id_to_user_stmt(env, sub);
+    assert(user!=NULL && user->sub==STMT_USER);
+    for (int i=0; i<user->User.size; i++) {
+        if (!strcmp(user->User.vec[i].id.val.s, sub)) {
+            return user->User.vec[i].type;
+        }
+    }
+    return NULL;
+}
+
 Sub* env_find_sub (Env* env, const char* sub) {
     while (env != NULL) {
         if (env->stmt->sub == STMT_USER) {
@@ -202,7 +213,6 @@ Type* env_expr_to_type (Env* env, Expr* e) {
             return tp->Tuple.vec[e->Index.index.val.n-1];
         }
 
-#if 0
         case EXPR_CONS: {
             Stmt* user = env_sub_id_to_user_stmt(env, e->Cons.subtype.val.s);
             assert(user != NULL);
@@ -212,6 +222,7 @@ Type* env_expr_to_type (Env* env, Expr* e) {
             return tp;
         }
 
+#if 0
         case EXPR_DISC: {   // x.True
             Type* val = env_tk_to_type(env, &e->Disc.val);
             assert(val->sub == TYPE_USER);

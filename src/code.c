@@ -468,37 +468,6 @@ void fe (Env* env, Expr* e) {
         default:
             assert(0);
 #if XXXXXX
-        case EXPR_CONS: {
-            char* arg = ftk(env, &e->Cons.arg, 1);
-            fe_tmp_set(env, e, NULL);
-
-            Stmt* user = env_sub_id_to_user_stmt(env, e->Cons.subtype.val.s);
-            assert(user != NULL);
-
-            char* sup = user->User.id.val.s;
-            char* sub = e->Cons.subtype.val.s;
-
-            if (user->User.isrec) {
-                // Nat* _1 = (Nat*) malloc(sizeof(Nat));
-                fprintf( ALL.out,
-                    "(%s*) malloc(sizeof(%s));\n"
-                    "assert(_tmp_%d!=NULL && \"not enough memory\");\n"
-                    "*_tmp_%d = ",
-                    sup, sup, e->N, e->N
-                );
-            } else {
-                // plain cons: nothing else to do
-            }
-
-            // Bool __1 = (Bool) { False, {_False=1} };
-            // Nat  __1 = (Nat)  { Succ,  {_Succ=&_2} };
-            fprintf(ALL.out,
-                "((%s) { %s, ._%s=%s });\n",
-                sup, sub, sub, arg
-            );
-            return;
-        }
-
         case EXPR_DISC: {
             int isptr = env_tk_isptr(env, &e->Disc.val);
             char* val = ftk(env, &e->Disc.val, 0);
@@ -541,6 +510,49 @@ void fe (Env* env, Expr* e) {
 }
 #endif
 
+int code_expr_pre (Env* env, Expr* e) {
+    switch (e->sub) {
+        case EXPR_CONS: {
+            Stmt* user = env_sub_id_to_user_stmt(env, e->Cons.subtype.val.s);
+            assert(user != NULL);
+
+            char* sup = user->User.id.val.s;
+            char* sub = e->Cons.subtype.val.s;
+
+            fprintf(ALL.out, "%s _tmp_%d = ", sup, e->N);
+
+            if (user->User.isrec) {
+                // Nat* _1 = (Nat*) malloc(sizeof(Nat));
+                fprintf (ALL.out,
+                    "(%s*) malloc(sizeof(%s));\n"
+                    "assert(_tmp_%d!=NULL && \"not enough memory\");\n"
+                    "*_tmp_%d = ",
+                    sup, sup, e->N, e->N
+                );
+            } else {
+                // plain cons: nothing else to do
+            }
+
+            // Bool __1 = (Bool) { False, {_False=1} };
+            // Nat  __1 = (Nat)  { Succ,  {_Succ=&_2} };
+
+            fprintf(ALL.out, "((%s) { %s", sup, sub);
+
+            Type* tp = env_sub_id_to_user_type(env, sub);
+            assert(tp != NULL);
+            if (tp->sub != TYPE_UNIT) {
+                fprintf(ALL.out, ", ._%s=", sub);
+                code_expr(env, e->Cons.arg);
+            }
+
+            out(" });\n");
+        }
+        default:
+            break;
+    }
+    return VISIT_CONTINUE;
+}
+
 int code_expr (Env* env, Expr* e) {
     Type* tp = env_expr_to_type(env, e);
     if (tp->sub==TYPE_UNIT && e->sub!=EXPR_CALL) {
@@ -563,6 +575,10 @@ int code_expr (Env* env, Expr* e) {
             out(e->Var.val.s);
             break;
         }
+
+        case EXPR_CONS:
+            fprintf(ALL.out, "_tmp_%d", e->N);
+            break;
 
         case EXPR_CALL: {
             if (e->Call.func->sub == EXPR_NATIVE) {
@@ -835,6 +851,7 @@ void code_stmt (Stmt* s) {
             break;
 
         case STMT_CALL:
+            code_expr_pre(s->env, s->Call);
             code_expr(s->env, s->Call);
             out(";\n");
             break;
@@ -851,9 +868,7 @@ void code_stmt (Stmt* s) {
                 break;
             }
             visit_type(s->env, s->Var.type, ftp_tuples);
-#if XXXXXX
-            fe(s->env, &s->Var.init);
-#endif
+            code_expr_pre(s->env, s->Var.init);
 
             fprintf(ALL.out, "%s %s", to_c(s->env,s->Var.type), s->Var.id.val.s);
 
@@ -871,8 +886,10 @@ void code_stmt (Stmt* s) {
         }
 
         case STMT_RETURN: {
-            char* ret = ftk(s->env, s->Return, 1);
-            fprintf(ALL.out, "return %s;\n", ret);
+            code_expr_pre(s->env, s->Return);
+            out("return");
+            code_expr(s->env, s->Return);
+            out(";\n");
             break;
         }
 
@@ -927,7 +944,7 @@ void code_stmt (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int native_pre (Stmt* s) {
+int code_native_pre (Stmt* s) {
     if (s->sub==STMT_NATIVE && s->Native.ispre) {
         out(s->Native.tk.val.s);
     }
@@ -935,7 +952,7 @@ int native_pre (Stmt* s) {
 }
 
 void code (Stmt* s) {
-    assert(visit_stmt(s,native_pre,NULL,NULL));
+    assert(visit_stmt(s,code_native_pre,NULL,NULL));
     out (
         "#include <assert.h>\n"
         "#include <stdio.h>\n"

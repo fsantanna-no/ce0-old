@@ -845,13 +845,13 @@ void t_all (void) {
         "call show x\n"
     ));
     // TYPE
-puts("-=-=-=-");
     assert(all(
         "False\n",
         "type Bool { False: () ; True: () }\n"
         "var b : Bool = False()\n"
         "call show b\n"
     ));
+puts("-=-=-=-");
 assert(0);
     assert(all(
         "Zz1\n",
