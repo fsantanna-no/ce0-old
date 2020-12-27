@@ -2,9 +2,9 @@
 
 #include "all.h"
 
-int visit_type (Type* tp, F_Type ft, void* arg) {
+int visit_type (Env* env, Type* tp, F_Type ft) {
     if (ft != NULL) {
-        switch (ft(tp,arg)) {
+        switch (ft(env,tp)) {
             case VISIT_ERROR:
                 return 0;
             case VISIT_CONTINUE:
@@ -22,20 +22,20 @@ int visit_type (Type* tp, F_Type ft, void* arg) {
             return 1;
         case TYPE_TUPLE:
             for (int i=0; i<tp->Tuple.size; i++) {
-                if (!visit_type(tp->Tuple.vec[i],ft,arg)) {
+                if (!visit_type(env,tp->Tuple.vec[i],ft)) {
                     return 0;
                 }
             }
             return 1;
         case TYPE_FUNC:
-            return (visit_type(tp->Func.inp,ft,arg) && visit_type(tp->Func.out,ft,arg));
+            return (visit_type(env,tp->Func.inp,ft) && visit_type(env,tp->Func.out,ft));
     }
     assert(0 && "bug found");
 }
 
 // 0=error, 1=success
 
-int visit_stmt (Stmt* s, F_Stmt fs) {
+int visit_stmt (Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
     if (fs != NULL) {
         switch (fs(s)) {
             case VISIT_ERROR:
@@ -49,24 +49,78 @@ int visit_stmt (Stmt* s, F_Stmt fs) {
 
     switch (s->sub) {
         case STMT_NONE:
-        case STMT_RETURN:
-        case STMT_USER:
-        case STMT_VAR:
         case STMT_NATIVE:
+            return 1;
+
         case STMT_CALL:
+            return visit_expr(s->env, s->Call, fe);
+        case STMT_RETURN:
+            return visit_expr(s->env, s->Return, fe);
+
+        case STMT_VAR:
+            return visit_type(s->env,s->Var.type,ft) && visit_expr(s->env,s->Var.init,fe);
+
+        case STMT_USER:
+            for (int i=0; i<s->User.size; i++) {
+                if (!visit_type(s->env,s->User.vec[i].type,ft)) {
+                    return 0;
+                }
+            }
             return 1;
 
         case STMT_SEQ:
-            return visit_stmt(s->Seq.s1,fs) && visit_stmt(s->Seq.s2,fs);
+            return visit_stmt(s->Seq.s1,fs,fe,ft) && visit_stmt(s->Seq.s2,fs,fe,ft);
 
         case STMT_IF:
-            return (visit_stmt(s->If.true,fs) && visit_stmt(s->If.false,fs));
+            return visit_expr(s->env,s->If.cond,fe) && visit_stmt(s->If.true,fs,fe,ft) && visit_stmt(s->If.false,fs,fe,ft);
 
         case STMT_FUNC:
-            return (s->Func.body==NULL) || visit_stmt(s->Func.body,fs);
+            return visit_type(s->env,s->Func.type,ft) && visit_stmt(s->Func.body,fs,fe,ft);
 
         case STMT_BLOCK:
-            return visit_stmt(s->Block, fs);
+            return visit_stmt(s->Block, fs,fe,ft);
+    }
+    assert(0 && "bug found");
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+int visit_expr (Env* env, Expr* e, F_Expr fe) {
+    if (fe != NULL) {
+        switch (fe(env,e)) {
+            case VISIT_ERROR:
+                return 0;
+            case VISIT_CONTINUE:
+                break;
+            case VISIT_BREAK:
+                return 1;
+        }
+    }
+
+    switch (e->sub) {
+        case EXPR_UNIT:
+        case EXPR_NATIVE:
+        case EXPR_VAR:
+            return 1;
+        case EXPR_TUPLE:
+            for (int i=0; i<e->Tuple.size; i++) {
+                if (!visit_expr(env, e->Tuple.vec[i], fe)) {
+                    return 0;
+                }
+            }
+            return 1;
+        case EXPR_INDEX:
+            return visit_expr(env, e->Index.val, fe);
+        case EXPR_CALL:
+            return visit_expr(env,e->Call.func,fe) && visit_expr(env,e->Call.arg,fe);
+        case EXPR_ALIAS:
+            return visit_expr(env, e->Alias, fe);
+        case EXPR_CONS:
+            return visit_expr(env, e->Cons.arg, fe);
+        case EXPR_DISC:
+            return visit_expr(env, e->Disc.val, fe);
+        case EXPR_PRED:
+            return visit_expr(env, e->Disc.val, fe);
     }
     assert(0 && "bug found");
 }

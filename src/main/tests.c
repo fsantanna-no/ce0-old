@@ -578,7 +578,7 @@ void t_parser_stmt (void) {
 void t_code (void) {
     // EXPR_UNIT
     {
-        char out[256];
+        char out[256] = "";
         all_init(stropen("w",sizeof(out),out), NULL);
         Expr e = { ALL.nn++, EXPR_UNIT, .Unit={TK_UNIT,{},0,0} };
         code_expr(NULL, &e);
@@ -587,7 +587,7 @@ void t_code (void) {
     }
     // EXPR_VAR
     {
-        char out[256];
+        char out[256] = "";
         all_init(stropen("w",sizeof(out),out), NULL);
         Type tp = { TYPE_UNIT, 0 };
         Stmt var = { ALL.nn++, STMT_VAR, .Var={{TX_VAR,{.s="xxx"},0,0},&tp,NULL} };
@@ -672,8 +672,6 @@ void t_code (void) {
             "}\n";
         assert(!strcmp(out,ret));
     }
-assert(0);
-#if TODO-resugar
     // STMT_TYPE
     {
         char out[8192] = "";
@@ -683,19 +681,24 @@ assert(0);
         );
         Stmt* s;
         assert(parser_stmts(TK_EOF,&s));
-        code(&s);
+        code(s);
         fclose(ALL.out);
         char* ret =
             "#include <assert.h>\n"
             "#include <stdio.h>\n"
             "#include <stdlib.h>\n"
-            "#define show_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
-            "#define show_Unit(x)  (show_Unit_(x), puts(\"\"))\n"
+            "typedef int Int;\n"
+            "#define show_Unit_() printf(\"()\")\n"
+            "#define show_Unit()  (show_Unit_(), puts(\"\"))\n"
+            "#define show_Int_(x) printf(\"%d\",x)\n"
+            "#define show_Int(x)  (show_Int_(x), puts(\"\"))\n"
             "int main (void) {\n"
             "\n"
             "struct Bool;\n"
             "typedef struct Bool Bool;\n"
+            "auto Bool clone_Bool (Bool v);\n"
             "auto void show_Bool_ (Bool v);\n"
+            "\n"
             "typedef enum {\n"
             "    False,\n"
             "    True\n"
@@ -708,6 +711,11 @@ assert(0);
             "        int _True;\n"
             "    };\n"
             "};\n"
+            "\n"
+            "Bool clone_Bool (Bool v) {\n"
+            "return v;\n"
+            "assert(0);\n"
+            "}\n"
             "\n"
             "void show_Bool_ (Bool v) {\n"
             "    switch (v.sub) {\n"
@@ -731,7 +739,6 @@ assert(0);
             "}\n";
         assert(!strcmp(out,ret));
     }
-#endif
 }
 
 void t_all (void) {
@@ -740,6 +747,7 @@ void t_all (void) {
         "(ln 1, col 1): expected statement : have \"/\"",
         "//call show()\n"
     ));
+assert(0);
     assert(all(
         "(ln 1, col 27): undeclared variable \"x\"",
         "func f: () -> () { return x }\n"

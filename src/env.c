@@ -397,7 +397,7 @@ int set_envs (Stmt* s) {
 
         case STMT_BLOCK: {
             Env* save = ALL.env;
-            visit_stmt(s->Block, set_envs);
+            visit_stmt(s->Block, set_envs, NULL, NULL);
             ALL.env = save;
             return VISIT_BREAK;                 // do not re-visit children, I just did them
         }
@@ -412,7 +412,7 @@ int set_envs (Stmt* s) {
 
             if (s->Func.body != NULL) {
                 Env* save = ALL.env;
-                visit_stmt(s->Func.body, set_envs);
+                visit_stmt(s->Func.body, set_envs, NULL, NULL);
                 ALL.env = save;
             }
 
@@ -435,133 +435,89 @@ int set_tmps (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int check_undeclareds (Stmt* s)
-{
-    int ftk (Env* env, Tk* tk, char* var_type) {
-        switch (tk->enu) {
-            case TK_UNIT:
-            case TX_NATIVE:
-            case TX_NUM:
-                return 1;
-
-            case TX_NULL:
-                var_type = "type";
-            case TX_USER:
-            case TX_VAR: {
-                Stmt* decl = env_id_to_stmt(env, tk->val.s, NULL);
-                if (decl == NULL) {
-                    char err[512];
-                    sprintf(err, "undeclared %s \"%s\"", var_type, tk->val.s);
-                    return err_message(tk, err);
-                }
-                return 1;
-            }
-
-            default:
-                assert(0 && "TODO");
-        }
-    }
-
-    int fe (Env* env, Expr* e) {
-        switch (e->sub) {
-            case EXPR_UNIT:
-            case EXPR_NATIVE:
-            case EXPR_INT:
-                return 1;
-
-#if XXXXXX
-            case EXPR_NULL:
-                return ftk(env, &e->tk, "type");
-
-            case EXPR_VAR:
-                return ftk(env, &e->tk, "variable");
-
-            case EXPR_TUPLE:
-                for (int i=0; i<e->Tuple.size; i++) {
-                    if (!ftk(env, e->Tuple.vec[i], "variable")) {
-                        return 0;
-                    }
-                }
-                return 1;
-
-            case EXPR_CALL:
-                return ftk(env, &e->Call.func, "function") &&
-                       ftk(env, &e->Call.arg,  "variable");
-
-            case EXPR_INDEX:
-                return ftk(env, &e->Index.val, "variable");
-
-            case EXPR_CONS: {
-                Stmt* user = env_sub_id_to_user_stmt(env, e->Cons.subtype.val.s);
-                if (user == NULL) {
-                    char err[512];
-                    sprintf(err, "undeclared subtype \"%s\"", e->Cons.subtype.val.s);
-                    return err_message(&e->Cons.subtype, err);
-                }
-                return ftk(env, &e->Cons.arg, "variable");
-            }
-
-            case EXPR_DISC:
-            case EXPR_PRED: {
-                Tk* val     = (e->sub == EXPR_DISC ? &e->Disc.val     : &e->Pred.val);
-                Tk* subtype = (e->sub == EXPR_DISC ? &e->Disc.subtype : &e->Pred.subtype);
-                if (subtype->enu == TX_NULL) {
-                    if (!ftk(env, subtype, "type")) {
-                        return 0;
-                    }
-                } else {
-                    Stmt* user = env_sub_id_to_user_stmt(env, subtype->val.s);
-                    if (user == NULL) {
-                        char err[512];
-                        sprintf(err, "undeclared subtype \"%s\"", subtype->val.s);
-                        return err_message(subtype, err);
-                    }
-                }
-                return ftk(env, val, "variable");
-            }
-#endif
-        }
-        assert(0);
-    }
-
-    int ftp (Type* tp, void* env) {
-        if (tp->sub == TYPE_USER) {
-            return ftk((Env*) env, &tp->User, "type");
-        }
-        return 1;
-    }
-
-    switch (s->sub) {
-        case STMT_NONE:
-        case STMT_SEQ:
-        case STMT_BLOCK:
-        case STMT_NATIVE:
-        case STMT_CALL:
+int ftk (Env* env, Tk* tk, char* var_type) {
+    switch (tk->enu) {
+        case TK_UNIT:
+        case TX_NATIVE:
+        case TX_NUM:
             return 1;
 
-        case STMT_VAR:
-            return (visit_type(s->Var.type,ftp,s->env) && fe(s->env,s->Var.init));
+        case TX_NULL:
+            var_type = "type";
+        case TX_USER:
+        case TX_VAR: {
+            Stmt* decl = env_id_to_stmt(env, tk->val.s, NULL);
+            if (decl == NULL) {
+                char err[512];
+                sprintf(err, "undeclared %s \"%s\"", var_type, tk->val.s);
+                return err_message(tk, err);
+            }
+            return 1;
+        }
 
-        case STMT_USER:
-            for (int i=0; i<s->User.size; i++) {
-                if (!visit_type(s->User.vec[i].type,ftp,s->env)) {
+        default:
+printf(">>> %d\n", tk->enu);
+            assert(0 && "TODO");
+    }
+}
+
+int check_decls_type (Env* env, Type* tp) {
+    if (tp->sub == TYPE_USER) {
+        return ftk(env, &tp->User, "type");
+    }
+    return VISIT_CONTINUE;
+}
+
+int check_decls_expr (Env* env, Expr* e) {
+    switch (e->sub) {
+        case EXPR_NULL:
+            return ftk(env, &e->Null, "type");
+        case EXPR_VAR:
+            return ftk(env, &e->Var, "variable");
+
+        case EXPR_CALL:
+            if (e->Call.func->sub != EXPR_VAR) {
+                return VISIT_CONTINUE;
+            }
+            if (!ftk(env, &e->Call.func->Var, "function")) {
+                return 0;
+            }
+            if (!visit_expr(env,e->Call.arg,check_decls_expr)) {
+                return 0;
+            }
+            return VISIT_BREAK;
+
+        case EXPR_CONS: {
+            Stmt* user = env_sub_id_to_user_stmt(env, e->Cons.subtype.val.s);
+            if (user == NULL) {
+                char err[512];
+                sprintf(err, "undeclared subtype \"%s\"", e->Cons.subtype.val.s);
+                return err_message(&e->Cons.subtype, err);
+            }
+            return VISIT_CONTINUE;
+        }
+
+        case EXPR_DISC:
+        case EXPR_PRED: {
+            Tk* subtype = (e->sub == EXPR_DISC ? &e->Disc.subtype : &e->Pred.subtype);
+            if (subtype->enu == TX_NULL) {
+                if (!ftk(env, subtype, "type")) {
                     return 0;
                 }
+            } else {
+                Stmt* user = env_sub_id_to_user_stmt(env, subtype->val.s);
+                if (user == NULL) {
+                    char err[512];
+                    sprintf(err, "undeclared subtype \"%s\"", subtype->val.s);
+                    return err_message(subtype, err);
+                }
             }
-            return 1;
+            return VISIT_CONTINUE;
+        }
 
-        case STMT_FUNC:
-            return visit_type(s->Func.type, ftp, s->env);
-
-#if XXXXXX
-        case STMT_IF:
-            return ftk(s->env, s->If.cond, "variable");
-
-        case STMT_RETURN:
-            return ftk(s->env, s->Return, "variable");
-#endif
+        default:
+            return VISIT_CONTINUE;
     }
-    assert(0);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -645,7 +601,7 @@ int check_types (Stmt* s) {
                     } else if (!type_is_sup_sub(func->Func.inp, arg)) {
                         char err[512];
                         sprintf(err, "invalid call to \"%s\" : type mismatch", e->Call.func->Var.val.s);
-                        return err_message(&e->Call.func, err);
+                        return err_message(&e->Call.func->Var, err);
                     }
                 }
                 break;
@@ -990,17 +946,17 @@ assert(0);
 ///////////////////////////////////////////////////////////////////////////////
 
 int env (Stmt* s) {
-    assert(visit_stmt(s,set_seqs));
-    assert(visit_stmt(s,set_envs));
+    assert(visit_stmt(s,set_seqs,NULL,NULL));
+    assert(visit_stmt(s,set_envs,NULL,NULL));
 //dump_stmt(s);
-    if (!visit_stmt(s,check_undeclareds)) {
+    if (!visit_stmt(s,NULL,check_decls_expr,check_decls_type)) {
         return 0;
     }
-    assert(visit_stmt(s,set_tmps));
-    if (!visit_stmt(s,check_types)) {
+    assert(visit_stmt(s,set_tmps,NULL,NULL));
+    if (!visit_stmt(s,check_types,NULL,NULL)) {
         return 0;
     }
-    if (!visit_stmt(s,check_owner_alias)) {
+    if (!visit_stmt(s,check_owner_alias,NULL,NULL)) {
         return 0;
     }
     return 1;
