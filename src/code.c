@@ -877,6 +877,10 @@ void code_stmt (Stmt* s) {
 
         case STMT_FUNC: {
             assert(s->Func.type->sub == TYPE_FUNC);
+
+            if (!strcmp(s->Func.id.val.s,"clone")) break;
+            if (!strcmp(s->Func.id.val.s,"show" )) break;
+
             visit_type(s->env, s->Func.type, ftp_tuples);
 
             // f: a -> User
