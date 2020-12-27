@@ -467,22 +467,6 @@ void fe (Env* env, Expr* e) {
 
         default:
             assert(0);
-#if XXXXXX
-        case EXPR_PRED: {
-            int isptr = env_tk_isptr(env, &e->Disc.val);
-            char* val = ftk(env, &e->Disc.val, 0);
-
-            fe_tmp_set(env, e, NULL);
-
-            int isnil = (e->Pred.subtype.enu == TX_NULL);
-            fprintf(ALL.out, "((%s%s == %s) ? (Bool){True,{._True=1}} : (Bool){False,{._False=1}});\n",
-                val,
-                (isnil ? "" : (isptr ? "->sub" : ".sub")),
-                (isnil ? "NULL" : e->Pred.subtype.val.s)
-            );
-            return;
-        }
-#endif
     }
     assert(0);
 }
@@ -634,6 +618,23 @@ void code_expr (Env* env, Expr* e) {
             code_expr(env, e->Index.val);
             fprintf(ALL.out, "._%d", e->Index.index.val.n);
             break;
+
+        case EXPR_PRED: {
+#if XXXXXX
+            int isptr = env_tk_isptr(env, &e->Disc.val);
+            char* val = ftk(env, &e->Disc.val, 0);
+            fe_tmp_set(env, e, NULL);
+#endif
+
+            int isnil = (e->Pred.subtype.enu == TX_NULL);
+            out("((");
+            code_expr(env, e->Pred.val);
+            fprintf (ALL.out,
+                ".sub == %s) ? (Bool){True} : (Bool){False})\n",
+                (isnil ? "NULL" : e->Pred.subtype.val.s)
+            );
+            break;
+        }
 
         default:
             assert(0);
@@ -903,6 +904,7 @@ void code_stmt (Stmt* s) {
         }
 
         case STMT_IF: {
+            code_expr_pre(s->env, s->If.tst);
             out("if (");
             code_expr(s->env, s->If.tst);
             out(".sub) {\n");

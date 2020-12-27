@@ -932,8 +932,6 @@ void t_all (void) {
         "var b : Bool = False()\n"
         "if b { } else { call show() }\n"
     ));
-puts("-=-=-=-");
-assert(0);
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
@@ -946,6 +944,7 @@ assert(0);
         "if b { call show() }\n"
     ));
     // PREDICATE
+puts("-=-=-=-");
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
@@ -953,6 +952,7 @@ assert(0);
         "var tst: Bool = b.True?\n"
         "if tst { call show () }\n"
     ));
+assert(0);
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
