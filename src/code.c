@@ -5,8 +5,6 @@
 
 #include "all.h"
 
-#if XXXXXX
-
 char* strupper (const char* src) {
     static char dst[256];
     assert(strlen(src) < sizeof(dst));
@@ -44,7 +42,7 @@ void to_ce_ (char* out, Type* tp) {
             strcat(out, "TUPLE");
             for (int i=0; i<tp->Tuple.size; i++) {
                 strcat(out, "__");
-                to_ce_(out, &tp->Tuple.vec[i]);
+                to_ce_(out, tp->Tuple.vec[i]);
             }
             break;
         case TYPE_FUNC:
@@ -90,7 +88,7 @@ void to_c_ (char* out, Env* env, Type* tp) {
             strcat(out, "TUPLE");
             for (int i=0; i<tp->Tuple.size; i++) {
                 strcat(out, "__");
-                to_ce_(out, &tp->Tuple.vec[i]);
+                to_ce_(out, tp->Tuple.vec[i]);
             }
             break;
         case TYPE_FUNC:
@@ -107,6 +105,8 @@ char* to_c (Env* env, Type* tp) {
     to_c_(out, env, tp);
     return out;
 }
+
+#if XXXXXX
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -532,12 +532,168 @@ void fe (Env* env, Expr* e) {
     }
     assert(0);
 }
+#endif
+
+void code_expr (Env* env, Expr* e) {
+    switch (e->sub) {
+        case EXPR_UNIT:
+            break;
+        case EXPR_NATIVE:
+            out(e->Native.val.s);
+            break;
+
+        case EXPR_VAR: {
+            Type* tp = env_expr_to_type(env, e);
+            if (tp->sub == TYPE_UNIT) {
+                break;
+            }
+            out(e->Var.val.s);
+            break;
+        }
+
+        case EXPR_CALL: {
+            if (e->Call.func->sub == EXPR_NATIVE) {
+                code_expr(env, e->Call.func);
+                out("(");
+                code_expr(env, e->Call.arg);
+                out(")");
+            } else {
+                assert(e->Call.func->sub == EXPR_VAR);
+
+                if (!strcmp(e->Call.func->Var.val.s,"show")) {
+                    out("show_");
+                    code_to_ce(env_expr_to_type(env, e->Call.arg));
+                } else {
+                    code_expr(env, e->Call.func);
+                }
+
+                out("(");
+                code_expr(env, e->Call.arg);
+                out(")");
+            }
+            break;
+        }
+
+        case EXPR_TUPLE:
+            out("((");
+            out(to_c(env, env_expr_to_type(env,e)));
+            out(") { ");
+            int first = 0;
+            for (int i=0; i<e->Tuple.size; i++) {
+                if (e->Tuple.vec[i]->sub != EXPR_UNIT) {
+                    if (first) {
+                        out(",");
+                    }
+                    first = 1;
+                    code_expr(env, e->Tuple.vec[i]);
+                }
+            }
+            out(" })");
+            break;
+
+        case EXPR_INDEX:
+            code_expr(env, e->Index.val);
+            fprintf(ALL.out, "._%d", e->Index.index.val.n);
+            break;
+
+        default:
+            assert(0);
+    }
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 
 void code_stmt (Stmt* s) {
     switch (s->sub) {
         case STMT_NONE:
+            break;
+
+        case STMT_SEQ:
+            code_stmt(s->Seq.s1);
+            code_stmt(s->Seq.s2);
+            break;
+
+        case STMT_CALL:
+            code_expr(s->env, s->Call);
+            out(";\n");
+            break;
+
+        case STMT_VAR: {
+            if (s->Var.type->sub == TYPE_UNIT) {
+                break;
+            }
+#if XXXXXX
+            visit_type(&s->Var.type, ftp, s->env);
+            fe(s->env, &s->Var.init);
+#endif
+
+            fprintf(ALL.out, "%s %s", to_c(s->env,s->Var.type), s->Var.id.val.s);
+
+            if (env_type_hasalloc(s->env,s->Var.type)) {
+                fprintf (ALL.out,
+                    " __attribute__ ((__cleanup__(%s_free)))",
+                    to_ce(s->Var.type)
+                );
+            }
+
+            out(" = ");
+            code_expr(env, s->Var.init);
+            out(";\n");
+            break;
+        }
+#if XXXXXX
+
+        case STMT_RETURN: {
+            char* ret = ftk(s->env, &s->Return, 1);
+            fprintf(ALL.out, "return %s;\n", ret);
+            break;
+        }
+
+        case STMT_IF: {
+            char* tst = ftk(s->env, &s->If.cond, 0); // Bool.sub returns 0 or 1
+            fprintf(ALL.out, "if (%s.sub) {\n", tst);
+            code_stmt(s->If.true);
+            out("} else {\n");
+            code_stmt(s->If.false);
+            out("}\n");
+            break;
+        }
+
+        case STMT_FUNC: {
+            if (s->Func.body == NULL) {
+                break;
+            }
+
+            assert(s->Func.type.sub == TYPE_FUNC);
+            visit_type(&s->Func.type, ftp, s->env);
+
+            // f: a -> User
+
+            char tp_out[256] = "";
+            to_c_(tp_out, s->env, s->Func.type.Func.out);
+
+            char tp_inp[256] = "";
+            to_c_(tp_inp, s->env, s->Func.type.Func.inp);
+
+            fprintf (ALL.out,
+                "%s %s (%s _arg_) {\n",
+                tp_out,
+                s->Func.id.val.s,
+                tp_inp
+            );
+            code_stmt(s->Func.body);
+            out("}\n");
+            break;
+        }
+
+        case STMT_BLOCK:
+            code_stmt(s->Block);
+            break;
+
+        case STMT_NATIVE:
+            if (!s->Native.ispre) {
+                out(s->Native.tk.val.s);
+            }
             break;
 
         case STMT_USER: {
@@ -744,93 +900,11 @@ void code_stmt (Stmt* s) {
             }
             break;
         }
-
-        case STMT_VAR: {
-            visit_type(&s->Var.type, ftp, s->env);
-            fe(s->env, &s->Var.init);
-
-            if (s->Var.init.sub==EXPR_CALL && s->Var.init.Call.isstmt) {
-                // no assignment (prevents x:void=_f())
-            } else {
-                fprintf(ALL.out, "%s %s", to_c(s->env,&s->Var.type), s->Var.id.val.s);
-
-                if (env_type_hasalloc(s->env, &s->Var.type)) {
-                    fprintf (ALL.out,
-                        " __attribute__ ((__cleanup__(%s_free)))",
-                        to_ce(&s->Var.type)
-                    );
-                }
-
-                fprintf(ALL.out, " = _tmp_%d;\n", s->Var.init.N);
-            }
-            break;
-        }
-
-        case STMT_RETURN: {
-            char* ret = ftk(s->env, &s->Return, 1);
-            fprintf(ALL.out, "return %s;\n", ret);
-            break;
-        }
-
-        case STMT_SEQ:
-            code_stmt(s->Seq.s1);
-            code_stmt(s->Seq.s2);
-            break;
-
-        case STMT_IF: {
-            char* tst = ftk(s->env, &s->If.cond, 0); // Bool.sub returns 0 or 1
-            fprintf(ALL.out, "if (%s.sub) {\n", tst);
-            code_stmt(s->If.true);
-            out("} else {\n");
-            code_stmt(s->If.false);
-            out("}\n");
-            break;
-        }
-
-        case STMT_FUNC: {
-            if (s->Func.body == NULL) {
-                break;
-            }
-
-            assert(s->Func.type.sub == TYPE_FUNC);
-            visit_type(&s->Func.type, ftp, s->env);
-
-            // f: a -> User
-
-            char tp_out[256] = "";
-            to_c_(tp_out, s->env, s->Func.type.Func.out);
-
-            char tp_inp[256] = "";
-            to_c_(tp_inp, s->env, s->Func.type.Func.inp);
-
-            fprintf (ALL.out,
-                "%s %s (%s _arg_) {\n",
-                tp_out,
-                s->Func.id.val.s,
-                tp_inp
-            );
-            code_stmt(s->Func.body);
-            out("}\n");
-            break;
-        }
-
-        case STMT_BLOCK:
-            code_stmt(s->Block);
-            break;
-
-        case STMT_NATIVE:
-            if (!s->Native.ispre) {
-                out(s->Native.tk.val.s);
-            }
-            break;
+#endif
     }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-
-void code_expr (Expr* e) {
-    fe(NULL, e);
-}
 
 int native_pre (Stmt* s) {
     if (s->sub==STMT_NATIVE && s->Native.ispre) {
@@ -846,10 +920,10 @@ void code (Stmt* s) {
         "#include <stdio.h>\n"
         "#include <stdlib.h>\n"
         "typedef int Int;\n"
-        "#define show_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
-        "#define show_Unit(x)  (show_Unit_(x), puts(\"\"))\n"
-        "#define show_Int_(x)  printf(\"%d\",x)\n"
-        "#define show_Int(x)   (show_Int_(x), puts(\"\"))\n"
+        "#define show_Unit_() printf(\"()\")\n"
+        "#define show_Unit()  (show_Unit_(), puts(\"\"))\n"
+        "#define show_Int_(x) printf(\"%d\",x)\n"
+        "#define show_Int(x)  (show_Int_(x), puts(\"\"))\n"
         "int main (void) {\n"
         "\n"
     );
@@ -857,5 +931,3 @@ void code (Stmt* s) {
     fprintf(ALL.out, "\n");
     out("}\n");
 }
-
-#endif

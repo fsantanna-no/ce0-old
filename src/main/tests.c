@@ -452,15 +452,14 @@ void t_parser_stmt (void) {
         assert(parser_stmt(&s));
         assert(s->sub == STMT_VAR);
         assert(s->Var.id.enu == TX_VAR);
-        assert(s->Var.type.sub == TYPE_TUPLE);
+        assert(s->Var.type->sub == TYPE_TUPLE);
         fclose(ALL.inp);
     }
-#if XXXXXX
     {
         all_init(NULL, stropen("r", 0, "var a : _char = ()"));
         Stmt* s;
         assert(parser_stmt(&s));
-        assert(s->Var.type.sub == TYPE_NATIVE);
+        assert(s->Var.type->sub == TYPE_NATIVE);
         fclose(ALL.inp);
     }
     // STMT_TYPE
@@ -492,7 +491,7 @@ void t_parser_stmt (void) {
         assert(s->sub == STMT_USER);
         assert(!strcmp(s->User.id.val.s, "Bool"));
         assert(s->User.size == 2);
-        assert(s->User.vec[0].type.sub == TYPE_UNIT);
+        assert(s->User.vec[0].type->sub == TYPE_UNIT);
         assert(!strcmp(s->User.vec[1].id.val.s, "True"));
         fclose(ALL.inp);
     }
@@ -508,18 +507,18 @@ void t_parser_stmt (void) {
         all_init(NULL, stropen("r", 0, "call f()"));
         Stmt* s;
         assert(parser_stmt(&s));
-        assert(s->sub == STMT_VAR);
-        assert(s->Var.init.sub == EXPR_CALL);
-        assert(s->Var.init.Call.func.enu == TX_VAR);
+        assert(s->sub == STMT_CALL);
+        assert(s->Call->Call.func->sub == EXPR_VAR);
+        assert(s->Call->Call.arg->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "call _printf()"));
         Stmt* s;
         assert(parser_stmt(&s));
-        assert(s->sub == STMT_VAR);
-        assert(s->Var.init.sub == EXPR_CALL);
-        assert(s->Var.init.Call.func.enu == TX_NATIVE);
+        assert(s->sub == STMT_CALL);
+        assert(s->Call->Call.func->sub == EXPR_NATIVE);
+        assert(s->Call->Call.arg->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
     {
@@ -527,8 +526,8 @@ void t_parser_stmt (void) {
         Stmt* s;
         assert(parser_stmts(TK_EOF,&s));
         assert(s->sub == STMT_SEQ);
-        assert(s->Seq.s1->sub == STMT_VAR);
-        assert(s->Seq.s1->Var.init.sub == EXPR_CALL);
+        assert(s->Seq.s1->sub == STMT_CALL);
+        assert(s->Seq.s2->sub == STMT_CALL);
         fclose(ALL.inp);
     }
     {
@@ -544,10 +543,10 @@ void t_parser_stmt (void) {
         Stmt* s;
         assert(parser_stmt(&s));
         assert(s->sub == STMT_IF);
-        assert(s->If.cond.enu == TK_UNIT);
+        assert(s->If.cond->sub == EXPR_UNIT);
         assert(s->If.true->sub==STMT_BLOCK && s->If.false->sub==STMT_BLOCK);
         assert(s->If.true->Block->sub==STMT_NONE);
-        assert(s->If.false->Block->sub==STMT_VAR);
+        assert(s->If.false->Block->sub==STMT_CALL);
         fclose(ALL.inp);
     }
     {
@@ -564,37 +563,48 @@ void t_parser_stmt (void) {
         Stmt* s;
         assert(parser_stmt(&s));
         assert(s->sub == STMT_FUNC);
-        assert(s->Func.type.sub == TYPE_FUNC);
+        assert(s->Func.type->sub == TYPE_FUNC);
         assert(!strcmp(s->Func.id.val.s, "f"));
         assert(s->Func.body->sub == STMT_BLOCK);
         assert(s->Func.body->Block->sub == STMT_SEQ);
         assert(s->Func.body->Block->Seq.s1->sub == STMT_VAR);
         assert(s->Func.body->Block->Seq.s2->sub == STMT_BLOCK);
         assert(s->Func.body->Block->Seq.s2->Block->sub == STMT_RETURN);
-        assert(s->Func.body->Block->Seq.s2->Block->Return.enu == TK_UNIT);
+        assert(s->Func.body->Block->Seq.s2->Block->Return->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
-#endif
 }
 
 void t_code (void) {
-#if TODO-resugar
     // EXPR_UNIT
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr e = { _N_++, EXPR_UNIT, .Unit={TK_UNIT,{},0,0} };
-        code_expr(&e);
+        Expr e = { ALL.nn++, EXPR_UNIT, .Unit={TK_UNIT,{},0,0} };
+        code_expr(NULL, &e);
         fclose(ALL.out);
-        assert(!strcmp(out,"1"));
+        assert(!strcmp(out,""));
     }
     // EXPR_VAR
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr e = { _N_++, EXPR_VAR, .tk={TX_VAR,{},0,0} };
-            strcpy(e.tk.val.s, "xxx");
-        code_expr(&e);
+        Type tp = { TYPE_UNIT, 0 };
+        Stmt var = { ALL.nn++, STMT_VAR, .Var={{TX_VAR,{.s="xxx"},0,0},&tp,NULL} };
+        Env env = { &var, NULL };
+        Expr e = { ALL.nn++, EXPR_VAR, .Var={TX_VAR,{.s="xxx"},0,0} };
+        code_expr(&env, &e);
+        fclose(ALL.out);
+        assert(!strcmp(out,""));
+    }
+    {
+        char out[256];
+        all_init(stropen("w",sizeof(out),out), NULL);
+        Type tp = { TYPE_NATIVE, 0 };
+        Stmt var = { ALL.nn++, STMT_VAR, .Var={{TX_VAR,{.s="xxx"},0,0},&tp,NULL} };
+        Env env = { &var, NULL };
+        Expr e = { ALL.nn++, EXPR_VAR, .Var={TX_VAR,{.s="xxx"},0,0} };
+        code_expr(&env, &e);
         fclose(ALL.out);
         assert(!strcmp(out,"xxx"));
     }
@@ -602,9 +612,9 @@ void t_code (void) {
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr e = { _N_++, EXPR_NATIVE, .tk={TX_NATIVE,{},0,0} };
-            strcpy(e.tk.val.s, "printf");
-        code_expr(&e);
+        Expr e = { ALL.nn++, EXPR_NATIVE, .Native={TX_NATIVE,{},0,0} };
+            strcpy(e.Native.val.s, "printf");
+        code_expr(NULL, &e);
         fclose(ALL.out);
         assert(!strcmp(out,"printf"));
     }
@@ -612,47 +622,58 @@ void t_code (void) {
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
-        Tk es[2] = {{TK_UNIT,{},0,0}, {TK_UNIT,{},0,0}};
-        Expr e = { _N_++, EXPR_TUPLE, .Tuple={2,es} };
-        code_expr(&e);
+        Expr unit = { ALL.nn++, EXPR_UNIT, .Unit={TK_UNIT,{},0,0} };
+        Expr* es[2] = {&unit, &unit};
+        Expr e = { ALL.nn++, EXPR_TUPLE, .Tuple={2,es} };
+        code_expr(NULL, &e);
         fclose(ALL.out);
-        assert(!strcmp(out,"((TUPLE__Unit__Unit) { 1,1 })"));
+        assert(!strcmp(out,"((TUPLE__Unit__Unit) {  })"));
     }
     // EXPR_INDEX
     {
         char out[256];
+        Type tp = { TYPE_NATIVE, 0 };
+        Stmt var = { ALL.nn++, STMT_VAR, .Var={{TX_VAR,{.s="x"},0,0},&tp,NULL} };
+        Env env = { &var, NULL };
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr e = { _N_++, EXPR_INDEX, .Index={{TX_VAR,{},0,0},{TX_NUM,{2},0,0}} };
-        code_expr(&e);
+        Expr val = { ALL.nn++, EXPR_VAR, .Var={TX_VAR,{.s="x"},0,0} };
+        Expr e = { ALL.nn++, EXPR_INDEX, .Index={&val,{TX_NUM,{2},0,0}} };
+        code_expr(&env, &e);
         fclose(ALL.out);
-        assert(!strcmp(out,"((TUPLE__Unit__Unit) { 1,1 })._2"));
+        assert(!strcmp(out,"x._2"));
     }
     {
         char out[8192] = "";
         all_init (
             stropen("w", sizeof(out), out),
-            stropen("r", 0, "var a : () = () ; call show a")
+            stropen("r", 0, "var a : () = () ; call _show a")
         );
         Stmt* s;
         assert(parser_stmts(TK_EOF,&s));
-        assert(s.sub==STMT_SEQ && s.Seq.vec[1].sub==STMT_CALL);
-        assert(env(&s));
-        code(&s);
+        assert(s->sub == STMT_SEQ);
+        assert(s->Seq.s1->sub == STMT_VAR);
+        assert(s->Seq.s2->sub == STMT_CALL);
+        assert(env(s));
+        code(s);
         fclose(ALL.out);
         char* ret =
             "#include <assert.h>\n"
             "#include <stdio.h>\n"
             "#include <stdlib.h>\n"
-            "#define show_Unit_(x) (assert(((long)(x))==1), printf(\"()\"))\n"
-            "#define show_Unit(x)  (show_Unit_(x), puts(\"\"))\n"
+            "typedef int Int;\n"
+            "#define show_Unit_() printf(\"()\")\n"
+            "#define show_Unit()  (show_Unit_(), puts(\"\"))\n"
+            "#define show_Int_(x) printf(\"%d\",x)\n"
+            "#define show_Int(x)  (show_Int_(x), puts(\"\"))\n"
             "int main (void) {\n"
             "\n"
-            "int a = 1;\n"
-            "show_Unit(a);\n"
+            "show();\n"
             "\n"
             "}\n";
         assert(!strcmp(out,ret));
     }
+assert(0);
+#if TODO-resugar
     // STMT_TYPE
     {
         char out[8192] = "";

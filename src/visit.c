@@ -22,7 +22,7 @@ int visit_type (Type* tp, F_Type ft, void* arg) {
             return 1;
         case TYPE_TUPLE:
             for (int i=0; i<tp->Tuple.size; i++) {
-                if (!visit_type(&tp->Tuple.vec[i],ft,arg)) {
+                if (!visit_type(tp->Tuple.vec[i],ft,arg)) {
                     return 0;
                 }
             }
@@ -53,6 +53,7 @@ int visit_stmt (Stmt* s, F_Stmt fs) {
         case STMT_USER:
         case STMT_VAR:
         case STMT_NATIVE:
+        case STMT_CALL:
             return 1;
 
         case STMT_SEQ:

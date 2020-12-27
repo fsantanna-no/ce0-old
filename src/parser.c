@@ -412,6 +412,10 @@ int parser_stmt (Stmt** ret) {
             return 0;
         }
         *s = (Stmt) { ALL.nn++, STMT_CALL, NULL, {NULL,NULL}, tk, .Call=e };
+        if (e->sub != EXPR_CALL) {
+            ALL.tk1 = ALL.tk0;  // workaround to fail before 1st expression
+            return err_expected("call expression");
+        }
 
     // STMT_IF
     } else if (accept(TK_IF)) {         // if
@@ -520,6 +524,12 @@ Stmt* enseq (Stmt* s1, Stmt* s2) {
         return s2;
     } else if (s2 == NULL) {
         return s1;
+    } else if (s1->sub == STMT_NONE) {
+        free(s1);
+        return s2;
+    } else if (s2->sub == STMT_NONE) {
+        free(s2);
+        return s1;
     } else {
         Stmt* ret = malloc(sizeof(Stmt));
         assert(ret != NULL);
@@ -529,7 +539,11 @@ Stmt* enseq (Stmt* s1, Stmt* s2) {
 }
 
 int parser_stmts (TK opt, Stmt** ret) {
-    *ret = NULL;
+    Stmt* none = malloc(sizeof(Stmt));
+    assert(none != NULL);
+    *none = (Stmt) { ALL.nn++, STMT_NONE, NULL, {NULL,NULL} };
+    *ret = none;
+
     while (1) {
         accept(';');    // optional
         Stmt* p;

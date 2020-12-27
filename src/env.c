@@ -87,31 +87,14 @@ Type* env_tk_to_type (Env* env, Tk* tk) { // static returns use env=NULL b/c no 
 #if XXXXXX
     switch (tk->enu) {
         case TK_UNIT: {
-            static Type tp = { TYPE_UNIT, 0 };
-            return &tp;
         }
         case TX_NATIVE: {
-            Type* tp = malloc(sizeof(Type));
-            assert(tp != NULL);
-            *tp = (Type) { TYPE_NATIVE, 0, .Native=*tk };
-            return tp;
         }
         case TX_VAR: {
-            Stmt* s = env_id_to_stmt(env, tk->val.s, NULL);
-            assert(s != NULL);
-            return (s->sub == STMT_VAR) ? &s->Var.type : &s->Func.type;
         }
         case TX_NULL: {
-            Stmt* user = env_id_to_stmt(env, tk->val.s, NULL);
-            assert(user != NULL);
-            Type* tp = malloc(sizeof(Type));
-            assert(tp != NULL);
-            *tp = (Type){ TYPE_USER, 0, .User=user->User.id };
-            return tp;
         }
         case TX_NUM: {
-            static Type tp = { TYPE_USER, 0, .User={TX_USER,{.s="Int"},0,0} };
-            return &tp;
         }
         default:
 //printf(">>> %d\n", tk->enu);
@@ -120,22 +103,45 @@ Type* env_tk_to_type (Env* env, Tk* tk) { // static returns use env=NULL b/c no 
 #endif
 }
 
-Type* env_expr_to_type_ (Env* env, Expr* e) {
-    assert(0);
-#if XXXXXX
+Type* env_expr_to_type (Env* env, Expr* e) {
     switch (e->sub) {
-        case EXPR_UNIT:
-        case EXPR_NATIVE:
-        case EXPR_VAR:
-        case EXPR_NULL:
-        case EXPR_INT:
-            return env_tk_to_type(env, &e->tk);
+        case EXPR_UNIT: {
+            static Type tp = { TYPE_UNIT, 0 };
+            return &tp;
+        }
+
+        case EXPR_NATIVE: {
+            Type* tp = malloc(sizeof(Type));
+            assert(tp != NULL);
+            *tp = (Type) { TYPE_NATIVE, 0, .Native=e->Native };
+            return tp;
+        }
+
+        case EXPR_VAR: {
+            Stmt* s = env_id_to_stmt(env, e->Var.val.s, NULL);
+            assert(s != NULL);
+            return (s->sub == STMT_VAR) ? s->Var.type : s->Func.type;
+        }
+
+        case EXPR_NULL: {
+            Stmt* user = env_id_to_stmt(env, e->Null.val.s, NULL);
+            assert(user != NULL);
+            Type* tp = malloc(sizeof(Type));
+            assert(tp != NULL);
+            *tp = (Type){ TYPE_USER, 0, .User=user->User.id };
+            return tp;
+        }
+
+        case EXPR_INT: {
+            static Type tp = { TYPE_USER, 0, .User={TX_USER,{.s="Int"},0,0} };
+            return &tp;
+        }
 
         case EXPR_TUPLE: {
-            Type* vec = malloc(e->Tuple.size*sizeof(Type));
+            Type** vec = malloc(e->Tuple.size*sizeof(Type));
             assert(vec != NULL);
             for (int i=0; i<e->Tuple.size; i++) {
-                vec[i] = *env_expr_to_type(env, &e->Tuple.vec[i]);
+                vec[i] = env_expr_to_type(env, e->Tuple.vec[i]);
             }
             Type* tp = malloc(sizeof(Type));
             assert(tp != NULL);
@@ -143,6 +149,7 @@ Type* env_expr_to_type_ (Env* env, Expr* e) {
             return tp;
         }
 
+#if 0
         case EXPR_CONS: {
             Stmt* user = env_sub_id_to_user_stmt(env, e->Cons.subtype.val.s);
             assert(user != NULL);
@@ -224,24 +231,11 @@ Type* env_expr_to_type_ (Env* env, Expr* e) {
 
         case EXPR_PRED:
             return &Type_Bool;
+#endif
+        default:
+            printf(">>> %d\n", e->sub);
     }
     assert(0 && "bug found");
-#endif
-}
-
-Type* env_expr_to_type (Env* env, Expr* e) {
-    assert(0);
-#if XXXXXX
-    Type* ret = env_expr_to_type_(env,e);
-    if (e->isalias && !ret->isalias) {
-        Type* new = malloc(sizeof(Type));
-        assert(new != NULL);
-        *new = *ret;
-        new->isalias = 1;
-        ret = new;
-    }
-    return ret;
-#endif
 }
 
 //  type Bool { ... }
@@ -542,6 +536,7 @@ int check_undeclareds (Stmt* s)
         case STMT_SEQ:
         case STMT_BLOCK:
         case STMT_NATIVE:
+        case STMT_CALL:
             return 1;
 
         case STMT_VAR:
@@ -639,23 +634,20 @@ int check_types (Stmt* s) {
                 Type* func = env_expr_to_type(env, e->Call.func);
                 Type* arg  = env_expr_to_type(env, e->Call.arg);
 
-                assert(0);
-#if XXXXXX
-                if (e->Call.func.enu == TX_NATIVE) {
+                if (e->Call.func->sub == EXPR_NATIVE) {
                     TODO("TODO [check_types]: _f(...)\n");
                 } else {
-                    assert(e->Call.func.enu == TX_VAR);
-                    if (!strcmp(e->Call.func.val.s,"clone")) {
+                    assert(e->Call.func->sub == EXPR_VAR);
+                    if (!strcmp(e->Call.func->Var.val.s,"clone")) {
                         TODO("TODO [check_types]: clone(...)\n");
-                    } else if (!strcmp(e->Call.func.val.s,"show")) {
+                    } else if (!strcmp(e->Call.func->Var.val.s,"show")) {
                         TODO("TODO [check_types]: show(...)\n");
                     } else if (!type_is_sup_sub(func->Func.inp, arg)) {
                         char err[512];
-                        sprintf(err, "invalid call to \"%s\" : type mismatch", e->Call.func.val.s);
+                        sprintf(err, "invalid call to \"%s\" : type mismatch", e->Call.func->Var.val.s);
                         return err_message(&e->Call.func, err);
                     }
                 }
-#endif
                 break;
             }
 
@@ -680,6 +672,9 @@ int check_types (Stmt* s) {
         case STMT_BLOCK:
         case STMT_NATIVE:
             return 1;
+
+        case STMT_CALL:
+            return fe(s->env, s->Call);
 
         case STMT_VAR:
             if (!fe(s->env, s->Var.init)) {
