@@ -100,6 +100,8 @@ int visit_expr (Env* env, Expr* e, F_Expr fe) {
     switch (e->sub) {
         case EXPR_UNIT:
         case EXPR_NATIVE:
+        case EXPR_NULL:
+        case EXPR_INT:
         case EXPR_VAR:
             return 1;
         case EXPR_TUPLE:

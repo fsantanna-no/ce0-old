@@ -38,9 +38,7 @@ int all (const char* xp, char* src) {
     dump_stmt(s);
 #endif
 
-#if XXXXXX
     code(s);
-#endif
     fclose(ALL.out);
 
 #ifdef DEBUG
@@ -747,7 +745,6 @@ void t_all (void) {
         "(ln 1, col 1): expected statement : have \"/\"",
         "//call show()\n"
     ));
-assert(0);
     assert(all(
         "(ln 1, col 27): undeclared variable \"x\"",
         "func f: () -> () { return x }\n"
@@ -785,12 +782,14 @@ assert(0);
         "   putchar('A');\n"
         "}\n"
     ));
+puts("-=-=-=-");
     assert(all(
         "A",
         "native _{\n"
         "   putchar('A');\n"
         "}\n"
     ));
+assert(0);
     assert(all(
         "1\n",
         "var x: Int = _abs(1)\n"

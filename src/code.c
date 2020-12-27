@@ -537,6 +537,11 @@ void code_expr (Env* env, Expr* e) {
     switch (e->sub) {
         case EXPR_UNIT:
             break;
+
+        case EXPR_INT:
+            fprintf(ALL.out, "%d", e->Int.val.n);
+            break;
+
         case EXPR_NATIVE:
             out(e->Native.val.s);
             break;

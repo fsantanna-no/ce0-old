@@ -88,6 +88,11 @@ void dump_stmt (Stmt* s) {
     switch (s->sub) {
         case STMT_NONE:
             break;
+        case STMT_CALL:
+            dump_spc();
+            dump_expr(s->Call);
+            puts("");
+            break;
         case STMT_VAR:
             dump_spc();
             printf("var %s: ", s->Var.id.val.s);

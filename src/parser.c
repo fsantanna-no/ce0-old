@@ -571,6 +571,7 @@ int parser (Stmt** ret) {
         static Type tp_alias = { TYPE_AUTO, 1 };
         static Type tp_clone = { TYPE_FUNC, .Func={&tp_alias,&tp_any} };
         static Type tp_show  = { TYPE_FUNC, .Func={&tp_alias,&Type_Unit} };
+        static Stmt none     = { 0, STMT_NONE };
 
         Stmt* Int = malloc(sizeof(Stmt));
         assert(Int != NULL);
@@ -585,11 +586,7 @@ int parser (Stmt** ret) {
         assert(clone != NULL);
         *clone = (Stmt) {   // clone ()
             0, STMT_FUNC, NULL, {NULL,NULL},
-            .Func = {
-                { TX_VAR,{.s="clone"},0,ALL.nn++ },
-                &tp_clone,
-                NULL    // TODO: STMT_NONE
-            }
+            .Func = { {TX_VAR,{.s="clone"},0,ALL.nn++}, &tp_clone, &none }
         };
 
         *ret = enseq(*ret, clone);
@@ -598,11 +595,7 @@ int parser (Stmt** ret) {
         assert(show != NULL);
         *show = (Stmt) {   // show ()
             0, STMT_FUNC, NULL, {NULL,NULL},
-            .Func = {
-                { TX_VAR,{.s="show"},0,ALL.nn++ },
-                &tp_show,
-                NULL    // TODO: STMT_NONE
-            }
+            .Func = { {TX_VAR,{.s="show"},0,ALL.nn++}, &tp_show, &none }
         };
 
         *ret = enseq(*ret, show);
