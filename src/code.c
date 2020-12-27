@@ -557,10 +557,10 @@ int code_expr_pre (Env* env, Expr* e) {
     return VISIT_CONTINUE;
 }
 
-int code_expr (Env* env, Expr* e) {
+void code_expr (Env* env, Expr* e) {
     Type* tp = env_expr_to_type(env, e);
     if (tp->sub==TYPE_UNIT && e->sub!=EXPR_CALL) {
-        return 1;     // no code to generate
+        return;     // no code to generate
     }
 
     switch (e->sub) {
@@ -616,15 +616,16 @@ int code_expr (Env* env, Expr* e) {
             out("((");
             out(to_c(env, env_expr_to_type(env,e)));
             out(") { ");
-            int first = 0;
+            int comma = 0;
             for (int i=0; i<e->Tuple.size; i++) {
-                int isunit = code_expr(env, e->Tuple.vec[i]);
-                if (!isunit) {
-                    if (first) {
+                Type* tp = env_expr_to_type(env, e->Tuple.vec[i]);
+                if (tp->sub != TYPE_UNIT) {
+                    if (comma) {
                         out(",");
                     }
-                    first = 1;
+                    comma = 1;
                 }
+                code_expr(env, e->Tuple.vec[i]);
             }
             out(" })");
             break;
@@ -637,7 +638,6 @@ int code_expr (Env* env, Expr* e) {
         default:
             assert(0);
     }
-    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -860,7 +860,7 @@ void code_stmt (Stmt* s) {
             break;
 
         case STMT_CALL:
-            code_expr_pre(s->env, s->Call);
+            visit_expr(s->env, s->Call, code_expr_pre);
             code_expr(s->env, s->Call);
             out(";\n");
             break;
@@ -877,7 +877,7 @@ void code_stmt (Stmt* s) {
                 break;
             }
             visit_type(s->env, s->Var.type, ftp_tuples);
-            code_expr_pre(s->env, s->Var.init);
+            visit_expr(s->env, s->Var.init, code_expr_pre);
 
             fprintf(ALL.out, "%s %s", to_c(s->env,s->Var.type), s->Var.id.val.s);
 
@@ -895,7 +895,7 @@ void code_stmt (Stmt* s) {
         }
 
         case STMT_RETURN: {
-            code_expr_pre(s->env, s->Return);
+            visit_expr(s->env, s->Return, code_expr_pre);
             out("return");
             code_expr(s->env, s->Return);
             out(";\n");
