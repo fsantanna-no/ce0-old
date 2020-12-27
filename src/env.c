@@ -666,7 +666,7 @@ int check_types_stmt (Stmt* s) {
             return 1;
 
         case STMT_IF:
-            if (!type_is_sup_sub(&Type_Bool, env_expr_to_type(s->env,s->If.cond))) {
+            if (!type_is_sup_sub(&Type_Bool, env_expr_to_type(s->env,s->If.tst))) {
                 return err_message(&s->tk, "invalid condition : type mismatch");
             }
             return 1;

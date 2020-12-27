@@ -903,8 +903,9 @@ void code_stmt (Stmt* s) {
         }
 
         case STMT_IF: {
-            char* tst = ftk(s->env, &s->If.cond, 0); // Bool.sub returns 0 or 1
-            fprintf(ALL.out, "if (%s.sub) {\n", tst);
+            out("if (");
+            code_expr(s->env, s->If.tst);
+            out(".sub) {\n");
             code_stmt(s->If.true);
             out("} else {\n");
             code_stmt(s->If.false);

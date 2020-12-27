@@ -75,7 +75,7 @@ int visit_stmt (Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
             return visit_stmt(s->Seq.s1,fs,fe,ft) && visit_stmt(s->Seq.s2,fs,fe,ft);
 
         case STMT_IF:
-            return visit_expr(s->env,s->If.cond,fe) && visit_stmt(s->If.true,fs,fe,ft) && visit_stmt(s->If.false,fs,fe,ft);
+            return visit_expr(s->env,s->If.tst,fe) && visit_stmt(s->If.true,fs,fe,ft) && visit_stmt(s->If.false,fs,fe,ft);
 
         case STMT_FUNC:
             return visit_type(s->env,s->Func.type,ft) && visit_stmt(s->Func.body,fs,fe,ft);

@@ -541,7 +541,7 @@ void t_parser_stmt (void) {
         Stmt* s;
         assert(parser_stmt(&s));
         assert(s->sub == STMT_IF);
-        assert(s->If.cond->sub == EXPR_UNIT);
+        assert(s->If.tst->sub == EXPR_UNIT);
         assert(s->If.true->sub==STMT_BLOCK && s->If.false->sub==STMT_BLOCK);
         assert(s->If.true->Block->sub==STMT_NONE);
         assert(s->If.false->Block->sub==STMT_CALL);
@@ -918,7 +918,6 @@ void t_all (void) {
         "var x: Xx = Xx1 a\n"
         "call show x\n"
     ));
-puts("-=-=-=-");
     assert(all(
         "Xx1 (Yy1,Zz1)\n",
         "type Zz { Zz1:() }\n"
@@ -926,7 +925,6 @@ puts("-=-=-=-");
         "type Xx { Xx1:(Yy,Zz) }\n"
         "call show (Xx1 (Yy1,Zz1))\n"
     ));
-assert(0);
     // IF
     assert(all(
         "()\n",
@@ -934,6 +932,8 @@ assert(0);
         "var b : Bool = False()\n"
         "if b { } else { call show() }\n"
     ));
+puts("-=-=-=-");
+assert(0);
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"

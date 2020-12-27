@@ -131,7 +131,7 @@ typedef struct Stmt {
             struct Stmt* s2;
         } Seq;
         struct {            // STMT_IF
-            Expr* cond;                  // if (tst)
+            Expr* tst;                  // if (tst)
             struct Stmt* true;          // { ... }
             struct Stmt* false;         // else { ... }
         } If;
