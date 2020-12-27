@@ -705,8 +705,6 @@ void t_code (void) {
             "struct Bool {\n"
             "    BOOL sub;\n"
             "    union {\n"
-            "        int _False;\n"
-            "        int _True;\n"
             "    };\n"
             "};\n"
             "\n"
@@ -808,12 +806,10 @@ void t_all (void) {
         "var y: () = x.1\n"
         "call _show_Unit y\n"
     ));
-puts("-=-=-=-");
     assert(all(
         "()\n",
         "call show (((),()).1)\n"
     ));
-assert(0);
     assert(all(
         "()\n",
         "var v: ((),()) = ((),())\n"
@@ -849,12 +845,14 @@ assert(0);
         "call show x\n"
     ));
     // TYPE
+puts("-=-=-=-");
     assert(all(
         "False\n",
         "type Bool { False: () ; True: () }\n"
         "var b : Bool = False()\n"
         "call show b\n"
     ));
+assert(0);
     assert(all(
         "Zz1\n",
         "type Zz { Zz1:() }\n"

@@ -67,10 +67,8 @@ void to_c_ (char* out, Env* env, Type* tp) {
     int isrec = 0;
     switch (tp->sub) {
         case TYPE_AUTO:
-            assert(0);
         case TYPE_UNIT:
-            strcat(out, "int");
-            break;
+            assert(0);
         case TYPE_NATIVE:
             strcat(out, "typeof(");
             strcat(out, tp->Native.val.s);
@@ -217,8 +215,13 @@ int ftp_tuples (Env* env, Type* tp) {
     // STRUCT
     out("typedef struct {\n");
     for (int i=0; i<tp->Tuple.size; i++) {
-        out(to_c(env,tp->Tuple.vec[i]));
-        fprintf(ALL.out, " _%d;\n", i+1);
+        Type* sub = tp->Tuple.vec[i];
+        if (sub->sub == TYPE_UNIT) {
+            // do not generate anything
+        } else {
+            out(to_c(env,tp->Tuple.vec[i]));
+            fprintf(ALL.out, " _%d;\n", i+1);
+        }
     }
     out("} ");
     out(tp_ce);
@@ -679,11 +682,15 @@ void code_user (Stmt* s) {
         );
         for (int i=0; i<s->User.size; i++) {
             Sub* sub = &s->User.vec[i];
-            out("        ");
-            out(to_c(s->env, sub->type));
-            out(" _");
-            out(sub->id.val.s);      // int _True
-            out(";\n");
+            if (sub->type->sub == TYPE_UNIT) {
+                // do not generate anything
+            } else {
+                out("        ");
+                out(to_c(s->env, sub->type));
+                out(" _");
+                out(sub->id.val.s);      // int _True
+                out(";\n");
+            }
         }
         fprintf(ALL.out,
             "    };\n"
