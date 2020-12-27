@@ -542,8 +542,8 @@ int code_expr_pre (Env* env, Expr* e) {
 }
 
 void code_expr (Env* env, Expr* e) {
-    Type* tp = env_expr_to_type(env, e);
-    if (tp->sub==TYPE_UNIT && e->sub!=EXPR_CALL) {
+    Type* TP = env_expr_to_type(env, e);
+    if (TP->sub==TYPE_UNIT && e->sub!=EXPR_CALL) {
         return;     // no code to generate
     }
 
@@ -561,6 +561,12 @@ void code_expr (Env* env, Expr* e) {
 
         case EXPR_VAR: {
             out(e->Var.val.s);
+            break;
+        }
+
+        case EXPR_ALIAS: {
+            out("&");
+            code_expr(env, e->Alias);
             break;
         }
 
@@ -598,7 +604,7 @@ void code_expr (Env* env, Expr* e) {
 
         case EXPR_TUPLE:
             out("((");
-            out(to_c(env, env_expr_to_type(env,e)));
+            out(to_c(env, TP));
             out(") { ");
             int comma = 0;
             for (int i=0; i<e->Tuple.size; i++) {
@@ -627,10 +633,13 @@ void code_expr (Env* env, Expr* e) {
 #endif
 
             int isnil = (e->Pred.subtype.enu == TX_NULL);
+            Type* tp = env_expr_to_type(env, e->Disc.val);
+
             out("((");
             code_expr(env, e->Pred.val);
             fprintf (ALL.out,
-                ".sub == %s) ? (Bool){True} : (Bool){False})\n",
+                "%ssub == %s) ? (Bool){True} : (Bool){False})\n",
+                (tp->isalias ? "->" : "."),
                 (isnil ? "NULL" : e->Pred.subtype.val.s)
             );
             break;

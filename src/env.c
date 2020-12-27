@@ -148,6 +148,16 @@ Type* env_expr_to_type (Env* env, Expr* e) {
             return &tp;
         }
 
+        case EXPR_ALIAS: {
+            Type* tp = env_expr_to_type(env, e->Alias);
+            assert(tp != NULL);
+            Type* ret = malloc(sizeof(Expr));
+            assert(ret != NULL);
+            *ret = *tp;
+            ret->isalias = 1;
+            return ret;
+        }
+
         case EXPR_TUPLE: {
             Type** vec = malloc(e->Tuple.size*sizeof(Type));
             assert(vec != NULL);
@@ -246,9 +256,6 @@ Type* env_expr_to_type (Env* env, Expr* e) {
             }
             assert(0 && "bug found");
         }
-
-        default:
-            printf(">>> %d\n", e->sub);
     }
     assert(0 && "bug found");
 }
@@ -594,17 +601,13 @@ int check_types_expr (Env* env, Expr* e) {
         case EXPR_TUPLE:
         case EXPR_NULL:
         case EXPR_INT:
-            break;
-
         case EXPR_ALIAS:
-            assert(0);
-
-        case EXPR_DISC:
-        case EXPR_PRED:
-            TODO("TODO [check_types]: EXPR_INDEX/EXPR_ALIAS/EXPR_DISC/EXPR_PRED\n");
             break;
 
         case EXPR_INDEX:
+        case EXPR_DISC:
+        case EXPR_PRED:
+            TODO("TODO [check_types]: EXPR_INDEX/EXPR_DISC/EXPR_PRED\n");
             // TODO: check if e->tuple is really a tuple and that e->index is in range
             TODO("TODO [check_types]: (x,y,z).1\n");
             break;

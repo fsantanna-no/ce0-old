@@ -968,7 +968,6 @@ void t_all (void) {
         "(ln 1, col 18): undeclared subtype \"Event\"",
         "call _check _arg.Event?\n"
     ));
-puts("-=-=-=-");
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
@@ -976,7 +975,6 @@ puts("-=-=-=-");
         "var c : &Bool = &b\n"
         "if c.False? {} else { call show() }\n"
     ));
-assert(0);
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
