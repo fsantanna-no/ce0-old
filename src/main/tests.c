@@ -579,7 +579,7 @@ void t_code (void) {
         char out[256] = "";
         all_init(stropen("w",sizeof(out),out), NULL);
         Expr e = { ALL.nn++, EXPR_UNIT, .Unit={TK_UNIT,{},0,0} };
-        code_expr(NULL, &e);
+        code_expr(NULL, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,""));
     }
@@ -591,7 +591,7 @@ void t_code (void) {
         Stmt var = { ALL.nn++, STMT_VAR, .Var={{TX_VAR,{.s="xxx"},0,0},&tp,NULL} };
         Env env = { &var, NULL };
         Expr e = { ALL.nn++, EXPR_VAR, .Var={TX_VAR,{.s="xxx"},0,0} };
-        code_expr(&env, &e);
+        code_expr(&env, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,""));
     }
@@ -602,7 +602,7 @@ void t_code (void) {
         Stmt var = { ALL.nn++, STMT_VAR, .Var={{TX_VAR,{.s="xxx"},0,0},&tp,NULL} };
         Env env = { &var, NULL };
         Expr e = { ALL.nn++, EXPR_VAR, .Var={TX_VAR,{.s="xxx"},0,0} };
-        code_expr(&env, &e);
+        code_expr(&env, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,"xxx"));
     }
@@ -612,7 +612,7 @@ void t_code (void) {
         all_init(stropen("w",sizeof(out),out), NULL);
         Expr e = { ALL.nn++, EXPR_NATIVE, .Native={TX_NATIVE,{},0,0} };
             strcpy(e.Native.val.s, "printf");
-        code_expr(NULL, &e);
+        code_expr(NULL, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,"printf"));
     }
@@ -623,7 +623,7 @@ void t_code (void) {
         Expr unit = { ALL.nn++, EXPR_UNIT, .Unit={TK_UNIT,{},0,0} };
         Expr* es[2] = {&unit, &unit};
         Expr e = { ALL.nn++, EXPR_TUPLE, .Tuple={2,es} };
-        code_expr(NULL, &e);
+        code_expr(NULL, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,"((TUPLE__Unit__Unit) {  })"));
     }
@@ -636,7 +636,7 @@ void t_code (void) {
         all_init(stropen("w",sizeof(out),out), NULL);
         Expr val = { ALL.nn++, EXPR_VAR, .Var={TX_VAR,{.s="x"},0,0} };
         Expr e = { ALL.nn++, EXPR_INDEX, .Index={&val,{TX_NUM,{2},0,0}} };
-        code_expr(&env, &e);
+        code_expr(&env, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,"x._2"));
     }
@@ -983,6 +983,7 @@ void t_all (void) {
         "var d : () = c.True!\n"
         "call show d\n"
     ));
+puts("-=-=-=-");
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
@@ -990,6 +991,7 @@ void t_all (void) {
         "var c : &Bool = &b\n"
         "call show c.True!\n"
     ));
+assert(0);
     // DISCRIMINATOR
     assert(all(
         "()\n",

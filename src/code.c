@@ -504,7 +504,7 @@ int code_expr_pre (Env* env, Expr* e) {
             assert(tp != NULL);
             if (tp->sub != TYPE_UNIT) {
                 fprintf(ALL.out, ", ._%s=", sub);
-                code_expr(env, e->Cons.arg);
+                code_expr(env, e->Cons.arg, 0);
             }
 
             out(" });\n");
@@ -512,8 +512,9 @@ int code_expr_pre (Env* env, Expr* e) {
         }
 
         case EXPR_DISC: {
+            Type* tp = env_expr_to_type(env, e->Disc.val);
             out("assert(");
-            code_expr(env, e->Disc.val);
+            code_expr(env, e->Disc.val, 1);
             fprintf (ALL.out,
                 ".sub == %s && \"discriminator failed\");\n",
                 e->Disc.subtype.val.s
@@ -541,10 +542,14 @@ int code_expr_pre (Env* env, Expr* e) {
     return VISIT_CONTINUE;
 }
 
-void code_expr (Env* env, Expr* e) {
+void code_expr (Env* env, Expr* e, int ctxplain) {
     Type* TP = env_expr_to_type(env, e);
     if (TP->sub==TYPE_UNIT && e->sub!=EXPR_CALL) {
         return;     // no code to generate
+    }
+
+    if (ctxplain && TP->isalias) {
+        out("(*(");
     }
 
     switch (e->sub) {
@@ -566,7 +571,7 @@ void code_expr (Env* env, Expr* e) {
 
         case EXPR_ALIAS: {
             out("&");
-            code_expr(env, e->Alias);
+            code_expr(env, e->Alias, 0);
             break;
         }
 
@@ -574,16 +579,11 @@ void code_expr (Env* env, Expr* e) {
             fprintf(ALL.out, "_tmp_%d", e->N);
             break;
 
-        case EXPR_DISC:
-            code_expr(env, e->Disc.val);
-            fprintf (ALL.out, "._%s", e->Disc.subtype.val.s);
-            break;
-
         case EXPR_CALL: {
             if (e->Call.func->sub == EXPR_NATIVE) {
-                code_expr(env, e->Call.func);
+                code_expr(env, e->Call.func, 0);
                 out("(");
-                code_expr(env, e->Call.arg);
+                code_expr(env, e->Call.arg, 0);
                 out(")");
             } else {
                 assert(e->Call.func->sub == EXPR_VAR);
@@ -592,11 +592,11 @@ void code_expr (Env* env, Expr* e) {
                     out("show_");
                     code_to_ce(env_expr_to_type(env, e->Call.arg));
                 } else {
-                    code_expr(env, e->Call.func);
+                    code_expr(env, e->Call.func, 0);
                 }
 
                 out("(");
-                code_expr(env, e->Call.arg);
+                code_expr(env, e->Call.arg, 0);
                 out(")");
             }
             break;
@@ -615,15 +615,23 @@ void code_expr (Env* env, Expr* e) {
                     }
                     comma = 1;
                 }
-                code_expr(env, e->Tuple.vec[i]);
+                code_expr(env, e->Tuple.vec[i], 0);
             }
             out(" })");
             break;
 
         case EXPR_INDEX:
-            code_expr(env, e->Index.val);
+            code_expr(env, e->Index.val, 1);
             fprintf(ALL.out, "._%d", e->Index.index.val.n);
             break;
+
+        case EXPR_DISC: {
+            code_expr(env, e->Disc.val, 1);
+            fprintf (ALL.out, "._%s",
+                e->Disc.subtype.val.s
+            );
+            break;
+        }
 
         case EXPR_PRED: {
 #if XXXXXX
@@ -631,15 +639,12 @@ void code_expr (Env* env, Expr* e) {
             char* val = ftk(env, &e->Disc.val, 0);
             fe_tmp_set(env, e, NULL);
 #endif
-
             int isnil = (e->Pred.subtype.enu == TX_NULL);
-            Type* tp = env_expr_to_type(env, e->Disc.val);
 
             out("((");
-            code_expr(env, e->Pred.val);
+            code_expr(env, e->Pred.val, 1);
             fprintf (ALL.out,
-                "%ssub == %s) ? (Bool){True} : (Bool){False})\n",
-                (tp->isalias ? "->" : "."),
+                ".sub == %s) ? (Bool){True} : (Bool){False})\n",
                 (isnil ? "NULL" : e->Pred.subtype.val.s)
             );
             break;
@@ -647,6 +652,9 @@ void code_expr (Env* env, Expr* e) {
 
         default:
             assert(0);
+    }
+    if (ctxplain && TP->isalias) {
+        out("))");
     }
 }
 
@@ -871,7 +879,7 @@ void code_stmt (Stmt* s) {
 
         case STMT_CALL:
             visit_expr(s->env, s->Call, code_expr_pre);
-            code_expr(s->env, s->Call);
+            code_expr(s->env, s->Call, 0);
             out(";\n");
             break;
 
@@ -899,7 +907,7 @@ void code_stmt (Stmt* s) {
             }
 
             out(" = ");
-            code_expr(s->env, s->Var.init);
+            code_expr(s->env, s->Var.init, 0);
             out(";\n");
             break;
         }
@@ -907,7 +915,7 @@ void code_stmt (Stmt* s) {
         case STMT_RETURN: {
             visit_expr(s->env, s->Return, code_expr_pre);
             out("return");
-            code_expr(s->env, s->Return);
+            code_expr(s->env, s->Return, 0);
             out(";\n");
             break;
         }
@@ -915,7 +923,7 @@ void code_stmt (Stmt* s) {
         case STMT_IF: {
             code_expr_pre(s->env, s->If.tst);
             out("if (");
-            code_expr(s->env, s->If.tst);
+            code_expr(s->env, s->If.tst, 0);
             out(".sub) {\n");
             code_stmt(s->If.true);
             out("} else {\n");
