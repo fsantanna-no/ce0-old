@@ -944,7 +944,6 @@ void t_all (void) {
         "if b { call show() }\n"
     ));
     // PREDICATE
-puts("-=-=-=-");
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
@@ -952,7 +951,6 @@ puts("-=-=-=-");
         "var tst: Bool = b.True?\n"
         "if tst { call show () }\n"
     ));
-assert(0);
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
@@ -967,9 +965,10 @@ assert(0);
         "if b.False? {} else { call show() }\n"
     ));
     assert(all(
-        "(ln 1, col 16): undeclared subtype \"Event\"",
-        "call check arg.Event?\n"
+        "(ln 1, col 18): undeclared subtype \"Event\"",
+        "call _check _arg.Event?\n"
     ));
+puts("-=-=-=-");
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
@@ -977,6 +976,7 @@ assert(0);
         "var c : &Bool = &b\n"
         "if c.False? {} else { call show() }\n"
     ));
+assert(0);
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
