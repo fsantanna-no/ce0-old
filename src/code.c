@@ -290,6 +290,10 @@ void code_expr_pre (Env* env, Expr* e) {
         case EXPR_INT:
             break;
 
+        case EXPR_ALIAS:
+            code_expr_pre(env, e->Alias);
+            break;
+
         case EXPR_TUPLE:
             for (int i=0; i<e->Tuple.size; i++) {
                 code_expr_pre(env, e->Tuple.vec[i]);
@@ -305,6 +309,10 @@ void code_expr_pre (Env* env, Expr* e) {
             code_expr_pre(env, e->Call.arg);
             break;
 
+        case EXPR_PRED:
+            code_expr_pre(env, e->Pred.val);
+            break;
+
         case EXPR_VAR:
             if (env_type_isrec(env,TP)) {
                 char* id = e->Var.val.s;
@@ -317,6 +325,8 @@ void code_expr_pre (Env* env, Expr* e) {
             break;
 
         case EXPR_CONS: {
+            code_expr_pre(env, e->Cons.arg);
+
             Stmt* user = env_sub_id_to_user_stmt(env, e->Cons.subtype.val.s);
             assert(user != NULL);
 
@@ -359,6 +369,7 @@ void code_expr_pre (Env* env, Expr* e) {
         }
 
         case EXPR_DISC: {
+            code_expr_pre(env, e->Disc.val);
             out("assert(");
             code_expr(env, e->Disc.val, 1);
             fprintf (ALL.out,
@@ -381,9 +392,6 @@ void code_expr_pre (Env* env, Expr* e) {
 #endif
             break;
         }
-
-        default:
-            assert(0);
     }
 }
 
