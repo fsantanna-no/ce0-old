@@ -369,7 +369,6 @@ int code_expr_pre (Env* env, Expr* e) {
 
             // transfer ownership
             if (e->istx) {
-assert(0);
                 // this prevents "double free"
                 code_expr(env, e, 1);
                 fprintf(ALL.out, " = NULL;\n");
