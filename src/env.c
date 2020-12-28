@@ -263,10 +263,7 @@ Type* env_expr_to_type (Env* env, Expr* e) {
 //  type Bool { ... }
 //  var x: Bool
 //  ... x ...           -- give "x" -> "var x" -> type Bool
-Stmt* env_tk_to_type_to_user_stmt (Env* env, Tk* tk) {
-    assert(0);
-    Type* tp = env_tk_to_type(env, tk);
-    assert(tp != NULL);
+Stmt* env_type_to_user_stmt (Env* env, Type* tp) {
     if (tp->sub == TYPE_USER) {
         Stmt* s = env_id_to_stmt(env, tp->User.val.s, NULL);
         assert(s != NULL);
@@ -329,18 +326,9 @@ int env_type_isrec (Env* env, Type* tp) {
     assert(0);
 }
 
-int env_tk_isptr (Env* env, Tk* tk) {
-    assert(0);
-    Type* tp = env_tk_to_type(env, tk);
-    if (tp->isalias) {
-        return 1;
-    }
-
-    Stmt* s = env_tk_to_type_to_user_stmt(env, tk);
-    if (s == NULL) {
-        return 0;
-    }
-    return s->User.isrec;
+int env_type_isptr (Env* env, Type* tp) {
+    Stmt* s = env_type_to_user_stmt(env, tp);
+    return (tp->isalias || (s!=NULL && s->User.isrec));
 }
 
 ///////////////////////////////////////////////////////////////////////////////

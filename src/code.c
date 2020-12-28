@@ -445,7 +445,7 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
             break;
 
         case EXPR_VAR: {
-            if (ctxplain && TP->isalias) {
+            if (ctxplain && env_type_isptr(env,TP)) {
                 out("(*(");
             }
 
