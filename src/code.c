@@ -291,7 +291,6 @@ int code_expr_pre (Env* env, Expr* e) {
         case EXPR_INT:
         case EXPR_ALIAS:
         case EXPR_TUPLE:
-        case EXPR_INDEX:
         case EXPR_CALL:
         case EXPR_PRED:
             break;
@@ -350,6 +349,15 @@ int code_expr_pre (Env* env, Expr* e) {
             break;
         }
 
+        case EXPR_INDEX:
+            //assert(e->Index.val->sub == EXPR_VAR);
+            if (e->istx && env_type_hasalloc(env,TP)) {
+                // this prevents "double free"
+                code_expr(env, e, 1);
+                fprintf(ALL.out, " = NULL;\n");
+            }
+            break;
+
         case EXPR_DISC: {
             assert(e->Disc.val->sub == EXPR_VAR);
             out("assert(");
@@ -361,9 +369,10 @@ int code_expr_pre (Env* env, Expr* e) {
 
             // transfer ownership
             if (e->istx && env_type_hasalloc(env,TP)) {
+assert(0);
                 // this prevents "double free"
-                code_expr(env, e->Disc.val, 1);
-                fprintf(ALL.out, "._%s = NULL;\n", e->Disc.subtype.val.s);
+                code_expr(env, e, 1);
+                fprintf(ALL.out, " = NULL;\n");
             }
 
             // TODO: f(x).Succ
