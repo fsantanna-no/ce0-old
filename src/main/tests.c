@@ -1017,14 +1017,12 @@ void t_all (void) {
         "var v: Int = f 1\n"
         "call show v\n"
     ));
-puts("-=-=-=-");
     assert(all(
         "()\n",
         "func f : () -> () { return arg }\n"
         "var v: () = f()\n"
         "call show v\n"
     ));
-assert(0);
     assert(all(
         "(ln 1, col 26): invalid return : type mismatch",
         "func f : ((),()) -> () { return arg }\n"
@@ -1098,6 +1096,7 @@ assert(0);
         "var n_: &Nat = &n\n"
         "call show n_\n"
     ));
+puts("-=-=-=-");
     assert(all(
         "Succ ($)\n",
         "type rec Nat {\n"
@@ -1107,6 +1106,7 @@ assert(0);
         "var n_: &Nat = &n\n"
         "call show n_\n"
     ));
+assert(0);
     assert(all(
         "XNat1 (Succ ($))\n",
         "type rec Nat {\n"

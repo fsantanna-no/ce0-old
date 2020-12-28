@@ -942,8 +942,11 @@ void code_stmt (Stmt* s) {
 
             // f: a -> User
 
+            int out_isunit = (s->Func.type->Func.out->sub == TYPE_UNIT);
             char tp_out[256] = "";
-            to_c_(tp_out, s->env, s->Func.type->Func.out);
+            if (!out_isunit) {
+                to_c_(tp_out, s->env, s->Func.type->Func.out);
+            }
 
             int inp_isunit = (s->Func.type->Func.inp->sub == TYPE_UNIT);
             char tp_inp[256] = "";
@@ -953,7 +956,7 @@ void code_stmt (Stmt* s) {
 
             fprintf (ALL.out,
                 "%s %s (%s %s) {\n",
-                tp_out,
+                (out_isunit ? "void" : tp_out),
                 s->Func.id.val.s,
                 (inp_isunit ? "void" : tp_inp),
                 (inp_isunit ? "" : "_arg_")
