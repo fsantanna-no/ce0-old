@@ -410,10 +410,6 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
         return;     // no code to generate
     }
 
-    if (ctxplain && TP->isalias) {
-        out("(*(");
-    }
-
     switch (e->sub) {
         case EXPR_UNIT:
             break;
@@ -431,12 +427,20 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
             break;
 
         case EXPR_VAR: {
+            if (ctxplain && TP->isalias) {
+                out("(*(");
+            }
+
             out(e->Var.val.s);
 
             Stmt* s = env_id_to_stmt(env, e->Var.val.s, NULL);
             assert(s != NULL);
             if (s->Var.istx) {
                 fprintf(ALL.out, "_%d", e->N);
+            }
+
+            if (ctxplain && TP->isalias) {
+                out("))");
             }
             break;
         }
@@ -526,9 +530,6 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
 
         default:
             assert(0);
-    }
-    if (ctxplain && TP->isalias) {
-        out("))");
     }
 }
 
