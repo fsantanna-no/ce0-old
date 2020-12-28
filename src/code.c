@@ -280,37 +280,17 @@ int ftp_tuples (Env* env, Type* tp) {
     return VISIT_CONTINUE;
 }
 
-void code_expr_pre (Env* env, Expr* e, int istx) {
-    //Type* TP = env_expr_to_type(env,e);
-
+int code_expr_pre (Env* env, Expr* e) {
     switch (e->sub) {
         case EXPR_UNIT:
         case EXPR_NATIVE:
         case EXPR_NULL:
         case EXPR_INT:
-            break;
-
         case EXPR_ALIAS:
-            code_expr_pre(env, e->Alias, 0);
-            break;
-
         case EXPR_TUPLE:
-            for (int i=0; i<e->Tuple.size; i++) {
-                code_expr_pre(env, e->Tuple.vec[i], 1);
-            }
-            break;
-
         case EXPR_INDEX:
-            code_expr_pre(env, e->Index.val, 0);
-            break;
-
         case EXPR_CALL:
-            code_expr_pre(env, e->Call.func, 0);
-            code_expr_pre(env, e->Call.arg, 1);
-            break;
-
         case EXPR_PRED:
-            code_expr_pre(env, e->Pred.val, 0);
             break;
 
         case EXPR_VAR: {
@@ -328,8 +308,6 @@ void code_expr_pre (Env* env, Expr* e, int istx) {
         }
 
         case EXPR_CONS: {
-            code_expr_pre(env, e->Cons.arg, 1);
-
             Stmt* user = env_sub_id_to_user_stmt(env, e->Cons.subtype.val.s);
             assert(user != NULL);
 
@@ -372,7 +350,6 @@ void code_expr_pre (Env* env, Expr* e, int istx) {
         }
 
         case EXPR_DISC: {
-            code_expr_pre(env, e->Disc.val, 0);
             assert(e->Disc.val->sub == EXPR_VAR);
             out("assert(");
             code_expr(env, e->Disc.val, 1);
@@ -412,6 +389,7 @@ void code_expr_pre (Env* env, Expr* e, int istx) {
             break;
         }
     }
+    return VISIT_CONTINUE;
 }
 
 void code_expr (Env* env, Expr* e, int ctxplain) {
@@ -768,7 +746,7 @@ void code_stmt (Stmt* s) {
             break;
 
         case STMT_CALL:
-            code_expr_pre(s->env, s->Call, 0);
+            visit_expr(s->env, s->Call, code_expr_pre);
             code_expr(s->env, s->Call, 0);
             out(";\n");
             break;
@@ -785,7 +763,7 @@ void code_stmt (Stmt* s) {
                 break;
             }
             visit_type(s->env, s->Var.type, ftp_tuples);
-            code_expr_pre(s->env, s->Var.init, 1);
+            visit_expr(s->env, s->Var.init, code_expr_pre);
 
             fprintf(ALL.out, "%s %s", to_c(s->env,s->Var.type), s->Var.id.val.s);
 
@@ -803,7 +781,7 @@ void code_stmt (Stmt* s) {
         }
 
         case STMT_RETURN: {
-            code_expr_pre(s->env, s->Return, 1);
+            visit_expr(s->env, s->Return, code_expr_pre);
             out("return ");
             code_expr(s->env, s->Return, 0);
             out(";\n");
@@ -811,7 +789,7 @@ void code_stmt (Stmt* s) {
         }
 
         case STMT_IF: {
-            code_expr_pre(s->env, s->If.tst, 0);
+            visit_expr(s->env, s->If.tst, code_expr_pre);
             out("if (");
             code_expr(s->env, s->If.tst, 0);
             out(".sub) {\n");
