@@ -281,7 +281,7 @@ int ftp_tuples (Env* env, Type* tp) {
 }
 
 void code_expr_pre (Env* env, Expr* e, int istx) {
-    Type* TP = env_expr_to_type(env,e);
+    //Type* TP = env_expr_to_type(env,e);
 
     switch (e->sub) {
         case EXPR_UNIT:
@@ -314,15 +314,9 @@ void code_expr_pre (Env* env, Expr* e, int istx) {
             break;
 
         case EXPR_VAR: {
-            if (!istx || !env_type_isrec(env,TP)) {   // TODO: hasalloc
-                break;
-            }
-
             Stmt* s = env_id_to_stmt(env, e->Var.val.s, NULL);
             assert(s != NULL);
-            if (s->sub == STMT_VAR) {
-                s->Var.istx = 1;
-
+            if (s->Var.istx) {
                 char* id = e->Var.val.s;
                 fprintf (ALL.out,
                     "typeof(%s) %s_%d = %s;\n"
