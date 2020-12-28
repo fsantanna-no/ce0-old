@@ -914,7 +914,7 @@ void code_stmt (Stmt* s) {
 
         case STMT_RETURN: {
             visit_expr(s->env, s->Return, code_expr_pre);
-            out("return");
+            out("return ");
             code_expr(s->env, s->Return, 0);
             out(";\n");
             break;
@@ -945,14 +945,18 @@ void code_stmt (Stmt* s) {
             char tp_out[256] = "";
             to_c_(tp_out, s->env, s->Func.type->Func.out);
 
+            int inp_isunit = (s->Func.type->Func.inp->sub == TYPE_UNIT);
             char tp_inp[256] = "";
-            to_c_(tp_inp, s->env, s->Func.type->Func.inp);
+            if (!inp_isunit) {
+                to_c_(tp_inp, s->env, s->Func.type->Func.inp);
+            }
 
             fprintf (ALL.out,
-                "%s %s (%s _arg_) {\n",
+                "%s %s (%s %s) {\n",
                 tp_out,
                 s->Func.id.val.s,
-                tp_inp
+                (inp_isunit ? "void" : tp_inp),
+                (inp_isunit ? "" : "_arg_")
             );
             code_stmt(s->Func.body);
             out("}\n");

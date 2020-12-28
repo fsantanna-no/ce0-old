@@ -983,7 +983,6 @@ void t_all (void) {
         "var d : () = c.True!\n"
         "call show d\n"
     ));
-puts("-=-=-=-");
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
@@ -991,7 +990,6 @@ puts("-=-=-=-");
         "var c : &Bool = &b\n"
         "call show c.True!\n"
     ));
-assert(0);
     // DISCRIMINATOR
     assert(all(
         "()\n",
@@ -1019,12 +1017,14 @@ assert(0);
         "var v: Int = f 1\n"
         "call show v\n"
     ));
+puts("-=-=-=-");
     assert(all(
         "()\n",
         "func f : () -> () { return arg }\n"
         "var v: () = f()\n"
         "call show v\n"
     ));
+assert(0);
     assert(all(
         "(ln 1, col 26): invalid return : type mismatch",
         "func f : ((),()) -> () { return arg }\n"
