@@ -479,7 +479,12 @@ int code_expr_pre (Env* env, Expr* e) {
             char* sup = user->User.id.val.s;
             char* sub = e->Cons.subtype.val.s;
 
-            fprintf(ALL.out, "%s _tmp_%d = ", sup, e->N);
+            fprintf (ALL.out,
+                "%s%s _tmp_%d = ",
+                sup,
+                (user->User.isrec ? "*" : ""),
+                e->N
+            );
 
             if (user->User.isrec) {
                 // Nat* _1 = (Nat*) malloc(sizeof(Nat));

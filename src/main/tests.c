@@ -1096,7 +1096,6 @@ void t_all (void) {
         "var n_: &Nat = &n\n"
         "call show n_\n"
     ));
-puts("-=-=-=-");
     assert(all(
         "Succ ($)\n",
         "type rec Nat {\n"
@@ -1106,7 +1105,6 @@ puts("-=-=-=-");
         "var n_: &Nat = &n\n"
         "call show n_\n"
     ));
-assert(0);
     assert(all(
         "XNat1 (Succ ($))\n",
         "type rec Nat {\n"
