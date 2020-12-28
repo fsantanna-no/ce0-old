@@ -194,7 +194,7 @@ void code_free (Env* env, Type* tp) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-char* toptr (Env* env, Type* tp, char* op1, char* op2) {
+char* norec_hasalloc (Env* env, Type* tp, char* op1, char* op2) {
     return (!env_type_isrec(env,tp) && env_type_hasalloc(env,tp)) ? op1 : op2;
 }
 
@@ -244,7 +244,7 @@ int ftp_tuples (Env* env, Type* tp) {
             "void show_%s%s_ (%s%s v) {\n"
             "    printf(\"(\");\n",
             ((!tp->isalias && hasalloc) ? "x" : ""),
-            tp_ce, tp_c, toptr(env,tp,"*","")
+            tp_ce, tp_c, norec_hasalloc(env,tp,"*","")
         );
         for (int i=0; i<tp->Tuple.size; i++) {
             if (i > 0) {
@@ -259,7 +259,7 @@ int ftp_tuples (Env* env, Type* tp) {
                 int hasalloc = env_type_hasalloc(env, sub);
                 fprintf(ALL.out, "    show_%s%s_(%sv%s_%d);\n",
                     ((/*sub->isalias ||*/ hasalloc) ? "x" : ""),
-                    to_ce(sub), toptr(env,sub,"&",""), toptr(env,tp,"->","."), i+1);
+                    to_ce(sub), norec_hasalloc(env,sub,"&",""), norec_hasalloc(env,tp,"->","."), i+1);
             }
         }
         fprintf(ALL.out,
@@ -269,7 +269,7 @@ int ftp_tuples (Env* env, Type* tp) {
             "    show_%s%s_(v);\n"
             "    puts(\"\");\n"
             "}\n",
-            ((!tp->isalias && hasalloc) ? "x" : ""), tp_ce, tp_c, toptr(env,tp,"*",""),
+            ((!tp->isalias && hasalloc) ? "x" : ""), tp_ce, tp_c, norec_hasalloc(env,tp,"*",""),
             ((!tp->isalias && hasalloc) ? "x" : ""), tp_ce
         );
         out("#endif\n");
@@ -576,7 +576,7 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
 
         case EXPR_ALIAS: {
             Type* tp = env_expr_to_type(env, e->Alias);
-            if (!env_type_hasalloc(env,tp)) {
+            if (!env_type_isrec(env,tp)) {
                 out("&");
             }
             code_expr(env, e->Alias, 0);
@@ -834,7 +834,7 @@ void code_user (Stmt* s) {
                     yes = par = 1;
                     sprintf(arg, "show_%s%s_(%sv%s_%s)",
                         (sub->type->isalias || sub_hasalloc ? "x" : ""),
-                        sub->type->User.val.s, toptr(s->env,sub->type,"&",""),
+                        sub->type->User.val.s, norec_hasalloc(s->env,sub->type,"&",""),
                         op, sub->id.val.s);
                     break;
                 case TYPE_TUPLE:
@@ -842,7 +842,7 @@ void code_user (Stmt* s) {
                     par = 0;
                     sprintf(arg, "show_%s%s_(%sv%s_%s)",
                         (sub->type->isalias || sub_hasalloc ? "x" : ""),
-                        to_ce(sub->type), toptr(s->env,sub->type,"&",""),
+                        to_ce(sub->type), norec_hasalloc(s->env,sub->type,"&",""),
                         op, sub->id.val.s);
                     break;
                 default:
