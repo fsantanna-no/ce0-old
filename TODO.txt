@@ -1,6 +1,4 @@
 - passar istx para code_expr/code_expr_pre
-    - code_expr_pre usar chamadas explicitas em vez de visit
-        - retornar visit_expr para ordem normal
 - voltar pra vec Seq?
 - preciso mesmo de Stmt.tk ??
 - a = lst.Next!.Next!
