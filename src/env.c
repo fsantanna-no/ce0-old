@@ -669,7 +669,7 @@ void set_txbx (Env* env, Expr* E) {
         }
     }
 
-    Type* tp = env_expr_to_type(env,E);
+    Type* tp = env_expr_to_type(env, (E->sub==EXPR_ALIAS ? E->Alias : E));
     assert(tp != NULL);
     if (env_type_hasalloc(env, tp)) {
         E->istx = 1;
