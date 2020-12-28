@@ -655,74 +655,41 @@ int check_types_stmt (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int set_istx (Stmt* s) {
-
-    void fe (Env* env, Expr* e, int istx) {
-        Type* TP = env_expr_to_type(env,e);
-
-        switch (e->sub) {
-            case EXPR_UNIT:
-            case EXPR_NATIVE:
-            case EXPR_NULL:
-            case EXPR_INT:
-                break;
-
-            case EXPR_ALIAS:
-                fe(env, e->Alias, 0);
-                break;
-
-            case EXPR_TUPLE:
-                for (int i=0; i<e->Tuple.size; i++) {
-                    fe(env, e->Tuple.vec[i], 1);
-                }
-                break;
-
-            case EXPR_INDEX:
-                fe(env, e->Index.val, 0);
-                break;
-
-            case EXPR_CALL:
-                fe(env, e->Call.func, 0);
-                fe(env, e->Call.arg, 1);
-                break;
-
-            case EXPR_PRED:
-                fe(env, e->Pred.val, 0);
-                break;
-
-            case EXPR_CONS:
-                fe(env, e->Cons.arg, 1);
-                break;
-
-            case EXPR_DISC:
-                fe(env, e->Disc.val, 0);
-                break;
-
-            case EXPR_VAR: {
-                e->istx = (istx && env_type_hasalloc(env,TP));
-                break;
+int set_istx_expr (Env* env, Expr* e) {
+    switch (e->sub) {
+        case EXPR_TUPLE:
+            for (int i=0; i<e->Tuple.size; i++) {
+                e->Tuple.vec[i]->istx = 1;
             }
-        }
-    }
+            break;
 
+        case EXPR_CALL:
+            e->Call.arg->istx = 1;
+            break;
+
+        case EXPR_CONS:
+            e->Cons.arg->istx = 1;
+            break;
+
+        default:
+            // istx = 0
+            break;
+    }
+    return VISIT_CONTINUE;
+}
+
+int set_istx_stmt (Stmt* s) {
     switch (s->sub) {
-        case STMT_CALL:
-            fe(s->env, s->Call, 0);
-            break;
-
         case STMT_VAR:
-            fe(s->env, s->Var.init, 1);
+            s->Var.init->istx = 1;
             break;
-
         case STMT_RETURN:
-            fe(s->env, s->Return, 1);
+            s->Return->istx = 1;
             break;
-
-        case STMT_IF:
-            fe(s->env, s->If.tst, 0);
+        default:
+            // istx = 0
             break;
     }
-
     return VISIT_CONTINUE;
 }
 
@@ -972,7 +939,7 @@ int env (Stmt* s) {
     if (!visit_stmt(s,check_types_stmt,check_types_expr,NULL)) {
         return 0;
     }
-    assert(visit_stmt(s,set_istx,NULL,NULL));
+    assert(visit_stmt(s,set_istx_stmt,set_istx_expr,NULL));
     if (!visit_stmt(s,check_owner_alias,NULL,NULL)) {
         return 0;
     }
