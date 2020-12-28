@@ -137,7 +137,7 @@ int parser_expr_ (Expr** ret)
 
 // EXPR_VAR
     } else if (accept(TX_VAR)) {
-        *e = (Expr) { ALL.nn++, EXPR_VAR, .Var=ALL.tk0 };
+        *e = (Expr) { ALL.nn++, EXPR_VAR, .Var={ALL.tk0,0} };
 
 // ALIAS
     } else if (accept('&')) {
@@ -338,7 +338,7 @@ int parser_stmt (Stmt** ret) {
             return 0;
         }
 
-        *s = (Stmt) { ALL.nn++, STMT_VAR, NULL, {NULL,NULL}, tk, .Var={id,tp,e,0} };
+        *s = (Stmt) { ALL.nn++, STMT_VAR, NULL, {NULL,NULL}, tk, .Var={id,tp,e} };
 
     // STMT_USER
     } else if (accept(TK_TYPE)) {       // type
@@ -482,8 +482,7 @@ int parser_stmt (Stmt** ret) {
             .Var = {
                 { TX_VAR, {.s="arg"}, id.lin, id.col },
                 tp->Func.inp,
-                expr,
-                0
+                expr
             }
         };
 

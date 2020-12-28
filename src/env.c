@@ -19,13 +19,13 @@ Stmt* env_id_to_stmt (Env* env, const char* id, int* scope) {
         const char* cur = NULL;
         switch (env->stmt->sub) {
             case STMT_USER:
-                cur = env->stmt->User.id.val.s;
+                cur = env->stmt->User.tk.val.s;
                 break;
             case STMT_VAR:
-                cur = env->stmt->Var.id.val.s;
+                cur = env->stmt->Var.tk.val.s;
                 break;
             case STMT_FUNC:
-                cur = env->stmt->Func.id.val.s;
+                cur = env->stmt->Func.tk.val.s;
                 break;
             default:
                 assert(0 && "bug found");
@@ -58,7 +58,7 @@ Stmt* env_sub_id_to_user_stmt (Env* env, const char* sub) {
     while (env != NULL) {
         if (env->stmt->sub == STMT_USER) {
             for (int i=0; i<env->stmt->User.size; i++) {
-                if (!strcmp(sub, env->stmt->User.vec[i].id.val.s)) {
+                if (!strcmp(sub, env->stmt->User.vec[i].tk.val.s)) {
                     return env->stmt;
                 }
             }
@@ -72,7 +72,7 @@ Type* env_sub_id_to_user_type (Env* env, const char* sub) {
     Stmt* user = env_sub_id_to_user_stmt(env, sub);
     assert(user!=NULL && user->sub==STMT_USER);
     for (int i=0; i<user->User.size; i++) {
-        if (!strcmp(user->User.vec[i].id.val.s, sub)) {
+        if (!strcmp(user->User.vec[i].tk.val.s, sub)) {
             return user->User.vec[i].type;
         }
     }
@@ -83,7 +83,7 @@ Sub* env_find_sub (Env* env, const char* sub) {
     while (env != NULL) {
         if (env->stmt->sub == STMT_USER) {
             for (int i=0; i<env->stmt->User.size; i++) {
-                if (!strcmp(sub, env->stmt->User.vec[i].id.val.s)) {
+                if (!strcmp(sub, env->stmt->User.vec[i].tk.val.s)) {
                     return &env->stmt->User.vec[i];
                 }
             }
@@ -108,7 +108,7 @@ Type* env_expr_to_type (Env* env, Expr* e) {
         }
 
         case EXPR_VAR: {
-            Stmt* s = env_id_to_stmt(env, e->Var.val.s, NULL);
+            Stmt* s = env_id_to_stmt(env, e->Var.tk.val.s, NULL);
             assert(s != NULL);
             return (s->sub == STMT_VAR) ? s->Var.type : s->Func.type;
         }
@@ -118,7 +118,7 @@ Type* env_expr_to_type (Env* env, Expr* e) {
             assert(user != NULL);
             Type* tp = malloc(sizeof(Type));
             assert(tp != NULL);
-            *tp = (Type){ TYPE_USER, 0, .User=user->User.id };
+            *tp = (Type){ TYPE_USER, 0, .User=user->User.tk };
             return tp;
         }
 
@@ -154,7 +154,7 @@ Type* env_expr_to_type (Env* env, Expr* e) {
             Type* tp = env_expr_to_type(env, e->Call.func);
             if (tp->sub == TYPE_FUNC) {
                 assert(e->Call.func->sub == EXPR_VAR);
-                if (!strcmp(e->Call.func->Var.val.s,"clone")) {     // returns type of arg
+                if (!strcmp(e->Call.func->Var.tk.val.s,"clone")) {     // returns type of arg
                     Type* ret = malloc(sizeof(Type));
                     assert(ret != NULL);
                     *ret = *env_expr_to_type(env, e->Call.arg);
@@ -174,7 +174,7 @@ Type* env_expr_to_type (Env* env, Expr* e) {
                         break;
                     case EXPR_VAR:
                     case EXPR_NATIVE:
-                        sprintf(tp->Native.val.s, "%s(%s)", e->Call.func->Native.val.s, e->Call.arg->Var.val.s);
+                        sprintf(tp->Native.val.s, "%s(%s)", e->Call.func->Native.val.s, e->Call.arg->Var.tk.val.s);
                         break;
                     case EXPR_NULL:
                         sprintf(tp->Native.val.s, "%s(NULL)", e->Call.func->Native.val.s);
@@ -207,7 +207,7 @@ Type* env_expr_to_type (Env* env, Expr* e) {
             assert(user != NULL);
             Type* tp = malloc(sizeof(Type));
             assert(tp != NULL);
-            *tp = (Type){ TYPE_USER, 0, .User=user->User.id };
+            *tp = (Type){ TYPE_USER, 0, .User=user->User.tk };
             return tp;
         }
 
@@ -468,13 +468,13 @@ int check_decls_expr (Env* env, Expr* e) {
         case EXPR_NULL:
             return ftk(env, &e->Null, "type");
         case EXPR_VAR:
-            return ftk(env, &e->Var, "variable");
+            return ftk(env, &e->Var.tk, "variable");
 
         case EXPR_CALL:
             if (e->Call.func->sub != EXPR_VAR) {
                 return VISIT_CONTINUE;
             }
-            if (!ftk(env, &e->Call.func->Var, "function")) {
+            if (!ftk(env, &e->Call.func->Var.tk, "function")) {
                 return 0;
             }
             if (!visit_expr(env,e->Call.arg,check_decls_expr)) {
@@ -587,14 +587,14 @@ int check_types_expr (Env* env, Expr* e) {
                 TODO("TODO [check_types]: _f(...)\n");
             } else {
                 assert(e->Call.func->sub == EXPR_VAR);
-                if (!strcmp(e->Call.func->Var.val.s,"clone")) {
+                if (!strcmp(e->Call.func->Var.tk.val.s,"clone")) {
                     TODO("TODO [check_types]: clone(...)\n");
-                } else if (!strcmp(e->Call.func->Var.val.s,"show")) {
+                } else if (!strcmp(e->Call.func->Var.tk.val.s,"show")) {
                     TODO("TODO [check_types]: show(...)\n");
                 } else if (!type_is_sup_sub(func->Func.inp, arg)) {
                     char err[512];
-                    sprintf(err, "invalid call to \"%s\" : type mismatch", e->Call.func->Var.val.s);
-                    return err_message(&e->Call.func->Var, err);
+                    sprintf(err, "invalid call to \"%s\" : type mismatch", e->Call.func->Var.tk.val.s);
+                    return err_message(&e->Call.func->Var.tk, err);
                 }
             }
             break;
@@ -630,8 +630,8 @@ int check_types_stmt (Stmt* s) {
         case STMT_VAR:
             if (!type_is_sup_sub(s->Var.type, env_expr_to_type(s->env,s->Var.init))) {
                 char err[512];
-                sprintf(err, "invalid assignment to \"%s\" : type mismatch", s->Var.id.val.s);
-                return err_message(&s->Var.id, err);
+                sprintf(err, "invalid assignment to \"%s\" : type mismatch", s->Var.tk.val.s);
+                return err_message(&s->Var.tk, err);
             }
             return 1;
 
@@ -700,9 +700,8 @@ int set_istx (Stmt* s) {
                 break;
 
             case EXPR_VAR: {
-                Stmt* s = env_id_to_stmt(env, e->Var.val.s, NULL);
-                assert(s != NULL);     // TODO: hasalloc vs isrec
-                s->Var.istx = (istx && env_type_isrec(env,TP) && s->sub==STMT_VAR);
+                // TODO: hasalloc vs isrec
+                e->Var.istx = (istx && env_type_isrec(env,TP));
                 break;
             }
         }
@@ -798,7 +797,7 @@ int check_owner_alias (Stmt* S) {
     {
         // stop when tracked STMT_VAR is out of scope
 
-        Stmt* decl = env_id_to_stmt(s->env, S->Var.id.val.s, NULL);
+        Stmt* decl = env_id_to_stmt(s->env, S->Var.tk.val.s, NULL);
         if (decl!=NULL && decl==S) {
             // ok: S is still in scope
         } else {
@@ -823,114 +822,65 @@ int check_owner_alias (Stmt* S) {
             }
         }
 
-        //
-
-        auto int rule_5_6 (void);
-        auto int rule_3 (void);
-
-        int ret = rule_5_6();
+        // Rule 5/6
+        auto var_access (Env* env, Expr* var);
+        int ret = visit_stmt(s, NULL, var_access, NULL);
         if (ret != EXEC_CONTINUE) {
             return ret;
         }
+
+        // Rule 3
+        auto int rule_3 (void);
         return rule_3();
 
-        int rule_5_6 (void)
-        {
-            int ftk (Env* env, Tk* tk, int isalias, int istx) {
-                if (strcmp(S->Var.id.val.s,tk->val.s)) {
-                    return 1;
+        int var_access (Env* env, Expr* var) {
+            if (var->sub != EXPR_VAR) {
+                return VISIT_CONTINUE;
+            }
+
+            if (strcmp(S->Var.tk.val.s,var->Var.tk.val.s)) {
+                return VISIT_CONTINUE;
+            }
+
+            // ensure that EXPR_VAR is really same as STMT_VAR
+            Stmt* decl = env_id_to_stmt(env, var->Var.tk.val.s, NULL);
+            assert(decl!=NULL && decl==S);
+
+            int isalias = 0;
+            //isalias = isalias || env_tk_to_type(env,tk)->isalias;
+
+            // if already moved, it doesn't matter, any access is invalid
+
+            switch (state) {
+                case NONE:
+                    break;
+                case TRANSFERRED: {  // Rule 6
+                    assert(tk1 != NULL);
+                    char err[1024];
+                    sprintf(err, "invalid access to \"%s\" : ownership was transferred (ln %ld)",
+                            var->Var.tk.val.s, tk1->lin);
+                    err_message(&var->Var.tk, err);
+                    return VISIT_ERROR;
                 }
-
-                // ensure that EXPR_VAR is really same as STMT_VAR
-                Stmt* decl = env_id_to_stmt(env, tk->val.s, NULL);
-                assert(decl!=NULL && decl==S);
-
-                //isalias = isalias || env_tk_to_type(env,tk)->isalias;
-
-                // if already moved, it doesn't matter, any access is invalid
-
-                switch (state) {
-                    case NONE:
-                        break;
-                    case TRANSFERRED: {  // Rule 6
-                        assert(tk1 != NULL);
+                case BORROWED: {    // Rule 5
+                    assert(tk1 != NULL);
+                    if (!isalias) {
                         char err[1024];
-                        sprintf(err, "invalid access to \"%s\" : ownership was transferred (ln %ld)",
-                                tk->val.s, tk1->lin);
-                        err_message(tk, err);
-                        return 0;
-                    }
-                    case BORROWED: {    // Rule 5
-                        assert(tk1 != NULL);
-                        if (!isalias) {
-                            char err[1024];
-                            sprintf(err, "invalid transfer of \"%s\" : active alias in scope (ln %ld)",
-                                    tk->val.s, tk1->lin);
-                            err_message(tk, err);
-                            return 0;
-                        }
+                        sprintf(err, "invalid transfer of \"%s\" : active alias in scope (ln %ld)",
+                                var->Var.tk.val.s, tk1->lin);
+                        err_message(&var->Var.tk, err);
+                        return VISIT_ERROR;
                     }
                 }
-                tk1 = tk;
-                if (isalias) {
-                    assert(state != TRANSFERRED && "bug found");
-                    state = BORROWED;
-                } else if (istx) {
-                    state = TRANSFERRED;
-                }
-                return 1;
             }
-
-return EXEC_CONTINUE;
-            switch (s->sub) {
-                case STMT_VAR: {
-                    Expr* e = s->Var.init;
-                    switch (e->sub) {
-                        case EXPR_UNIT:
-                        case EXPR_NATIVE:
-                        case EXPR_NULL:
-                        case EXPR_INT:
-                        case EXPR_PRED:
-                            return EXEC_CONTINUE;
-
-                        case EXPR_VAR:
-                            assert(0);
-#if XXXXXX
-                            return ftk(s->env, &e->Var, e->isalias, 1);
-
-                        case EXPR_TUPLE:
-                            for (int i=0; i<e->Tuple.size; i++) {
-                                int ret = ftk(s->env, &e->Tuple.vec[i], 0, 1);
-                                if (ret != EXEC_CONTINUE) {
-                                    return ret;
-                                }
-                            }
-                            return EXEC_CONTINUE;
-
-                        case EXPR_CONS:
-                            return ftk(s->env, &e->Cons.arg, 0, 1);
-
-                        case EXPR_CALL:
-                            return ftk(s->env, &e->Call.arg, 0, 1);
-
-                        case EXPR_INDEX:
-                            return ftk(s->env, &e->Index.val, e->isalias, 0);
-
-                        case EXPR_DISC:
-                            return ftk(s->env, &e->Disc.val, e->isalias, 0);
-#endif
-                    }
-                    assert(0 && "bug found");
-                }
-
-#if XXXXXX
-                case STMT_RETURN:
-                    return ftk(s->env, &s->Return, 0, 1);
-#endif
-
-                default:
-                    return EXEC_CONTINUE;
+            tk1 = &var->Var.tk;
+            if (isalias) {
+                assert(state != TRANSFERRED && "bug found");
+                state = BORROWED;
+            } else if (var->Var.istx) {
+                state = TRANSFERRED;
             }
+            return VISIT_CONTINUE;
         }
 
         int rule_3 (void)
@@ -993,7 +943,7 @@ return EXEC_CONTINUE;
                                 if (aliases[i] == decl) {
                                     char err[1024];
                                     sprintf(err, "invalid return : cannot return alias to local \"%s\" (ln %ld)",
-                                            S->Var.id.val.s, S->Var.id.lin);
+                                            S->Var.tk.val.s, S->Var.tk.lin);
                                     err_message(&s->Return, err);
                                     return EXEC_ERROR;
                                 }

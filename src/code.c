@@ -126,7 +126,7 @@ void code_free_user (Env* env, Stmt* user) {
 
     // Nat_free
 
-    const char* sup = user->User.id.val.s;
+    const char* sup = user->User.tk.val.s;
     int isrec = user->User.isrec;
 
     fprintf (ALL.out,
@@ -143,7 +143,7 @@ void code_free_user (Env* env, Stmt* user) {
         if (env_type_hasalloc(env, sub.type)) {
             fprintf (ALL.out,
                 "    %s_free(&(*p)%s_%s);\n",
-                to_ce(sub.type), (isrec ? "->" : "."), sub.id.val.s
+                to_ce(sub.type), (isrec ? "->" : "."), sub.tk.val.s
             );
         }
     }
@@ -294,10 +294,8 @@ int code_expr_pre (Env* env, Expr* e) {
             break;
 
         case EXPR_VAR: {
-            Stmt* s = env_id_to_stmt(env, e->Var.val.s, NULL);
-            assert(s != NULL);
-            if (s->Var.istx) {
-                char* id = e->Var.val.s;
+            if (e->Var.istx) {
+                char* id = e->Var.tk.val.s;
                 fprintf (ALL.out,
                     "typeof(%s) %s_%d = %s;\n"
                     "%s = NULL;\n", // this prevents "double free"
@@ -311,7 +309,7 @@ int code_expr_pre (Env* env, Expr* e) {
             Stmt* user = env_sub_id_to_user_stmt(env, e->Cons.subtype.val.s);
             assert(user != NULL);
 
-            char* sup = user->User.id.val.s;
+            char* sup = user->User.tk.val.s;
             char* sub = e->Cons.subtype.val.s;
 
             fprintf (ALL.out,
@@ -420,11 +418,9 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
                 out("(*(");
             }
 
-            out(e->Var.val.s);
+            out(e->Var.tk.val.s);
 
-            Stmt* s = env_id_to_stmt(env, e->Var.val.s, NULL);
-            assert(s != NULL);
-            if (s->Var.istx) {
+            if (e->Var.istx) {
                 fprintf(ALL.out, "_%d", e->N);
             }
 
@@ -456,7 +452,7 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
             } else {
                 assert(e->Call.func->sub == EXPR_VAR);
 
-                if (!strcmp(e->Call.func->Var.val.s,"show")) {
+                if (!strcmp(e->Call.func->Var.tk.val.s,"show")) {
                     out("show_");
                     code_to_ce(env_expr_to_type(env, e->Call.arg));
                 } else {
@@ -529,8 +525,8 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
 ///////////////////////////////////////////////////////////////////////////////
 
 void code_user (Stmt* s) {
-    const char* sup = s->User.id.val.s;
-    const char* SUP = strupper(s->User.id.val.s);
+    const char* sup = s->User.tk.val.s;
+    const char* SUP = strupper(s->User.tk.val.s);
     int isrec = s->User.isrec;
 
     // show must receive & from hasalloc, otherwise it would receive ownership
@@ -574,7 +570,7 @@ void code_user (Stmt* s) {
         out("typedef enum {\n");
             for (int i=0; i<s->User.size; i++) {
                 out("    ");
-                out(s->User.vec[i].id.val.s);    // False
+                out(s->User.vec[i].tk.val.s);    // False
                 if (i < s->User.size-1) {
                     out(",");
                 }
@@ -599,7 +595,7 @@ void code_user (Stmt* s) {
                 out("        ");
                 out(to_c(s->env, sub->type));
                 out(" _");
-                out(sub->id.val.s);      // int _True
+                out(sub->tk.val.s);      // int _True
                 out(";\n");
             }
         }
@@ -636,7 +632,7 @@ void code_user (Stmt* s) {
             out("switch (v->sub) {\n");
             for (int i=0; i<s->User.size; i++) {
                 Sub* sub = &s->User.vec[i];
-                char* id = sub->id.val.s;
+                char* id = sub->tk.val.s;
                 fprintf (ALL.out,
                     "case %s: {\n"
                     "   %s* ret = malloc(sizeof(%s));\n"
@@ -696,7 +692,7 @@ void code_user (Stmt* s) {
                     sprintf(arg, "show_%s%s_(%sv%s_%s)",
                         (sub->type->isalias || sub_hasalloc ? "x" : ""),
                         sub->type->User.val.s, norec_hasalloc(s->env,sub->type,"&",""),
-                        op, sub->id.val.s);
+                        op, sub->tk.val.s);
                     break;
                 case TYPE_TUPLE:
                     yes = 1;
@@ -704,7 +700,7 @@ void code_user (Stmt* s) {
                     sprintf(arg, "show_%s%s_(%sv%s_%s)",
                         (sub->type->isalias || sub_hasalloc ? "x" : ""),
                         to_ce(sub->type), norec_hasalloc(s->env,sub->type,"&",""),
-                        op, sub->id.val.s);
+                        op, sub->tk.val.s);
                     break;
                 default:
                     assert(0 && "bug found");
@@ -716,7 +712,7 @@ void code_user (Stmt* s) {
                 "            %s;\n"                   // ()
                 "            printf(\"%s\");\n"       // )
                 "            break;\n",
-                sub->id.val.s, sub->id.val.s, yes?" ":"", par?"(":"", arg, par?")":""
+                sub->tk.val.s, sub->tk.val.s, yes?" ":"", par?"(":"", arg, par?")":""
             );
         }
         out("    }\n");
@@ -752,7 +748,7 @@ void code_stmt (Stmt* s) {
             break;
 
         case STMT_USER: {
-            if (strcmp(s->User.id.val.s,"Int")) {
+            if (strcmp(s->User.tk.val.s,"Int")) {
                 code_user(s);
             }
             break;
@@ -765,7 +761,7 @@ void code_stmt (Stmt* s) {
             visit_type(s->env, s->Var.type, ftp_tuples);
             visit_expr(s->env, s->Var.init, code_expr_pre);
 
-            fprintf(ALL.out, "%s %s", to_c(s->env,s->Var.type), s->Var.id.val.s);
+            fprintf(ALL.out, "%s %s", to_c(s->env,s->Var.type), s->Var.tk.val.s);
 
             if (env_type_hasalloc(s->env,s->Var.type)) {
                 fprintf (ALL.out,
@@ -803,8 +799,8 @@ void code_stmt (Stmt* s) {
         case STMT_FUNC: {
             assert(s->Func.type->sub == TYPE_FUNC);
 
-            if (!strcmp(s->Func.id.val.s,"clone")) break;
-            if (!strcmp(s->Func.id.val.s,"show" )) break;
+            if (!strcmp(s->Func.tk.val.s,"clone")) break;
+            if (!strcmp(s->Func.tk.val.s,"show" )) break;
 
             visit_type(s->env, s->Func.type, ftp_tuples);
 
@@ -825,7 +821,7 @@ void code_stmt (Stmt* s) {
             fprintf (ALL.out,
                 "%s %s (%s %s) {\n",
                 (out_isunit ? "void" : tp_out),
-                s->Func.id.val.s,
+                s->Func.tk.val.s,
                 (inp_isunit ? "void" : tp_inp),
                 (inp_isunit ? "" : "_arg_")
             );

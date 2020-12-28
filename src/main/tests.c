@@ -292,7 +292,7 @@ void t_parser_expr (void) {
         all_init(NULL, stropen("r", 0, "x"));
         Expr* e;
         assert(parser_expr(&e));
-        assert(e->sub == EXPR_VAR); assert(!strcmp(e->Var.val.s,"x"));
+        assert(e->sub == EXPR_VAR); assert(!strcmp(e->Var.tk.val.s,"x"));
         fclose(ALL.inp);
     }
     // EXPR_NATIVE
@@ -300,7 +300,7 @@ void t_parser_expr (void) {
         all_init(NULL, stropen("r", 0, "_x"));
         Expr* e;
         assert(parser_expr(&e));
-        assert(e->sub == EXPR_NATIVE); assert(!strcmp(e->Var.val.s,"x"));
+        assert(e->sub == EXPR_NATIVE); assert(!strcmp(e->Var.tk.val.s,"x"));
         fclose(ALL.inp);
     }
     // EXPR_TUPLE
@@ -331,7 +331,7 @@ void t_parser_expr (void) {
         assert(parser_expr(&e));
         assert(e->sub == EXPR_TUPLE);
         assert(e->Tuple.size == 3);
-        assert(e->Tuple.vec[1]->sub == EXPR_VAR && !strcmp(e->Tuple.vec[1]->Var.val.s,"x"));
+        assert(e->Tuple.vec[1]->sub == EXPR_VAR && !strcmp(e->Tuple.vec[1]->Var.tk.val.s,"x"));
         assert(e->Tuple.vec[2]->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
@@ -342,7 +342,7 @@ void t_parser_expr (void) {
         assert(parser_expr(&e));
         assert(e->sub == EXPR_CALL);
         assert(e->Call.func->sub == EXPR_VAR);
-        assert(!strcmp(e->Call.func->Var.val.s, "xxx"));
+        assert(!strcmp(e->Call.func->Var.tk.val.s, "xxx"));
         assert(e->Call.arg->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
@@ -352,7 +352,7 @@ void t_parser_expr (void) {
         assert(parser_expr(&e));
         assert(e->sub == EXPR_CALL);
         assert(e->Call.func->sub == EXPR_VAR);
-        assert(!strcmp(e->Call.func->Var.val.s, "f"));
+        assert(!strcmp(e->Call.func->Var.tk.val.s, "f"));
         assert(e->Call.arg->sub == EXPR_CALL);
         fclose(ALL.inp);
     }
@@ -439,7 +439,7 @@ void t_parser_stmt (void) {
         Stmt* s;
         assert(parser_stmt(&s));
         assert(s->sub == STMT_VAR);
-        assert(s->Var.id.enu == TX_VAR);
+        assert(s->Var.tk.enu == TX_VAR);
         assert(s->Var.type->sub == TYPE_UNIT);
         assert(s->Var.init->sub == EXPR_UNIT);
         fclose(ALL.inp);
@@ -449,7 +449,7 @@ void t_parser_stmt (void) {
         Stmt* s;
         assert(parser_stmt(&s));
         assert(s->sub == STMT_VAR);
-        assert(s->Var.id.enu == TX_VAR);
+        assert(s->Var.tk.enu == TX_VAR);
         assert(s->Var.type->sub == TYPE_TUPLE);
         fclose(ALL.inp);
     }
@@ -487,10 +487,10 @@ void t_parser_stmt (void) {
         Stmt* s;
         assert(parser_stmt(&s));
         assert(s->sub == STMT_USER);
-        assert(!strcmp(s->User.id.val.s, "Bool"));
+        assert(!strcmp(s->User.tk.val.s, "Bool"));
         assert(s->User.size == 2);
         assert(s->User.vec[0].type->sub == TYPE_UNIT);
-        assert(!strcmp(s->User.vec[1].id.val.s, "True"));
+        assert(!strcmp(s->User.vec[1].tk.val.s, "True"));
         fclose(ALL.inp);
     }
     // STMT_CALL
@@ -562,7 +562,7 @@ void t_parser_stmt (void) {
         assert(parser_stmt(&s));
         assert(s->sub == STMT_FUNC);
         assert(s->Func.type->sub == TYPE_FUNC);
-        assert(!strcmp(s->Func.id.val.s, "f"));
+        assert(!strcmp(s->Func.tk.val.s, "f"));
         assert(s->Func.body->sub == STMT_BLOCK);
         assert(s->Func.body->Block->sub == STMT_SEQ);
         assert(s->Func.body->Block->Seq.s1->sub == STMT_VAR);
@@ -590,7 +590,7 @@ void t_code (void) {
         Type tp = { TYPE_UNIT, 0 };
         Stmt var = { ALL.nn++, STMT_VAR, .Var={{TX_VAR,{.s="xxx"},0,0},&tp,NULL} };
         Env env = { &var, NULL };
-        Expr e = { ALL.nn++, EXPR_VAR, .Var={TX_VAR,{.s="xxx"},0,0} };
+        Expr e = { ALL.nn++, EXPR_VAR, .Var={{TX_VAR,{.s="xxx"},0,0},0} };
         code_expr(&env, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,""));
@@ -601,7 +601,7 @@ void t_code (void) {
         Type tp = { TYPE_NATIVE, 0 };
         Stmt var = { ALL.nn++, STMT_VAR, .Var={{TX_VAR,{.s="xxx"},0,0},&tp,NULL} };
         Env env = { &var, NULL };
-        Expr e = { ALL.nn++, EXPR_VAR, .Var={TX_VAR,{.s="xxx"},0,0} };
+        Expr e = { ALL.nn++, EXPR_VAR, .Var={{TX_VAR,{.s="xxx"},0,0},0} };
         code_expr(&env, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,"xxx"));
@@ -634,7 +634,7 @@ void t_code (void) {
         Stmt var = { ALL.nn++, STMT_VAR, .Var={{TX_VAR,{.s="x"},0,0},&tp,NULL} };
         Env env = { &var, NULL };
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr val = { ALL.nn++, EXPR_VAR, .Var={TX_VAR,{.s="x"},0,0} };
+        Expr val = { ALL.nn++, EXPR_VAR, .Var={{TX_VAR,{.s="x"},0,0},0} };
         Expr e = { ALL.nn++, EXPR_INDEX, .Index={&val,{TX_NUM,{2},0,0}} };
         code_expr(&env, &e, 0);
         fclose(ALL.out);
@@ -1173,7 +1173,6 @@ void t_all (void) {
         "var b: &Nat = &a.2\n"
         "call show b\n"
     ));
-puts("-=-=-=-");
     assert(all(
         "(ln 6, col 14): invalid access to \"c\" : ownership was transferred (ln 5)",
         "type rec Nat {\n"
@@ -1183,7 +1182,7 @@ puts("-=-=-=-");
         "var a: (Nat,Nat) = ($Nat,c)\n" // precisa transferir o c
         "var d: Nat = c\n"               // erro
     ));
-assert(0);
+puts("-=-=-=-");
     assert(all(
         "(ln 7, col 16): invalid access to \"a\" : ownership was transferred (ln 6)",
         "type rec Nat {\n"
@@ -1195,6 +1194,7 @@ assert(0);
         "var d: &Nat = &a.2\n"          // no: a is txed
         "call show d\n"
     ));
+assert(0);
     assert(all(
         "$\n",
         "type rec Nat {\n"

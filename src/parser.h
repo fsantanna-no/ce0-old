@@ -65,8 +65,11 @@ typedef struct Expr {
         Tk Native;      // EXPR_NATIVE
         Tk Null;        // EXPR_NULL
         Tk Int;         // EXPR_INT
-        Tk Var;         // EXPR_VAR
         struct Expr* Alias;  // EXPR_ALIAS
+        struct {        // EXPR_VAR
+            Tk tk;
+            int istx;
+        } Var;
         struct {        // EXPR_TUPLE
             int size;                   // 2
             struct Expr** vec;          // (x,y)
@@ -95,7 +98,7 @@ typedef struct Expr {
 } Expr;
 
 typedef struct {
-    Tk    id;                           // True:
+    Tk    tk;                           // True:
     Type* type;                         // ()
 } Sub;
 
@@ -112,14 +115,13 @@ typedef struct Stmt {
         Expr* Return;       // STMT_RETURN
         struct Stmt* Block; // STMT_BLOCK
         struct {            // STMT_VAR
-            Tk    id;                    // ns
+            Tk    tk;                    // ns
             Type* type;                  // : Nat
             Expr* init;                  // = n
-            int   istx;
         } Var;
         struct {            // STMT_USER
             int  isrec;                 // rec
-            Tk   id;                    // Bool
+            Tk   tk;                    // Bool
             int  size;                  // 2 subs
             Sub* vec;                   // [True,False]
         } User;
@@ -137,7 +139,7 @@ typedef struct Stmt {
             struct Stmt* false;         // else { ... }
         } If;
         struct {            // STMT_FUNC
-            Tk id;                      // func f
+            Tk tk;                      // func f
             Type* type;                 // : () -> ()
             struct Stmt* body;          // { ... }
         } Func;

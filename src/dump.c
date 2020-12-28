@@ -52,7 +52,7 @@ void dump_expr (Expr* e) {
             printf("%d", e->Int.val.n);
             break;
         case EXPR_VAR:
-            printf("%s", e->Var.val.s);
+            printf("%s", e->Var.tk.val.s);
             break;
         case EXPR_ALIAS:
             putchar('&');
@@ -94,14 +94,14 @@ void dump_stmt (Stmt* s) {
             break;
         case STMT_VAR:
             dump_spc();
-            printf("var %s: ", s->Var.id.val.s);
+            printf("var %s: ", s->Var.tk.val.s);
             dump_type(s->Var.type);
             printf(" = ");
             dump_expr(s->Var.init);
             break;
         case STMT_USER:
             dump_spc();
-            printf("type %s:\n", s->User.id.val.s);
+            printf("type %s:\n", s->User.tk.val.s);
             break;
         case STMT_SEQ:
             dump_stmt(s->Seq.s1);
@@ -121,7 +121,7 @@ void dump_stmt (Stmt* s) {
             break;
         case STMT_FUNC:
             dump_spc();
-            printf("func %s:\n", s->Func.id.val.s);
+            printf("func %s:\n", s->Func.tk.val.s);
             if (s->Func.body != NULL) {
                 _SPC_ += 4;
                 dump_stmt(s->Func.body);
@@ -156,12 +156,12 @@ void dump_stmt (Stmt* s) {
 void dump_env (Env* env) {
     while (env != NULL) {
         if (env->stmt->sub == STMT_USER) {
-            puts(env->stmt->User.id.val.s);
+            puts(env->stmt->User.tk.val.s);
         } else if (env->stmt->sub == STMT_VAR) {
-            puts(env->stmt->Var.id.val.s);
+            puts(env->stmt->Var.tk.val.s);
         } else {
             assert(env->stmt->sub == STMT_FUNC);
-            puts(env->stmt->Func.id.val.s);
+            puts(env->stmt->Func.tk.val.s);
         }
         env = env->prev;
     }
