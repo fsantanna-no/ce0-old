@@ -379,12 +379,30 @@ void code_expr_pre (Env* env, Expr* e, int istx) {
 
         case EXPR_DISC: {
             code_expr_pre(env, e->Disc.val, 0);
+            assert(e->Disc.val->sub == EXPR_VAR);
             out("assert(");
             code_expr(env, e->Disc.val, 1);
             fprintf (ALL.out,
                 ".sub == %s && \"discriminator failed\");\n",
+                 e->Disc.subtype.val.s
+             );
+            break;
+
+            // TODO: f(x).Succ
+#if 0
+            out("typeof(");
+            code_expr(env, e->Disc.val, 1);
+            out(")");
+            fprintf(ALL.out, " _tmp_%d = ", e->N);
+            code_expr(env, e->Disc.val, 1);
+            out(";\n");
+
+            fprintf (ALL.out,
+                "assert(_tmp_%d.sub==%s && \"discriminator failed\");\n",
+                e->N,
                 e->Disc.subtype.val.s
             );
+#endif
 
 #if XXXXXX
             int isptr = 0; // TODO: env_tk_isptr(env, &e->Disc.val);
@@ -504,10 +522,14 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
             break;
 
         case EXPR_DISC: {
+            assert(e->Disc.val->sub == EXPR_VAR);
             code_expr(env, e->Disc.val, 1);
             fprintf (ALL.out, "._%s",
                 e->Disc.subtype.val.s
             );
+#if 0
+            fprintf(ALL.out, "_tmp_%d", e->N);
+#endif
             break;
         }
 
