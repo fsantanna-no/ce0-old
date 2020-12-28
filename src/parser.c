@@ -137,7 +137,7 @@ int parser_expr_ (Expr** ret)
 
 // EXPR_VAR
     } else if (accept(TX_VAR)) {
-        *e = (Expr) { ALL.nn++, EXPR_VAR, 0, .Var=ALL.tk0 };
+        *e = (Expr) { ALL.nn++, EXPR_VAR, 0, .Var={ALL.tk0,NO} };
 
 // ALIAS
     } else if (accept('&')) {

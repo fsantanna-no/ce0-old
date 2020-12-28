@@ -52,7 +52,7 @@ void dump_expr (Expr* e) {
             printf("%d", e->Int.val.n);
             break;
         case EXPR_VAR:
-            printf("%s", e->Var.val.s);
+            printf("%s", e->Var.tk.val.s);
             break;
         case EXPR_ALIAS:
             putchar('&');

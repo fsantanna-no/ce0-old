@@ -292,7 +292,7 @@ void t_parser_expr (void) {
         all_init(NULL, stropen("r", 0, "x"));
         Expr* e;
         assert(parser_expr(&e));
-        assert(e->sub == EXPR_VAR); assert(!strcmp(e->Var.val.s,"x"));
+        assert(e->sub == EXPR_VAR); assert(!strcmp(e->Var.tk.val.s,"x"));
         fclose(ALL.inp);
     }
     // EXPR_NATIVE
@@ -300,7 +300,7 @@ void t_parser_expr (void) {
         all_init(NULL, stropen("r", 0, "_x"));
         Expr* e;
         assert(parser_expr(&e));
-        assert(e->sub == EXPR_NATIVE); assert(!strcmp(e->Var.val.s,"x"));
+        assert(e->sub == EXPR_NATIVE); assert(!strcmp(e->Var.tk.val.s,"x"));
         fclose(ALL.inp);
     }
     // EXPR_TUPLE
@@ -331,7 +331,7 @@ void t_parser_expr (void) {
         assert(parser_expr(&e));
         assert(e->sub == EXPR_TUPLE);
         assert(e->Tuple.size == 3);
-        assert(e->Tuple.vec[1]->sub == EXPR_VAR && !strcmp(e->Tuple.vec[1]->Var.val.s,"x"));
+        assert(e->Tuple.vec[1]->sub == EXPR_VAR && !strcmp(e->Tuple.vec[1]->Var.tk.val.s,"x"));
         assert(e->Tuple.vec[2]->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
@@ -342,7 +342,7 @@ void t_parser_expr (void) {
         assert(parser_expr(&e));
         assert(e->sub == EXPR_CALL);
         assert(e->Call.func->sub == EXPR_VAR);
-        assert(!strcmp(e->Call.func->Var.val.s, "xxx"));
+        assert(!strcmp(e->Call.func->Var.tk.val.s, "xxx"));
         assert(e->Call.arg->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
@@ -352,7 +352,7 @@ void t_parser_expr (void) {
         assert(parser_expr(&e));
         assert(e->sub == EXPR_CALL);
         assert(e->Call.func->sub == EXPR_VAR);
-        assert(!strcmp(e->Call.func->Var.val.s, "f"));
+        assert(!strcmp(e->Call.func->Var.tk.val.s, "f"));
         assert(e->Call.arg->sub == EXPR_CALL);
         fclose(ALL.inp);
     }
@@ -590,7 +590,7 @@ void t_code (void) {
         Type tp = { TYPE_UNIT, 0 };
         Stmt var = { ALL.nn++, STMT_VAR, .Var={{TX_VAR,{.s="xxx"},0,0},&tp,NULL} };
         Env env = { &var, NULL };
-        Expr e = { ALL.nn++, EXPR_VAR, 0, .Var={TX_VAR,{.s="xxx"},0,0} };
+        Expr e = { ALL.nn++, EXPR_VAR, 0, .Var={{TX_VAR,{.s="xxx"},0,0},NO} };
         code_expr(&env, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,""));
@@ -601,7 +601,7 @@ void t_code (void) {
         Type tp = { TYPE_NATIVE, 0 };
         Stmt var = { ALL.nn++, STMT_VAR, .Var={{TX_VAR,{.s="xxx"},0,0},&tp,NULL} };
         Env env = { &var, NULL };
-        Expr e = { ALL.nn++, EXPR_VAR, 0, .Var={TX_VAR,{.s="xxx"},0,0} };
+        Expr e = { ALL.nn++, EXPR_VAR, 0, .Var={{TX_VAR,{.s="xxx"},0,0},NO} };
         code_expr(&env, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,"xxx"));
@@ -634,7 +634,7 @@ void t_code (void) {
         Stmt var = { ALL.nn++, STMT_VAR, .Var={{TX_VAR,{.s="x"},0,0},&tp,NULL} };
         Env env = { &var, NULL };
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr val = { ALL.nn++, EXPR_VAR, 0, .Var={TX_VAR,{.s="x"},0,0} };
+        Expr val = { ALL.nn++, EXPR_VAR, 0, .Var={{TX_VAR,{.s="x"},0,0},NO} };
         Expr e = { ALL.nn++, EXPR_INDEX, 0, .Index={&val,{TX_NUM,{2},0,0}} };
         code_expr(&env, &e, 0);
         fclose(ALL.out);

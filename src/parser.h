@@ -57,17 +57,24 @@ typedef struct Type {
 
 extern int _N_;
 
+typedef enum {
+    NO=0, TX, BW
+} TXBW;
+
 typedef struct Expr {
     int N;
     EXPR sub;
-    int istx;
+    int istx;   // set to null on tx to avoid double free
     union {
         Tk Unit;        // EXPR_UNIT
         Tk Native;      // EXPR_NATIVE
         Tk Null;        // EXPR_NULL
         Tk Int;         // EXPR_INT
-        Tk Var;         // EXPR_VAR
         struct Expr* Alias;  // EXPR_ALIAS
+        struct {        // EXPR_VAR
+            Tk tk;
+            TXBW txbw;  // evaluate var ownership accesses
+        } Var;
         struct {        // EXPR_TUPLE
             int size;                   // 2
             struct Expr** vec;          // (x,y)

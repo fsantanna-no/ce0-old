@@ -108,7 +108,7 @@ Type* env_expr_to_type (Env* env, Expr* e) {
         }
 
         case EXPR_VAR: {
-            Stmt* s = env_id_to_stmt(env, e->Var.val.s, NULL);
+            Stmt* s = env_id_to_stmt(env, e->Var.tk.val.s, NULL);
             assert(s != NULL);
             return (s->sub == STMT_VAR) ? s->Var.type : s->Func.type;
         }
@@ -154,7 +154,7 @@ Type* env_expr_to_type (Env* env, Expr* e) {
             Type* tp = env_expr_to_type(env, e->Call.func);
             if (tp->sub == TYPE_FUNC) {
                 assert(e->Call.func->sub == EXPR_VAR);
-                if (!strcmp(e->Call.func->Var.val.s,"clone")) {     // returns type of arg
+                if (!strcmp(e->Call.func->Var.tk.val.s,"clone")) {     // returns type of arg
                     Type* ret = malloc(sizeof(Type));
                     assert(ret != NULL);
                     *ret = *env_expr_to_type(env, e->Call.arg);
@@ -174,7 +174,7 @@ Type* env_expr_to_type (Env* env, Expr* e) {
                         break;
                     case EXPR_VAR:
                     case EXPR_NATIVE:
-                        sprintf(tp->Native.val.s, "%s(%s)", e->Call.func->Native.val.s, e->Call.arg->Var.val.s);
+                        sprintf(tp->Native.val.s, "%s(%s)", e->Call.func->Native.val.s, e->Call.arg->Var.tk.val.s);
                         break;
                     case EXPR_NULL:
                         sprintf(tp->Native.val.s, "%s(NULL)", e->Call.func->Native.val.s);
@@ -467,13 +467,13 @@ int check_decls_expr (Env* env, Expr* e) {
         case EXPR_NULL:
             return ftk(env, &e->Null, "type");
         case EXPR_VAR:
-            return ftk(env, &e->Var, "variable");
+            return ftk(env, &e->Var.tk, "variable");
 
         case EXPR_CALL:
             if (e->Call.func->sub != EXPR_VAR) {
                 return VISIT_CONTINUE;
             }
-            if (!ftk(env, &e->Call.func->Var, "function")) {
+            if (!ftk(env, &e->Call.func->Var.tk, "function")) {
                 return 0;
             }
             if (!visit_expr(env,e->Call.arg,check_decls_expr)) {
@@ -586,14 +586,14 @@ int check_types_expr (Env* env, Expr* e) {
                 TODO("TODO [check_types]: _f(...)\n");
             } else {
                 assert(e->Call.func->sub == EXPR_VAR);
-                if (!strcmp(e->Call.func->Var.val.s,"clone")) {
+                if (!strcmp(e->Call.func->Var.tk.val.s,"clone")) {
                     TODO("TODO [check_types]: clone(...)\n");
-                } else if (!strcmp(e->Call.func->Var.val.s,"show")) {
+                } else if (!strcmp(e->Call.func->Var.tk.val.s,"show")) {
                     TODO("TODO [check_types]: show(...)\n");
                 } else if (!type_is_sup_sub(func->Func.inp, arg)) {
                     char err[512];
-                    sprintf(err, "invalid call to \"%s\" : type mismatch", e->Call.func->Var.val.s);
-                    return err_message(&e->Call.func->Var, err);
+                    sprintf(err, "invalid call to \"%s\" : type mismatch", e->Call.func->Var.tk.val.s);
+                    return err_message(&e->Call.func->Var.tk, err);
                 }
             }
             break;
@@ -682,10 +682,28 @@ int set_istx_expr (Env* env, Expr* e) {
     return VISIT_CONTINUE;
 }
 
+Expr* expr_leftmost (Expr* e) {
+    switch (e->sub) {
+        case EXPR_ALIAS:
+            return expr_leftmost(e->Alias);
+        case EXPR_INDEX:
+            return expr_leftmost(e->Index.val);
+        case EXPR_DISC:
+            return expr_leftmost(e->Disc.val);
+        default:
+            return e;
+    }
+}
+
 int set_istx_stmt (Stmt* s) {
     switch (s->sub) {
         case STMT_VAR:
             s->Var.init->istx = env_type_hasalloc(s->env,env_expr_to_type(s->env,s->Var.init));
+            Expr* left = expr_leftmost(s->Var.init);
+            assert(left != NULL);
+            if (left->sub == EXPR_VAR) {
+                left->Var.txbw = (s->Var.init->sub == EXPR_ALIAS ? BW : TX);
+            }
             break;
         case STMT_RETURN:
             s->Return->istx = env_type_hasalloc(s->env,env_expr_to_type(s->env,s->Return));
@@ -807,12 +825,12 @@ int check_owner_alias (Stmt* S) {
                 return VISIT_CONTINUE;
             }
 
-            if (strcmp(S->Var.tk.val.s,var->Var.val.s)) {
+            if (strcmp(S->Var.tk.val.s,var->Var.tk.val.s)) {
                 return VISIT_CONTINUE;
             }
 
             // ensure that EXPR_VAR is really same as STMT_VAR
-            Stmt* decl = env_id_to_stmt(env, var->Var.val.s, NULL);
+            Stmt* decl = env_id_to_stmt(env, var->Var.tk.val.s, NULL);
             assert(decl!=NULL && decl==S);
 
             //Type* tp = env_expr_to_type(env,var);
@@ -831,8 +849,8 @@ int check_owner_alias (Stmt* S) {
                     assert(tk1 != NULL);
                     char err[1024];
                     sprintf(err, "invalid access to \"%s\" : ownership was transferred (ln %ld)",
-                            var->Var.val.s, tk1->lin);
-                    err_message(&var->Var, err);
+                            var->Var.tk.val.s, tk1->lin);
+                    err_message(&var->Var.tk, err);
                     return VISIT_ERROR;
                 }
                 case BORROWED: {    // Rule 5
@@ -840,13 +858,13 @@ int check_owner_alias (Stmt* S) {
                     if (istx) {
                         char err[1024];
                         sprintf(err, "invalid transfer of \"%s\" : active alias in scope (ln %ld)",
-                                var->Var.val.s, tk1->lin);
-                        err_message(&var->Var, err);
+                                var->Var.tk.val.s, tk1->lin);
+                        err_message(&var->Var.tk, err);
                         return VISIT_ERROR;
                     }
                 }
             }
-            tk1 = &var->Var;
+            tk1 = &var->Var.tk;
             if (isbw) {
                 assert(state != TRANSFERRED && "bug found");
                 state = BORROWED;
@@ -916,7 +934,7 @@ return EXEC_CONTINUE;
                                 if (aliases[i] == decl) {
                                     char err[1024];
                                     sprintf(err, "invalid return : cannot return alias to local \"%s\" (ln %ld)",
-                                            S->Var.val.s, S->Var.lin);
+                                            S->Var.tk.val.s, S->Var.lin);
                                     err_message(&s->Return, err);
                                     return EXEC_ERROR;
                                 }

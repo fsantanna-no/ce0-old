@@ -297,7 +297,7 @@ int code_expr_pre (Env* env, Expr* e) {
 
         case EXPR_VAR: {
             if (e->istx) {
-                char* id = e->Var.val.s;
+                char* id = e->Var.tk.val.s;
                 fprintf (ALL.out,
                     "typeof(%s) %s_%d = %s;\n"
                     "%s = NULL;\n", // this prevents "double free"
@@ -424,7 +424,7 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
                 out("(*(");
             }
 
-            out(e->Var.val.s);
+            out(e->Var.tk.val.s);
 
             if (e->istx) {
                 fprintf(ALL.out, "_%d", e->N);
@@ -458,7 +458,7 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
             } else {
                 assert(e->Call.func->sub == EXPR_VAR);
 
-                if (!strcmp(e->Call.func->Var.val.s,"show")) {
+                if (!strcmp(e->Call.func->Var.tk.val.s,"show")) {
                     out("show_");
                     code_to_ce(env_expr_to_type(env, e->Call.arg));
                 } else {
