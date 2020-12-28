@@ -655,24 +655,50 @@ int check_types_stmt (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int set_istx_expr (Env* env, Expr* e) {
+void set_txbx (Env* env, Expr* e) {
+    void set_leftmost (Expr* e) {
+        Expr* expr_leftmost (Expr* e) {
+            switch (e->sub) {
+                case EXPR_ALIAS:
+                    return expr_leftmost(e->Alias);
+                case EXPR_INDEX:
+                    return expr_leftmost(e->Index.val);
+                case EXPR_DISC:
+                    return expr_leftmost(e->Disc.val);
+                default:
+                    return e;
+            }
+        }
+
+        Expr* left = expr_leftmost(e);
+        assert(left != NULL);
+        if (left->sub == EXPR_VAR) {
+            left->Var.txbw = (e->sub == EXPR_ALIAS ? BW : TX);
+        }
+    }
+
     Type* tp = env_expr_to_type(env,e);
     assert(tp != NULL);
-    int istx = env_type_hasalloc(env, tp);
+    if (env_type_hasalloc(env, tp)) {
+        e->istx = 1;
+        set_leftmost(e);
+    }
+}
 
+int set_istx_expr (Env* env, Expr* e) {
     switch (e->sub) {
         case EXPR_TUPLE:
             for (int i=0; i<e->Tuple.size; i++) {
-                e->Tuple.vec[i]->istx = istx;
+                set_txbx(env, e->Tuple.vec[i]);
             }
             break;
 
         case EXPR_CALL:
-            e->Call.arg->istx = istx;
+            set_txbx(env, e->Call.arg);
             break;
 
         case EXPR_CONS:
-            e->Cons.arg->istx = istx;
+            set_txbx(env, e->Cons.arg);
             break;
 
         default:
@@ -682,31 +708,13 @@ int set_istx_expr (Env* env, Expr* e) {
     return VISIT_CONTINUE;
 }
 
-Expr* expr_leftmost (Expr* e) {
-    switch (e->sub) {
-        case EXPR_ALIAS:
-            return expr_leftmost(e->Alias);
-        case EXPR_INDEX:
-            return expr_leftmost(e->Index.val);
-        case EXPR_DISC:
-            return expr_leftmost(e->Disc.val);
-        default:
-            return e;
-    }
-}
-
 int set_istx_stmt (Stmt* s) {
     switch (s->sub) {
         case STMT_VAR:
-            s->Var.init->istx = env_type_hasalloc(s->env,env_expr_to_type(s->env,s->Var.init));
-            Expr* left = expr_leftmost(s->Var.init);
-            assert(left != NULL);
-            if (left->sub == EXPR_VAR) {
-                left->Var.txbw = (s->Var.init->sub == EXPR_ALIAS ? BW : TX);
-            }
+            set_txbx(s->env, s->Var.init);
             break;
         case STMT_RETURN:
-            s->Return->istx = env_type_hasalloc(s->env,env_expr_to_type(s->env,s->Return));
+            set_txbx(s->env, s->Return);
             break;
         default:
             // istx = 0
@@ -833,14 +841,6 @@ int check_owner_alias (Stmt* S) {
             Stmt* decl = env_id_to_stmt(env, var->Var.tk.val.s, NULL);
             assert(decl!=NULL && decl==S);
 
-            //Type* tp = env_expr_to_type(env,var);
-            //int isalias = env_tk_to_type(env,tk)->isalias;
-
-            //int istx = (var->istx && !isalias);
-            //int isbw = (var->isbw &&  isalias);
-            int istx = var->istx;
-            int isbw = 0;
-
             switch (state) {
                 case NONE:
                     break;
@@ -855,7 +855,7 @@ int check_owner_alias (Stmt* S) {
                 }
                 case BORROWED: {    // Rule 5
                     assert(tk1 != NULL);
-                    if (istx) {
+                    if (var->Var.txbw == TX) {
                         char err[1024];
                         sprintf(err, "invalid transfer of \"%s\" : active alias in scope (ln %ld)",
                                 var->Var.tk.val.s, tk1->lin);
@@ -865,10 +865,10 @@ int check_owner_alias (Stmt* S) {
                 }
             }
             tk1 = &var->Var.tk;
-            if (isbw) {
+            if (var->Var.txbw == BW) {
                 assert(state != TRANSFERRED && "bug found");
                 state = BORROWED;
-            } else if (istx) {
+            } else if (var->Var.txbw == TX) {
                 state = TRANSFERRED;
             }
             return VISIT_CONTINUE;
