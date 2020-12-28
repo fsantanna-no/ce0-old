@@ -1193,7 +1193,6 @@ void t_all (void) {
         "var d: &Nat = &a.2\n"          // no: a is txed
         "call show d\n"
     ));
-puts("-=-=-=-");
     assert(all(
         "$\n",
         "type rec Nat {\n"
@@ -1205,7 +1204,6 @@ puts("-=-=-=-");
         "var d: &Nat = &a.2\n"
         "call show d\n"                 // ok: $Nat
     ));
-assert(0);
     assert(all(
         "Succ ($)\n",
         "type rec Nat {\n"
@@ -1218,6 +1216,7 @@ assert(0);
         "var d: &Nat = &a.1\n"
         "call show d\n"             // ok: e
     ));
+puts("-=-=-=-");
     assert(all(
         "(ln 7, col 14): invalid transfer of \"c\" : active alias in scope (ln 6)",
         "type rec Nat {\n"
@@ -1228,6 +1227,7 @@ assert(0);
         "var b: &Nat = &c.Succ!\n"      // borrow de c
         "var e: Nat = c\n"              // erro
     ));
+assert(0);
     assert(all(
         "Succ ($)\n",
         "type rec Nat {\n"

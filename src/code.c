@@ -296,7 +296,7 @@ int code_expr_pre (Env* env, Expr* e) {
             break;
 
         case EXPR_VAR: {
-            if (e->istx && env_type_hasalloc(env,TP)) {
+            if (e->istx) {
                 char* id = e->Var.val.s;
                 fprintf (ALL.out,
                     "typeof(%s) %s_%d = %s;\n"
@@ -351,7 +351,7 @@ int code_expr_pre (Env* env, Expr* e) {
 
         case EXPR_INDEX:
             //assert(e->Index.val->sub == EXPR_VAR);
-            if (e->istx && env_type_hasalloc(env,TP)) {
+            if (e->istx) {
                 // this prevents "double free"
                 code_expr(env, e, 1);
                 fprintf(ALL.out, " = NULL;\n");
@@ -368,7 +368,7 @@ int code_expr_pre (Env* env, Expr* e) {
              );
 
             // transfer ownership
-            if (e->istx && env_type_hasalloc(env,TP)) {
+            if (e->istx) {
 assert(0);
                 // this prevents "double free"
                 code_expr(env, e, 1);
@@ -426,7 +426,7 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
 
             out(e->Var.val.s);
 
-            if (e->istx && env_type_hasalloc(env,TP)) {
+            if (e->istx) {
                 fprintf(ALL.out, "_%d", e->N);
             }
 

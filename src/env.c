@@ -656,19 +656,23 @@ int check_types_stmt (Stmt* s) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int set_istx_expr (Env* env, Expr* e) {
+    Type* tp = env_expr_to_type(env,e);
+    assert(tp != NULL);
+    int istx = env_type_hasalloc(env, tp);
+
     switch (e->sub) {
         case EXPR_TUPLE:
             for (int i=0; i<e->Tuple.size; i++) {
-                e->Tuple.vec[i]->istx = 1;
+                e->Tuple.vec[i]->istx = istx;
             }
             break;
 
         case EXPR_CALL:
-            e->Call.arg->istx = 1;
+            e->Call.arg->istx = istx;
             break;
 
         case EXPR_CONS:
-            e->Cons.arg->istx = 1;
+            e->Cons.arg->istx = istx;
             break;
 
         default:
@@ -681,10 +685,10 @@ int set_istx_expr (Env* env, Expr* e) {
 int set_istx_stmt (Stmt* s) {
     switch (s->sub) {
         case STMT_VAR:
-            s->Var.init->istx = 1;
+            s->Var.init->istx = env_type_hasalloc(s->env,env_expr_to_type(s->env,s->Var.init));
             break;
         case STMT_RETURN:
-            s->Return->istx = 1;
+            s->Return->istx = env_type_hasalloc(s->env,env_expr_to_type(s->env,s->Return));
             break;
         default:
             // istx = 0
@@ -811,15 +815,19 @@ int check_owner_alias (Stmt* S) {
             Stmt* decl = env_id_to_stmt(env, var->Var.val.s, NULL);
             assert(decl!=NULL && decl==S);
 
-            int isalias = 0;
-            //isalias = isalias || env_tk_to_type(env,tk)->isalias;
+            //Type* tp = env_expr_to_type(env,var);
+            //int isalias = env_tk_to_type(env,tk)->isalias;
 
-            // if already moved, it doesn't matter, any access is invalid
+            //int istx = (var->istx && !isalias);
+            //int isbw = (var->isbw &&  isalias);
+            int istx = var->istx;
+            int isbw = 0;
 
             switch (state) {
                 case NONE:
                     break;
                 case TRANSFERRED: {  // Rule 6
+                    // if already moved, it doesn't matter, any access is invalid
                     assert(tk1 != NULL);
                     char err[1024];
                     sprintf(err, "invalid access to \"%s\" : ownership was transferred (ln %ld)",
@@ -829,7 +837,7 @@ int check_owner_alias (Stmt* S) {
                 }
                 case BORROWED: {    // Rule 5
                     assert(tk1 != NULL);
-                    if (!isalias) {
+                    if (istx) {
                         char err[1024];
                         sprintf(err, "invalid transfer of \"%s\" : active alias in scope (ln %ld)",
                                 var->Var.val.s, tk1->lin);
@@ -839,10 +847,10 @@ int check_owner_alias (Stmt* S) {
                 }
             }
             tk1 = &var->Var;
-            if (isalias) {
+            if (isbw) {
                 assert(state != TRANSFERRED && "bug found");
                 state = BORROWED;
-            } else if (var->istx) {
+            } else if (istx) {
                 state = TRANSFERRED;
             }
             return VISIT_CONTINUE;
