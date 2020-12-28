@@ -279,201 +279,32 @@ int ftp_tuples (Env* env, Type* tp) {
     out("#endif\n");
     return VISIT_CONTINUE;
 }
-#if XXXXXX
 
-char* ftk_ (Tk* tk) {
-    static char decl[256];
-    sprintf(decl, "_tmp_%ld_%ld", tk->lin, tk->col);
-    return decl;
-}
-
-char* ftk (Env* env, Tk* tk, int istx) {
-    char* decl = ftk_(tk);
-
-    switch (tk->enu) {
-        case TK_UNIT:
-            fprintf(ALL.out, "int %s = 1;\n", decl);
-            break;
-        case TX_NATIVE:
-        case TX_VAR:
-            fprintf(ALL.out, "typeof(%s) %s = %s;\n", tk->val.s, decl, tk->val.s);
-            break;
-        case TX_NULL:
-            fprintf(ALL.out, "%s* %s = NULL;\n", tk->val.s, decl);
-            break;
-        case TX_NUM:
-            fprintf(ALL.out, "int %s = %d;\n", decl, tk->val.n);
-            break;
-        default:
-//printf(">>> %d\n", tk->enu);
-            assert(0);
-    }
-
-    // Set EXPR_VAR.istx=1 for root recursive and not alias/alias type.
-    //      f(nat)          -- istx=1       -- root, recursive
-    //      return nat      -- istx=1       -- root, recursive
-    //      show(&nat)    -- istx=0       -- root, recursive, alias
-    //      f(alias_nat)    -- istx=0       -- root, recursive, alias type
-    //      nat.xxx         -- istx=0       -- not root, recursive
-    if (istx && tk->enu==TX_VAR) {
-        Type* tp = env_tk_to_type(env,tk);
-        assert(tp != NULL);
-        if (env_type_hasalloc(env,tp) && !tp->isalias) {
-            // this prevents "double free"
-
-            if (env_type_isrec(env,tp)) {
-                fprintf(ALL.out, "%s = NULL;\n", tk->val.s);
-            } else {
-                switch (tp->sub) {
-                    case TYPE_TUPLE:
-                        for (int i=0; i<tp->Tuple.size; i++) {
-                            if (env_type_isrec(env,&tp->Tuple.vec[i])) {
-                                fprintf(ALL.out, "%s._%d = NULL;\n", tk->val.s, i+1);
-                            }
-                        }
-                        break;
-                    case TYPE_USER: {
-                        Stmt* decl = env_id_to_stmt(env, tp->User.val.s, NULL);
-                        assert(decl!=NULL && decl->sub==STMT_USER);
-                        for (int i=0; i<decl->User.size; i++) {
-                            Sub* sub = &decl->User.vec[i];
-                            if (env_type_isrec(env,&sub->type)) {
-                                fprintf(ALL.out, "%s._%s = NULL;\n", tk->val.s, sub->id.val.s);
-                            }
-                        }
-                        break;
-                    }
-                    default:
-                        assert(0);
-                }
-            }
-        }
-    }
-
-    return decl;
-}
-
-// prepares _tmp_N
-
-void fe_tmp_set (Env* env, Expr* e, char* tp) {
-    if (tp == NULL) {
-        tp = to_c(env,env_expr_to_type(env,e));
-    }
-    fprintf(ALL.out, "%s _tmp_%d = ", tp, e->N);
-}
-
-int isaddr (Env* env, Expr* e) {
-    return (e->isalias && !env_type_isrec(env,env_expr_to_type(env,e)));
-}
-
-void fe (Env* env, Expr* e) {
-    switch (e->sub) {
-        case EXPR_UNIT:
-        case EXPR_NULL:
-        case EXPR_INT:
-        case EXPR_NATIVE:
-        case EXPR_VAR: {
-            char* tk = ftk(env, &e->tk, (e->sub==EXPR_VAR && !e->isalias));
-            char* tp = NULL;
-            char tp_[256];
-            if (e->sub == EXPR_NATIVE) {
-                sprintf(tp_, "typeof(%s)", tk);
-                tp = tp_;
-            }
-            fe_tmp_set(env, e, tp);
-//printf(">>> %s -> %d\n", e->tk.val.s, env_type_isrec(env,env_expr_to_type(env,e)));
-            if (isaddr(env,e)) {
-                out("&");
-            }
-            out(tk);
-            out(";\n");
-            return;
-        }
-
-        case EXPR_TUPLE:
-            for (int i=0; i<e->Tuple.size; i++) {
-                ftk(env, &e->Tuple.vec[i], 1);
-            }
-            fe_tmp_set(env, e, NULL);
-            fprintf(ALL.out, "((%s) {", to_c(env, env_expr_to_type(env,e)));
-            for (int i=0; i<e->Tuple.size; i++) {
-                if (i != 0) {
-                    out(",");
-                }
-                fprintf(ALL.out, "_tmp_%ld_%ld", e->Tuple.vec[i].lin, e->Tuple.vec[i].col);
-            }
-            out(" });\n");
-            return;
-
-        case EXPR_INDEX: {
-            char* val = ftk(env, &e->Index.val, 0);
-            fe_tmp_set(env, e, NULL);
-            fprintf(ALL.out, "%s%s._%d;\n", (isaddr(env,e) ? "&":""), val, e->Index.index.val.n);
-
-            // transfer ownership
-            Type* tp = env_expr_to_type(env,e);
-            assert(tp != NULL);
-            if (env_type_hasalloc(env,tp)) { // also checks isalias
-                // this prevents "double free"
-                fprintf(ALL.out, "%s._%d = NULL;\n", e->Index.val.val.s, e->Index.index.val.n);
-            }
-            return;
-        }
-
-        case EXPR_CALL: {
-            char* arg = ftk(env, &e->Call.arg, 1);
-
-            char* tp = NULL;
-            char tp_[512];
-            if (e->Call.func.enu == TX_NATIVE) {
-                if (e->Call.arg.enu == TK_UNIT) {
-                    sprintf(tp_, "typeof(%s())", e->Call.func.val.s);   // _f() instead of _f(1)
-                } else {
-                    sprintf(tp_, "typeof(%s(%s))", e->Call.func.val.s, arg);
-                }
-                tp = tp_;
-            } else if (e->Call.func.enu==TX_VAR && !strcmp(e->Call.func.val.s,"clone")) {
-                sprintf(tp_, "typeof(%s_%s(%s))", e->Call.func.val.s, to_ce(env_tk_to_type(env,&e->Call.arg)), arg);
-                tp = tp_;
-            }
-
-            if (!e->Call.isstmt) {
-                fe_tmp_set(env, e, tp);
-            }
-
-            if (e->Call.func.enu == TX_VAR) {
-                if (!strcmp(e->Call.func.val.s,"clone")) {
-                    out("clone_");
-                    code_to_ce(env_tk_to_type(env, &e->Call.arg));
-                } else if (!strcmp(e->Call.func.val.s,"show")) {
-                    out("show_");
-                    code_to_ce(env_tk_to_type(env, &e->Call.arg));
-                } else {
-                    out(e->Call.func.val.s);
-                }
-            } else {
-                out(e->Call.func.val.s);
-            }
-
-            if (e->Call.func.enu==TX_NATIVE && e->Call.arg.enu==TK_UNIT) {
-                out("();\n");   // _f() instead of _f(1)
-            } else {
-                fprintf(ALL.out, "(%s);\n", arg);
-            }
-            return;
-        }
-
-        default:
-            assert(0);
-    }
-    assert(0);
-}
-#endif
-
-int code_expr_pre (Env* env, Expr* e) {
+void code_expr_pre (Env* env, Expr* e) {
     Type* TP = env_expr_to_type(env,e);
 
     switch (e->sub) {
+        case EXPR_UNIT:
+        case EXPR_NATIVE:
+        case EXPR_NULL:
+        case EXPR_INT:
+            break;
+
+        case EXPR_TUPLE:
+            for (int i=0; i<e->Tuple.size; i++) {
+                code_expr_pre(env, e->Tuple.vec[i]);
+            }
+            break;
+
+        case EXPR_INDEX:
+            code_expr_pre(env, e->Index.val);
+            break;
+
+        case EXPR_CALL:
+            code_expr_pre(env, e->Call.func);
+            code_expr_pre(env, e->Call.arg);
+            break;
+
         case EXPR_VAR:
             if (env_type_isrec(env,TP)) {
                 char* id = e->Var.val.s;
@@ -552,9 +383,8 @@ int code_expr_pre (Env* env, Expr* e) {
         }
 
         default:
-            break;
+            assert(0);
     }
-    return VISIT_CONTINUE;
 }
 
 void code_expr (Env* env, Expr* e, int ctxplain) {
@@ -901,7 +731,7 @@ void code_stmt (Stmt* s) {
             break;
 
         case STMT_CALL:
-            visit_expr(s->env, s->Call, code_expr_pre);
+            code_expr_pre(s->env, s->Call);
             code_expr(s->env, s->Call, 0);
             out(";\n");
             break;
@@ -918,7 +748,7 @@ void code_stmt (Stmt* s) {
                 break;
             }
             visit_type(s->env, s->Var.type, ftp_tuples);
-            visit_expr(s->env, s->Var.init, code_expr_pre);
+            code_expr_pre(s->env, s->Var.init);
 
             fprintf(ALL.out, "%s %s", to_c(s->env,s->Var.type), s->Var.id.val.s);
 
@@ -936,7 +766,7 @@ void code_stmt (Stmt* s) {
         }
 
         case STMT_RETURN: {
-            visit_expr(s->env, s->Return, code_expr_pre);
+            code_expr_pre(s->env, s->Return);
             out("return ");
             code_expr(s->env, s->Return, 0);
             out(";\n");

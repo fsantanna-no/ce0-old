@@ -120,10 +120,6 @@ int visit_expr_ (Env* env, Expr* e, F_Expr fe) {
 }
 
 int visit_expr (Env* env, Expr* e, F_Expr fe) {
-    int ret = visit_expr_(env, e, fe);
-    if (ret != VISIT_CONTINUE) {
-        return ret;
-    }
     if (fe != NULL) {
         switch (fe(env,e)) {
             case VISIT_ERROR:
@@ -133,6 +129,10 @@ int visit_expr (Env* env, Expr* e, F_Expr fe) {
             case VISIT_BREAK:
                 return 1;
         }
+    }
+    int ret = visit_expr_(env, e, fe);
+    if (ret != VISIT_CONTINUE) {
+        return ret;
     }
     return 1;
 }
