@@ -655,33 +655,31 @@ int check_types_stmt (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void set_txbx (Env* env, Expr* e) {
-    void set_leftmost (Expr* e) {
-        Expr* expr_leftmost (Expr* e) {
-            switch (e->sub) {
-                case EXPR_ALIAS:
-                    return expr_leftmost(e->Alias);
-                case EXPR_INDEX:
-                    return expr_leftmost(e->Index.val);
-                case EXPR_DISC:
-                    return expr_leftmost(e->Disc.val);
-                default:
-                    return e;
-            }
-        }
-
-        Expr* left = expr_leftmost(e);
-        assert(left != NULL);
-        if (left->sub == EXPR_VAR) {
-            left->Var.txbw = (e->sub == EXPR_ALIAS ? BW : TX);
+void set_txbx (Env* env, Expr* E) {
+    Expr* expr_leftmost (Expr* e) {
+        switch (e->sub) {
+            case EXPR_ALIAS:
+                return expr_leftmost(e->Alias);
+            case EXPR_INDEX:
+                return expr_leftmost(e->Index.val);
+            case EXPR_DISC:
+                return expr_leftmost(e->Disc.val);
+            default:
+                return e;
         }
     }
 
-    Type* tp = env_expr_to_type(env,e);
+    Type* tp = env_expr_to_type(env,E);
     assert(tp != NULL);
     if (env_type_hasalloc(env, tp)) {
-        e->istx = 1;
-        set_leftmost(e);
+        E->istx = 1;
+
+        Expr* left = expr_leftmost(E);
+        assert(left != NULL);
+        if (left->sub == EXPR_VAR) {
+            left->Var.txbw = (E->sub==EXPR_ALIAS ? BW : (E==left ? TX : NO));
+                // TX only for root vars (E==left)
+        }
     }
 }
 
