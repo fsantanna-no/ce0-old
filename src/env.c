@@ -839,6 +839,7 @@ int check_owner_alias (Stmt* S) {
                 return 1;
             }
 
+return EXEC_CONTINUE;
             switch (s->sub) {
                 case STMT_VAR: {
                     Expr* e = s->Var.init;
@@ -892,7 +893,7 @@ int check_owner_alias (Stmt* S) {
 
         int rule_3 (void)
         {
-assert(0);
+return EXEC_CONTINUE;
 #if XXXXXX
             switch (s->sub) {
                 case STMT_VAR: {

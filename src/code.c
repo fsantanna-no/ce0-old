@@ -241,7 +241,7 @@ int ftp_tuples (Env* env, Type* tp) {
             ((!tp->isalias && hasalloc) ? "x" : ""), tp_ce
         );
         fprintf(ALL.out,
-            "int show_%s%s_ (%s%s v) {\n"
+            "void show_%s%s_ (%s%s v) {\n"
             "    printf(\"(\");\n",
             ((!tp->isalias && hasalloc) ? "x" : ""),
             tp_ce, tp_c, toptr(env,tp,"*","")
@@ -264,12 +264,10 @@ int ftp_tuples (Env* env, Type* tp) {
         }
         fprintf(ALL.out,
             "    printf(\")\");\n"
-            "    return 1;\n"
             "}\n"
-            "int show_%s%s (%s%s v) {\n"
+            "void show_%s%s (%s%s v) {\n"
             "    show_%s%s_(v);\n"
             "    puts(\"\");\n"
-            "    return 1;\n"
             "}\n",
             ((!tp->isalias && hasalloc) ? "x" : ""), tp_ce, tp_c, toptr(env,tp,"*",""),
             ((!tp->isalias && hasalloc) ? "x" : ""), tp_ce
@@ -512,7 +510,6 @@ int code_expr_pre (Env* env, Expr* e) {
         }
 
         case EXPR_DISC: {
-            Type* tp = env_expr_to_type(env, e->Disc.val);
             out("assert(");
             code_expr(env, e->Disc.val, 1);
             fprintf (ALL.out,
@@ -560,17 +557,23 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
             fprintf(ALL.out, "%d", e->Int.val.n);
             break;
 
+        case EXPR_NULL:
+            out("NULL");
+            break;
+
         case EXPR_NATIVE:
             out(e->Native.val.s);
             break;
 
-        case EXPR_VAR: {
+        case EXPR_VAR:
             out(e->Var.val.s);
             break;
-        }
 
         case EXPR_ALIAS: {
-            out("&");
+            Type* tp = env_expr_to_type(env, e->Alias);
+            if (!env_type_hasalloc(env,tp)) {
+                out("&");
+            }
             code_expr(env, e->Alias, 0);
             break;
         }
@@ -579,7 +582,7 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
             fprintf(ALL.out, "_tmp_%d", e->N);
             break;
 
-        case EXPR_CALL: {
+        case EXPR_CALL:
             if (e->Call.func->sub == EXPR_NATIVE) {
                 code_expr(env, e->Call.func, 0);
                 out("(");
@@ -600,7 +603,6 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
                 out(")");
             }
             break;
-        }
 
         case EXPR_TUPLE:
             out("((");
@@ -803,7 +805,7 @@ void code_user (Stmt* s) {
             out (
                 "if (v == NULL) {\n"
                 "    printf(\"$\");\n"
-                "    return 1;\n"
+                "    return;\n"
                 "}\n"
             );
         }
