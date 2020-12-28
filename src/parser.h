@@ -115,6 +115,7 @@ typedef struct Stmt {
             Tk    id;                    // ns
             Type* type;                  // : Nat
             Expr* init;                  // = n
+            int   istx;
         } Var;
         struct {            // STMT_USER
             int  isrec;                 // rec

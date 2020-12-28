@@ -313,8 +313,16 @@ void code_expr_pre (Env* env, Expr* e, int istx) {
             code_expr_pre(env, e->Pred.val, 0);
             break;
 
-        case EXPR_VAR:
-            if (istx && env_type_isrec(env,TP)) {
+        case EXPR_VAR: {
+            if (!istx || !env_type_isrec(env,TP)) {   // TODO: hasalloc
+                break;
+            }
+
+            Stmt* s = env_id_to_stmt(env, e->Var.val.s, NULL);
+            assert(s != NULL);
+            if (s->sub == STMT_VAR) {
+                s->Var.istx = 1;
+
                 char* id = e->Var.val.s;
                 fprintf (ALL.out,
                     "typeof(%s) %s_%d = %s;\n"
@@ -323,6 +331,7 @@ void code_expr_pre (Env* env, Expr* e, int istx) {
                 );
             }
             break;
+        }
 
         case EXPR_CONS: {
             code_expr_pre(env, e->Cons.arg, 1);
@@ -421,12 +430,16 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
             out(e->Native.val.s);
             break;
 
-        case EXPR_VAR:
+        case EXPR_VAR: {
             out(e->Var.val.s);
-            if (env_type_isrec(env,TP)) {
+
+            Stmt* s = env_id_to_stmt(env, e->Var.val.s, NULL);
+            assert(s != NULL);
+            if (s->Var.istx) {
                 fprintf(ALL.out, "_%d", e->N);
             }
             break;
+        }
 
         case EXPR_ALIAS: {
             Type* tp = env_expr_to_type(env, e->Alias);
