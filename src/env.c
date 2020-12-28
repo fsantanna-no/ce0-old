@@ -451,7 +451,6 @@ int ftk (Env* env, Tk* tk, char* var_type) {
         }
 
         default:
-printf(">>> %d\n", tk->enu);
             assert(0 && "TODO");
     }
 }
@@ -700,8 +699,7 @@ int set_istx (Stmt* s) {
                 break;
 
             case EXPR_VAR: {
-                // TODO: hasalloc vs isrec
-                e->Var.istx = (istx && env_type_isrec(env,TP));
+                e->Var.istx = (istx && env_type_hasalloc(env,TP));
                 break;
             }
         }
