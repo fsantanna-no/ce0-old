@@ -445,7 +445,8 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
             break;
 
         case EXPR_VAR: {
-            if (ctxplain && env_type_isptr(env,TP)) {
+            int deref = (ctxplain && env_type_isptr(env,TP));
+            if (deref) {
                 out("(*(");
             }
 
@@ -457,7 +458,7 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
                 fprintf(ALL.out, "_%d", e->N);
             }
 
-            if (ctxplain && TP->isalias) {
+            if (deref) {
                 out("))");
             }
             break;
