@@ -281,6 +281,9 @@ int ftp_tuples (Env* env, Type* tp) {
 }
 
 int code_expr_pre (Env* env, Expr* e) {
+    Type* TP = env_expr_to_type(env, e);
+    assert(TP != NULL);
+
     switch (e->sub) {
         case EXPR_UNIT:
         case EXPR_NATIVE:
@@ -294,8 +297,8 @@ int code_expr_pre (Env* env, Expr* e) {
             break;
 
         case EXPR_VAR: {
-            if (e->Var.istx) {
-                char* id = e->Var.tk.val.s;
+            if (e->istx) {
+                char* id = e->Var.val.s;
                 fprintf (ALL.out,
                     "typeof(%s) %s_%d = %s;\n"
                     "%s = NULL;\n", // this prevents "double free"
@@ -355,34 +358,27 @@ int code_expr_pre (Env* env, Expr* e) {
                 ".sub == %s && \"discriminator failed\");\n",
                  e->Disc.subtype.val.s
              );
-            break;
+
+            // transfer ownership
+            if (e->istx) { // also checks isalias
+                // this prevents "double free"
+                code_expr(env, e->Disc.val, 1);
+                fprintf(ALL.out, "._%s = NULL;\n", e->Disc.subtype.val.s);
+            }
 
             // TODO: f(x).Succ
-#if XXXXXX
+#if 0
             out("typeof(");
             code_expr(env, e->Disc.val, 1);
             out(")");
             fprintf(ALL.out, " _tmp_%d = ", e->N);
             code_expr(env, e->Disc.val, 1);
             out(";\n");
-
             fprintf (ALL.out,
                 "assert(_tmp_%d.sub==%s && \"discriminator failed\");\n",
                 e->N,
                 e->Disc.subtype.val.s
             );
-
-            int isptr = 0; // TODO: env_tk_isptr(env, &e->Disc.val);
-            fe_tmp_set(env, e, NULL);
-            fprintf(ALL.out, "%s%s%s_%s;\n", (isaddr(env,e) ? "&" : ""), val, (isptr ? "->" : "."), e->Disc.subtype.val.s);
-
-            // transfer ownership
-            Type* tp = env_expr_to_type(env,e);
-            assert(tp != NULL);
-            if (env_type_hasalloc(env,tp)) { // also checks isalias
-                // this prevents "double free"
-                fprintf(ALL.out, "%s%s_%s = NULL;\n", e->Disc.val.val.s, (isptr ? "->" : "."), e->Disc.subtype.val.s);
-            }
 #endif
             break;
         }
@@ -392,6 +388,7 @@ int code_expr_pre (Env* env, Expr* e) {
 
 void code_expr (Env* env, Expr* e, int ctxplain) {
     Type* TP = env_expr_to_type(env, e);
+    assert(TP != NULL);
     if (TP->sub==TYPE_UNIT && e->sub!=EXPR_CALL) {
         return;     // no code to generate
     }
@@ -418,9 +415,9 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
                 out("(*(");
             }
 
-            out(e->Var.tk.val.s);
+            out(e->Var.val.s);
 
-            if (e->Var.istx) {
+            if (e->istx) {
                 fprintf(ALL.out, "_%d", e->N);
             }
 
@@ -452,7 +449,7 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
             } else {
                 assert(e->Call.func->sub == EXPR_VAR);
 
-                if (!strcmp(e->Call.func->Var.tk.val.s,"show")) {
+                if (!strcmp(e->Call.func->Var.val.s,"show")) {
                     out("show_");
                     code_to_ce(env_expr_to_type(env, e->Call.arg));
                 } else {

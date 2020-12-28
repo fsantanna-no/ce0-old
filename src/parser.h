@@ -60,16 +60,14 @@ extern int _N_;
 typedef struct Expr {
     int N;
     EXPR sub;
+    int istx;
     union {
         Tk Unit;        // EXPR_UNIT
         Tk Native;      // EXPR_NATIVE
         Tk Null;        // EXPR_NULL
         Tk Int;         // EXPR_INT
+        Tk Var;         // EXPR_VAR
         struct Expr* Alias;  // EXPR_ALIAS
-        struct {        // EXPR_VAR
-            Tk tk;
-            int istx;
-        } Var;
         struct {        // EXPR_TUPLE
             int size;                   // 2
             struct Expr** vec;          // (x,y)
