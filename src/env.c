@@ -93,27 +93,6 @@ Sub* env_find_sub (Env* env, const char* sub) {
     return NULL;
 }
 
-Type* env_tk_to_type (Env* env, Tk* tk) { // static returns use env=NULL b/c no ids underneath
-    assert(0);
-#if XXXXXX
-    switch (tk->enu) {
-        case TK_UNIT: {
-        }
-        case TX_NATIVE: {
-        }
-        case TX_VAR: {
-        }
-        case TX_NULL: {
-        }
-        case TX_NUM: {
-        }
-        default:
-//printf(">>> %d\n", tk->enu);
-            assert(0);
-    }
-#endif
-}
-
 Type* env_expr_to_type (Env* env, Expr* e) {
     switch (e->sub) {
         case EXPR_UNIT: {

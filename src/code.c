@@ -389,7 +389,7 @@ void code_expr_pre (Env* env, Expr* e, int istx) {
             break;
 
             // TODO: f(x).Succ
-#if 0
+#if XXXXXX
             out("typeof(");
             code_expr(env, e->Disc.val, 1);
             out(")");
@@ -402,9 +402,7 @@ void code_expr_pre (Env* env, Expr* e, int istx) {
                 e->N,
                 e->Disc.subtype.val.s
             );
-#endif
 
-#if XXXXXX
             int isptr = 0; // TODO: env_tk_isptr(env, &e->Disc.val);
             fe_tmp_set(env, e, NULL);
             fprintf(ALL.out, "%s%s%s_%s;\n", (isaddr(env,e) ? "&" : ""), val, (isptr ? "->" : "."), e->Disc.subtype.val.s);

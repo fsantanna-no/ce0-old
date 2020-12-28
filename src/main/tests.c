@@ -1134,7 +1134,6 @@ void t_all (void) {
         "var c: Nat = Succ Succ $Nat\n"
         "call show &c\n"
     ));
-puts("-=-=-=-");
     assert(all(
         "Succ ($)\n",
         "type rec Nat {\n"
@@ -1143,7 +1142,6 @@ puts("-=-=-=-");
         "var c: Nat = Succ Succ $Nat\n"
         "call show &c.Succ!\n"
     ));
-assert(0);
     assert(all(
         "Succ ($)\n",
         "type rec Nat {\n"
@@ -1175,6 +1173,7 @@ assert(0);
         "var b: &Nat = &a.2\n"
         "call show b\n"
     ));
+puts("-=-=-=-");
     assert(all(
         "(ln 6, col 14): invalid access to \"c\" : ownership was transferred (ln 5)",
         "type rec Nat {\n"
@@ -1184,6 +1183,7 @@ assert(0);
         "var a: (Nat,Nat) = ($Nat,c)\n" // precisa transferir o c
         "var d: Nat = c\n"               // erro
     ));
+assert(0);
     assert(all(
         "(ln 7, col 16): invalid access to \"a\" : ownership was transferred (ln 6)",
         "type rec Nat {\n"
