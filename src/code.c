@@ -471,7 +471,20 @@ void fe (Env* env, Expr* e) {
 #endif
 
 int code_expr_pre (Env* env, Expr* e) {
+    Type* TP = env_expr_to_type(env,e);
+
     switch (e->sub) {
+        case EXPR_VAR:
+            if (env_type_isrec(env,TP)) {
+                char* id = e->Var.val.s;
+                fprintf (ALL.out,
+                    "typeof(%s) %s_%d = %s;\n"
+                    "%s = NULL;\n", // this prevents "double free"
+                    id, id, e->N, id, id
+                );
+            }
+            break;
+
         case EXPR_CONS: {
             Stmt* user = env_sub_id_to_user_stmt(env, e->Cons.subtype.val.s);
             assert(user != NULL);
@@ -572,6 +585,9 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
 
         case EXPR_VAR:
             out(e->Var.val.s);
+            if (env_type_isrec(env,TP)) {
+                fprintf(ALL.out, "_%d", e->N);
+            }
             break;
 
         case EXPR_ALIAS: {
