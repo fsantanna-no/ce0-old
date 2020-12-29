@@ -1,3 +1,4 @@
+- remover "x" de clone?
 - TYPE_null
     - set alloc fields to NULL
 - voltar pra vec Seq?

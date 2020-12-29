@@ -683,13 +683,17 @@ void code_user (Stmt* s) {
                     "case %s: {\n"
                     "   %s* ret = malloc(sizeof(%s));\n"
                     "   assert(ret!=NULL && \"not enough memory\");\n"
-                    "   *ret = (%s) { %s, {._%s=clone_%s%s(v->_%s)} };\n"
+                    "   *ret = (%s) { %s, {._%s=%sclone_%s%s(%sv->_%s)} };\n"
                     "   return ret;\n"
                     "}\n",
                     id,
                     sup, sup,
                     sup, id, id,
-                    (hasalloc ? "x" : ""), to_ce(sub->type), id
+                    norec_hasalloc(s->env,sub->type,"*",""),
+                    (hasalloc ? "x" : ""),
+                    to_ce(sub->type),
+                    (env_type_isrec(s->env,sub->type) ? "" : "&"),
+                    id
                 );
             }
             out("}\n");
