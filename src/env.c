@@ -660,7 +660,7 @@ int check_types_stmt (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void set_txbx (Env* env, Expr* E) {
+void set_txbx (Env* env, Expr* E, int isset) {
     Expr* expr_leftmost (Expr* e) {
         switch (e->sub) {
             case EXPR_ALIAS:
@@ -682,26 +682,26 @@ void set_txbx (Env* env, Expr* E) {
         Expr* left = expr_leftmost(E);
         assert(left != NULL);
         if (left->sub == EXPR_VAR) {
-            left->Var.txbw = (E->sub==EXPR_ALIAS ? BW : (E==left ? TX : NO));
+            left->Var.txbw = (E->sub==EXPR_ALIAS ? (isset ? BW : NO) : (E==left ? TX : NO));
                 // TX only for root vars (E==left)
         }
     }
 }
 
-int set_istx_expr (Env* env, Expr* e) {
+int set_istx_expr (Env* env, Expr* e, int isset) {
     switch (e->sub) {
         case EXPR_TUPLE:
             for (int i=0; i<e->Tuple.size; i++) {
-                set_txbx(env, e->Tuple.vec[i]);
+                set_txbx(env, e->Tuple.vec[i], isset);
             }
             break;
 
         case EXPR_CALL:
-            set_txbx(env, e->Call.arg);
+            set_txbx(env, e->Call.arg, 0);
             break;
 
         case EXPR_CONS:
-            set_txbx(env, e->Cons.arg);
+            set_txbx(env, e->Cons.arg, isset);
             break;
 
         default:
@@ -714,10 +714,18 @@ int set_istx_expr (Env* env, Expr* e) {
 int set_istx_stmt (Stmt* s) {
     switch (s->sub) {
         case STMT_VAR:
-            set_txbx(s->env, s->Var.init);
+            set_txbx(s->env, s->Var.init, 1);
+            set_istx_expr(s->env, s->Var.init, 1);
+            break;
+        case STMT_CALL:
+            set_istx_expr(s->env, s->Call, 0);
+            break;
+        case STMT_IF:
+            set_istx_expr(s->env, s->If.tst, 0);
             break;
         case STMT_RETURN:
-            set_txbx(s->env, s->Return);
+            set_txbx(s->env, s->Return, 0);
+            set_istx_expr(s->env, s->Return, 0);
             break;
         default:
             // istx = 0
@@ -968,7 +976,7 @@ int env (Stmt* s) {
     if (!visit_stmt(s,check_types_stmt,check_types_expr,NULL)) {
         return 0;
     }
-    assert(visit_stmt(s,set_istx_stmt,set_istx_expr,NULL));
+    assert(visit_stmt(s,set_istx_stmt,NULL,NULL));
     if (!visit_stmt(s,check_owner_alias,NULL,NULL)) {
         return 0;
     }
