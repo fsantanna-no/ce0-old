@@ -1,4 +1,5 @@
-- passar istx para code_expr/code_expr_pre
+- TYPE_null
+    - set alloc fields to NULL
 - voltar pra vec Seq?
 - preciso mesmo de Stmt.tk ??
 - a = lst.Next!.Next!

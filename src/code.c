@@ -155,41 +155,69 @@ void code_free_user (Env* env, Stmt* user) {
     out("}\n");
 }
 
-void code_free (Env* env, Type* tp) {
-    switch (tp->sub) {
-        case TYPE_TUPLE: {
-            if (!env_type_hasalloc(env,tp)) {
-                return;
-            }
+void code_free_tuple (Env* env, Type* tp) {
+    assert(tp->sub == TYPE_TUPLE);
+    assert(env_type_hasalloc(env,tp));
 
-            char* tp_ = to_ce(tp);
+    char* tp_ = to_ce(tp);
+    fprintf (ALL.out,
+        "void %s_free (%s* p) {\n",
+        tp_, tp_
+    );
+    for (int i=0; i<tp->Tuple.size; i++) {
+        Type* sub = tp->Tuple.vec[i];
+        if (env_type_hasalloc(env,sub)) {
             fprintf (ALL.out,
-                "void %s_free (%s* p) {\n",
-                tp_, tp_
+                "    %s_free(&p->_%d);\n",
+                to_ce(sub), i+1
             );
-            for (int i=0; i<tp->Tuple.size; i++) {
-                Type* sub = tp->Tuple.vec[i];
-                if (env_type_hasalloc(env,sub)) {
-                    fprintf (ALL.out,
-                        "    %s_free(&p->_%d);\n",
-                        to_ce(sub), i+1
-                    );
-                }
-            }
-            out("}\n");
-            break;
         }
-        case TYPE_USER: { // TODO-set-null
-            Stmt* user = env_id_to_stmt(env, tp->User.val.s, NULL);
-            assert(user != NULL);
-            if (env_user_hasalloc(env,user)) {
-                code_free_user(env, user);
-            }
-            break;
-        }
-        default:
-            assert(0);
     }
+    out("}\n");
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+void code_null_user (Env* env, Stmt* user) {
+    assert(user->sub == STMT_USER);
+    assert(env_user_hasalloc(env,user));
+
+    const char* sup = user->User.tk.val.s;
+    int isrec = user->User.isrec;
+
+    fprintf (ALL.out,
+        "void %s_null (struct %s%s* p) {\n",
+        sup, sup, (isrec ? "*" : "")
+    );
+
+    if (user->User.isrec) {
+        out("*p = NULL;\n");
+    } else {
+        assert(0);
+    }
+
+    out("}\n");
+}
+
+void code_null_tuple (Env* env, Type* tp) {
+    assert(tp->sub == TYPE_TUPLE);
+    assert(env_type_hasalloc(env,tp));
+
+    char* tp_ = to_ce(tp);
+    fprintf (ALL.out,
+        "void %s_null (%s* p) {\n",
+        tp_, tp_
+    );
+    for (int i=0; i<tp->Tuple.size; i++) {
+        Type* sub = tp->Tuple.vec[i];
+        if (env_type_hasalloc(env,sub)) {
+            fprintf (ALL.out,
+                "    %s_null(&p->_%d);\n",
+                to_ce(sub), i+1
+            );
+        }
+    }
+    out("}\n");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -227,10 +255,13 @@ int ftp_tuples (Env* env, Type* tp) {
     out(tp_ce);
     out(";\n");
 
-    // FREE
-    code_free(env, tp);
-
     int hasalloc = env_type_hasalloc(env, tp);
+
+    // FREE, NULL
+    if (hasalloc) {
+        code_free_tuple(env, tp);
+        code_null_tuple(env, tp);
+    }
 
     // SHOW
     {
@@ -296,13 +327,11 @@ int code_expr_pre (Env* env, Expr* e) {
             break;
 
         case EXPR_VAR: {
+            // this prevents "double free"
             if (e->istx) {
                 char* id = e->Var.tk.val.s;
-                fprintf (ALL.out,
-                    "typeof(%s) %s_%d = %s;\n"
-                    "%s = NULL;\n", // this prevents "double free"
-                    id, id, e->N, id, id
-                );
+                fprintf(ALL.out, "typeof(%s) %s_%d = %s;\n", id, id, e->N, id);
+                fprintf(ALL.out, "%s_null(&%s);\n", to_ce(TP), id);
             }
             break;
         }
@@ -350,11 +379,12 @@ int code_expr_pre (Env* env, Expr* e) {
         }
 
         case EXPR_INDEX:
-            //assert(e->Index.val->sub == EXPR_VAR);
             if (e->istx) {
                 // this prevents "double free"
+                out(to_ce(TP));
+                out("_null(&");
                 code_expr(env, e, 1);
-                fprintf(ALL.out, " = NULL;\n");
+                out(");\n");
             }
             break;
 
@@ -370,8 +400,10 @@ int code_expr_pre (Env* env, Expr* e) {
             // transfer ownership
             if (e->istx) {
                 // this prevents "double free"
+                out(to_ce(TP));
+                out("_null(&");
                 code_expr(env, e, 1);
-                fprintf(ALL.out, " = NULL;\n");
+                out(");\n");
             }
 
             // TODO: f(x).Succ
@@ -614,6 +646,7 @@ void code_user (Stmt* s) {
     // FREE
     if (env_user_hasalloc(s->env,s)) {
         code_free_user(s->env, s);
+        code_null_user(s->env, s);
     }
 
     // CLONE

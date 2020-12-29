@@ -885,17 +885,6 @@ void t_all (void) {
         "var z: _int = _4\n"
         "call show(Size (x,y,w,x))\n"
     ));
-#if TODO-anon-tuples // infer from destiny
-    assert(all(
-        "Zz1\n",
-        "type Set_ {\n"
-        "    Size:     (_int,_int,_int,_int)\n"
-        "    Color_BG: _int\n"
-        "    Color_FG: _int\n"
-        "}\n"
-        "call show(Size(_1,_2,_3,_4))\n"
-    ));
-#endif
     assert(all(
         "Zz1 ((),())\n",
         "type Zz { Zz1:((),()) }\n"
@@ -1105,6 +1094,7 @@ void t_all (void) {
         "var n_: &Nat = &n\n"
         "call show n_\n"
     ));
+puts("-=-=-=-");
     assert(all(
         "XNat1 (Succ ($))\n",
         "type rec Nat {\n"
@@ -1118,6 +1108,7 @@ void t_all (void) {
         "var x_: &XNat = &x\n"
         "call show x_\n"
     ));
+assert(0);
     assert(all(
         "Succ ($)\n",
         "type rec Nat {\n"
@@ -1252,7 +1243,6 @@ void t_all (void) {
         "var k: &XNat = &i\n"
         "call show k\n"
     ));
-#if TODO-set-null
     assert(all(
         "XNat1 ($)\n",
         "type rec Nat {\n"
@@ -1272,8 +1262,6 @@ void t_all (void) {
         "var k_: &XNat = &k\n"
         "call show k_\n"
     ));
-#endif
-puts("-=-=-=-");
     assert(all(
         "$\n",
         "type rec Nat {\n"
@@ -1285,7 +1273,6 @@ puts("-=-=-=-");
         "var c_: &Nat = &c\n"
         "call show c_\n"
     ));
-assert(0);
     assert(all(
         "(ln 9, col 17): undeclared type \"Naty\"",
         "type Bool {\n"
@@ -1349,33 +1336,6 @@ assert(0);
         "var n_: &Nat = &n\n"
         "call show n_\n"
     ));
-#if TODO-POOL
-    // POOL
-    assert(all(
-        "(ln 4, col 23): missing pool for constructor",
-        "type rec Nat {\n"
-        "   Succ: Nat\n"
-        "}\n"
-        "call _show_Nat(Succ(Succ($Nat)))\n"
-    ));
-    assert(all(
-        "(ln 5, col 13): missing pool for call",
-        "type rec Nat {\n"
-        "   Succ: Nat\n"
-        "}\n"
-        "func f: () -> Nat {}\n"
-        "call show(f())\n"
-    ));
-    assert(all(
-        "(ln 5, col 6): missing pool for return of \"f\"",
-        "type rec Nat {\n"
-        "   Succ: Nat\n"
-        "}\n"
-        "func f: () -> Nat {}\n"
-        "call f()\n"
-    ));
-#endif
-
     assert(all(
         "$\n",
         "type rec Nat {\n"
@@ -1556,7 +1516,6 @@ assert(0);
         "    return b             -- error: cannot return alias to deallocated value\n"
         "}\n"
     ));
-#if TODO-xxx
     assert(all(
         "Item ()",
         "type rec List {\n"
@@ -1567,7 +1526,6 @@ assert(0);
         "var c: List = a.Item!\n"
         "call show &c\n"
     ));
-#endif
     assert(all(
         "Succ ($)\n",
         "type Bool {\n"
@@ -1634,6 +1592,19 @@ assert(0);
         "var y_: &Nat = &y\n"
         "call show y_\n"
     ));
+
+#if TODO-anon-tuples // infer from destiny
+    assert(all(
+        "Zz1\n",
+        "type Set_ {\n"
+        "    Size:     (_int,_int,_int,_int)\n"
+        "    Color_BG: _int\n"
+        "    Color_FG: _int\n"
+        "}\n"
+        "call show(Size(_1,_2,_3,_4))\n"
+    ));
+#endif
+
 #if TODO-clone-tuples
     assert(all(
         "(Succ ($), False)\n",
@@ -1666,6 +1637,33 @@ assert(0);
         "    var l2: List = $List\n"
         "    set r = &l2  -- error\n"
         "}\n"
+    ));
+#endif
+
+#if TODO-POOL
+    // POOL
+    assert(all(
+        "(ln 4, col 23): missing pool for constructor",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "call _show_Nat(Succ(Succ($Nat)))\n"
+    ));
+    assert(all(
+        "(ln 5, col 13): missing pool for call",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "func f: () -> Nat {}\n"
+        "call show(f())\n"
+    ));
+    assert(all(
+        "(ln 5, col 6): missing pool for return of \"f\"",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "func f: () -> Nat {}\n"
+        "call f()\n"
     ));
 #endif
 }
