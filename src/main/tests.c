@@ -28,15 +28,15 @@ int all (const char* xp, char* src) {
         return !strcmp(ALL.err, xp);
     }
 
+#ifdef DEBUG
+    dump_stmt(s);
+#endif
     if (!env(s)) {
 #ifdef DEBUG
         puts(ALL.err);
 #endif
         return !strcmp(ALL.err, xp);
     }
-#ifdef DEBUG
-    dump_stmt(s);
-#endif
 
     code(s);
     fclose(ALL.out);
@@ -1283,7 +1283,6 @@ void t_all (void) {
         "var n: Nat = $Nat\n"
         "var tst: () = n.$Naty?\n"
     ));
-puts("-=-=-=-");
     assert(all(
         "()\n",
         "type rec Nat {\n"
@@ -1305,7 +1304,6 @@ puts("-=-=-=-");
         "var tst: Bool = n.$Nat?\n"
         "call show tst\n"
     ));
-assert(0);
     assert(all(
         "Succ (Succ ($))\n",
         "type rec Nat {\n"
@@ -1430,6 +1428,16 @@ assert(0);
         "var y_: &Nat = &y\n"
         "call show y_\n"
     ));
+puts("-=-=-=-");
+    assert(all(
+        "$\n",
+        "type rec Nat {\n"
+        "    Succ: Nat\n"
+        "}\n"
+        "var n: Nat = $Nat\n"
+        "call show &n\n"
+        "var z: Nat = n\n"
+    ));
     assert(all(
         "Succ (Succ (Succ ($)))\n",
         "type Bool {\n"
@@ -1440,23 +1448,19 @@ assert(0);
         "    Succ: Nat\n"
         "}\n"
         "func len: Nat -> Nat {\n"
-        "    var tst: Bool = arg.$Nat?\n"
-        "    if tst {\n"
+        "    if arg.$Nat? {\n"
         "        return $Nat\n"
         "    } else {\n"
-        "        var a: Nat = arg.Succ!\n"
-        "        var b: Nat = len a\n"
-        "        var c: Nat = Succ b\n"
-        "        return c\n"
+        "        var n: Nat = len arg.Succ!\n"
+        "        call show &n\n"
+        "        return Succ n\n"
         "    }\n"
         "}\n"
-        "var a: Nat = Succ $Nat\n"
-        "var b: Nat = Succ a\n"
-        "var x: Nat = Succ b\n"
+        "var x: Nat = Succ Succ Succ $Nat\n"
         "var y: Nat = len x\n"
-        "var y_: &Nat = &y\n"
-        "call show y_\n"
+        "call show &y\n"
     ));
+assert(0);
 
     // OWNERSHIP / BORROWING
     assert(all(

@@ -21,6 +21,12 @@
     - set / loop / traverse / vector / string
 - docs
 
+- ambiguidade:
+        var n: Nat = len arg.Succ!
+        show &n
+    - lido como
+        var n: Nat = len arg.Succ! show &n
+
 - clone tuples (TODO-clone-tuples)
 
 - TODO-set-null
