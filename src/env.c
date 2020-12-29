@@ -4,6 +4,7 @@
 
 #include "all.h"
 
+Type Type_Unit = { TYPE_UNIT, 0 };
 Type Type_Bool = { TYPE_USER, 0, .User={TX_USER,{.s="Bool"},0,0} };
 
 int err_message (Tk* tk, const char* v) {
@@ -217,6 +218,10 @@ Type* env_expr_to_type (Env* env, Expr* e) {
         case EXPR_DISC: {   // x.True
             Type* val = env_expr_to_type(env, e->Disc.val);
             assert(val->sub == TYPE_USER);
+            if (e->Disc.subtype.enu == TX_NULL) {
+                assert(!strcmp(e->Disc.subtype.val.s, val->User.val.s));
+                return &Type_Unit;
+            }
             Type* tp = env_sub_id_to_user_type(env, e->Disc.subtype.val.s);
             assert(!tp->isalias && "bug found : `&´ inside subtype");
             if (!val->isalias) {

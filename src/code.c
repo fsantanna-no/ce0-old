@@ -398,12 +398,18 @@ int code_expr_pre (Env* env, Expr* e) {
 
         case EXPR_DISC: {
             assert(e->Disc.val->sub == EXPR_VAR);
-            out("assert(");
-            code_expr(env, e->Disc.val, 1);
-            fprintf (ALL.out,
-                ".sub == %s && \"discriminator failed\");\n",
-                 e->Disc.subtype.val.s
-             );
+            if (e->Disc.subtype.enu == TX_NULL) {
+                out("assert(&");
+                code_expr(env, e->Disc.val, 1);
+                out(" == NULL && \"discriminator failed\");\n");
+            } else {
+                out("assert(");
+                code_expr(env, e->Disc.val, 1);
+                fprintf (ALL.out,
+                    ".sub == %s && \"discriminator failed\");\n",
+                     e->Disc.subtype.val.s
+                 );
+            }
 
             // transfer ownership
             if (e->istx) {
@@ -546,19 +552,16 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
         }
 
         case EXPR_PRED: {
-#if XXXXXX
-            int isptr = env_tk_isptr(env, &e->Disc.val);
-            char* val = ftk(env, &e->Disc.val, 0);
-            fe_tmp_set(env, e, NULL);
-#endif
-            int isnil = (e->Pred.subtype.enu == TX_NULL);
-
-            out("((");
-            code_expr(env, e->Pred.val, 1);
-            fprintf (ALL.out,
-                ".sub == %s) ? (Bool){True} : (Bool){False})\n",
-                (isnil ? "NULL" : e->Pred.subtype.val.s)
-            );
+            if (e->Pred.subtype.enu == TX_NULL) {
+                out("((&");
+                code_expr(env, e->Pred.val, 1);
+                out(" == NULL)");
+            } else {
+                out("((");
+                code_expr(env, e->Pred.val, 1);
+                fprintf(ALL.out, ".sub == %s)", e->Pred.subtype.val.s);
+            }
+            out(" ? (Bool){True} : (Bool){False})\n");
             break;
         }
 
