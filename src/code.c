@@ -338,7 +338,7 @@ int code_expr_pre (Env* env, Expr* e) {
             // this prevents "double free"
             if (e->istx) {
                 char* id = e->Var.tk.val.s;
-                fprintf(ALL.out, "typeof(%s) %s_%d = %s;\n", id, id, e->N, id);
+                fprintf(ALL.out, "typeof(%s) _tmp_%d = %s;\n", id, e->N, id);
                 fprintf(ALL.out, "%s_null(&%s);\n", to_ce(TP), id);
             }
             break;
@@ -386,21 +386,29 @@ int code_expr_pre (Env* env, Expr* e) {
             break;
         }
 
-        case EXPR_INDEX:
+        case EXPR_INDEX: // TODO: f(x).1
+            // transfer ownership, prevents "double free"
             if (e->istx) {
-                // this prevents "double free"
+                e->istx = 0;
+                out("typeof(");
+                code_expr(env, e, 0);
+                fprintf(ALL.out, ") _tmp_%d = ", e->N);
+                code_expr(env, e, 0);
+                out(";\n");
+
                 out(to_ce(TP));
                 out("_null(&");
-                code_expr(env, e, 1);
+                code_expr(env, e, 0);
                 out(");\n");
+                e->istx = 1;
             }
             break;
 
-        case EXPR_DISC: {
+        case EXPR_DISC: { // TODO: f(x).Succ
             assert(e->Disc.val->sub == EXPR_VAR);
             if (e->Disc.subtype.enu == TX_NULL) {
-                out("assert(&");
-                code_expr(env, e->Disc.val, 1);
+                out("assert(");
+                code_expr(env, e->Disc.val, 0);
                 out(" == NULL && \"discriminator failed\");\n");
             } else {
                 out("assert(");
@@ -411,29 +419,21 @@ int code_expr_pre (Env* env, Expr* e) {
                  );
             }
 
-            // transfer ownership
+            // transfer ownership, prevents "double free"
             if (e->istx) {
-                // this prevents "double free"
+                e->istx = 0;
+                out("typeof(");
+                code_expr(env, e, 0);
+                fprintf(ALL.out, ") _tmp_%d = ", e->N);
+                code_expr(env, e, 0);
+                out(";\n");
+
                 out(to_ce(TP));
                 out("_null(&");
-                code_expr(env, e, 1);
+                code_expr(env, e, 0);
                 out(");\n");
+                e->istx = 1;
             }
-
-            // TODO: f(x).Succ
-#if 0
-            out("typeof(");
-            code_expr(env, e->Disc.val, 1);
-            out(")");
-            fprintf(ALL.out, " _tmp_%d = ", e->N);
-            code_expr(env, e->Disc.val, 1);
-            out(";\n");
-            fprintf (ALL.out,
-                "assert(_tmp_%d.sub==%s && \"discriminator failed\");\n",
-                e->N,
-                e->Disc.subtype.val.s
-            );
-#endif
             break;
         }
     }
@@ -468,13 +468,11 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
             if (deref) {
                 out("(*(");
             }
-
-            out(e->Var.tk.val.s);
-
             if (e->istx) {
-                fprintf(ALL.out, "_%d", e->N);
+                fprintf(ALL.out, "_tmp_%d", e->N);
+            } else {
+                out(e->Var.tk.val.s);
             }
-
             if (deref) {
                 out("))");
             }
@@ -535,19 +533,22 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
             break;
 
         case EXPR_INDEX:
-            code_expr(env, e->Index.val, 1);
-            fprintf(ALL.out, "._%d", e->Index.index.val.n);
+            if (e->istx) {
+                fprintf(ALL.out, "_tmp_%d", e->N);
+            } else {
+                code_expr(env, e->Index.val, 1);
+                fprintf(ALL.out, "._%d", e->Index.index.val.n);
+            }
             break;
 
         case EXPR_DISC: {
             assert(e->Disc.val->sub == EXPR_VAR);
-            code_expr(env, e->Disc.val, 1);
-            fprintf (ALL.out, "._%s",
-                e->Disc.subtype.val.s
-            );
-#if 0
-            fprintf(ALL.out, "_tmp_%d", e->N);
-#endif
+            if (e->istx) {
+                fprintf(ALL.out, "_tmp_%d", e->N);
+            } else {
+                code_expr(env, e->Disc.val, 1);
+                fprintf(ALL.out, "._%s", e->Disc.subtype.val.s);
+            }
             break;
         }
 

@@ -1242,7 +1242,7 @@ void t_all (void) {
         "call show k\n"
     ));
     assert(all(
-        "XNat1 ($)\n",
+        "XNat1 (Succ (Succ ($)))\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -1428,7 +1428,6 @@ void t_all (void) {
         "var y_: &Nat = &y\n"
         "call show y_\n"
     ));
-puts("-=-=-=-");
     assert(all(
         "$\n",
         "type rec Nat {\n"
@@ -1447,10 +1446,45 @@ puts("-=-=-=-");
         "type rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
+        "func len: &Nat -> Nat {\n"
+        "    if arg.$Nat? {\n"
+        "        return $Nat\n"
+        "    } else {\n"
+        "        var x: &Nat = arg.Succ!\n"
+        "        var n: Nat = len &arg.Succ!\n"
+        "        return Succ n\n"
+        "    }\n"
+        "}\n"
+        "var x: Nat = Succ Succ Succ $Nat\n"
+        "var y: Nat = len &x\n"
+        "call show &y\n"
+    ));
+puts("-=-=-=-");
+    assert(all(
+        "Succ (Succ ($))\n",
+        "type rec Nat {\n"
+        "    Succ: Nat\n"
+        "}\n"
+        "var x: Nat = Succ Succ Succ $Nat\n"
+        "var y: Nat = x.Succ!\n"
+        "call show &y\n"
+    ));
+    assert(all(
+        "Succ (Succ (Succ ($)))\n",
+        "type Bool {\n"
+        "    False: ()\n"
+        "    True:  ()\n"
+        "}\n"
+        "type rec Nat {\n"
+        "    Succ: Nat\n"
+        "}\n"
         "func len: Nat -> Nat {\n"
         "    if arg.$Nat? {\n"
         "        return $Nat\n"
         "    } else {\n"
+        "        var x: Nat = arg.Succ!\n"
+        "        call show 111\n"
+        "        call show &x\n"
         "        var n: Nat = len arg.Succ!\n"
         "        call show &n\n"
         "        return Succ n\n"
