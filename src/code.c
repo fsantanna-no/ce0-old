@@ -193,7 +193,15 @@ void code_null_user (Env* env, Stmt* user) {
     if (user->User.isrec) {
         out("*p = NULL;\n");
     } else {
-        assert(0);
+        for (int i=0; i<user->User.size; i++) {
+            Sub sub = user->User.vec[i];
+            if (env_type_hasalloc(env, sub.type)) {
+                fprintf (ALL.out,
+                    "    %s_null(&(*p)%s_%s);\n",
+                    to_ce(sub.type), (isrec ? "->" : "."), sub.tk.val.s
+                );
+            }
+        }
     }
 
     out("}\n");
