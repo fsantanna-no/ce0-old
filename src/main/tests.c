@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DEBUG
-//#define VALGRIND
+//#define DEBUG
+#define VALGRIND
 
 #include "../all.h"
 
@@ -1610,7 +1610,6 @@ void t_all (void) {
     ));
 
     // CLONE
-puts("-=-=-=-");
     assert(all(
         "True\n",
         "type Bool {\n"
@@ -1621,7 +1620,6 @@ puts("-=-=-=-");
         "var y: Bool = clone x\n"
         "call show y\n"
     ));
-assert(0);
     assert(all(
         "Succ ($)\n",
         "type rec Nat {\n"

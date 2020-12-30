@@ -503,6 +503,9 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
                 if (!strcmp(e->Call.func->Var.tk.val.s,"show")) {
                     out("show_");
                     code_to_ce(env_expr_to_type(env, e->Call.arg));
+                } else if (!strcmp(e->Call.func->Var.tk.val.s,"clone")) {
+                    out("clone_");
+                    code_to_ce(env_expr_to_type(env, e->Call.arg));
                 } else {
                     code_expr(env, e->Call.func, 0);
                 }
