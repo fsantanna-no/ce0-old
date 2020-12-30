@@ -134,7 +134,7 @@ A tuple type identifier is a comma-separated list of types, enclosed in
 parentheses:
 
 ```
-((),())     (_int,(Tree,Tree))
+((),())     (Int,(Tree,Tree))
 ```
 
 ## Function
@@ -517,7 +517,7 @@ its subtypes:
 
 ```
 type rec List {         -- a list is either empty ($List) or
-    Item: (_int,List)   -- an item that holds a number and a sublist
+    Item: (Int,List)    -- an item that holds a number and a sublist
 }
 
 var l: List = Item (1, Item (2,$List))   -- list `1 -> 2 -> null`
@@ -527,7 +527,7 @@ A variable of a recursive type holds a reference to its value, since
 constructors are always dynamically allocated in the heap:
 
 ```
-var x: List = Item(_1, $List)
+var x: List = Item(1, $List)
     |              __|__
    / \            /     \
   | x |--------> |   1   | <-- actual allocated memory with the linked list
@@ -542,7 +542,7 @@ automatically deallocated when the enclosing scope terminates:
 
 ```
 {
-    var x: List = Item(_1, $List)
+    var x: List = Item(1, $List)
 }
 -- scope terminates, memory pointed by `x` is deallocated
 ```
@@ -551,7 +551,7 @@ A variable can be aliased or *borrowed* with the prefix ampersand `&`.
 In this case, both the owner and the alias refer to the same allocated value:
 
 ```
-var x: List  = Item(_1, $List)
+var x: List  = Item(1, $List)
 var y: &List = &x    |
     |              __|__
    / \            /     \
@@ -588,14 +588,12 @@ extra overheads.
 
 ### Ownership transfer
 
-TODO: implicit null is important
-
 As stated in rule 6, an ownership transfer invalidates the original owner and
 rejects further accesses to it:
 
 ```
 {
-    var x: List = Item(_1, $List)   -- `x` is the original owner
+    var x: List = Item(1, $List)    -- `x` is the original owner
     var y: List = x                 -- `y` is the new owner
     ... x ...                       -- error: `x` cannot be referred again
     ... y ...                       -- ok
@@ -609,7 +607,7 @@ scopes:
 
 ```
 {
-    var x: List = Item(_1, $List)   -- `x` is the original owner
+    var x: List = Item(1, $List)    -- `x` is the original owner
     {
         var y: List = x             -- `y` is the new owner
     }                               -- deallocate here?
@@ -627,6 +625,22 @@ func build: () -> List {
 var l: List = build()       -- `l` is the new owner
 ```
 
+It is possible to transfer only part of a recursive value.
+In this case, the removed part will be automatically reset to the null subtype:
+
+```
+var x: List = Item(1, Item(2, $List))   -- after: Item(1,$List)
+var y: List = x.Item!                   -- after: Item(2,$List)
+```
+
+Finally, it is also possible to loose ownership without transferring to anyone.
+In this case, the value without owner will be deallocated immediately:
+
+```
+var x: List = Item(1, $List)    -- previous value
+set x = $List                   -- previous value is deallocated
+```
+
 ## Borrowing
 
 In many situations, transferring ownership is undesirable, such as when passing
@@ -637,7 +651,7 @@ var l: List = build()   -- `l` is the owner
 ... length(&l) ...      -- `l` is borrowed on call and unborrowed on return
 ... l ...               -- `l` is still the owner
 
-func length: (&List -> _int) {
+func length: (&List -> Int) {
     ... -- use alias, which is destroyed on termination
 }
 ```
