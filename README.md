@@ -669,18 +669,19 @@ func f: () -> &List {
 If escaping an alias were allowed, it would refer to a value that would be
 deallocated from memory, resulting in a dangling reference.
 
-<!--
-
-Rule 5 states that if there is an active alias, then ownership cannot be
-transferred:
+Rule 5 states that if there is an active alias to a value, then its ownership
+cannot be transferred:
 
 ```
-var l: List = ...
-call f(&l)
-call g(
+var l: List = ...       -- owner
+var x: &List = &l       -- active alias
+call g(l)               -- error: cannot transfer with active alias
+```
 
-TODO: rule 5
+This rule prevents that a transfer eventually deallocates a value that is still
+reachable through an active alias (i.e, *use-after-free*).
 
+<!--
 All dependencies of an assignment are tracked and all constructors are
 allocated in the same pool.
 When the pool itself goes out of scope, all allocated memory inside it is
