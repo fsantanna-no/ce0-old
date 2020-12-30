@@ -660,20 +660,20 @@ int check_types_stmt (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void set_txbx (Env* env, Expr* E, int notx, int nobw) {
-    Expr* expr_leftmost (Expr* e) {
-        switch (e->sub) {
-            case EXPR_ALIAS:
-                return expr_leftmost(e->Alias);
-            case EXPR_INDEX:
-                return expr_leftmost(e->Index.val);
-            case EXPR_DISC:
-                return expr_leftmost(e->Disc.val);
-            default:
-                return e;
-        }
+Expr* expr_leftmost (Expr* e) {
+    switch (e->sub) {
+        case EXPR_ALIAS:
+            return expr_leftmost(e->Alias);
+        case EXPR_INDEX:
+            return expr_leftmost(e->Index.val);
+        case EXPR_DISC:
+            return expr_leftmost(e->Disc.val);
+        default:
+            return e;
     }
+}
 
+void set_txbx (Env* env, Expr* E, int notx, int nobw) {
     Type* tp = env_expr_to_type(env, (E->sub==EXPR_ALIAS ? E->Alias : E));
     assert(tp != NULL);
     if (env_type_hasalloc(env, tp)) {
@@ -852,7 +852,7 @@ int check_owner_alias (Stmt* S) {
             }
         }
 
-        // Rule 5/6
+        // Rule 5/6: check var accesses starting from VAR/CALL/IF/RETURN
         auto int var_access (Env* env, Expr* var);
         switch (s->sub) {
             case STMT_VAR:
@@ -919,29 +919,30 @@ int check_owner_alias (Stmt* S) {
             return VISIT_CONTINUE;
         }
 
-        int rule_3 (void)
-        {
-return EXEC_CONTINUE;
-#if XXXXXX
+        int rule_3 (void) {
             switch (s->sub) {
                 case STMT_VAR: {
                     // var S: T = ...
                     // var s: &T = &y;      <-- if y reaches S, so does s
-                    if (s->Var.type.isalias) {
+                    if (s->Var.type->isalias) {
                         // get "var" being aliased
-                        Tk* var = NULL;
-                        Type* tp = env_expr_to_type(s->env, &s->Var.init);
+                        Type* tp = env_expr_to_type(s->env, s->Var.init);
                         assert(tp->isalias);
-                        switch (s->Var.init.sub) {
+
+                        Tk* var = NULL;
+                        switch (s->Var.init->sub) {
                             case EXPR_VAR:
-                                var = &s->Var.init.tk;
+                                var = &s->Var.init->Var.tk;
                                 break;
+                            case EXPR_ALIAS:
                             case EXPR_INDEX:
-                                var = &s->Var.init.Index.val;
+                            case EXPR_DISC: {
+                                Expr* left = expr_leftmost(s->Var.init);
+                                assert(left != NULL);
+                                assert(left->sub == EXPR_VAR);
+                                var = &left->Var.tk;
                                 break;
-                            case EXPR_DISC:
-                                var = &s->Var.init.Disc.val;
-                                break;
+                            }
                             case EXPR_CALL:
                                 break;          // TODO?
                             case EXPR_TUPLE:
@@ -968,19 +969,21 @@ return EXEC_CONTINUE;
                     break;
                 }
                 case STMT_RETURN: {
-                    Type* tp = env_tk_to_type(s->env, &s->Return);
+                    Type* tp = env_expr_to_type(s->env, s->Return);
                     if (tp->isalias) {
-                        assert(s->Return.enu == TX_VAR);
+                        Expr* var = expr_leftmost(s->Return);
+                        assert(var != NULL);
+                        assert(var->sub == EXPR_VAR);
                         int scope;
-                        Stmt* decl = env_id_to_stmt(s->env, s->Return.val.s, &scope);
+                        Stmt* decl = env_id_to_stmt(s->env, var->Var.tk.val.s, &scope);
                         assert(decl != NULL);
                         if (scope == 0) {
                             for (int i=0; i<aliases_n; i++) {
                                 if (aliases[i] == decl) {
                                     char err[1024];
                                     sprintf(err, "invalid return : cannot return alias to local \"%s\" (ln %ld)",
-                                            S->Var.tk.val.s, S->Var.lin);
-                                    err_message(&s->Return, err);
+                                            S->Var.tk.val.s, S->Var.tk.lin);
+                                    err_message(&var->Var.tk, err);
                                     return EXEC_ERROR;
                                 }
                             }
@@ -992,7 +995,6 @@ return EXEC_CONTINUE;
                     break;
             }
             return EXEC_CONTINUE;
-#endif
         }
     }
 }

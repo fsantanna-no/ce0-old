@@ -1543,7 +1543,6 @@ void t_all (void) {
         "var y_: &Nat = &y\n"
         "call show y_\n"
     ));
-puts("-=-=-=-");
     assert(all(
         "(ln 8, col 12): invalid return : cannot return alias to local \"l\" (ln 5)",
         "type rec List {\n"
@@ -1556,6 +1555,7 @@ puts("-=-=-=-");
         "    return b             -- error: cannot return alias to deallocated value\n"
         "}\n"
     ));
+puts("-=-=-=-");
 assert(0);
     assert(all(
         "Item ()",
