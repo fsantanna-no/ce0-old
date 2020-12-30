@@ -633,8 +633,9 @@ var x: List = Item(1, Item(2, $List))   -- after: Item(1,$List)
 var y: List = x.Item!                   -- after: Item(2,$List)
 ```
 
-Finally, it is also possible to loose ownership without transferring to anyone.
-In this case, the value without owner will be deallocated immediately:
+Finally, it is also possible to make a "void transfer" through a `set`
+statement.
+In this case, the value with lost ownership will be deallocated immediately:
 
 ```
 var x: List = Item(1, $List)    -- previous value
@@ -668,9 +669,17 @@ func f: () -> &List {
 If escaping an alias were allowed, it would refer to a value that would be
 deallocated from memory, resulting in a dangling reference.
 
-TODO: rule 5
-
 <!--
+
+Rule 5 states that if there is an active alias, then ownership cannot be
+transferred:
+
+```
+var l: List = ...
+call f(&l)
+call g(
+
+TODO: rule 5
 
 All dependencies of an assignment are tracked and all constructors are
 allocated in the same pool.
@@ -740,7 +749,7 @@ void* pool_alloc (Pool* pool, int n) {
 }
 ```
 
--->
+--
 
 A dynamic constructor must check if all allocations succeeded.
 
@@ -821,3 +830,5 @@ func fthree: () -> Nat {
     return three            -- should not use pool b/c defined outside
 }
 ```
+
+-->

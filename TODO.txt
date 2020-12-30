@@ -1,3 +1,4 @@
+- invalidate aliases instead of refusing transfer
 - set
     - testar var, disc, tx owner
 - loop
