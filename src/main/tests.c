@@ -1555,7 +1555,6 @@ void t_all (void) {
         "    return b             -- error: cannot return alias to deallocated value\n"
         "}\n"
     ));
-puts("-=-=-=-");
     assert(all(
         "Item ($)\n",
         "type rec List {\n"
@@ -1566,7 +1565,6 @@ puts("-=-=-=-");
         "var c: List = a.Item!\n"
         "call show &c\n"
     ));
-assert(0);
     assert(all(
         "Succ ($)\n",
         "type Bool {\n"
@@ -1612,6 +1610,7 @@ assert(0);
     ));
 
     // CLONE
+puts("-=-=-=-");
     assert(all(
         "True\n",
         "type Bool {\n"
@@ -1622,6 +1621,7 @@ assert(0);
         "var y: Bool = clone x\n"
         "call show y\n"
     ));
+assert(0);
     assert(all(
         "Succ ($)\n",
         "type rec Nat {\n"
