@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-//#define DEBUG
+#define DEBUG
 //#define VALGRIND
 
 #include "../all.h"
@@ -1556,9 +1556,8 @@ void t_all (void) {
         "}\n"
     ));
 puts("-=-=-=-");
-assert(0);
     assert(all(
-        "Item ()",
+        "Item ($)\n",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
@@ -1567,6 +1566,7 @@ assert(0);
         "var c: List = a.Item!\n"
         "call show &c\n"
     ));
+assert(0);
     assert(all(
         "Succ ($)\n",
         "type Bool {\n"

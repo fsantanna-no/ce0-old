@@ -405,7 +405,6 @@ int code_expr_pre (Env* env, Expr* e) {
             break;
 
         case EXPR_DISC: { // TODO: f(x).Succ
-            assert(e->Disc.val->sub == EXPR_VAR);
             if (e->Disc.subtype.enu == TX_NULL) {
                 out("assert(");
                 code_expr(env, e->Disc.val, 0);
@@ -542,12 +541,18 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
             break;
 
         case EXPR_DISC: {
-            assert(e->Disc.val->sub == EXPR_VAR);
+            int deref = (ctxplain && env_type_isptr(env,TP));
+            if (deref) {
+                out("(*(");
+            }
             if (e->istx) {
                 fprintf(ALL.out, "_tmp_%d", e->N);
             } else {
                 code_expr(env, e->Disc.val, 1);
                 fprintf(ALL.out, "._%s", e->Disc.subtype.val.s);
+            }
+            if (deref) {
+                out("))");
             }
             break;
         }
