@@ -367,15 +367,13 @@ int set_seqs (Stmt* s) {
 int set_envs (Stmt* s) {
     s->env = ALL.env;
     switch (s->sub) {
-        case STMT_SET:
-            assert(0);
-
         case STMT_NONE:
         case STMT_RETURN:
         case STMT_SEQ:
         case STMT_IF:
         case STMT_NATIVE:
         case STMT_CALL:
+        case STMT_SET:
             break;
 
         case STMT_VAR: {
@@ -619,9 +617,6 @@ int check_types_expr (Env* env, Expr* e) {
 
 int check_types_stmt (Stmt* s) {
     switch (s->sub) {
-        case STMT_SET:
-            assert(0);
-
         case STMT_NONE:
         case STMT_USER:
         case STMT_FUNC:
@@ -633,6 +628,14 @@ int check_types_stmt (Stmt* s) {
 
         case STMT_VAR:
             if (!type_is_sup_sub(s->Var.type, env_expr_to_type(s->env,s->Var.init))) {
+                char err[512];
+                sprintf(err, "invalid assignment to \"%s\" : type mismatch", s->Var.tk.val.s);
+                return err_message(&s->Var.tk, err);
+            }
+            return 1;
+
+        case STMT_SET:
+            if (!type_is_sup_sub(env_expr_to_type(s->env,s->Set.dst), env_expr_to_type(s->env,s->Set.src))) {
                 char err[512];
                 sprintf(err, "invalid assignment to \"%s\" : type mismatch", s->Var.tk.val.s);
                 return err_message(&s->Var.tk, err);

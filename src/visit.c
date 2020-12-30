@@ -49,7 +49,7 @@ int visit_stmt (Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
 
     switch (s->sub) {
         case STMT_SET:
-            assert(0);
+            return visit_expr(s->env,s->Set.dst,fe) && visit_expr(s->env,s->Set.src,fe);
 
         case STMT_NONE:
         case STMT_NATIVE:

@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 
-//#define DEBUG
-#define VALGRIND
+#define DEBUG
+//#define VALGRIND
 
 #include "../all.h"
 
@@ -1664,20 +1664,24 @@ void t_all (void) {
 #endif
 
     // SET
-#if TODO-set
+    assert(all(
+        "20\n",
+        "var v: Int = 10\n"
+        "set v = 20\n"
+        "call show v\n"
+    ));
     assert(all(
         "TODO",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
         "var l1: List = $List\n"
-        "var r: &List = build()\n"
+        "var r: &List = Item $List\n"
         "{\n"
         "    var l2: List = $List\n"
         "    set r = &l2  -- error\n"
         "}\n"
     ));
-#endif
 
 #if TODO-POOL
     // POOL

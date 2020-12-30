@@ -792,9 +792,6 @@ void code_user (Stmt* s) {
 
 void code_stmt (Stmt* s) {
     switch (s->sub) {
-        case STMT_SET:
-            assert(0);
-
         case STMT_NONE:
             break;
 
@@ -817,11 +814,12 @@ void code_stmt (Stmt* s) {
         }
 
         case STMT_VAR: {
+            visit_type(s->env, s->Var.type, ftp_tuples);
+            visit_expr(s->env, s->Var.init, code_expr_pre);
+
             if (s->Var.type->sub == TYPE_UNIT) {
                 break;
             }
-            visit_type(s->env, s->Var.type, ftp_tuples);
-            visit_expr(s->env, s->Var.init, code_expr_pre);
 
             fprintf(ALL.out, "%s %s", to_c(s->env,s->Var.type), s->Var.tk.val.s);
 
@@ -834,6 +832,28 @@ void code_stmt (Stmt* s) {
 
             out(" = ");
             code_expr(s->env, s->Var.init, 0);
+            out(";\n");
+            break;
+        }
+
+        case STMT_SET: {
+            visit_expr(s->env, s->Set.src, code_expr_pre);
+            visit_expr(s->env, s->Set.dst, code_expr_pre);
+
+            Type* dst = env_expr_to_type(s->env, s->Set.dst);
+            assert(dst != NULL);
+            if (dst->sub == TYPE_UNIT) {
+                break;
+            }
+
+            // TODO: if "dst" is hasalloc, need to free it
+            if (env_type_hasalloc(s->env,dst)) {
+                assert(0);
+            }
+
+            code_expr(s->env, s->Set.dst, 0);
+            out(" = ");
+            code_expr(s->env, s->Set.src, 0);
             out(";\n");
             break;
         }

@@ -100,6 +100,14 @@ void dump_stmt (Stmt* s) {
             dump_expr(s->Var.init);
             puts("");
             break;
+        case STMT_SET:
+            dump_spc();
+            printf("set ");
+            dump_expr(s->Set.dst);
+            printf(" = ");
+            dump_expr(s->Set.src);
+            puts("");
+            break;
         case STMT_USER:
             dump_spc();
             printf("type %s:", s->User.tk.val.s);
