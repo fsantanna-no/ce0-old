@@ -686,28 +686,16 @@ void set_txbx (Env* env, Expr* E, int notx, int nobw) {
         if (left->sub == EXPR_VAR) {
             //left->Var.txbw = NO; (dont set explicitly to avoid unset previous set)
             if (E->sub==EXPR_ALIAS && !nobw) {
-puts(left->Var.tk.val.s);
-puts("BW");
                 left->Var.txbw = BW;
             }
             if (E->sub!=EXPR_ALIAS && E==left && !notx) { // TX only for root vars (E==left)
                 left->Var.txbw = TX;
-            }
-
-            if (left->Var.txbw == TX) {
-printf(">>> %d\n", notx);
-                dump_expr(E); puts("");
-                dump_expr(left); puts("");
-puts("<<<");
             }
         }
     }
 }
 
 int set_istx_expr (Env* env, Expr* e, int notx, int nobw) {
-    printf(">>> %d %d\n", notx, nobw);
-    dump_expr(e);
-    puts("");
     set_txbx(env, e, notx, nobw);
 
     switch (e->sub) {
@@ -866,9 +854,19 @@ int check_owner_alias (Stmt* S) {
 
         // Rule 5/6
         auto int var_access (Env* env, Expr* var);
-        int ret = visit_stmt(s, NULL, var_access, NULL);
-        if (ret != EXEC_CONTINUE) {
-            return ret;
+        switch (s->sub) {
+            case STMT_VAR:
+            case STMT_CALL:
+            case STMT_IF:
+            case STMT_RETURN: {
+                int ret = visit_stmt(s, NULL, var_access, NULL);
+                if (ret != EXEC_CONTINUE) {
+                    return ret;
+                }
+                break;
+            }
+            default:
+                break;
         }
 
         // Rule 3
@@ -883,7 +881,6 @@ int check_owner_alias (Stmt* S) {
             if (strcmp(S->Var.tk.val.s,var->Var.tk.val.s)) {
                 return VISIT_CONTINUE;
             }
-printf("ACC %s %d\n", var->Var.tk.val.s, var->Var.txbw);
 
             // ensure that EXPR_VAR is really same as STMT_VAR
             Stmt* decl = env_id_to_stmt(env, var->Var.tk.val.s, NULL);
@@ -915,10 +912,8 @@ printf("ACC %s %d\n", var->Var.tk.val.s, var->Var.txbw);
             tk1 = &var->Var.tk;
             if (var->Var.txbw == BW) {
                 assert(state != TRANSFERRED && "bug found");
-printf("BORROWED %s\n", var->Var.tk.val.s);
                 state = BORROWED;
             } else if (var->Var.txbw == TX) {
-printf("TRANSFERRED %s\n", var->Var.tk.val.s);
                 state = TRANSFERRED;
             }
             return VISIT_CONTINUE;

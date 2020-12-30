@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DEBUG
+//#define DEBUG
 //#define VALGRIND
 
 #include "../all.h"
@@ -1488,8 +1488,6 @@ void t_all (void) {
         "var y: Nat = len x\n"
         "call show &y\n"
     ));
-puts("-=-=-=-");
-assert(0);
 
     // OWNERSHIP / BORROWING
     assert(all(
@@ -1545,6 +1543,7 @@ assert(0);
         "var y_: &Nat = &y\n"
         "call show y_\n"
     ));
+puts("-=-=-=-");
     assert(all(
         "(ln 8, col 12): invalid return : cannot return alias to local \"l\" (ln 5)",
         "type rec List {\n"
@@ -1557,6 +1556,7 @@ assert(0);
         "    return b             -- error: cannot return alias to deallocated value\n"
         "}\n"
     ));
+assert(0);
     assert(all(
         "Item ()",
         "type rec List {\n"
