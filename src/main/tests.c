@@ -1676,7 +1676,7 @@ void t_all (void) {
         "    Item: List\n"
         "}\n"
         "var l1: List = $List\n"
-        "var r: &List = Item $List\n"
+        "var r: &List = &l1\n"
         "{\n"
         "    var l2: List = $List\n"
         "    set r = &l2  -- error\n"

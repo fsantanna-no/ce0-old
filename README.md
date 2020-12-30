@@ -575,7 +575,7 @@ of rules:
     - The owner is a variable that lives in the stack and reaches the allocated value.
 2. When the owner goes out of scope, the allocated memory is automatically
    deallocated.
-3. An alias cannot escape the scope of its owner.
+3. An alias cannot escape or survive outside the scope of its owner.
 4. Ownership can be transferred in three ways:
     - Assigning the owner to another variable, which becomes the new owner (e.g. `new = old`).
     - Passing the owner to a function call argument, which becomes the new owner (e.g. `f(old)`).
@@ -648,7 +648,7 @@ In many situations, transferring ownership is undesirable, such as when passing
 a value to a narrower scope for temporary manipulation:
 
 ```
-var l: List = build()   -- `l` is the owner
+var l: List = ...       -- `l` is the owner
 ... length(&l) ...      -- `l` is borrowed on call and unborrowed on return
 ... l ...               -- `l` is still the owner
 
@@ -657,17 +657,27 @@ func length: (&List -> Int) {
 }
 ```
 
-Rule 3 states that an alias cannot escape the scope of its owner:
+Rule 3 states that an alias cannot escape or survive outside the scope of its
+owner:
 
 ```
 func f: () -> &List {
-    var l: List = build()   -- `l` is the owner
+    var l: List = ...       -- `l` is the owner
     return &l               -- error: cannot return alias to deallocated value
 }
 ```
 
-If escaping an alias were allowed, it would refer to a value that would be
-deallocated from memory, resulting in a dangling reference.
+```
+var x: &List = ...          -- outer scope
+{
+    var l2: List = ...
+    set x = &l2             -- error: cannot hold reference from inner scope
+}
+... x ...                   -- use-after-free
+```
+
+If surviving aliases were allowed, they would refer to deallocated values,
+resulting in a dangling reference (i.e, *use-after-free*).
 
 Rule 5 states that if there is an active alias to a value, then its ownership
 cannot be transferred:
@@ -676,6 +686,7 @@ cannot be transferred:
 var l: List = ...       -- owner
 var x: &List = &l       -- active alias
 call g(l)               -- error: cannot transfer with active alias
+... x ...               -- use-after-free
 ```
 
 This rule prevents that a transfer eventually deallocates a value that is still
