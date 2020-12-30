@@ -1,3 +1,4 @@
+- a.2 nao transfere o a, mas empresta sim
 - remover "x" de clone?
 - TYPE_null
     - set alloc fields to NULL

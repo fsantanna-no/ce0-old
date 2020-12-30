@@ -660,7 +660,7 @@ int check_types_stmt (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void set_txbx (Env* env, Expr* E, int isset) {
+void set_txbx (Env* env, Expr* E, int notx, int nobw) {
     Expr* expr_leftmost (Expr* e) {
         switch (e->sub) {
             case EXPR_ALIAS:
@@ -677,31 +677,69 @@ void set_txbx (Env* env, Expr* E, int isset) {
     Type* tp = env_expr_to_type(env, (E->sub==EXPR_ALIAS ? E->Alias : E));
     assert(tp != NULL);
     if (env_type_hasalloc(env, tp)) {
-        E->istx = 1;
+        if (!notx) {
+            E->istx = 1;
+        }
 
         Expr* left = expr_leftmost(E);
         assert(left != NULL);
         if (left->sub == EXPR_VAR) {
-            left->Var.txbw = (E->sub==EXPR_ALIAS ? (isset ? BW : NO) : (E==left ? TX : NO));
-                // TX only for root vars (E==left)
+            //left->Var.txbw = NO; (dont set explicitly to avoid unset previous set)
+            if (E->sub==EXPR_ALIAS && !nobw) {
+puts(left->Var.tk.val.s);
+puts("BW");
+                left->Var.txbw = BW;
+            }
+            if (E->sub!=EXPR_ALIAS && E==left && !notx) { // TX only for root vars (E==left)
+                left->Var.txbw = TX;
+            }
+
+            if (left->Var.txbw == TX) {
+printf(">>> %d\n", notx);
+                dump_expr(E); puts("");
+                dump_expr(left); puts("");
+puts("<<<");
+            }
         }
     }
 }
 
-int set_istx_expr (Env* env, Expr* e, int isset) {
+int set_istx_expr (Env* env, Expr* e, int notx, int nobw) {
+    printf(">>> %d %d\n", notx, nobw);
+    dump_expr(e);
+    puts("");
+    set_txbx(env, e, notx, nobw);
+
     switch (e->sub) {
+        case EXPR_ALIAS:
+            set_istx_expr(env, e->Alias, 1, 1);
+            break;
+
         case EXPR_TUPLE:
             for (int i=0; i<e->Tuple.size; i++) {
-                set_txbx(env, e->Tuple.vec[i], isset);
+                set_istx_expr(env, e->Tuple.vec[i], notx, nobw);
             }
             break;
 
+        case EXPR_INDEX:
+            set_istx_expr(env, e->Index.val, 1, 1);
+            break;
+
         case EXPR_CALL:
-            set_txbx(env, e->Call.arg, 0);
+            set_istx_expr(env, e->Call.func, 1, 1);
+            set_istx_expr(env, e->Call.arg, 0, 1);
             break;
 
         case EXPR_CONS:
-            set_txbx(env, e->Cons.arg, isset);
+            set_istx_expr(env, e->Cons.arg, 0, nobw);
+            break;
+
+        case EXPR_DISC:
+            set_istx_expr(env, e->Disc.val, 1, 0);
+            break;
+
+        case EXPR_PRED:
+            set_istx_expr(env, e->Pred.val, 1, 1);
             break;
 
         default:
@@ -714,18 +752,16 @@ int set_istx_expr (Env* env, Expr* e, int isset) {
 int set_istx_stmt (Stmt* s) {
     switch (s->sub) {
         case STMT_VAR:
-            set_txbx(s->env, s->Var.init, 1);
-            set_istx_expr(s->env, s->Var.init, 1);
+            set_istx_expr(s->env, s->Var.init, 0, 0);
             break;
         case STMT_CALL:
-            set_istx_expr(s->env, s->Call, 0);
+            set_istx_expr(s->env, s->Call, 1, 1);
             break;
         case STMT_IF:
-            set_istx_expr(s->env, s->If.tst, 0);
+            set_istx_expr(s->env, s->If.tst, 1, 1);
             break;
         case STMT_RETURN:
-            set_txbx(s->env, s->Return, 0);
-            set_istx_expr(s->env, s->Return, 0);
+            set_istx_expr(s->env, s->Return, 0, 1);
             break;
         default:
             // istx = 0
@@ -847,6 +883,7 @@ int check_owner_alias (Stmt* S) {
             if (strcmp(S->Var.tk.val.s,var->Var.tk.val.s)) {
                 return VISIT_CONTINUE;
             }
+printf("ACC %s %d\n", var->Var.tk.val.s, var->Var.txbw);
 
             // ensure that EXPR_VAR is really same as STMT_VAR
             Stmt* decl = env_id_to_stmt(env, var->Var.tk.val.s, NULL);
@@ -878,8 +915,10 @@ int check_owner_alias (Stmt* S) {
             tk1 = &var->Var.tk;
             if (var->Var.txbw == BW) {
                 assert(state != TRANSFERRED && "bug found");
+printf("BORROWED %s\n", var->Var.tk.val.s);
                 state = BORROWED;
             } else if (var->Var.txbw == TX) {
+printf("TRANSFERRED %s\n", var->Var.tk.val.s);
                 state = TRANSFERRED;
             }
             return VISIT_CONTINUE;

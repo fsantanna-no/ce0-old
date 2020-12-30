@@ -1189,7 +1189,7 @@ void t_all (void) {
         "}\n"
         "var c: Nat = Succ $Nat\n"
         "var a: (Nat,Nat) = ($Nat,c)\n"
-        "var b: Nat = a.2\n"            // zera a.2 (a se mantem)
+        "var b: Nat = a.2\n"            // zera a.2 (a se mantem sem tx)
         "var d: &Nat = &a.2\n"
         "call show d\n"                 // ok: $Nat
     ));
@@ -1459,7 +1459,6 @@ void t_all (void) {
         "var y: Nat = len &x\n"
         "call show &y\n"
     ));
-puts("-=-=-=-");
     assert(all(
         "Succ (Succ ($))\n",
         "type rec Nat {\n"
@@ -1482,18 +1481,14 @@ puts("-=-=-=-");
         "    if arg.$Nat? {\n"
         "        return $Nat\n"
         "    } else {\n"
-        "        var x: Nat = arg.Succ!\n"
-        "        call show 111\n"
-        "        call show &x\n"
-        "        var n: Nat = len arg.Succ!\n"
-        "        call show &n\n"
-        "        return Succ n\n"
+        "        return Succ len arg.Succ!\n"
         "    }\n"
         "}\n"
         "var x: Nat = Succ Succ Succ $Nat\n"
         "var y: Nat = len x\n"
         "call show &y\n"
     ));
+puts("-=-=-=-");
 assert(0);
 
     // OWNERSHIP / BORROWING

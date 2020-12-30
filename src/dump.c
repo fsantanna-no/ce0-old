@@ -98,10 +98,12 @@ void dump_stmt (Stmt* s) {
             dump_type(s->Var.type);
             printf(" = ");
             dump_expr(s->Var.init);
+            puts("");
             break;
         case STMT_USER:
             dump_spc();
-            printf("type %s:\n", s->User.tk.val.s);
+            printf("type %s:", s->User.tk.val.s);
+            puts("");
             break;
         case STMT_SEQ:
             dump_stmt(s->Seq.s1);
@@ -135,7 +137,8 @@ void dump_stmt (Stmt* s) {
             dump_stmt(s->Block);
             _SPC_ -= 4;
             dump_spc();
-            printf("}\n");
+            printf("}");
+            puts("");
             break;
         case STMT_RETURN:
             dump_spc();
@@ -145,7 +148,8 @@ void dump_stmt (Stmt* s) {
             break;
         case STMT_NATIVE:
             dump_spc();
-            printf("_{ ... }\n");
+            printf("_{ ... }");
+            puts("");
             break;
         default:
             printf("ERR: %d\n", s->sub);
