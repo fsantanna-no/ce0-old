@@ -1,13 +1,11 @@
-- VALGRIND
+- set
+    - testar var, disc, tx owner
+- loop
 - remover "x" de clone?
-- TYPE_null
-    - set alloc fields to NULL
 - voltar pra vec Seq?
 - preciso mesmo de Stmt.tk ??
 - a = lst.Next!.Next!
     - TODO-xxx
-- set
-    - testar var, disc, tx owner
 - pico-open/close
 - type Set_ {
     Color: Color_
