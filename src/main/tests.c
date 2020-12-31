@@ -1544,7 +1544,7 @@ void t_all (void) {
         "call show y_\n"
     ));
     assert(all(
-        "(ln 8, col 12): invalid return : cannot return alias to local \"l\" (ln 5)",
+        "(ln 8, col 12): invalid return : cannot return local alias \"l\" (ln 5)",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
@@ -1660,7 +1660,7 @@ void t_all (void) {
         "call show &l1\n"
     ));
     assert(all(
-        "(ln 8, col 14): invalid return : cannot assign alias to local \"l2\" (ln 7)",
+        "(ln 8, col 14): invalid assignment : cannot hold local alias \"l2\" (ln 7)",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
@@ -1671,7 +1671,8 @@ void t_all (void) {
         "    set r = &l2  -- error\n"
         "}\n"
     ));
-assert(0);
+//puts("-=-=-=-=-");
+//assert(0);
 
 #if TODO-anon-tuples // infer from destiny
     assert(all(

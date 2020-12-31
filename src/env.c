@@ -12,10 +12,7 @@ int err_message (Tk* tk, const char* v) {
     return 0;
 }
 
-Stmt* env_id_to_stmt (Env* env, const char* id, int* scope) {
-    if (scope != NULL) {
-        *scope = 0;
-    }
+Stmt* env_id_to_stmt (Env* env, const char* id) {
     while (env != NULL) {
         const char* cur = NULL;
         switch (env->stmt->sub) {
@@ -28,11 +25,11 @@ Stmt* env_id_to_stmt (Env* env, const char* id, int* scope) {
             case STMT_FUNC:
                 cur = env->stmt->Func.tk.val.s;
                 break;
+            case STMT_BLOCK:
+                // ignore, just a block sentinel
+                break;
             default:
                 assert(0 && "bug found");
-        }
-        if (scope!=NULL && !strcmp("arg",cur)) {
-            *scope = *scope + 1;
         }
         if (cur!=NULL && !strcmp(id,cur)) {
             return env->stmt;
@@ -43,7 +40,7 @@ Stmt* env_id_to_stmt (Env* env, const char* id, int* scope) {
 }
 
 Stmt* env_stmt_to_func (Stmt* s) {
-    Stmt* arg = env_id_to_stmt(s->env, "arg", NULL);
+    Stmt* arg = env_id_to_stmt(s->env, "arg");
     assert(arg != NULL);
     Env* env = arg->env;
     while (env != NULL) {
@@ -109,13 +106,13 @@ Type* env_expr_to_type (Env* env, Expr* e) {
         }
 
         case EXPR_VAR: {
-            Stmt* s = env_id_to_stmt(env, e->Var.tk.val.s, NULL);
+            Stmt* s = env_id_to_stmt(env, e->Var.tk.val.s);
             assert(s != NULL);
             return (s->sub == STMT_VAR) ? s->Var.type : s->Func.type;
         }
 
         case EXPR_NULL: {
-            Stmt* user = env_id_to_stmt(env, e->Null.val.s, NULL);
+            Stmt* user = env_id_to_stmt(env, e->Null.val.s);
             assert(user != NULL);
             Type* tp = malloc(sizeof(Type));
             assert(tp != NULL);
@@ -249,7 +246,7 @@ Type* env_expr_to_type (Env* env, Expr* e) {
 //  ... x ...           -- give "x" -> "var x" -> type Bool
 Stmt* env_type_to_user_stmt (Env* env, Type* tp) {
     if (tp->sub == TYPE_USER) {
-        Stmt* s = env_id_to_stmt(env, tp->User.val.s, NULL);
+        Stmt* s = env_id_to_stmt(env, tp->User.val.s);
         assert(s != NULL);
         return s;
     } else {
@@ -276,7 +273,7 @@ int env_type_hasalloc (Env* env, Type* tp) {
             }
             return 0;
         case TYPE_USER: {
-            Stmt* user = env_id_to_stmt(env, tp->User.val.s, NULL);
+            Stmt* user = env_id_to_stmt(env, tp->User.val.s);
             assert(user!=NULL && user->sub==STMT_USER);
             if (user->User.isrec) {
                 return 1;
@@ -302,7 +299,7 @@ int env_type_isrec (Env* env, Type* tp) {
         case TYPE_TUPLE:
             return 0;
         case TYPE_USER: {
-            Stmt* user = env_id_to_stmt(env, tp->User.val.s, NULL);
+            Stmt* user = env_id_to_stmt(env, tp->User.val.s);
             assert(user!=NULL && user->sub==STMT_USER);
             return user->User.isrec;
         }
@@ -365,59 +362,72 @@ int set_seqs (Stmt* s) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int set_envs (Stmt* s) {
-    s->env = ALL.env;
-    switch (s->sub) {
-        case STMT_NONE:
-        case STMT_RETURN:
-        case STMT_SEQ:
-        case STMT_IF:
-        case STMT_NATIVE:
-        case STMT_CALL:
-        case STMT_SET:
-            break;
+    int DEPTH = 0;
+    auto int set_envs_ (Stmt* s);
+    return visit_stmt(s,set_envs_,NULL,NULL);
 
-        case STMT_VAR: {
-            Env* new = malloc(sizeof(Env));     // visit stmt after expr above
-            *new = (Env) { s, ALL.env };
-            ALL.env = new;
-            return VISIT_BREAK;                 // do not visit expr again
-        }
+    int set_envs_ (Stmt* s) {
+        s->env = ALL.env;
+        switch (s->sub) {
+            case STMT_NONE:
+            case STMT_RETURN:
+            case STMT_SEQ:
+            case STMT_IF:
+            case STMT_NATIVE:
+            case STMT_CALL:
+            case STMT_SET:
+                break;
 
-        case STMT_USER: {
-            Env* new = malloc(sizeof(Env));
-            *new = (Env) { s, ALL.env };
-            ALL.env = new;
-            if (s->User.isrec) {
-                s->env = ALL.env;
-            }
-            break;
-        }
-
-        case STMT_BLOCK: {
-            Env* save = ALL.env;
-            visit_stmt(s->Block, set_envs, NULL, NULL);
-            ALL.env = save;
-            return VISIT_BREAK;                 // do not re-visit children, I just did them
-        }
-
-        case STMT_FUNC: {
-            // body of recursive function depends on myself
-            {
-                Env* new = malloc(sizeof(Env));
-                *new = (Env) { s, ALL.env };        // put myself
+            case STMT_VAR: {
+                Env* new = malloc(sizeof(Env));     // visit stmt after expr above
+                *new = (Env) { s, ALL.env, DEPTH };
                 ALL.env = new;
+                return VISIT_BREAK;                 // do not visit expr again
             }
 
-            if (s->Func.body != NULL) {
+            case STMT_USER: {
+                Env* new = malloc(sizeof(Env));
+                *new = (Env) { s, ALL.env, DEPTH };
+                ALL.env = new;
+                if (s->User.isrec) {
+                    s->env = ALL.env;
+                }
+                break;
+            }
+
+            case STMT_BLOCK: {
                 Env* save = ALL.env;
-                visit_stmt(s->Func.body, set_envs, NULL, NULL);
+                DEPTH++;
+                { // dummy node to apply new depth
+                    Env* new = malloc(sizeof(Env));     // visit stmt after expr above
+                    *new = (Env) { s, ALL.env, DEPTH };
+                    ALL.env = new;
+                }
+                visit_stmt(s->Block, set_envs_, NULL, NULL);
+                DEPTH--;
                 ALL.env = save;
+                return VISIT_BREAK;                 // do not re-visit children, I just did them
             }
 
-            return VISIT_BREAK;                 // do not visit children, I just did that
+            case STMT_FUNC: {
+                // body of recursive function depends on myself
+                {
+                    Env* new = malloc(sizeof(Env));
+                    *new = (Env) { s, ALL.env, DEPTH };        // put myself
+                    ALL.env = new;
+                }
+
+                if (s->Func.body != NULL) {
+                    Env* save = ALL.env;
+                    visit_stmt(s->Func.body, set_envs_, NULL, NULL);
+                    ALL.env = save;
+                }
+
+                return VISIT_BREAK;                 // do not visit children, I just did that
+            }
         }
+        return 1;
     }
-    return 1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -446,7 +456,7 @@ int ftk (Env* env, Tk* tk, char* var_type) {
             var_type = "type";
         case TX_USER:
         case TX_VAR: {
-            Stmt* decl = env_id_to_stmt(env, tk->val.s, NULL);
+            Stmt* decl = env_id_to_stmt(env, tk->val.s);
             if (decl == NULL) {
                 char err[512];
                 sprintf(err, "undeclared %s \"%s\"", var_type, tk->val.s);
@@ -835,7 +845,7 @@ int check_owner_alias (Stmt* S) {
     {
         // stop when tracked STMT_VAR is out of scope
 
-        Stmt* decl = env_id_to_stmt(s->env, S->Var.tk.val.s, NULL);
+        Stmt* decl = env_id_to_stmt(s->env, S->Var.tk.val.s);
         if (decl!=NULL && decl==S) {
             // ok: S is still in scope
         } else {
@@ -894,7 +904,7 @@ int check_owner_alias (Stmt* S) {
             }
 
             // ensure that EXPR_VAR is really same as STMT_VAR
-            Stmt* decl = env_id_to_stmt(env, var->Var.tk.val.s, NULL);
+            Stmt* decl = env_id_to_stmt(env, var->Var.tk.val.s);
             assert(decl!=NULL && decl==S);
 
             switch (state) {
@@ -969,7 +979,7 @@ int check_owner_alias (Stmt* S) {
                     }
 
                     assert(var->enu == TX_VAR);
-                    Stmt* decl = env_id_to_stmt(s->env, var->val.s, NULL);
+                    Stmt* decl = env_id_to_stmt(s->env, var->val.s);
                     assert(decl != NULL);
 
                     // check if "y" reaches "S"
@@ -984,41 +994,43 @@ int check_owner_alias (Stmt* S) {
                     break;
                 }
 
-#if 0
                 case STMT_SET: {
                     Type* tp = env_expr_to_type(s->env, s->Set.src);
                     if (!tp->isalias) {
                         break;
                     }
 
-                    Expr* src = expr_leftmost(s->Set.src);
-                    assert(src != NULL);
-                    assert(src->sub == EXPR_VAR);
-                    int src_scope;
-                    Stmt* src_decl = env_id_to_stmt(s->env, src->Var.tk.val.s, &src_scope);
-                    assert(src_decl != NULL);
+                    // set DST = SRC
+                    // check if scope of DST<=S
+                    // otherwise assert that SRC is in *not* in the set of aliases to S
 
                     Expr* dst = expr_leftmost(s->Set.dst);
                     assert(dst != NULL);
                     assert(dst->sub == EXPR_VAR);
-                    int dst_scope;
-                    Stmt* dst_decl = env_id_to_stmt(s->env, dst->Var.tk.val.s, &dst_scope);
+                    Stmt* dst_decl = env_id_to_stmt(S->env, dst->Var.tk.val.s);
                     assert(dst_decl != NULL);
 
-                    if (src_scope == 0) {
-                        for (int i=0; i<aliases_n; i++) {
-                            if (aliases[i] == src_decl) {
-                                char err[1024];
-                                sprintf(err, "invalid return : cannot return alias to local \"%s\" (ln %ld)",
-                                        S->Var.tk.val.s, S->Var.tk.lin);
-                                err_message(&var->Var.tk, err);
-                                return EXEC_ERROR;
-                            }
+                    if (S->env->depth <= dst_decl->env->depth) {
+                        break;  // OK: S >= dst
+                    }
+
+                    Expr* src = expr_leftmost(s->Set.src);
+                    assert(src != NULL);
+                    assert(src->sub == EXPR_VAR);
+                    Stmt* src_decl = env_id_to_stmt(s->env, src->Var.tk.val.s);
+                    assert(src_decl != NULL);
+
+                    for (int i=0; i<aliases_n; i++) {
+                        if (aliases[i] == src_decl) {
+                            char err[1024];
+                            sprintf(err, "invalid assignment : cannot hold local alias \"%s\" (ln %ld)",
+                                    S->Var.tk.val.s, S->Var.tk.lin);
+                            err_message(&src->Var.tk, err);
+                            return EXEC_ERROR;
                         }
                     }
                     break;
                 }
-#endif
 
                 case STMT_RETURN: {     // check if returning one of the aliases to S
                     Type* tp = env_expr_to_type(s->env, s->Return);
@@ -1029,21 +1041,15 @@ int check_owner_alias (Stmt* S) {
                     Expr* var = expr_leftmost(s->Return);
                     assert(var != NULL);
                     assert(var->sub == EXPR_VAR);
-                    int scope;
-                    Stmt* decl = env_id_to_stmt(s->env, var->Var.tk.val.s, &scope);
-                    assert(decl != NULL);
-                    assert(scope == 0);     // never caught outer scope before
-#if 0
-                    // this should never be required: should not track aliases to outer scopes
-                    if (scope != 0) {
-                        break;          // OK: returning alias from outer scope
-                    }
-#endif
+                    Stmt* decl = env_id_to_stmt(s->env, var->Var.tk.val.s);
 
                     for (int i=0; i<aliases_n; i++) {
                         if (aliases[i] == decl) {
                             char err[1024];
-                            sprintf(err, "invalid return : cannot return alias to local \"%s\" (ln %ld)",
+                            assert(decl->env->depth == s->env->depth);
+                                // never caught outer scope before
+                                // this should never be required: should not track aliases to outer scopes
+                            sprintf(err, "invalid return : cannot return local alias \"%s\" (ln %ld)",
                                     S->Var.tk.val.s, S->Var.tk.lin);
                             err_message(&var->Var.tk, err);
                             return EXEC_ERROR;
@@ -1064,7 +1070,7 @@ int check_owner_alias (Stmt* S) {
 
 int env (Stmt* s) {
     assert(visit_stmt(s,set_seqs,NULL,NULL));
-    assert(visit_stmt(s,set_envs,NULL,NULL));
+    assert(set_envs(s));
 //dump_stmt(s);
     if (!visit_stmt(s,NULL,check_decls_expr,check_decls_type)) {
         return 0;

@@ -1,9 +1,10 @@
 typedef struct Env {
     Stmt* stmt;         // STMT_USER, STMT_VAR
     struct Env* prev;
+    int depth;
 } Env;
 
-Stmt* env_id_to_stmt    (Env* env, const char* id, int* scope);
+Stmt* env_id_to_stmt    (Env* env, const char* id);
 Type* env_tk_to_type    (Env* env, Tk* tk);
 Type* env_expr_to_type  (Env* env, Expr* e);
 Stmt* env_stmt_to_func  (Stmt* s);

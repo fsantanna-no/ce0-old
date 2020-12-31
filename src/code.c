@@ -75,7 +75,7 @@ void to_c_ (char* out, Env* env, Type* tp) {
             strcat(out, ")");
             break;
         case TYPE_USER: {
-            Stmt* s = env_id_to_stmt(env, tp->User.val.s, NULL);
+            Stmt* s = env_id_to_stmt(env, tp->User.val.s);
             isrec = (s!=NULL && s->User.isrec);
             if (isrec) strcat(out, "struct ");
             strcat(out, tp->User.val.s);
