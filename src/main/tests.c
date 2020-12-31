@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-//#define DEBUG
+#define DEBUG
 //#define VALGRIND
 
 #include "../all.h"
@@ -1676,11 +1676,32 @@ void t_all (void) {
 
     // LOOP
     assert(all(
-        "10\n",
+        "20\n",
         "loop {\n"
         "   break\n"
         "}\n"
-        "call show 10\n"
+        "call show 20\n"
+    ));
+    assert(all(
+        "15\n",
+        "type Bool {\n"
+        "    False: ()\n"
+        "    True:  ()\n"
+        "}\n"
+        "\n"
+        "func bool: Int -> Bool {\n"
+        "    return _(arg ? (Bool){True} : (Bool){False})\n"
+        "}\n"
+        "var i: Int = 1\n"
+        "var n: Int = 0\n"
+        "loop {\n"
+        "    set n = _(n + i)\n"
+        "    set i = _(i + 1)\n"
+        "    if bool _(i > 5) {\n"
+        "        break\n"
+        "    }\n"
+        "}\n"
+        "call show n    -- shows 10\n"
     ));
 
 #if TODO-anon-tuples // infer from destiny

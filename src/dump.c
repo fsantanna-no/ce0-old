@@ -129,6 +129,16 @@ void dump_stmt (Stmt* s) {
             dump_stmt(s->If.false);
             _SPC_ -= 4;
             break;
+        case STMT_BREAK:
+            dump_spc();
+            printf("break");
+            puts("");
+            break;
+        case STMT_LOOP:
+            printf("loop:\n");
+            _SPC_ += 4;
+            dump_stmt(s->Loop);
+            break;
         case STMT_FUNC:
             dump_spc();
             printf("func %s:\n", s->Func.tk.val.s);
@@ -159,9 +169,6 @@ void dump_stmt (Stmt* s) {
             printf("_{ ... }");
             puts("");
             break;
-        default:
-            printf("ERR: %d\n", s->sub);
-            assert(0);
     }
 }
 

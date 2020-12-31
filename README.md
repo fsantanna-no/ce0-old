@@ -21,11 +21,13 @@ The following keywords are reserved:
 
 ```
     arg         -- function argument
+    break       -- escape loop statement
     call        -- function invocation
     clone       -- clone function
     else        -- conditional statement
     func        -- function declaration
     if          -- conditional statement
+    loop        -- loop statement
     native      -- native statement
     pre         -- native pre declaration
     rec         -- type recursive declaration
@@ -360,6 +362,20 @@ if x {
 }
 ```
 
+## Loop
+
+A `loop` executes a block of statements indefinitely until it reaches a `break`
+statement:
+
+```
+loop {
+    ...         -- repeats this command indefinitely
+    if ... {    -- until this condition is met
+        break
+    }
+}
+```
+
 ## Function, Argument and Return
 
 A function declaration binds a block of statements to a name which can be
@@ -418,6 +434,8 @@ Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: ()
       |  `set´ Expr `=´ Expr            -- assignment               set x = 1
       |  `call´ Expr                    -- call                     call f()
       |  `if´ Expr `{´ Stmt `}´         -- conditional              if x { call f() } else { call g() }
+      |  `loop´ `{´ Stmt `}´            -- loop                     loop { break }
+      |  `break´                        -- break                    break
          [`else´ `{´ Stmt `}´]
       |  `func´ VAR `:´ Type `{´        -- function                 func f : ()->() { return () }
             Stmt
