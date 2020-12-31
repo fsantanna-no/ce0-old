@@ -422,8 +422,10 @@ int set_envs (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// TODO: remove it all
 int set_tmps (Stmt* s) {
     if (s->sub==STMT_VAR && s->Var.type->sub==TYPE_AUTO) {
+assert(0);
         Type* tp = env_expr_to_type(s->env, s->Var.init);
         assert(tp != NULL);
         s->Var.type = tp;
@@ -858,10 +860,11 @@ int check_owner_alias (Stmt* S) {
             }
         }
 
-        // Rule 5/6: check var accesses starting from VAR/CALL/IF/RETURN
+        // Rule 5/6: check var accesses starting from VAR/SET/CALL/IF/RETURN
         auto int var_access (Env* env, Expr* var);
         switch (s->sub) {
             case STMT_VAR:
+            case STMT_SET:
             case STMT_CALL:
             case STMT_IF:
             case STMT_RETURN: {

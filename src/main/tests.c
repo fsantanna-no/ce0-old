@@ -1680,16 +1680,15 @@ void t_all (void) {
         "set l2 = l1\n"
         "call show &l2\n"
     ));
-assert(0);
     assert(all(
-        "TODO",
+        "(ln 7, col 12): invalid access to \"l1\" : ownership was transferred (ln 6)",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
         "var l1: List = $List\n"
         "var l2: List = $List\n"
         "set l2 = l1\n"
-        "call show l1\n"
+        "call show &l1\n"
     ));
     assert(all(
         "TODO",
@@ -1703,6 +1702,7 @@ assert(0);
         "    set r = &l2  -- error\n"
         "}\n"
     ));
+assert(0);
 
 #if TODO-POOL
     // POOL
