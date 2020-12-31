@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DEBUG
+//#define DEBUG
 //#define VALGRIND
 
 #include "../all.h"
@@ -1673,6 +1673,15 @@ void t_all (void) {
     ));
 //puts("-=-=-=-=-");
 //assert(0);
+
+    // LOOP
+    assert(all(
+        "10\n",
+        "loop {\n"
+        "   break\n"
+        "}\n"
+        "call show 10\n"
+    ));
 
 #if TODO-anon-tuples // infer from destiny
     assert(all(

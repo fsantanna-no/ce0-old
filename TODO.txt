@@ -1,6 +1,6 @@
 - set
     - testar var, disc, tx owner
-- loop
+- loop / break
 - remover "x" de clone?
 - voltar pra vec Seq?
 - preciso mesmo de Stmt.tk ??

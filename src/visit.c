@@ -48,11 +48,9 @@ int visit_stmt (Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
     }
 
     switch (s->sub) {
-        case STMT_SET:
-            return visit_expr(s->env,s->Set.dst,fe) && visit_expr(s->env,s->Set.src,fe);
-
         case STMT_NONE:
         case STMT_NATIVE:
+        case STMT_BREAK:
             return 1;
 
         case STMT_CALL:
@@ -62,6 +60,9 @@ int visit_stmt (Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
 
         case STMT_VAR:
             return visit_type(s->env,s->Var.type,ft) && visit_expr(s->env,s->Var.init,fe);
+
+        case STMT_SET:
+            return visit_expr(s->env,s->Set.dst,fe) && visit_expr(s->env,s->Set.src,fe);
 
         case STMT_USER:
             for (int i=0; i<s->User.size; i++) {
@@ -76,6 +77,9 @@ int visit_stmt (Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
 
         case STMT_IF:
             return visit_expr(s->env,s->If.tst,fe) && visit_stmt(s->If.true,fs,fe,ft) && visit_stmt(s->If.false,fs,fe,ft);
+
+        case STMT_LOOP:
+            return visit_stmt(s->Loop,fs,fe,ft);
 
         case STMT_FUNC:
             return visit_type(s->env,s->Func.type,ft) && visit_stmt(s->Func.body,fs,fe,ft);

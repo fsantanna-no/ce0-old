@@ -448,18 +448,31 @@ int parser_stmt (Stmt** ret) {
 
         *s = (Stmt) { ALL.nn++, STMT_IF, NULL, {NULL,NULL}, tk, .If={e,t,f} };
 
-    // STMT_FUNC
-    } else if (accept(TK_FUNC)) {   // func
+    // STMT_BREAK
+    } else if (accept(TK_BREAK)) {      // break
+        *s = (Stmt) { ALL.nn++, STMT_BREAK, NULL, {NULL,NULL}, ALL.tk0 };
+
+    // STMT_LOOP
+    } else if (accept(TK_LOOP)) {       // loop
         Tk tk = ALL.tk0;
-        if (!accept(TX_VAR)) {    // f
+        Stmt* body;
+        if (!parser_block(&body)) {
+            return 0;
+        }
+        *s = (Stmt) { ALL.nn++, STMT_LOOP, NULL, {NULL,NULL}, tk, .Loop=body };
+
+    // STMT_FUNC
+    } else if (accept(TK_FUNC)) {       // func
+        Tk tk = ALL.tk0;
+        if (!accept(TX_VAR)) {          // f
             return 0;
         }
         Tk id = ALL.tk0;
-        if (!accept(':')) {         // :
+        if (!accept(':')) {             // :
             return 0;
         }
         Type* tp;
-        if (!parser_type(&tp)) {    // () -> ()
+        if (!parser_type(&tp)) {        // () -> ()
             return 0;
         }
 

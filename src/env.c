@@ -373,6 +373,8 @@ int set_envs (Stmt* s) {
             case STMT_RETURN:
             case STMT_SEQ:
             case STMT_IF:
+            case STMT_LOOP:
+            case STMT_BREAK:
             case STMT_NATIVE:
             case STMT_CALL:
             case STMT_SET:
@@ -633,6 +635,8 @@ int check_types_stmt (Stmt* s) {
         case STMT_USER:
         case STMT_FUNC:
         case STMT_SEQ:
+        case STMT_LOOP:
+        case STMT_BREAK:
         case STMT_BLOCK:
         case STMT_NATIVE:
         case STMT_CALL:

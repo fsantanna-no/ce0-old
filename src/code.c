@@ -880,6 +880,15 @@ void code_stmt (Stmt* s) {
             break;
         }
 
+        case STMT_BREAK:
+            out("break;\n");
+            break;
+        case STMT_LOOP:
+            out("while (1) {\n");
+            code_stmt(s->Loop);
+            out("}\n");
+            break;
+
         case STMT_FUNC: {
             assert(s->Func.type->sub == TYPE_FUNC);
 

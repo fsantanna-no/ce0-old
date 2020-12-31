@@ -15,11 +15,13 @@ typedef enum {
 
     TK_RESERVED,    // all reserved keywords
     //TK_ARG,
+    TK_BREAK,
     TK_CALL,
     //TK_CLONE,
     TK_ELSE,
     TK_FUNC,
     TK_IF,
+    TK_LOOP,
     TK_NATIVE,
     TK_PRE,
     TK_REC,

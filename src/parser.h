@@ -30,6 +30,8 @@ typedef enum {
     STMT_CALL,
     STMT_SEQ,
     STMT_IF,
+    STMT_LOOP,
+    STMT_BREAK,
     STMT_FUNC,
     STMT_RETURN,
     STMT_BLOCK,
@@ -118,6 +120,8 @@ typedef struct Stmt {
     union {
         Expr* Call;         // STMT_CALL
         Expr* Return;       // STMT_RETURN
+        struct Stmt* Loop;  // STMT_LOOP
+        //void  Break;      // STMT_BREAK
         struct Stmt* Block; // STMT_BLOCK
         struct {            // STMT_VAR
             Tk    tk;                    // ns

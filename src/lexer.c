@@ -8,12 +8,14 @@
 
 static char* reserved[] = {
     //"arg",
+    "break",
     "call",
     //"clone",
     "else",
     "func",
     "if",
     //"Int",
+    "loop",
     "native",
     "pre",
     "rec",
