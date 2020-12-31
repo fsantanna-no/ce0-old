@@ -454,9 +454,10 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
             break;
 
         case EXPR_VAR: {
-            //int ishasrec = env_type_ishasrec(env,TP,1);
-            //int deref = (deref_ishasrec && ishasrec) || (TP->isalias && !ishasrec);
-            int deref = (deref_ishasrec && (TP->isalias || env_type_isrec(env,TP,0)));
+            int isrec    = env_type_isrec(env,TP,1);
+            int ishasrec = env_type_ishasrec(env,TP,1);
+            int deref = (deref_ishasrec && isrec) || (TP->isalias && !ishasrec);
+            //int deref = (deref_ishasrec && (TP->isalias || env_type_isrec(env,TP,0)));
             if (deref) {
                 out("(*(");
             }
@@ -537,9 +538,10 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
             break;
 
         case EXPR_DISC: {
-            //int ishasrec = env_type_ishasrec(env,TP,1);
-            //int deref = (deref_ishasrec && ishasrec) || (TP->isalias && !ishasrec);
-            int deref = (deref_ishasrec && (TP->isalias || env_type_isrec(env,TP,0)));
+            int isrec    = env_type_isrec(env,TP,1);
+            int ishasrec = env_type_ishasrec(env,TP,1);
+            int deref = (deref_ishasrec && isrec) || (TP->isalias && !ishasrec);
+            //int deref = (deref_ishasrec && (TP->isalias || env_type_isrec(env,TP,0)));
             if (deref) {
                 out("(*(");
             }
