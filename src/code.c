@@ -103,14 +103,14 @@ char* to_c (Env* env, Type* tp) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int env_user_hasalloc (Env* env, Stmt* user) {
+int env_user_ishasrec (Env* env, Stmt* user) {
     assert(user->sub == STMT_USER);
     if (user->User.isrec) {
         return 1;
     }
     for (int i=0; i<user->User.size; i++) {
         Sub sub = user->User.vec[i];
-        if (env_type_hasalloc(env, sub.type)) {
+        if (env_type_ishasrec(env, sub.type)) {
             return 1;
         }
     }
@@ -119,7 +119,7 @@ int env_user_hasalloc (Env* env, Stmt* user) {
 
 void code_free_user (Env* env, Stmt* user) {
     assert(user->sub == STMT_USER);
-    assert(env_user_hasalloc(env,user));
+    assert(env_user_ishasrec(env,user));
 
     // Nat_free
 
@@ -137,7 +137,7 @@ void code_free_user (Env* env, Stmt* user) {
 
     for (int i=0; i<user->User.size; i++) {
         Sub sub = user->User.vec[i];
-        if (env_type_hasalloc(env, sub.type)) {
+        if (env_type_ishasrec(env, sub.type)) {
             fprintf (ALL.out,
                 "    %s_free(&(*p)%s_%s);\n",
                 to_ce(sub.type), (isrec ? "->" : "."), sub.tk.val.s
@@ -154,7 +154,7 @@ void code_free_user (Env* env, Stmt* user) {
 
 void code_free_tuple (Env* env, Type* tp) {
     assert(tp->sub == TYPE_TUPLE);
-    assert(env_type_hasalloc(env,tp));
+    assert(env_type_ishasrec(env,tp));
 
     char* tp_ = to_ce(tp);
     fprintf (ALL.out,
@@ -163,7 +163,7 @@ void code_free_tuple (Env* env, Type* tp) {
     );
     for (int i=0; i<tp->Tuple.size; i++) {
         Type* sub = tp->Tuple.vec[i];
-        if (env_type_hasalloc(env,sub)) {
+        if (env_type_ishasrec(env,sub)) {
             fprintf (ALL.out,
                 "    %s_free(&p->_%d);\n",
                 to_ce(sub), i+1
@@ -177,7 +177,7 @@ void code_free_tuple (Env* env, Type* tp) {
 
 void code_null_user (Env* env, Stmt* user) {
     assert(user->sub == STMT_USER);
-    assert(env_user_hasalloc(env,user));
+    assert(env_user_ishasrec(env,user));
 
     const char* sup = user->User.tk.val.s;
     int isrec = user->User.isrec;
@@ -192,7 +192,7 @@ void code_null_user (Env* env, Stmt* user) {
     } else {
         for (int i=0; i<user->User.size; i++) {
             Sub sub = user->User.vec[i];
-            if (env_type_hasalloc(env, sub.type)) {
+            if (env_type_ishasrec(env, sub.type)) {
                 fprintf (ALL.out,
                     "    %s_null(&(*p)%s_%s);\n",
                     to_ce(sub.type), (isrec ? "->" : "."), sub.tk.val.s
@@ -206,7 +206,7 @@ void code_null_user (Env* env, Stmt* user) {
 
 void code_null_tuple (Env* env, Type* tp) {
     assert(tp->sub == TYPE_TUPLE);
-    assert(env_type_hasalloc(env,tp));
+    assert(env_type_ishasrec(env,tp));
 
     char* tp_ = to_ce(tp);
     fprintf (ALL.out,
@@ -215,7 +215,7 @@ void code_null_tuple (Env* env, Type* tp) {
     );
     for (int i=0; i<tp->Tuple.size; i++) {
         Type* sub = tp->Tuple.vec[i];
-        if (env_type_hasalloc(env,sub)) {
+        if (env_type_ishasrec(env,sub)) {
             fprintf (ALL.out,
                 "    %s_null(&p->_%d);\n",
                 to_ce(sub), i+1
@@ -226,10 +226,6 @@ void code_null_tuple (Env* env, Type* tp) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-
-char* norec_hasalloc (Env* env, Type* tp, char* op1, char* op2) {
-    return (!env_type_isrec(env,tp) && env_type_hasalloc(env,tp)) ? op1 : op2;
-}
 
 int ftp_tuples (Env* env, Type* tp) {
     if (tp->sub != TYPE_TUPLE) {
@@ -260,16 +256,17 @@ int ftp_tuples (Env* env, Type* tp) {
     out(tp_ce);
     out(";\n");
 
-    int hasalloc = env_type_hasalloc(env, tp);
+    int ishasrec = env_type_ishasrec(env, tp);
 
     // FREE, NULL
-    if (hasalloc) {
+    if (ishasrec) {
         code_free_tuple(env, tp);
         code_null_tuple(env, tp);
     }
 
     // SHOW
     {
+        int hasrec1 = env_type_hasrec(env, tp);
         fprintf (ALL.out,
             "#ifndef __show_%s__\n"
             "#define __show_%s__\n",
@@ -278,20 +275,21 @@ int ftp_tuples (Env* env, Type* tp) {
         fprintf(ALL.out,
             "void show_%s_ (%s%s v) {\n"
             "    printf(\"(\");\n",
-            tp_ce, tp_c, norec_hasalloc(env,tp,"*","")
+            tp_ce, tp_c, (hasrec1 ? "*" : "")
         );
         for (int i=0; i<tp->Tuple.size; i++) {
             if (i > 0) {
                 fprintf(ALL.out, "    printf(\",\");\n");
             }
             Type* sub = tp->Tuple.vec[i];
+            int hasrec2 = env_type_hasrec(env, sub);
             if (sub->sub == TYPE_NATIVE) {
                 fprintf(ALL.out, "    putchar('?');\n");
             } else if (sub->sub == TYPE_UNIT) {
                 fprintf(ALL.out, "    show_Unit_();\n");
             } else {
                 fprintf(ALL.out, "    show_%s_(%sv%s_%d);\n",
-                    to_ce(sub), norec_hasalloc(env,sub,"&",""), norec_hasalloc(env,tp,"->","."), i+1);
+                    to_ce(sub), (hasrec2 ? "&" : ""), (hasrec1 ? "->" : "."), i+1);
             }
         }
         fprintf(ALL.out,
@@ -301,7 +299,7 @@ int ftp_tuples (Env* env, Type* tp) {
             "    show_%s_(v);\n"
             "    puts(\"\");\n"
             "}\n",
-            tp_ce, tp_c, norec_hasalloc(env,tp,"*",""),
+            tp_ce, tp_c, (hasrec1 ? "*" : ""),
             tp_ce
         );
         out("#endif\n");
@@ -456,7 +454,7 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
             break;
 
         case EXPR_VAR: {
-            int deref = (ctxplain && env_type_isptr(env,TP));
+            int deref = (ctxplain && (TP->isalias || env_type_isrec(env,TP,0)));
             if (deref) {
                 out("(*(");
             }
@@ -473,7 +471,7 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
 
         case EXPR_ALIAS: {
             Type* tp = env_expr_to_type(env, e->Alias);
-            if (!env_type_isrec(env,tp)) {
+            if (!env_type_isrec(env,tp,1)) {
                 out("&");
             }
             code_expr(env, e->Alias, 0);
@@ -537,7 +535,7 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
             break;
 
         case EXPR_DISC: {
-            int deref = (ctxplain && env_type_isptr(env,TP));
+            int deref = (ctxplain && (TP->isalias || env_type_isrec(env,TP,0)));
             if (deref) {
                 out("(*(");
             }
@@ -579,8 +577,8 @@ void code_user (Stmt* s) {
     const char* SUP = strupper(s->User.tk.val.s);
     int isrec = s->User.isrec;
 
-    // show must receive & from hasalloc, otherwise it would receive ownership
-    int hasalloc = env_user_hasalloc(s->env, s);
+    // show must receive & from ishasrec, otherwise it would receive ownership
+    int ishasrec = env_user_ishasrec(s->env, s);
 
     // struct Bool;
     // typedef struct Bool Bool;
@@ -596,14 +594,14 @@ void code_user (Stmt* s) {
 
         fprintf(ALL.out,
             "auto %s%s clone_%s (%s%s v);\n",
-            sup, (hasalloc ? "*" : ""),
+            sup, (ishasrec ? "*" : ""),
             sup,
-            sup, (hasalloc ? "*" : "")
+            sup, (ishasrec ? "*" : "")
         );
 
         fprintf(ALL.out,
             "auto void show_%s_ (%s%s v);\n", // auto: https://stackoverflow.com/a/7319417
-            sup, sup, (hasalloc ? "*" : "")
+            sup, sup, (ishasrec ? "*" : "")
         );
     }
     out("\n");
@@ -656,7 +654,7 @@ void code_user (Stmt* s) {
     out("\n");
 
     // FREE
-    if (env_user_hasalloc(s->env,s)) {
+    if (env_user_ishasrec(s->env,s)) {
         code_free_user(s->env, s);
         code_null_user(s->env, s);
     }
@@ -665,11 +663,11 @@ void code_user (Stmt* s) {
     {
         fprintf(ALL.out,
             "%s%s clone_%s (%s%s v) {\n",
-            sup, (hasalloc ? "*" : ""),
+            sup, (ishasrec ? "*" : ""),
             sup,
-            sup, (hasalloc ? "*" : "")
+            sup, (ishasrec ? "*" : "")
         );
-        if (!hasalloc) {
+        if (!ishasrec) {
             out("return v;\n");
         } else {
             if (isrec) {
@@ -693,9 +691,9 @@ void code_user (Stmt* s) {
                     id,
                     sup, sup,
                     sup, id, id,
-                    norec_hasalloc(s->env,sub->type,"*",""),
+                    env_type_hasrec(s->env,sub->type) ? "*" : "",
                     to_ce(sub->type),
-                    (env_type_isrec(s->env,sub->type) ? "" : "&"),
+                    (env_type_isrec(s->env,sub->type,0) ? "" : "&"),
                     id
                 );
             }
@@ -708,12 +706,12 @@ void code_user (Stmt* s) {
 
     // SHOW
     {
-        char* op = (hasalloc ? "->" : ".");
+        char* op = (ishasrec ? "->" : ".");
 
         // _show_Bool (Bool v)
         fprintf(ALL.out,
             "void show_%s_ (%s%s v) {\n",
-            sup, sup, (hasalloc ? "*" : "")
+            sup, sup, (ishasrec ? "*" : "")
         );
         if (isrec) {
             out (
@@ -730,6 +728,7 @@ void code_user (Stmt* s) {
             char arg[1024] = "";
             int yes = 0;
             int par = 0;
+            int hasrec = env_type_hasrec(s->env, sub->type);
 
             switch (sub->type->sub) {
                 case TYPE_UNIT:
@@ -741,14 +740,14 @@ void code_user (Stmt* s) {
                 case TYPE_USER:
                     yes = par = 1;
                     sprintf(arg, "show_%s_(%sv%s_%s)",
-                        sub->type->User.val.s, norec_hasalloc(s->env,sub->type,"&",""),
+                        sub->type->User.val.s, (hasrec ? "&" : ""),
                         op, sub->tk.val.s);
                     break;
                 case TYPE_TUPLE:
                     yes = 1;
                     par = 0;
                     sprintf(arg, "show_%s_(%sv%s_%s)",
-                        to_ce(sub->type), norec_hasalloc(s->env,sub->type,"&",""),
+                        to_ce(sub->type), (hasrec ? "&" : ""),
                         op, sub->tk.val.s);
                     break;
                 default:
@@ -771,7 +770,7 @@ void code_user (Stmt* s) {
             "    show_%s_(v);\n"
             "    puts(\"\");\n"
             "}\n",
-            sup, sup, (hasalloc ? "*" : ""),
+            sup, sup, (ishasrec ? "*" : ""),
             sup
         );
     }
@@ -810,7 +809,7 @@ void code_stmt (Stmt* s) {
 
             fprintf(ALL.out, "%s %s", to_c(s->env,s->Var.type), s->Var.tk.val.s);
 
-            if (env_type_hasalloc(s->env,s->Var.type)) {
+            if (env_type_ishasrec(s->env,s->Var.type)) {
                 fprintf (ALL.out,
                     " __attribute__ ((__cleanup__(%s_free)))",
                     to_ce(s->Var.type)
@@ -833,8 +832,8 @@ void code_stmt (Stmt* s) {
                 break;
             }
 
-            // TODO: if "dst" is hasalloc, need to free it
-            if (env_type_hasalloc(s->env,dst)) {
+            // TODO: if "dst" is ishasrec, need to free it
+            if (env_type_ishasrec(s->env,dst)) {
                 fprintf(ALL.out, "%s_free(&", to_ce(dst));
                 code_expr(s->env, s->Set.dst, 0);
                 out(");\n");
