@@ -384,14 +384,14 @@ int code_expr_pre (Env* env, Expr* e) {
             if (e->istx) {
                 e->istx = 0;
                 out("typeof(");
-                code_expr(env, e, 0);
+                code_expr(env, e, 1);
                 fprintf(ALL.out, ") _tmp_%d = ", e->N);
-                code_expr(env, e, 0);
+                code_expr(env, e, 1);
                 out(";\n");
 
                 out(to_ce(TP));
                 out("_null(&");
-                code_expr(env, e, 0);
+                code_expr(env, e, 1);
                 out(");\n");
                 e->istx = 1;
             }
@@ -486,9 +486,9 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
 
         case EXPR_CALL:
             if (e->Call.func->sub == EXPR_NATIVE) {
-                code_expr(env, e->Call.func, 0);
+                code_expr(env, e->Call.func, 1);
                 out("(");
-                code_expr(env, e->Call.arg, 0);
+                code_expr(env, e->Call.arg, 1);
                 out(")");
             } else {
                 assert(e->Call.func->sub == EXPR_VAR);
@@ -500,7 +500,7 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
                     out("clone_");
                     code_to_ce(env_expr_to_type(env, e->Call.arg));
                 } else {
-                    code_expr(env, e->Call.func, 0);
+                    code_expr(env, e->Call.func, 1);
                 }
 
                 out("(");
@@ -789,7 +789,7 @@ void code_stmt (Stmt* s) {
 
         case STMT_CALL:
             visit_expr(s->env, s->Call, code_expr_pre);
-            code_expr(s->env, s->Call, 0);
+            code_expr(s->env, s->Call, 1);
             out(";\n");
             break;
 
@@ -858,7 +858,7 @@ void code_stmt (Stmt* s) {
         case STMT_IF: {
             visit_expr(s->env, s->If.tst, code_expr_pre);
             out("if (");
-            code_expr(s->env, s->If.tst, 0);
+            code_expr(s->env, s->If.tst, 1);
             out(".sub) {\n");
             code_stmt(s->If.true);
             out("} else {\n");
