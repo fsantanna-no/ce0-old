@@ -1671,6 +1671,27 @@ void t_all (void) {
         "call show v\n"
     ));
     assert(all(
+        "Item (Item ($))\n",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "var l1: List = Item Item $List\n"
+        "var l2: List = Item $List\n"
+        "set l2 = l1\n"
+        "call show &l2\n"
+    ));
+assert(0);
+    assert(all(
+        "TODO",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "var l1: List = $List\n"
+        "var l2: List = $List\n"
+        "set l2 = l1\n"
+        "call show l1\n"
+    ));
+    assert(all(
         "TODO",
         "type rec List {\n"
         "    Item: List\n"

@@ -848,7 +848,9 @@ void code_stmt (Stmt* s) {
 
             // TODO: if "dst" is hasalloc, need to free it
             if (env_type_hasalloc(s->env,dst)) {
-                assert(0);
+                fprintf(ALL.out, "%s_free(&", to_ce(dst));
+                code_expr(s->env, s->Set.dst, 0);
+                out(");\n");
             }
 
             code_expr(s->env, s->Set.dst, 0);

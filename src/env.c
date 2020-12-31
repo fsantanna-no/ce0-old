@@ -745,6 +745,9 @@ int set_istx_stmt (Stmt* s) {
         case STMT_VAR:
             set_istx_expr(s->env, s->Var.init, 0, 0);
             break;
+        case STMT_SET:
+            set_istx_expr(s->env, s->Set.src, 0, 0);
+            break;
         case STMT_CALL:
             set_istx_expr(s->env, s->Call, 1, 1);
             break;
