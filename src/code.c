@@ -453,25 +453,6 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
             out(e->Native.val.s);
             break;
 
-        case EXPR_VAR: {
-            int isrec    = env_type_isrec(env,TP,1);
-            int ishasrec = env_type_ishasrec(env,TP,1);
-            int deref = (deref_ishasrec && isrec) || (TP->isalias && !ishasrec);
-            //int deref = (deref_ishasrec && (TP->isalias || env_type_isrec(env,TP,0)));
-            if (deref) {
-                out("(*(");
-            }
-            if (e->istx) {
-                fprintf(ALL.out, "_tmp_%d", e->N);
-            } else {
-                out(e->Var.tk.val.s);
-            }
-            if (deref) {
-                out("))");
-            }
-            break;
-        }
-
         case EXPR_ALIAS: {
             Type* tp = env_expr_to_type(env, e->Alias);
             if (!env_type_isrec(env,tp,1)) {
@@ -536,6 +517,25 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
                 fprintf(ALL.out, "._%d", e->Index.index.val.n);
             }
             break;
+
+        case EXPR_VAR: {
+            int isrec    = env_type_isrec(env,TP,1);
+            int ishasrec = env_type_ishasrec(env,TP,1);
+            int deref = (deref_ishasrec && isrec) || (TP->isalias && !ishasrec);
+            //int deref = (deref_ishasrec && (TP->isalias || env_type_isrec(env,TP,0)));
+            if (deref) {
+                out("(*(");
+            }
+            if (e->istx) {
+                fprintf(ALL.out, "_tmp_%d", e->N);
+            } else {
+                out(e->Var.tk.val.s);
+            }
+            if (deref) {
+                out("))");
+            }
+            break;
+        }
 
         case EXPR_DISC: {
             int isrec    = env_type_isrec(env,TP,1);
