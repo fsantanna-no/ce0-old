@@ -914,6 +914,19 @@ void t_all (void) {
         "type Xx { Xx1:(Yy,Zz) }\n"
         "call show (Xx1 (Yy1,Zz1))\n"
     ));
+    assert(all(
+        "Event (Any)\n",
+        "type Event_ {\n"
+        "    Any: ()\n"
+        "}\n"
+        "type Input {\n"
+        "    Event: &Event_\n"
+        "}\n"
+        "var e: Event_ = Any\n"
+        "var x: Input = Event &e\n"
+        "call show x\n"
+    ));
+
     // IF
     assert(all(
         "()\n",

@@ -521,7 +521,9 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
         case EXPR_VAR: {
             int isrec    = env_type_isrec(env,TP,1);
             int ishasrec = env_type_ishasrec(env,TP,1);
-            int deref = (deref_ishasrec && isrec) || (TP->isalias && !ishasrec);
+            //int deref = (deref_ishasrec && isrec) || (TP->isalias && !ishasrec);
+            int deref = (deref_ishasrec && (isrec || (TP->isalias && ishasrec))) || (TP->isalias && !ishasrec);
+            //
             //int deref = (deref_ishasrec && (TP->isalias || env_type_isrec(env,TP,0)));
             if (deref) {
                 out("(*(");
@@ -540,7 +542,9 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
         case EXPR_DISC: {
             int isrec    = env_type_isrec(env,TP,1);
             int ishasrec = env_type_ishasrec(env,TP,1);
-            int deref = (deref_ishasrec && isrec) || (TP->isalias && !ishasrec);
+            //int deref = (deref_ishasrec && isrec) || (TP->isalias && !ishasrec);
+            int deref = (deref_ishasrec && (isrec || (TP->isalias && ishasrec))) || (TP->isalias && !ishasrec);
+            //
             //int deref = (deref_ishasrec && (TP->isalias || env_type_isrec(env,TP,0)));
             if (deref) {
                 out("(*(");
@@ -734,7 +738,15 @@ void code_user (Stmt* s) {
             char arg[1024] = "";
             int yes = 0;
             int par = 0;
-            int hasrec = env_type_hasrec(s->env, sub->type, 0);
+
+            char* op2 = ""; {
+                int hasrec = env_type_hasrec(s->env, sub->type, 0);
+                if (hasrec && !sub->type->isalias) {
+                    op2 = "&";
+                } else if (!hasrec && sub->type->isalias) {
+                    op2 = "*";
+                }
+            }
 
             switch (sub->type->sub) {
                 case TYPE_UNIT:
@@ -746,14 +758,14 @@ void code_user (Stmt* s) {
                 case TYPE_USER:
                     yes = par = 1;
                     sprintf(arg, "show_%s_(%sv%s_%s)",
-                        sub->type->User.val.s, (hasrec ? "&" : ""),
+                        sub->type->User.val.s, op2,
                         op, sub->tk.val.s);
                     break;
                 case TYPE_TUPLE:
                     yes = 1;
                     par = 0;
                     sprintf(arg, "show_%s_(%sv%s_%s)",
-                        to_ce(sub->type), (hasrec ? "&" : ""),
+                        to_ce(sub->type), op2,
                         op, sub->tk.val.s);
                     break;
                 default:
