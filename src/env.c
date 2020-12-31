@@ -223,11 +223,11 @@ Type* env_expr_to_type (Env* env, Expr* e) {
             assert(!tp->isalias && "bug found : `&´ inside subtype");
             if (!val->isalias) {
                 return tp;
-            } else if (!env_type_ishasrec(env,tp)) {
+            } else if (!env_type_ishasrec(env,tp,0)) {
                 // only keep & if sub hasalloc:
                 //  &x -> x.True
                 return tp;
-            } else if (env_type_ishasrec(env,tp)) {
+            } else if (env_type_ishasrec(env,tp,0)) {
                 //  &x -> &x.Cons
                 Type* ret = malloc(sizeof(Type));
                 assert(ret != NULL);
@@ -254,12 +254,12 @@ Stmt* env_type_to_user_stmt (Env* env, Type* tp) {
     }
 }
 
-int env_type_hasrec (Env* env, Type* tp) {
-    auto int aux (Env* env, Type* tp);
-    return (!env_type_isrec(env,tp,0) && aux(env,tp));
+int env_type_hasrec (Env* env, Type* tp, int okalias) {
+    auto int aux (Env* env, Type* tp, int okalias);
+    return (!env_type_isrec(env,tp,0) && aux(env,tp,okalias));
 
-    int aux (Env* env, Type* tp) {
-        if (tp->isalias) {
+    int aux (Env* env, Type* tp, int okalias) {
+        if (!okalias && tp->isalias) {
             return 0;
         }
         switch (tp->sub) {
@@ -271,7 +271,7 @@ int env_type_hasrec (Env* env, Type* tp) {
                 return 0;
             case TYPE_TUPLE:
                 for (int i=0; i<tp->Tuple.size; i++) {
-                    if (aux(env, tp->Tuple.vec[i])) {
+                    if (aux(env, tp->Tuple.vec[i], 0)) {
                         return 1;
                     }
                 }
@@ -283,7 +283,7 @@ int env_type_hasrec (Env* env, Type* tp) {
                     return 1;
                 }
                 for (int i=0; i<user->User.size; i++) {
-                    if (aux(env,user->User.vec[i].type)) {
+                    if (aux(env,user->User.vec[i].type, 0)) {
                         return 1;
                     }
                 }
@@ -316,8 +316,8 @@ int env_type_isrec (Env* env, Type* tp, int okalias) {
     assert(0);
 }
 
-int env_type_ishasrec (Env* env, Type* tp) {
-    return env_type_isrec(env,tp,0) || env_type_hasrec(env,tp);
+int env_type_ishasrec (Env* env, Type* tp, int okalias) {
+    return env_type_isrec(env,tp,okalias) || env_type_hasrec(env,tp,okalias);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -703,7 +703,7 @@ Expr* expr_leftmost (Expr* e) {
 void set_txbx (Env* env, Expr* E, int notx, int nobw) {
     Type* tp = env_expr_to_type(env, (E->sub==EXPR_ALIAS ? E->Alias : E));
     assert(tp != NULL);
-    if (env_type_ishasrec(env, tp)) {
+    if (env_type_ishasrec(env,tp,0)) {
         if (!notx) {
             E->istx = 1;
         }
@@ -820,7 +820,7 @@ int check_owner_alias (Stmt* S) {
         return 1;               // not var declaration
     }
 
-    if (!env_type_ishasrec(S->env, S->Var.type)) {
+    if (!env_type_ishasrec(S->env, S->Var.type,0)) {
         return 1;               // not recursive type
     }
 

@@ -110,7 +110,7 @@ int env_user_ishasrec (Env* env, Stmt* user) {
     }
     for (int i=0; i<user->User.size; i++) {
         Sub sub = user->User.vec[i];
-        if (env_type_ishasrec(env, sub.type)) {
+        if (env_type_ishasrec(env, sub.type, 0)) {
             return 1;
         }
     }
@@ -137,7 +137,7 @@ void code_free_user (Env* env, Stmt* user) {
 
     for (int i=0; i<user->User.size; i++) {
         Sub sub = user->User.vec[i];
-        if (env_type_ishasrec(env, sub.type)) {
+        if (env_type_ishasrec(env, sub.type, 0)) {
             fprintf (ALL.out,
                 "    %s_free(&(*p)%s_%s);\n",
                 to_ce(sub.type), (isrec ? "->" : "."), sub.tk.val.s
@@ -154,7 +154,7 @@ void code_free_user (Env* env, Stmt* user) {
 
 void code_free_tuple (Env* env, Type* tp) {
     assert(tp->sub == TYPE_TUPLE);
-    assert(env_type_ishasrec(env,tp));
+    assert(env_type_ishasrec(env,tp,0));
 
     char* tp_ = to_ce(tp);
     fprintf (ALL.out,
@@ -163,7 +163,7 @@ void code_free_tuple (Env* env, Type* tp) {
     );
     for (int i=0; i<tp->Tuple.size; i++) {
         Type* sub = tp->Tuple.vec[i];
-        if (env_type_ishasrec(env,sub)) {
+        if (env_type_ishasrec(env,sub,0)) {
             fprintf (ALL.out,
                 "    %s_free(&p->_%d);\n",
                 to_ce(sub), i+1
@@ -192,7 +192,7 @@ void code_null_user (Env* env, Stmt* user) {
     } else {
         for (int i=0; i<user->User.size; i++) {
             Sub sub = user->User.vec[i];
-            if (env_type_ishasrec(env, sub.type)) {
+            if (env_type_ishasrec(env,sub.type,0)) {
                 fprintf (ALL.out,
                     "    %s_null(&(*p)%s_%s);\n",
                     to_ce(sub.type), (isrec ? "->" : "."), sub.tk.val.s
@@ -206,7 +206,7 @@ void code_null_user (Env* env, Stmt* user) {
 
 void code_null_tuple (Env* env, Type* tp) {
     assert(tp->sub == TYPE_TUPLE);
-    assert(env_type_ishasrec(env,tp));
+    assert(env_type_ishasrec(env,tp,0));
 
     char* tp_ = to_ce(tp);
     fprintf (ALL.out,
@@ -215,7 +215,7 @@ void code_null_tuple (Env* env, Type* tp) {
     );
     for (int i=0; i<tp->Tuple.size; i++) {
         Type* sub = tp->Tuple.vec[i];
-        if (env_type_ishasrec(env,sub)) {
+        if (env_type_ishasrec(env,sub,0)) {
             fprintf (ALL.out,
                 "    %s_null(&p->_%d);\n",
                 to_ce(sub), i+1
@@ -256,7 +256,7 @@ int ftp_tuples (Env* env, Type* tp) {
     out(tp_ce);
     out(";\n");
 
-    int ishasrec = env_type_ishasrec(env, tp);
+    int ishasrec = env_type_ishasrec(env, tp, 0);
 
     // FREE, NULL
     if (ishasrec) {
@@ -266,7 +266,7 @@ int ftp_tuples (Env* env, Type* tp) {
 
     // SHOW
     {
-        int hasrec1 = env_type_hasrec(env, tp);
+        int hasrec1 = env_type_hasrec(env, tp, 0);
         fprintf (ALL.out,
             "#ifndef __show_%s__\n"
             "#define __show_%s__\n",
@@ -282,7 +282,7 @@ int ftp_tuples (Env* env, Type* tp) {
                 fprintf(ALL.out, "    printf(\",\");\n");
             }
             Type* sub = tp->Tuple.vec[i];
-            int hasrec2 = env_type_hasrec(env, sub);
+            int hasrec2 = env_type_hasrec(env, sub, 0);
             if (sub->sub == TYPE_NATIVE) {
                 fprintf(ALL.out, "    putchar('?');\n");
             } else if (sub->sub == TYPE_UNIT) {
@@ -430,7 +430,7 @@ int code_expr_pre (Env* env, Expr* e) {
     return VISIT_CONTINUE;
 }
 
-void code_expr (Env* env, Expr* e, int ctxplain) {
+void code_expr (Env* env, Expr* e, int deref_ishasrec) {
     Type* TP = env_expr_to_type(env, e);
     assert(TP != NULL);
     if (TP->sub==TYPE_UNIT && e->sub!=EXPR_CALL) {
@@ -454,7 +454,9 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
             break;
 
         case EXPR_VAR: {
-            int deref = (ctxplain && (TP->isalias || env_type_isrec(env,TP,0)));
+            //int ishasrec = env_type_ishasrec(env,TP,1);
+            //int deref = (deref_ishasrec && ishasrec) || (TP->isalias && !ishasrec);
+            int deref = (deref_ishasrec && (TP->isalias || env_type_isrec(env,TP,0)));
             if (deref) {
                 out("(*(");
             }
@@ -535,7 +537,9 @@ void code_expr (Env* env, Expr* e, int ctxplain) {
             break;
 
         case EXPR_DISC: {
-            int deref = (ctxplain && (TP->isalias || env_type_isrec(env,TP,0)));
+            //int ishasrec = env_type_ishasrec(env,TP,1);
+            //int deref = (deref_ishasrec && ishasrec) || (TP->isalias && !ishasrec);
+            int deref = (deref_ishasrec && (TP->isalias || env_type_isrec(env,TP,0)));
             if (deref) {
                 out("(*(");
             }
@@ -691,7 +695,7 @@ void code_user (Stmt* s) {
                     id,
                     sup, sup,
                     sup, id, id,
-                    env_type_hasrec(s->env,sub->type) ? "*" : "",
+                    env_type_hasrec(s->env,sub->type,0) ? "*" : "",
                     to_ce(sub->type),
                     (env_type_isrec(s->env,sub->type,0) ? "" : "&"),
                     id
@@ -728,7 +732,7 @@ void code_user (Stmt* s) {
             char arg[1024] = "";
             int yes = 0;
             int par = 0;
-            int hasrec = env_type_hasrec(s->env, sub->type);
+            int hasrec = env_type_hasrec(s->env, sub->type, 0);
 
             switch (sub->type->sub) {
                 case TYPE_UNIT:
@@ -809,7 +813,7 @@ void code_stmt (Stmt* s) {
 
             fprintf(ALL.out, "%s %s", to_c(s->env,s->Var.type), s->Var.tk.val.s);
 
-            if (env_type_ishasrec(s->env,s->Var.type)) {
+            if (env_type_ishasrec(s->env,s->Var.type,0)) {
                 fprintf (ALL.out,
                     " __attribute__ ((__cleanup__(%s_free)))",
                     to_ce(s->Var.type)
@@ -833,7 +837,7 @@ void code_stmt (Stmt* s) {
             }
 
             // TODO: if "dst" is ishasrec, need to free it
-            if (env_type_ishasrec(s->env,dst)) {
+            if (env_type_ishasrec(s->env,dst,0)) {
                 fprintf(ALL.out, "%s_free(&", to_ce(dst));
                 code_expr(s->env, s->Set.dst, 0);
                 out(");\n");
