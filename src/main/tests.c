@@ -1632,6 +1632,47 @@ void t_all (void) {
         "call show y_\n"
     ));
 
+    // SET
+    assert(all(
+        "20\n",
+        "var v: Int = 10\n"
+        "set v = 20\n"
+        "call show v\n"
+    ));
+    assert(all(
+        "Item (Item ($))\n",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "var l1: List = Item Item $List\n"
+        "var l2: List = Item $List\n"
+        "set l2 = l1\n"
+        "call show &l2\n"
+    ));
+    assert(all(
+        "(ln 7, col 12): invalid access to \"l1\" : ownership was transferred (ln 6)",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "var l1: List = $List\n"
+        "var l2: List = $List\n"
+        "set l2 = l1\n"
+        "call show &l1\n"
+    ));
+    assert(all(
+        "(ln 8, col 14): invalid return : cannot assign alias to local \"l2\" (ln 7)",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "var l1: List = $List\n"
+        "var r: &List = &l1\n"
+        "{\n"
+        "    var l2: List = $List\n"
+        "    set r = &l2  -- error\n"
+        "}\n"
+    ));
+assert(0);
+
 #if TODO-anon-tuples // infer from destiny
     assert(all(
         "Zz1\n",
@@ -1662,47 +1703,6 @@ void t_all (void) {
         "call show z_\n"
     ));
 #endif
-
-    // SET
-    assert(all(
-        "20\n",
-        "var v: Int = 10\n"
-        "set v = 20\n"
-        "call show v\n"
-    ));
-    assert(all(
-        "Item (Item ($))\n",
-        "type rec List {\n"
-        "    Item: List\n"
-        "}\n"
-        "var l1: List = Item Item $List\n"
-        "var l2: List = Item $List\n"
-        "set l2 = l1\n"
-        "call show &l2\n"
-    ));
-    assert(all(
-        "(ln 7, col 12): invalid access to \"l1\" : ownership was transferred (ln 6)",
-        "type rec List {\n"
-        "    Item: List\n"
-        "}\n"
-        "var l1: List = $List\n"
-        "var l2: List = $List\n"
-        "set l2 = l1\n"
-        "call show &l1\n"
-    ));
-    assert(all(
-        "TODO",
-        "type rec List {\n"
-        "    Item: List\n"
-        "}\n"
-        "var l1: List = $List\n"
-        "var r: &List = &l1\n"
-        "{\n"
-        "    var l2: List = $List\n"
-        "    set r = &l2  -- error\n"
-        "}\n"
-    ));
-assert(0);
 
 #if TODO-POOL
     // POOL
