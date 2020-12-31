@@ -22,9 +22,6 @@ void out (const char* v) {
 ///////////////////////////////////////////////////////////////////////////////
 
 void to_ce_ (char* out, Type* tp) {
-    if (tp->isalias) {
-        strcat(out, "x");
-    }
     switch (tp->sub) {
         case TYPE_AUTO:
             assert(0);
@@ -274,15 +271,13 @@ int ftp_tuples (Env* env, Type* tp) {
     // SHOW
     {
         fprintf (ALL.out,
-            "#ifndef __show_%s%s__\n"
-            "#define __show_%s%s__\n",
-            ((!tp->isalias && hasalloc) ? "x" : ""), tp_ce,
-            ((!tp->isalias && hasalloc) ? "x" : ""), tp_ce
+            "#ifndef __show_%s__\n"
+            "#define __show_%s__\n",
+            tp_ce, tp_ce
         );
         fprintf(ALL.out,
-            "void show_%s%s_ (%s%s v) {\n"
+            "void show_%s_ (%s%s v) {\n"
             "    printf(\"(\");\n",
-            ((!tp->isalias && hasalloc) ? "x" : ""),
             tp_ce, tp_c, norec_hasalloc(env,tp,"*","")
         );
         for (int i=0; i<tp->Tuple.size; i++) {
@@ -295,21 +290,19 @@ int ftp_tuples (Env* env, Type* tp) {
             } else if (sub->sub == TYPE_UNIT) {
                 fprintf(ALL.out, "    show_Unit_();\n");
             } else {
-                int hasalloc = env_type_hasalloc(env, sub);
-                fprintf(ALL.out, "    show_%s%s_(%sv%s_%d);\n",
-                    ((/*sub->isalias ||*/ hasalloc) ? "x" : ""),
+                fprintf(ALL.out, "    show_%s_(%sv%s_%d);\n",
                     to_ce(sub), norec_hasalloc(env,sub,"&",""), norec_hasalloc(env,tp,"->","."), i+1);
             }
         }
         fprintf(ALL.out,
             "    printf(\")\");\n"
             "}\n"
-            "void show_%s%s (%s%s v) {\n"
-            "    show_%s%s_(v);\n"
+            "void show_%s (%s%s v) {\n"
+            "    show_%s_(v);\n"
             "    puts(\"\");\n"
             "}\n",
-            ((!tp->isalias && hasalloc) ? "x" : ""), tp_ce, tp_c, norec_hasalloc(env,tp,"*",""),
-            ((!tp->isalias && hasalloc) ? "x" : ""), tp_ce
+            tp_ce, tp_c, norec_hasalloc(env,tp,"*",""),
+            tp_ce
         );
         out("#endif\n");
     }
@@ -602,15 +595,14 @@ void code_user (Stmt* s) {
         );
 
         fprintf(ALL.out,
-            "auto %s%s clone_%s%s (%s%s v);\n",
+            "auto %s%s clone_%s (%s%s v);\n",
             sup, (hasalloc ? "*" : ""),
-            (hasalloc ? "x" : ""), sup,
+            sup,
             sup, (hasalloc ? "*" : "")
         );
 
         fprintf(ALL.out,
-            "auto void show_%s%s_ (%s%s v);\n", // auto: https://stackoverflow.com/a/7319417
-            (hasalloc ? "x" : ""),
+            "auto void show_%s_ (%s%s v);\n", // auto: https://stackoverflow.com/a/7319417
             sup, sup, (hasalloc ? "*" : "")
         );
     }
@@ -672,9 +664,9 @@ void code_user (Stmt* s) {
     // CLONE
     {
         fprintf(ALL.out,
-            "%s%s clone_%s%s (%s%s v) {\n",
+            "%s%s clone_%s (%s%s v) {\n",
             sup, (hasalloc ? "*" : ""),
-            (hasalloc ? "x" : ""), sup,
+            sup,
             sup, (hasalloc ? "*" : "")
         );
         if (!hasalloc) {
@@ -695,14 +687,13 @@ void code_user (Stmt* s) {
                     "case %s: {\n"
                     "   %s* ret = malloc(sizeof(%s));\n"
                     "   assert(ret!=NULL && \"not enough memory\");\n"
-                    "   *ret = (%s) { %s, {._%s=%sclone_%s%s(%sv->_%s)} };\n"
+                    "   *ret = (%s) { %s, {._%s=%sclone_%s(%sv->_%s)} };\n"
                     "   return ret;\n"
                     "}\n",
                     id,
                     sup, sup,
                     sup, id, id,
                     norec_hasalloc(s->env,sub->type,"*",""),
-                    (hasalloc ? "x" : ""),
                     to_ce(sub->type),
                     (env_type_isrec(s->env,sub->type) ? "" : "&"),
                     id
@@ -721,8 +712,7 @@ void code_user (Stmt* s) {
 
         // _show_Bool (Bool v)
         fprintf(ALL.out,
-            "void show_%s%s_ (%s%s v) {\n",
-            (hasalloc ? "x" : ""),
+            "void show_%s_ (%s%s v) {\n",
             sup, sup, (hasalloc ? "*" : "")
         );
         if (isrec) {
@@ -736,7 +726,6 @@ void code_user (Stmt* s) {
         fprintf(ALL.out, "    switch (v%ssub) {\n", op);
         for (int i=0; i<s->User.size; i++) {
             Sub* sub = &s->User.vec[i];
-            int sub_hasalloc = env_type_hasalloc(s->env, sub->type);
 
             char arg[1024] = "";
             int yes = 0;
@@ -751,16 +740,14 @@ void code_user (Stmt* s) {
                     break;
                 case TYPE_USER:
                     yes = par = 1;
-                    sprintf(arg, "show_%s%s_(%sv%s_%s)",
-                        (sub->type->isalias || sub_hasalloc ? "x" : ""),
+                    sprintf(arg, "show_%s_(%sv%s_%s)",
                         sub->type->User.val.s, norec_hasalloc(s->env,sub->type,"&",""),
                         op, sub->tk.val.s);
                     break;
                 case TYPE_TUPLE:
                     yes = 1;
                     par = 0;
-                    sprintf(arg, "show_%s%s_(%sv%s_%s)",
-                        (sub->type->isalias || sub_hasalloc ? "x" : ""),
+                    sprintf(arg, "show_%s_(%sv%s_%s)",
                         to_ce(sub->type), norec_hasalloc(s->env,sub->type,"&",""),
                         op, sub->tk.val.s);
                     break;
@@ -780,12 +767,12 @@ void code_user (Stmt* s) {
         out("    }\n");
         out("}\n");
         fprintf(ALL.out,
-            "void show_%s%s (%s%s v) {\n"
-            "    show_%s%s_(v);\n"
+            "void show_%s (%s%s v) {\n"
+            "    show_%s_(v);\n"
             "    puts(\"\");\n"
             "}\n",
-            (hasalloc ? "x" : ""), sup, sup, (hasalloc ? "*" : ""),
-            (hasalloc ? "x" : ""), sup
+            sup, sup, (hasalloc ? "*" : ""),
+            sup
         );
     }
 }

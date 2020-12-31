@@ -1,7 +1,5 @@
 - set
     - testar var, disc, tx owner
-- loop / break
-- remover "x" de clone?
 - voltar pra vec Seq?
 - preciso mesmo de Stmt.tk ??
 - a = lst.Next!.Next!
