@@ -960,6 +960,19 @@ void t_all (void) {
         "call show y\n"
     ));
 
+    // TUPLE
+    assert(all(
+        "((1,2),(3,4))\n",
+        "var x: ((Int,Int),(Int,Int)) = ((1,2),(3,4))\n"
+        "call show x\n"
+    ));
+#if 0
+    assert(all(
+        "((1,2),(3,4))\n",
+        "call show ((1,2),(3,4))\n"
+    ));
+#endif
+
     // IF
     assert(all(
         "()\n",

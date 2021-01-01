@@ -3,34 +3,40 @@
 #include "all.h"
 
 int visit_type (Env* env, Type* tp, F_Type ft) {
-    if (ft != NULL) {
-        switch (ft(env,tp)) {
-            case VISIT_ERROR:
-                return 0;
-            case VISIT_CONTINUE:
-                break;
-            case VISIT_BREAK:
-                return 1;
-        }
-    }
-
     switch (tp->sub) {
         case TYPE_AUTO:
         case TYPE_UNIT:
         case TYPE_NATIVE:
         case TYPE_USER:
-            return 1;
+            break;
         case TYPE_TUPLE:
             for (int i=0; i<tp->Tuple.size; i++) {
-                if (!visit_type(env,tp->Tuple.vec[i],ft)) {
-                    return 0;
+                int ret = visit_type(env,tp->Tuple.vec[i],ft);
+                if (ret != VISIT_CONTINUE) {
+                    return ret;
                 }
             }
-            return 1;
-        case TYPE_FUNC:
-            return (visit_type(env,tp->Func.inp,ft) && visit_type(env,tp->Func.out,ft));
+            break;
+        case TYPE_FUNC: {
+            int ret = (visit_type(env,tp->Func.inp,ft) && visit_type(env,tp->Func.out,ft));
+            if (ret != VISIT_CONTINUE) {
+                return ret;
+            }
+        }
     }
-    assert(0 && "bug found");
+    //assert(0 && "bug found");
+
+    if (ft != NULL) {
+        switch (ft(env,tp)) {
+            case VISIT_ERROR:
+                return 0;
+            case VISIT_CONTINUE:
+                return 1;
+            case VISIT_BREAK:
+                assert(0);
+        }
+    }
+    return 1;
 }
 
 // 0=error, 1=success
