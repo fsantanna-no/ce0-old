@@ -833,6 +833,12 @@ void t_all (void) {
         "}\n"
         "call _f ()\n"
     ));
+    assert(all(
+        "hello\n",
+        "var y: _(char*) = _(\"hello\")\n"
+        "var x: (Int,_(char*)) = (10,y)\n"
+        "call _puts x.2\n"
+    ));
     // OUTPUT
     assert(all(
         "()\n",
@@ -1743,6 +1749,19 @@ void t_all (void) {
         "}\n"
         "call show n    -- shows 10\n"
     ));
+
+#if TODO-as
+    assert(all(
+        "a",
+        "var x: ((Int,Int),_int) = ((1,1),_1 as _int)\n"
+        "call show x.1\n"
+    ));
+    assert(all(
+        "a",
+        "var x: ((Int,Int),_{char*}) = ((1,1),_(\"oi\") as _(char*))\n"
+        "call show x.1\n"
+    ));
+#endif
 
 #if TODO-anon-tuples // infer from destiny
     assert(all(

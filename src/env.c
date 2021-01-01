@@ -184,7 +184,8 @@ Type* env_expr_to_type (Env* env, Expr* e) {
                         // _f _g 1
                         break;
                     default:
-                        assert(0);
+                        //assert(0);
+                        break;
                 }
                 return tp;   // TODO: should be typeof(f(arg))
             }

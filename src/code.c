@@ -15,6 +15,15 @@ char* strupper (const char* src) {
     return dst;
 }
 
+void strcat_ (char* dst, const char* src) {
+    int N = strlen(dst);
+    for (int i=0; i<strlen(src); i++) {
+        dst[N-1] = (src[i]=='*' ? '_' : src[i]);
+        dst[N] = '\0';
+        N++;
+    }
+}
+
 void out (const char* v) {
     fputs(v, ALL.out);
 }
@@ -29,7 +38,7 @@ void to_ce_ (char* out, Type* tp) {
             strcat(out, "Unit");
             break;
         case TYPE_NATIVE:
-            strcat(out, tp->Native.val.s);
+            strcat_(out, tp->Native.val.s);
             break;
         case TYPE_USER: {
             strcat(out, tp->User.val.s);
