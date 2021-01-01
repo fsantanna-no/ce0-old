@@ -284,10 +284,11 @@ int ftp_tuples (Env* env, Type* tp) {
             Type* sub = tp->Tuple.vec[i];
 
             char* op2 = ""; {
+                int ishasrec = env_type_ishasrec(env, sub, 1);
                 int hasrec = env_type_hasrec(env, sub, 0);
                 if (hasrec && !sub->isalias) {
                     op2 = "&";
-                } else if (!hasrec && sub->isalias) {
+                } else if (!ishasrec && sub->isalias) {
                     op2 = "*";
                 }
             }
@@ -297,7 +298,7 @@ int ftp_tuples (Env* env, Type* tp) {
             } else if (sub->sub == TYPE_UNIT) {
                 fprintf(ALL.out, "    show_Unit_();\n");
             } else {
-                fprintf(ALL.out, "    show_%s_(%sv%s_%d); /* xxx */\n",
+                fprintf(ALL.out, "    show_%s_(%sv%s_%d);\n",
                     to_ce(sub), op2, (hasrec1 ? "->" : "."), i+1);
             }
         }
@@ -391,14 +392,14 @@ int code_expr_pre (Env* env, Expr* e) {
             if (e->istx) {
                 e->istx = 0;
                 out("typeof(");
-                code_expr(env, e, 1);
+                code_expr(env, e, 0);
                 fprintf(ALL.out, ") _tmp_%d = ", e->N);
-                code_expr(env, e, 1);
+                code_expr(env, e, 0);
                 out(";\n");
 
                 out(to_ce(TP));
                 out("_null(&");
-                code_expr(env, e, 1);
+                code_expr(env, e, 0);
                 out(");\n");
                 e->istx = 1;
             }
@@ -444,6 +445,17 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
     assert(TP != NULL);
     if (TP->sub==TYPE_UNIT && e->sub!=EXPR_CALL) {
         return;     // no code to generate
+    }
+
+    int isrec    = env_type_isrec(env,TP,1);
+    int ishasrec = env_type_ishasrec(env,TP,1);
+    int deref = (deref_ishasrec && (isrec || (TP->isalias && ishasrec))) ||
+                (e->sub!=EXPR_ALIAS && TP->isalias && !ishasrec);
+    //int deref = (deref_ishasrec && isrec) || (TP->isalias && !ishasrec);
+    //
+    //int deref = (deref_ishasrec && (TP->isalias || env_type_isrec(env,TP,0)));
+    if (deref) {
+        out("(*(");
     }
 
     switch (e->sub) {
@@ -518,7 +530,7 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
             out(" })");
             break;
 
-        case EXPR_INDEX:
+        case EXPR_INDEX: {
             if (e->istx) {
                 fprintf(ALL.out, "_tmp_%d", e->N);
             } else {
@@ -526,52 +538,24 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
                 fprintf(ALL.out, "._%d", e->Index.index.val.n);
             }
             break;
+        }
 
-        case EXPR_VAR: {
-            int isrec    = env_type_isrec(env,TP,1);
-            int ishasrec = env_type_ishasrec(env,TP,1);
-            //int deref = (deref_ishasrec && isrec) || (TP->isalias && !ishasrec);
-            int deref = (deref_ishasrec && (isrec || (TP->isalias && ishasrec))) || (TP->isalias && !ishasrec);
-            //
-            //int deref = (deref_ishasrec && (TP->isalias || env_type_isrec(env,TP,0)));
-            if (deref) {
-                out("(*(");
-            }
+        case EXPR_VAR:
             if (e->istx) {
                 fprintf(ALL.out, "_tmp_%d", e->N);
             } else {
                 out(e->Var.tk.val.s);
             }
-            if (deref) {
-                out("))");
-            }
             break;
-        }
 
-        case EXPR_DISC: {
-            int isrec    = env_type_isrec(env,TP,1);
-            int ishasrec = env_type_ishasrec(env,TP,1);
-            //int deref = (deref_ishasrec && isrec) || (TP->isalias && !ishasrec);
-printf(">>> %d %d %d\n", isrec, ishasrec, TP->isalias);
-dump_expr(e);
-puts("");
-            int deref = (deref_ishasrec && (isrec || (TP->isalias && ishasrec))) || (TP->isalias && !ishasrec);
-            //
-            //int deref = (deref_ishasrec && (TP->isalias || env_type_isrec(env,TP,0)));
-            if (deref) {
-                out("(*(");
-            }
+        case EXPR_DISC:
             if (e->istx) {
                 fprintf(ALL.out, "_tmp_%d", e->N);
             } else {
                 code_expr(env, e->Disc.val, 1);
                 fprintf(ALL.out, "._%s", e->Disc.subtype.val.s);
             }
-            if (deref) {
-                out("))");
-            }
             break;
-        }
 
         case EXPR_PRED: {
             if (e->Pred.subtype.enu == TX_NULL) {
@@ -589,6 +573,10 @@ puts("");
 
         default:
             assert(0);
+    }
+
+    if (deref) {
+        out("))");
     }
 }
 

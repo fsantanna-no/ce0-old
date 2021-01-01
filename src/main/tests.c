@@ -917,6 +917,17 @@ void t_all (void) {
     assert(all(
         "True\n",
         "type Bool { False: () ; True: () }\n"
+        "type Input {\n"
+        "    Event: ()\n"
+        "}\n"
+        "var x: Input = Event ()\n"
+        "var x_: &Input = &x\n"
+        "var y: Bool = x_.Event?\n"
+        "call show y\n"
+    ));
+    assert(all(
+        "True\n",
+        "type Bool { False: () ; True: () }\n"
         "type Event_ {\n"
         "    Any: ()\n"
         "}\n"

@@ -220,7 +220,7 @@ Type* env_expr_to_type (Env* env, Expr* e) {
                 return &Type_Unit;
             }
             Type* tp = env_sub_id_to_user_type(env, e->Disc.subtype.val.s);
-            assert(!tp->isalias && "bug found : `&´ inside subtype");
+            //assert(!tp->isalias && "bug found : `&´ inside subtype");
             if (!val->isalias) {
                 return tp;
             } else if (!env_type_ishasrec(env,tp,0)) {
