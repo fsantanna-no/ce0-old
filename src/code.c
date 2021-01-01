@@ -282,14 +282,23 @@ int ftp_tuples (Env* env, Type* tp) {
                 fprintf(ALL.out, "    printf(\",\");\n");
             }
             Type* sub = tp->Tuple.vec[i];
-            int hasrec2 = env_type_hasrec(env, sub, 0);
+
+            char* op2 = ""; {
+                int hasrec = env_type_hasrec(env, sub, 0);
+                if (hasrec && !sub->isalias) {
+                    op2 = "&";
+                } else if (!hasrec && sub->isalias) {
+                    op2 = "*";
+                }
+            }
+
             if (sub->sub == TYPE_NATIVE) {
                 fprintf(ALL.out, "    putchar('?');\n");
             } else if (sub->sub == TYPE_UNIT) {
                 fprintf(ALL.out, "    show_Unit_();\n");
             } else {
-                fprintf(ALL.out, "    show_%s_(%sv%s_%d);\n",
-                    to_ce(sub), (hasrec2 ? "&" : ""), (hasrec1 ? "->" : "."), i+1);
+                fprintf(ALL.out, "    show_%s_(%sv%s_%d); /* xxx */\n",
+                    to_ce(sub), op2, (hasrec1 ? "->" : "."), i+1);
             }
         }
         fprintf(ALL.out,
@@ -543,6 +552,9 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
             int isrec    = env_type_isrec(env,TP,1);
             int ishasrec = env_type_ishasrec(env,TP,1);
             //int deref = (deref_ishasrec && isrec) || (TP->isalias && !ishasrec);
+printf(">>> %d %d %d\n", isrec, ishasrec, TP->isalias);
+dump_expr(e);
+puts("");
             int deref = (deref_ishasrec && (isrec || (TP->isalias && ishasrec))) || (TP->isalias && !ishasrec);
             //
             //int deref = (deref_ishasrec && (TP->isalias || env_type_isrec(env,TP,0)));

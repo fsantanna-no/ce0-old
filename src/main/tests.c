@@ -915,7 +915,8 @@ void t_all (void) {
         "call show (Xx1 (Yy1,Zz1))\n"
     ));
     assert(all(
-        "Event (Any)\n",
+        "True\n",
+        "type Bool { False: () ; True: () }\n"
         "type Event_ {\n"
         "    Any: ()\n"
         "}\n"
@@ -924,7 +925,22 @@ void t_all (void) {
         "}\n"
         "var e: Event_ = Any\n"
         "var x: Input = Event &e\n"
-        "call show x\n"
+        "var y: Bool = x.Event!.Any?\n"
+        "call show y\n"
+    ));
+    assert(all(
+        "True\n",
+        "type Bool { False: () ; True: () }\n"
+        "type Event_ {\n"
+        "    Any: ()\n"
+        "}\n"
+        "type Input {\n"
+        "    Event: (&Event_,())\n"
+        "}\n"
+        "var e: Event_ = Any\n"
+        "var x: Input = Event (&e,())\n"
+        "var y: Bool = x.Event!.1.Any?\n"
+        "call show y\n"
     ));
 
     // IF

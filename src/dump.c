@@ -74,7 +74,8 @@ void dump_expr (Expr* e) {
             printf("cons\n");
             break;
         case EXPR_DISC:
-            printf("disc\n");
+            dump_expr(e->Disc.val);
+            printf(".%s!", e->Disc.subtype.val.s);
             break;
         case EXPR_PRED:
             dump_expr(e->Pred.val);
