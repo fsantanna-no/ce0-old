@@ -1,3 +1,5 @@
+- set de & altera valor e nao ref
+
 plain   isrec   hasrec
 &plain  &isrec  &hasrec
 
@@ -5,6 +7,9 @@ plain:  declarado em C como plain, usado em Ce como plain
 isrec:  declarado em C como ptr,   usado em Ce como ptr
 hasrec: declarado em C como plain, usado em Ce como ptr
 
+- var x: Int = _
+- -Int
+- input/output vs call input / call output
 - call output Draw Text ((0,5), _("Hello!") as _(char*))
 - defer
 - unificar op2

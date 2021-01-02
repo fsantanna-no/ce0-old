@@ -960,6 +960,19 @@ void t_all (void) {
         "call show y\n"
     ));
 
+    // ALIAS
+    assert(all(
+        "True\n",
+        "type Bool {\n"
+        "    False: ()\n"
+        "    True:  ()\n"
+        "}\n"
+        "var x: Bool = False\n"
+        "var y: &Bool = &x\n"
+        "set y = True\n"
+        "call show x\n"
+    ));
+
     // TUPLE
     assert(all(
         "((1,2),(3,4))\n",
@@ -1106,6 +1119,59 @@ void t_all (void) {
         "var a: Bool = True()\n"
         "var b: Bool = inv a\n"
         "call show b\n"
+    ));
+    assert(all(
+        "2\n",
+        "func f : Int -> Int {\n"
+        "   set arg = _(arg+1)\n"
+        "   return arg\n"
+        "}\n"
+        "call show f 1\n"
+    ));
+    assert(all(
+        "2\n",
+        "func f : &Int -> () {\n"
+        "   set arg = _(*arg+1)\n"
+        "   return ()\n"
+        "}\n"
+        "var x: Int = 1\n"
+        "call f &x\n"
+        "call show x\n"
+    ));
+    assert(all(
+        "True\n",
+        "type Bool {\n"
+        "    False: ()\n"
+        "    True:  ()\n"
+        "}\n"
+        "func f : &Bool -> () {\n"
+        "   set arg = arg\n"
+        "   return ()\n"
+        "}\n"
+        "var x: Bool = True\n"
+        "call f &x\n"
+        "call show x\n"
+    ));
+    assert(all(
+        "True\n",
+        "type Bool {\n"
+        "    False: ()\n"
+        "    True:  ()\n"
+        "}\n"
+        "func not: Bool -> Bool {\n"
+        "    if arg {\n"
+        "        return False\n"
+        "    } else {\n"
+        "        return True\n"
+        "    }\n"
+        "}\n"
+        "func f : &Bool -> () {\n"
+        "   set arg = True\n"
+        "   return ()\n"
+        "}\n"
+        "var x: Bool = False\n"
+        "call f &x\n"
+        "call show x\n"
     ));
     // ENV
     assert(all(

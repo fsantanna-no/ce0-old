@@ -542,7 +542,7 @@ int check_decls_expr (Env* env, Expr* e) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int type_is_sup_sub (Type* sup, Type* sub) {
+int type_is_sup_sub (Type* sup, Type* sub, int isset) {
 #if 1
     assert(sup->sub!=TYPE_AUTO && sub->sub!=TYPE_AUTO);
 #else
@@ -556,24 +556,21 @@ int type_is_sup_sub (Type* sup, Type* sub) {
     if (sup->sub != sub->sub) {
         return 0;   // different TYPE_xxx
     }
-    if (sup->isalias != sub->isalias) {
+    if (!isset && sup->isalias!=sub->isalias) {
         return 0;
     }
     switch (sup->sub) {
         case TYPE_USER:
             //printf("%s vs %s\n", sup->User.val.s, sub->User.val.s);
-            return (
-                (sup->isalias == sub->isalias) &&
-                (sub->User.enu==TK_ERR || !strcmp(sup->User.val.s,sub->User.val.s))
-                    // TODO: clone
-            );
+            return (sub->User.enu==TK_ERR || !strcmp(sup->User.val.s,sub->User.val.s));
+                // TODO: clone
 
         case TYPE_TUPLE:
             if (sup->Tuple.size != sub->Tuple.size) {
                 return 0;
             }
             for (int i=0; i<sup->Tuple.size; i++) {
-                if (!type_is_sup_sub(sup->Tuple.vec[i], sub->Tuple.vec[i])) {
+                if (!type_is_sup_sub(sup->Tuple.vec[i], sub->Tuple.vec[i], 0)) {
                     return 0;
                 }
             }
@@ -616,7 +613,7 @@ int check_types_expr (Env* env, Expr* e) {
                     TODO("TODO [check_types]: clone(...)\n");
                 } else if (!strcmp(e->Call.func->Var.tk.val.s,"show")) {
                     TODO("TODO [check_types]: show(...)\n");
-                } else if (!type_is_sup_sub(func->Func.inp, arg)) {
+                } else if (!type_is_sup_sub(func->Func.inp, arg, 0)) {
                     char err[512];
                     sprintf(err, "invalid call to \"%s\" : type mismatch", e->Call.func->Var.tk.val.s);
                     return err_message(&e->Call.func->Var.tk, err);
@@ -628,7 +625,7 @@ int check_types_expr (Env* env, Expr* e) {
         case EXPR_CONS: {
             Sub* sub = env_find_sub(env, e->Cons.subtype.val.s);
             assert(sub != NULL);
-            if (!type_is_sup_sub(sub->type, env_expr_to_type(env,e->Cons.arg))) {
+            if (!type_is_sup_sub(sub->type, env_expr_to_type(env,e->Cons.arg), 0)) {
                 char err[512];
                 sprintf(err, "invalid constructor \"%s\" : type mismatch", e->Cons.subtype.val.s);
                 return err_message(&e->Cons.subtype, err);
@@ -652,7 +649,7 @@ int check_types_stmt (Stmt* s) {
             return 1;
 
         case STMT_VAR:
-            if (!type_is_sup_sub(s->Var.type, env_expr_to_type(s->env,s->Var.init))) {
+            if (!type_is_sup_sub(s->Var.type, env_expr_to_type(s->env,s->Var.init), 0)) {
                 char err[512];
                 sprintf(err, "invalid assignment to \"%s\" : type mismatch", s->Var.tk.val.s);
                 return err_message(&s->Var.tk, err);
@@ -660,7 +657,7 @@ int check_types_stmt (Stmt* s) {
             return 1;
 
         case STMT_SET:
-            if (!type_is_sup_sub(env_expr_to_type(s->env,s->Set.dst), env_expr_to_type(s->env,s->Set.src))) {
+            if (!type_is_sup_sub(env_expr_to_type(s->env,s->Set.dst), env_expr_to_type(s->env,s->Set.src), 1)) {
                 char err[512];
                 sprintf(err, "invalid assignment to \"%s\" : type mismatch", s->Var.tk.val.s);
                 return err_message(&s->Var.tk, err);
@@ -668,7 +665,7 @@ int check_types_stmt (Stmt* s) {
             return 1;
 
         case STMT_IF:
-            if (!type_is_sup_sub(&Type_Bool, env_expr_to_type(s->env,s->If.tst))) {
+            if (!type_is_sup_sub(&Type_Bool, env_expr_to_type(s->env,s->If.tst), 0)) {
                 return err_message(&s->tk, "invalid condition : type mismatch");
             }
             return 1;
@@ -677,7 +674,7 @@ int check_types_stmt (Stmt* s) {
             Stmt* func = env_stmt_to_func(s);
             assert(func != NULL);
             assert(func->Func.type->sub == TYPE_FUNC);
-            if (!type_is_sup_sub(func->Func.type->Func.out, env_expr_to_type(s->env,s->Return))) {
+            if (!type_is_sup_sub(func->Func.type->Func.out, env_expr_to_type(s->env,s->Return), 0)) {
                 return err_message(&s->tk, "invalid return : type mismatch");
             }
             return 1;
