@@ -192,6 +192,7 @@ static TK lx_token (TK_val* val) {
                     }
                     c = fgetc(ALL.inp);
                 }
+                val->s[i] = '\0';
                 val->n = atoi(val->s);
                 ungetc(c, ALL.inp);
                 return TX_NUM;

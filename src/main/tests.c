@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DEBUG
+//#define DEBUG
 //#define VALGRIND
 
 #include "../all.h"
@@ -965,6 +965,12 @@ void t_all (void) {
         "((1,2),(3,4))\n",
         "var x: ((Int,Int),(Int,Int)) = ((1,2),(3,4))\n"
         "call show x\n"
+    ));
+    assert(all(
+        "(1,2)\n",
+        "var x0: Int = 1\n"
+        "var tup: (Int,Int) = (x0,2)\n"
+        "call show tup\n"
     ));
 #if 0
     assert(all(
