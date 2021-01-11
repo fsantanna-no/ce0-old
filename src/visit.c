@@ -4,7 +4,7 @@
 
 int visit_type (Env* env, Type* tp, F_Type ft) {
     switch (tp->sub) {
-        case TYPE_AUTO:
+        case TYPE_ANY:
         case TYPE_UNIT:
         case TYPE_NATIVE:
         case TYPE_USER:
@@ -101,6 +101,7 @@ int visit_stmt (Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
 int visit_expr_ (Env* env, Expr* e, F_Expr fe) {
     switch (e->sub) {
         case EXPR_UNIT:
+        case EXPR_UNK:
         case EXPR_NATIVE:
         case EXPR_NULL:
         case EXPR_INT:

@@ -123,6 +123,10 @@ int parser_expr_ (Expr** ret)
     if (accept(TK_UNIT)) {
         *e = (Expr) { ALL.nn++, EXPR_UNIT, 0, .Unit=ALL.tk0 };
 
+// EXPR_UNK
+    } else if (accept('?')) {
+        *e = (Expr) { ALL.nn++, EXPR_UNK, 0, .Unk=ALL.tk0 };
+
 // EXPR_NULL
     } else if (accept(TX_NULL)) {   // $Nat
         *e = (Expr) { ALL.nn++, EXPR_NULL, 0, .Null=ALL.tk0 };
@@ -578,8 +582,8 @@ int parser (Stmt** ret) {
 
     // Int, clone, show
     {
-        static Type tp_any   = { TYPE_AUTO, 0 };
-        static Type tp_alias = { TYPE_AUTO, 1 };
+        static Type tp_any   = { TYPE_ANY, 0 };
+        static Type tp_alias = { TYPE_ANY, 1 };
         static Type tp_clone = { TYPE_FUNC, .Func={&tp_alias,&tp_any} };
         static Type tp_show  = { TYPE_FUNC, .Func={&tp_alias,&Type_Unit} };
         static Stmt none     = { 0, STMT_NONE };

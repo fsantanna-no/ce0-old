@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-//#define DEBUG
+#define DEBUG
 //#define VALGRIND
 
 #include "../all.h"
@@ -1761,6 +1761,14 @@ void t_all (void) {
         "var y: Nat = clone x_\n"
         "var y_: &Nat = &y\n"
         "call show y_\n"
+    ));
+
+    // EXPR_UNK
+    assert(all(
+        "10\n",
+        "var x: Int = ?\n"
+        "set x = 10\n"
+        "call show x\n"
     ));
 
     // SET

@@ -32,7 +32,7 @@ void out (const char* v) {
 
 void to_ce_ (char* out, Type* tp) {
     switch (tp->sub) {
-        case TYPE_AUTO:
+        case TYPE_ANY:
             assert(0);
         case TYPE_UNIT:
             strcat(out, "Unit");
@@ -72,7 +72,7 @@ void code_to_ce (Type* tp) {
 void to_c_ (char* out, Env* env, Type* tp) {
     int isrec = 0;
     switch (tp->sub) {
-        case TYPE_AUTO:
+        case TYPE_ANY:
         case TYPE_UNIT:
             assert(0);
         case TYPE_NATIVE:
@@ -335,6 +335,7 @@ int code_expr_pre (Env* env, Expr* e) {
 
     switch (e->sub) {
         case EXPR_UNIT:
+        case EXPR_UNK:
         case EXPR_NATIVE:
         case EXPR_NULL:
         case EXPR_INT:
@@ -843,8 +844,10 @@ void code_stmt (Stmt* s) {
                 );
             }
 
-            out(" = ");
-            code_expr(s->env, s->Var.init, 0);
+            if (s->Var.init->sub != EXPR_UNK) {
+                out(" = ");
+                code_expr(s->env, s->Var.init, 0);
+            }
             out(";\n");
             break;
         }

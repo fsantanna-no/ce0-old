@@ -1,5 +1,5 @@
 typedef enum {
-    TYPE_AUTO = 0,
+    TYPE_ANY = 0,
     TYPE_UNIT,
     TYPE_NATIVE,
     TYPE_USER,
@@ -9,6 +9,7 @@ typedef enum {
 
 typedef enum {
     EXPR_UNIT = 1,
+    EXPR_UNK,
     EXPR_NATIVE,
     EXPR_NULL,
     EXPR_INT,
@@ -69,6 +70,7 @@ typedef struct Expr {
     int istx;   // set to null on tx to avoid double free
     union {
         Tk Unit;        // EXPR_UNIT
+        Tk Unk;         // EXPR_UNK
         Tk Native;      // EXPR_NATIVE
         Tk Null;        // EXPR_NULL
         Tk Int;         // EXPR_INT

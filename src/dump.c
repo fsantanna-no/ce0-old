@@ -15,7 +15,7 @@ void dump_type (Type* tp) {
         putchar('&');
     }
     switch (tp->sub) {
-        case TYPE_AUTO:
+        case TYPE_ANY:
             printf("?");
             break;
         case TYPE_UNIT:
@@ -37,10 +37,12 @@ void dump_type (Type* tp) {
 }
 
 void dump_expr (Expr* e) {
-    //printf("[%s] ", e->tk.val.s);
     switch (e->sub) {
         case EXPR_UNIT:
             printf("()");
+            break;
+        case EXPR_UNK:
+            printf("?");
             break;
         case EXPR_NATIVE:
             printf("%s", e->Native.val.s);

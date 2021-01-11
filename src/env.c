@@ -93,6 +93,11 @@ Sub* env_find_sub (Env* env, const char* sub) {
 
 Type* env_expr_to_type (Env* env, Expr* e) {
     switch (e->sub) {
+        case EXPR_UNK: {
+            static Type tp = { TYPE_ANY, 0 };
+            return &tp;
+        }
+
         case EXPR_UNIT: {
             static Type tp = { TYPE_UNIT, 0 };
             return &tp;
@@ -264,8 +269,7 @@ int env_type_hasrec (Env* env, Type* tp, int okalias) {
             return 0;
         }
         switch (tp->sub) {
-            case TYPE_AUTO:
-                assert(0);
+            case TYPE_ANY:
             case TYPE_UNIT:
             case TYPE_NATIVE:
             case TYPE_FUNC:
@@ -301,8 +305,7 @@ int env_type_isrec (Env* env, Type* tp, int okalias) {
         return 0;
     }
     switch (tp->sub) {
-        case TYPE_AUTO:
-            assert(0);
+        case TYPE_ANY:
         case TYPE_UNIT:
         case TYPE_NATIVE:
         case TYPE_FUNC:
@@ -443,19 +446,6 @@ int set_envs (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// TODO: remove it all
-int set_tmps (Stmt* s) {
-    if (s->sub==STMT_VAR && s->Var.type->sub==TYPE_AUTO) {
-assert(0);
-        Type* tp = env_expr_to_type(s->env, s->Var.init);
-        assert(tp != NULL);
-        s->Var.type = tp;
-    }
-    return VISIT_CONTINUE;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
 int ftk (Env* env, Tk* tk, char* var_type) {
     switch (tk->enu) {
         case TK_UNIT:
@@ -543,13 +533,9 @@ int check_decls_expr (Env* env, Expr* e) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int type_is_sup_sub (Type* sup, Type* sub, int isset) {
-#if 1
-    assert(sup->sub!=TYPE_AUTO && sub->sub!=TYPE_AUTO);
-#else
-    if (sup->sub==TYPE_AUTO || sub->sub==TYPE_AUTO) {
+    if (sup->sub==TYPE_ANY || sub->sub==TYPE_ANY) {
         return 1;
     }
-#endif
     if (sup->sub==TYPE_NATIVE || sub->sub==TYPE_NATIVE) {
         return 1;
     }
@@ -585,6 +571,7 @@ int type_is_sup_sub (Type* sup, Type* sub, int isset) {
 int check_types_expr (Env* env, Expr* e) {
     switch (e->sub) {
         case EXPR_UNIT:
+        case EXPR_UNK:
         case EXPR_NATIVE:
         case EXPR_VAR:
         case EXPR_TUPLE:
@@ -1085,7 +1072,6 @@ int env (Stmt* s) {
     if (!visit_stmt(s,NULL,check_decls_expr,check_decls_type)) {
         return 0;
     }
-    assert(visit_stmt(s,set_tmps,NULL,NULL));
     if (!visit_stmt(s,check_types_stmt,check_types_expr,NULL)) {
         return 0;
     }

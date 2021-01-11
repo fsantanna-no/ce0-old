@@ -52,7 +52,7 @@ The following symbols are valid:
     &           -- alias prefix
     $           -- null subtype
     !           -- type discriminator
-    ?           -- type predicate
+    ?           -- type predicate, unknown initialization
 ```
 
 ## Identifiers
@@ -427,7 +427,7 @@ native pre _{
 
 ```
 Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: () = ()
-            `=´ Expr
+            `=´ (Expr | `?´)
       |  `type´ [`rec´] USER `{`        -- user type declaration    type rec List {
             { USER `:´ Type [`;´] }     --    subtypes                 Cons: List
          `}´                                                        }
