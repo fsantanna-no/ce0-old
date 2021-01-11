@@ -131,6 +131,18 @@ static TK lx_token (TK_val* val) {
             c = fgetc(ALL.inp);
             if (c == '>') {
                 return TK_ARROW;
+            } else if (isdigit(c)) {
+                int i = 0;
+                val->s[i++] = '-';
+                while (isdigit(c)) {
+                    val->s[i++] = c;
+                    assert(i < 256);
+                    c = fgetc(ALL.inp);
+                }
+                val->s[i] = '\0';
+                val->n = atoi(val->s);
+                ungetc(c, ALL.inp);
+                return TX_NUM;
             } else {
                 ungetc(c, ALL.inp);
                 val->s[0] = '-';

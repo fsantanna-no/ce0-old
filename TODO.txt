@@ -1,5 +1,3 @@
-- var x: Int = ?
-- -Int
 - input/output vs call input / call output
 
 plain   isrec   hasrec

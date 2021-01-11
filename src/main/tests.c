@@ -1771,6 +1771,13 @@ void t_all (void) {
         "call show x\n"
     ));
 
+    // INT
+    assert(all(
+        "-10\n",
+        "var x: Int = -10\n"
+        "call show x\n"
+    ));
+
     // SET
     assert(all(
         "20\n",
