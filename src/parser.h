@@ -18,6 +18,7 @@ typedef enum {
     EXPR_TUPLE,
     EXPR_INDEX,
     EXPR_CALL,
+    EXPR_IO,
     EXPR_CONS,
     EXPR_DISC,
     EXPR_PRED
@@ -29,6 +30,7 @@ typedef enum {
     STMT_USER,
     STMT_SET,
     STMT_CALL,
+    STMT_IO,
     STMT_SEQ,
     STMT_IF,
     STMT_LOOP,
@@ -91,6 +93,10 @@ typedef struct Expr {
             struct Expr* func;          // f
             struct Expr* arg;           // (x,y)
         } Call;
+        struct {        // EXPR_IO
+            Tk io;                       // output
+            struct Expr* cons;           // Std ()
+        } Io;
         struct {        // EXPR_CONS
             Tk subtype;                 // .True
             struct Expr* arg;
@@ -121,6 +127,7 @@ typedef struct Stmt {
     Tk tk;
     union {
         Expr* Call;         // STMT_CALL
+        Expr* Io;           // STMT_IO
         Expr* Return;       // STMT_RETURN
         struct Stmt* Loop;  // STMT_LOOP
         //void  Break;      // STMT_BREAK
@@ -164,7 +171,7 @@ typedef struct Stmt {
 ///////////////////////////////////////////////////////////////////////////////
 
 int parser_type   (Type** ret);
-int parser_expr   (Expr** ret, int maypre);
+int parser_expr   (Expr** ret);
 int parser_stmt   (Stmt** ret);
 int parser_stmts  (TK opt, Stmt** ret);
 int parser        (Stmt** ret);

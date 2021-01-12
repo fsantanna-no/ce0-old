@@ -273,7 +273,7 @@ int ftp_tuples (Env* env, Type* tp) {
         code_null_tuple(env, tp);
     }
 
-    // SHOW
+    // STDO
     {
         int hasrec1 = env_type_hasrec(env, tp, 0);
         fprintf (ALL.out,
@@ -342,6 +342,7 @@ int code_expr_pre (Env* env, Expr* e) {
         case EXPR_ALIAS:
         case EXPR_TUPLE:
         case EXPR_CALL:
+        case EXPR_IO:
         case EXPR_PRED:
             break;
 
@@ -724,7 +725,7 @@ void code_user (Stmt* s) {
     }
     out("\n");
 
-    // SHOW
+    // STDO
     {
         char* op = (ishasrec ? "->" : ".");
 
@@ -818,6 +819,14 @@ void code_stmt (Stmt* s) {
             visit_expr(s->env, s->Call, code_expr_pre);
             code_expr(s->env, s->Call, 1);
             out(";\n");
+            break;
+
+        case STMT_IO:
+            assert(s->Io->Io.io.enu == TK_OUTPUT);
+            visit_expr(s->env, s->Io->Io.cons, code_expr_pre);
+            out("output(");
+            code_expr(s->env, s->Call, 1);
+            out(");\n");
             break;
 
         case STMT_USER: {

@@ -1,4 +1,5 @@
 - input/output vs call input / call output
+    - retorno vai ser fixo Int ou vai ser 1o campo do User?
     - output Type ...
     - input  Type
 

@@ -72,6 +72,11 @@ void dump_expr (Expr* e) {
             putchar(' ');
             dump_expr(e->Call.arg);
             break;
+        case EXPR_IO:
+            printf("%s", lexer_tk2str(&e->Io.io));
+            putchar(' ');
+            dump_expr(e->Io.cons);
+            break;
         case EXPR_CONS:
             printf("cons\n");
             break;
@@ -93,6 +98,11 @@ void dump_stmt (Stmt* s) {
         case STMT_CALL:
             dump_spc();
             dump_expr(s->Call);
+            puts("");
+            break;
+        case STMT_IO:
+            dump_spc();
+            dump_expr(s->Io);
             puts("");
             break;
         case STMT_VAR:

@@ -125,6 +125,7 @@ Type* env_expr_to_type (Env* env, Expr* e) {
             return tp;
         }
 
+        case EXPR_IO:
         case EXPR_INT: {
             static Type tp = { TYPE_USER, 0, .User={TX_USER,{.s="Int"},0,0} };
             return &tp;
@@ -389,6 +390,7 @@ int set_envs (Stmt* s) {
             case STMT_BREAK:
             case STMT_NATIVE:
             case STMT_CALL:
+            case STMT_IO:
             case STMT_SET:
                 break;
 
@@ -578,6 +580,7 @@ int check_types_expr (Env* env, Expr* e) {
         case EXPR_NULL:
         case EXPR_INT:
         case EXPR_ALIAS:
+        case EXPR_IO:
             break;
 
         case EXPR_INDEX:
@@ -598,8 +601,8 @@ int check_types_expr (Env* env, Expr* e) {
                 assert(e->Call.func->sub == EXPR_VAR);
                 if (!strcmp(e->Call.func->Var.tk.val.s,"clone")) {
                     TODO("TODO [check_types]: clone(...)\n");
-                } else if (!strcmp(e->Call.func->Var.tk.val.s,"show")) {
-                    TODO("TODO [check_types]: show(...)\n");
+                } else if (!strcmp(e->Call.func->Var.tk.val.s,"std")) {
+                    TODO("TODO [check_types]: std(...)\n");
                 } else if (!type_is_sup_sub(func->Func.inp, arg, 0)) {
                     char err[512];
                     sprintf(err, "invalid call to \"%s\" : type mismatch", e->Call.func->Var.tk.val.s);
@@ -633,6 +636,7 @@ int check_types_stmt (Stmt* s) {
         case STMT_BLOCK:
         case STMT_NATIVE:
         case STMT_CALL:
+        case STMT_IO:
             return 1;
 
         case STMT_VAR:

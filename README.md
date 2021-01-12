@@ -35,7 +35,6 @@ The following keywords are reserved:
     rec         -- type recursive declaration
     return      -- function return
     set         -- assignment statement
-    show        -- output function
     type        -- new type declaration
     var         -- variable declaration
 ```
@@ -129,7 +128,7 @@ with an ampersand `&` if an alias:
 List    Int     Tree
 ```
 
-The type `Int` is a primitive type that holds [integer values](#TODO).
+The type `Int` is a primitive type that holds [integer values](TODO).
 
 ## Tuple
 
@@ -201,7 +200,7 @@ position:
 (x,()).2                -- yields ()
 ```
 
-## Call, Input & Output
+## Call
 
 A call invokes an expression as a [function](TODO) with the given argument:
 
@@ -222,22 +221,30 @@ var y: List = Item Item $List
 var x: List = clone y           -- `x` becomes "Item Item $List"
 ```
 
-Just like a `call`, the `input` & `output` keywords also invoke expressions as
-functions, but with the purpose of communicating with external devices, such as
-the keyboard and screen:
+## Input & Output
+
+The the `input` & `output` keywords also invoke [user type constructors](TODO)
+as system calls with the purpose of communicating with external devices, such
+as the keyboard and screen:
 
 ```
-input delay 2000            -- waits 2 seconds
-output draw Pixel (0,0)     -- draws a pixel on the screen
+input Delay 2000            -- waits 2 seconds
+output Draw Pixel (0,0)     -- draws a pixel on the screen
 ```
 
-The supported functions and associated behaviors dependend on the platform.
-The special function `std` works for the standard input & output devices and
+The supported constructors and associated behaviors dependend on the platform.
+The special constructor `Std` works for the standard input & output devices and
 accepts any value as argument:
 
 ```
-var x: Int = input std      -- reads an `Int` from stdin
-output std x                -- writes the value of `x` to stdout
+var x: Int = input Std      -- reads an `Int` from stdin
+type Input {
+    Delay: Int
+    Event: (Events,&Event_)
+    Event_Timeout: (Events,&Event_,Int)
+}
+
+output Std x                -- writes the value of `x` to stdout
 ```
 
 ## Constructor, Discriminator, Predicate
@@ -322,7 +329,7 @@ type rec Tree {
 The prefix `$` yields the null subtype of all recursive types, e.g., `$Tree` is
 the null subtype of `Tree`.
 The null subtype can be used in a
-[constructor, discriminator, or predicate](#TODO).
+[constructor, discriminator, or predicate](TODO).
 
 ## Variable declaration
 
@@ -348,18 +355,24 @@ set tup.1 = n
 set x.Student! = ()
 ```
 
-## Call, Input & Output
+## Input & Output
 
-The `call`, `input` & `output` statements invoke the respective
-[expressions](#TODO):
+A call statement invokes a [call expression](TODO):
 
 ```
 call f()        -- calls f passing ()
-input std       -- input from stdin
-output std 10   -- output to stdout
 ```
 
-### Input & Output
+```
+
+## Input & Output
+
+The `input` & `output` statements invoke the respective [expressions](TODO):
+
+```
+input Std       -- input from stdin
+output Std 10   -- output to stdout
+```
 
 ## Sequence
 
@@ -453,8 +466,8 @@ Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: ()
             { USER `:´ Type [`;´] }     --    subtypes                 Cons: List
          `}´                                                        }
       |  `set´ Expr `=´ Expr            -- assignment               set x = 1
-      |  (`call´ | `input´ |` output´)  -- call                     call f()
-            Expr [Expr]                 -- input & output           input std
+      |  `call´ Expr Expr               -- call                     call f()
+      |  (`input´|`output´) USER [Expr] -- input & output           input Std ; output Std 10
       |  `if´ Expr `{´ Stmt `}´         -- conditional              if x { call f() } else { call g() }
       |  `loop´ `{´ Stmt `}´            -- loop                     loop { break }
       |  `break´                        -- break                    break
@@ -474,8 +487,8 @@ Expr ::= `(´ `)´                        -- unit value               ()
       |  `&´ Expr                       -- alias                    &x
       |  `(´ Expr {`,´ Expr} `)´        -- tuple                    (x,())
       |  USER [Expr]                    -- constructor              True ()
-      |  [`call´ | `input´ | `output´]  -- call                     f(x)
-            Expr [Expr]                 -- input & output           output std 10
+      |  (`input´|`output´) USER [Expr] -- input & output           input Std ; output Std 10
+      |  Expr Expr                      -- call                     f(x)
       |  Expr `.´ NUM                   -- tuple index              x.1
       |  Expr `.´ [`$´] USER `!´        -- discriminator            x.True!
       |  Expr `.´ [`$´] USER `?´        -- predicate                x.False?
