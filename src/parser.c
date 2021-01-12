@@ -31,15 +31,6 @@ int check (TK enu) {
     return (ALL.tk1.enu == enu);
 }
 
-int check_err (TK enu) {
-    int ret = check(enu);
-    if (ret == 0) {
-        err_expected(lexer_tk2err(enu));
-        //puts(ALL.err);
-    }
-    return ret;
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 
 int parser_type (Type** ret) {
@@ -122,7 +113,7 @@ int parser_type (Type** ret) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int parser_expr_ (Expr** ret, int canio)
+int parser_expr_ (Expr** ret)
 {
     Expr* e = malloc(sizeof(Expr));
     assert(e != NULL);
@@ -200,18 +191,6 @@ int parser_expr_ (Expr** ret, int canio)
         *e = (Expr) { ALL.nn++, EXPR_TUPLE, .Tuple={n,vec} };
         *ret = e;
 
-// EXPR_IO
-    } else if (canio && (accept(TK_INPUT) || accept(TK_OUTPUT))) {
-        Tk tk = ALL.tk0;
-        if (!check_err(TX_USER)) {
-            return 0;
-        }
-        Expr* cons;
-        if (!parser_expr(&cons,0)) {
-            return 0;
-        }
-        *e = (Expr) { ALL.nn++, EXPR_IO, .Io={tk,cons} };
-
 // EXPR_CONS
     } else if (accept(TX_USER)) {  // True
         Tk sub = ALL.tk0;
@@ -231,9 +210,11 @@ int parser_expr_ (Expr** ret, int canio)
     return 1;
 }
 
-int parser_expr (Expr** ret, int canio) {
+int parser_expr (Expr** ret, int canpre) {
+    int ispre = canpre && (accept(TK_CALL) || accept(TK_INPUT) || accept(TK_OUTPUT));
+
     Expr* cur;
-    if (!parser_expr_(&cur,canio)) {
+    if (!parser_expr_(&cur)) {
         return 0;
     }
     *ret = cur;
@@ -271,6 +252,12 @@ int parser_expr (Expr** ret, int canio) {
 // EXPR_CALL
         } else if (parser_expr(&arg,0)) {
             *new = (Expr) { ALL.nn++, EXPR_CALL, 0, .Call={cur,arg} };
+        } else if (ispre) {
+            arg = malloc(sizeof(Expr));
+            assert(arg != NULL);
+            *arg = (Expr) { ALL.nn++, EXPR_UNIT, .Unit={TK_UNIT,{},0,ALL.nn++} };
+            *new = (Expr) { ALL.nn++, EXPR_CALL, 0, .Call={cur,arg} };
+            break;
 
         } else {
             free(new);
@@ -284,6 +271,7 @@ int parser_expr (Expr** ret, int canio) {
             }
         }
 
+        ispre = 0;      // ony on first iteration
         *ret = new;
         cur = new;
     }
@@ -428,10 +416,10 @@ int parser_stmt (Stmt** ret) {
         *s = (Stmt) { ALL.nn++, STMT_SET, NULL, {NULL,NULL}, tk, .Set={dst,src} };
 
     // STMT_CALL
-    } else if (accept(TK_CALL)) {
+    } else if (check(TK_CALL) || check(TK_INPUT) || check(TK_OUTPUT)) {
         Tk tk = ALL.tk0;
         Expr* e;
-        if (!parser_expr(&e,0)) {
+        if (!parser_expr(&e,1)) {
             return 0;
         }
         *s = (Stmt) { ALL.nn++, STMT_CALL, NULL, {NULL,NULL}, tk, .Call=e };
@@ -439,13 +427,6 @@ int parser_stmt (Stmt** ret) {
             ALL.tk1 = ALL.tk0;  // workaround to fail before 1st expression
             return err_expected("call expression");
         }
-
-    } else if (check(TK_INPUT) || check(TK_OUTPUT)) {
-        Expr* e;
-        if (!parser_expr(&e,1)) {
-            return 0;
-        }
-        *s = (Stmt) { ALL.nn++, STMT_IO, NULL, {NULL,NULL}, e->Io.io, .Io=e };
 
     // STMT_IF
     } else if (accept(TK_IF)) {         // if
@@ -604,12 +585,14 @@ int parser_stmts (TK opt, Stmt** ret) {
 }
 
 int parser (Stmt** ret) {
-    //static Type Type_Unit  = { TYPE_UNIT, 0 };
-    static Type tp_any = { TYPE_ANY, 0 };
+    static Type Type_Unit  = { TYPE_UNIT, 0 };
+    static Type tp_any     = { TYPE_ANY,  0 };
+    static Type tp_alias   = { TYPE_ANY,  1 };
+    static Stmt none       = { 0, STMT_NONE };
 
     *ret = NULL;
 
-    // Int, Std, clone
+    // Int, std, clone
     {
         static Stmt Int = (Stmt) {   // Int
             0, STMT_USER, NULL, {NULL,NULL},
@@ -618,18 +601,15 @@ int parser (Stmt** ret) {
         *ret = enseq(*ret, &Int);
     }
     {
-        static Sub vec[] = { {{TX_VAR,{.s="Std"},0,__COUNTER__},&tp_any} };
-        static Stmt Std_ = (Stmt) {   // Int
-            0, STMT_USER, NULL, {NULL,NULL},
-            .User = { 0, {TX_USER,{.s="Std_"},0,__COUNTER__}, 1, vec }
+        static Type tp_stdo  = { TYPE_FUNC, .Func={&tp_stdo,&Type_Unit} };
+        static Stmt stdo = (Stmt) {   // std ()
+            0, STMT_FUNC, NULL, {NULL,NULL},
+            .Func = { {TX_VAR,{.s="std"},0,__COUNTER__}, &tp_stdo, &none }
         };
-        *ret = enseq(*ret, &Std_);
+        *ret = enseq(*ret, &stdo);
     }
     {
-        static Type tp_alias = { TYPE_ANY, 1 };
         static Type tp_clone = { TYPE_FUNC, .Func={&tp_alias,&tp_any} };
-        static Stmt none     = { 0, STMT_NONE };
-
         static Stmt clone = (Stmt) {   // clone ()
             0, STMT_FUNC, NULL, {NULL,NULL},
             .Func = { {TX_VAR,{.s="clone"},0,__COUNTER__}, &tp_clone, &none }

@@ -342,7 +342,6 @@ int code_expr_pre (Env* env, Expr* e) {
         case EXPR_ALIAS:
         case EXPR_TUPLE:
         case EXPR_CALL:
-        case EXPR_IO:
         case EXPR_PRED:
             break;
 
@@ -498,22 +497,6 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
             fprintf(ALL.out, "_tmp_%d", e->N);
             break;
 
-        case EXPR_IO:
-            assert(e->Io.cons->sub == EXPR_CONS);
-            if (!strcmp(e->Io.cons->Cons.subtype.val.s,"Std")) {
-                assert(e->Io.io.enu == TK_OUTPUT);
-                out("stdo_");
-                code_to_ce(env_expr_to_type(env, e->Io.cons->Cons.arg));
-                out("(");
-                code_expr(env, e->Io.cons->Cons.arg, 0);
-                out(")");
-            } else {
-                out("output(");
-                fprintf(ALL.out, "_tmp_%d", e->N);
-                out(")");
-            }
-            break;
-
         case EXPR_CALL:
             if (e->Call.func->sub == EXPR_NATIVE) {
                 code_expr(env, e->Call.func, 1);
@@ -522,7 +505,11 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
                 out(")");
             } else {
                 assert(e->Call.func->sub == EXPR_VAR);
-                if (!strcmp(e->Call.func->Var.tk.val.s,"clone")) {
+
+                if (!strcmp(e->Call.func->Var.tk.val.s,"std")) {
+                    out("stdo_");
+                    code_to_ce(env_expr_to_type(env, e->Call.arg));
+                } else if (!strcmp(e->Call.func->Var.tk.val.s,"clone")) {
                     out("clone_");
                     code_to_ce(env_expr_to_type(env, e->Call.arg));
                 } else {
@@ -833,21 +820,8 @@ void code_stmt (Stmt* s) {
             out(";\n");
             break;
 
-        case STMT_IO:
-            assert(s->Io->sub == EXPR_IO);
-            assert(s->Io->Io.cons->sub == EXPR_CONS);
-            if (!strcmp(s->Io->Io.cons->Cons.subtype.val.s,"Std")) {
-                assert(s->Io->Io.io.enu == TK_OUTPUT);
-                visit_expr(s->env, s->Io->Io.cons->Cons.arg, code_expr_pre);
-            } else {
-                visit_expr(s->env, s->Io, code_expr_pre);
-            }
-            code_expr(s->env, s->Io, 1);
-            out(";\n");
-            break;
-
         case STMT_USER: {
-            if (!strcmp(s->User.tk.val.s,"Int") || !strcmp(s->User.tk.val.s,"Std_")) {
+            if (!strcmp(s->User.tk.val.s,"Int")) {
                 break;
             }
             code_user(s);
@@ -936,6 +910,7 @@ void code_stmt (Stmt* s) {
             assert(s->Func.type->sub == TYPE_FUNC);
 
             if (!strcmp(s->Func.tk.val.s,"clone")) break;
+            if (!strcmp(s->Func.tk.val.s,"std")) break;
 
             visit_type(s->env, s->Func.type, ftp_tuples);
 

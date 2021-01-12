@@ -61,8 +61,6 @@ int visit_stmt (Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
 
         case STMT_CALL:
             return visit_expr(s->env, s->Call, fe);
-        case STMT_IO:
-            return visit_expr(s->env, s->Io, fe);
         case STMT_RETURN:
             return visit_expr(s->env, s->Return, fe);
 
@@ -120,8 +118,6 @@ int visit_expr_ (Env* env, Expr* e, F_Expr fe) {
             return visit_expr(env, e->Index.val, fe);
         case EXPR_CALL:
             return visit_expr(env,e->Call.func,fe) && visit_expr(env,e->Call.arg,fe);
-        case EXPR_IO:
-            return visit_expr(env, e->Io.cons, fe);
         case EXPR_ALIAS:
             return visit_expr(env, e->Alias, fe);
         case EXPR_CONS:
