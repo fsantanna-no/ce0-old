@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DEBUG
+//#define DEBUG
 //#define VALGRIND
 
 #include "../all.h"
@@ -880,7 +880,7 @@ void t_all (void) {
         "output std zz\n"
     ));
     assert(all(
-        "(ln 6, col 11): undeclared subtype \"Set_\"",
+        "(ln 6, col 12): undeclared subtype \"Set_\"",
         "type Set_ {\n"
         "    Size:     (_int,_int,_int,_int)\n"
         "    Color_BG: _int\n"
@@ -1189,16 +1189,16 @@ void t_all (void) {
         "_stdo_Unit(x)\n"
     ));
     assert(all(
-        "(ln 1, col 11): undeclared variable \"x\"",
+        "(ln 1, col 12): undeclared variable \"x\"",
         "output std x\n"
     ));
     assert(all(
-        "(ln 2, col 11): undeclared variable \"x\"",
+        "(ln 2, col 12): undeclared variable \"x\"",
         "func f : ()->() { var x:()=(); return x }\n"
         "output std x\n"
     ));
     assert(all(
-        "(ln 2, col 11): undeclared variable \"x\"",
+        "(ln 2, col 12): undeclared variable \"x\"",
         "if () { var x:()=() }\n"
         "output std x\n"
     ));
@@ -1214,7 +1214,7 @@ void t_all (void) {
         "output std l\n"
     ));
     assert(all(
-        "(ln 1, col 11): undeclared type \"List\"",
+        "(ln 1, col 12): undeclared type \"List\"",
         "output std $List\n"
     ));
     assert(all(
@@ -1806,7 +1806,7 @@ void t_all (void) {
         "output std &l2\n"
     ));
     assert(all(
-        "(ln 7, col 12): invalid access to \"l1\" : ownership was transferred (ln 6)",
+        "(ln 7, col 13): invalid access to \"l1\" : ownership was transferred (ln 6)",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
