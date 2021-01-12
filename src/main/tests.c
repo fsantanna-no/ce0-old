@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-//#define DEBUG
+#define DEBUG
 //#define VALGRIND
 
 #include "../all.h"
@@ -669,10 +669,10 @@ void t_code (void) {
             "#include <stdio.h>\n"
             "#include <stdlib.h>\n"
             "typedef int Int;\n"
-            "#define stdo_Unit_() printf(\"()\")\n"
-            "#define stdo_Unit()  (stdo_Unit_(), puts(\"\"))\n"
-            "#define stdo_Int_(x) printf(\"%d\",x)\n"
-            "#define stdo_Int(x)  (stdo_Int_(x), puts(\"\"))\n"
+            "#define stdout_Unit_() printf(\"()\")\n"
+            "#define stdout_Unit()  (stdout_Unit_(), puts(\"\"))\n"
+            "#define stdout_Int_(x) printf(\"%d\",x)\n"
+            "#define stdout_Int(x)  (stdout_Int_(x), puts(\"\"))\n"
             "int main (void) {\n"
             "\n"
             "stdo();\n"
@@ -696,16 +696,16 @@ void t_code (void) {
             "#include <stdio.h>\n"
             "#include <stdlib.h>\n"
             "typedef int Int;\n"
-            "#define stdo_Unit_() printf(\"()\")\n"
-            "#define stdo_Unit()  (stdo_Unit_(), puts(\"\"))\n"
-            "#define stdo_Int_(x) printf(\"%d\",x)\n"
-            "#define stdo_Int(x)  (stdo_Int_(x), puts(\"\"))\n"
+            "#define stdout_Unit_() printf(\"()\")\n"
+            "#define stdout_Unit()  (stdout_Unit_(), puts(\"\"))\n"
+            "#define stdout_Int_(x) printf(\"%d\",x)\n"
+            "#define stdout_Int(x)  (stdout_Int_(x), puts(\"\"))\n"
             "int main (void) {\n"
             "\n"
             "struct Bool;\n"
             "typedef struct Bool Bool;\n"
             "auto Bool clone_Bool (Bool v);\n"
-            "auto void stdo_Bool_ (Bool v);\n"
+            "auto void stdout_Bool_ (Bool v);\n"
             "\n"
             "typedef enum {\n"
             "    False,\n"
@@ -723,7 +723,7 @@ void t_code (void) {
             "assert(0);\n"
             "}\n"
             "\n"
-            "void stdo_Bool_ (Bool v) {\n"
+            "void stdout_Bool_ (Bool v) {\n"
             "    switch (v.sub) {\n"
             "        case False:\n"
             "            printf(\"False\");\n"
@@ -737,8 +737,8 @@ void t_code (void) {
             "            break;\n"
             "    }\n"
             "}\n"
-            "void stdo_Bool (Bool v) {\n"
-            "    stdo_Bool_(v);\n"
+            "void stdout_Bool (Bool v) {\n"
+            "    stdout_Bool_(v);\n"
             "    puts(\"\");\n"
             "}\n"
             "\n"
@@ -803,7 +803,7 @@ void t_all (void) {
     ));
     assert(all(
         "1\n",
-        "call _stdo_Int _abs(1)\n"
+        "call _stdout_Int _abs(1)\n"
     ));
     assert(all(
         "A",
@@ -814,7 +814,7 @@ void t_all (void) {
         "()\n",
         "var x: ((),()) = ((),())\n"
         "var y: () = x.1\n"
-        "call _stdo_Unit y\n"
+        "call _stdout_Unit y\n"
     ));
     assert(all(
         "()\n",
@@ -826,7 +826,7 @@ void t_all (void) {
         "var x: ((),((),())) = ((),v)\n"
         "var y: ((),()) = x.2\n"
         "var z: () = y.2\n"
-        "call _stdo_Unit z\n"
+        "call _stdout_Unit z\n"
     ));
     assert(all(
         "()\n",
@@ -834,7 +834,7 @@ void t_all (void) {
         "var x: ((),((),())) = ((),v)\n"
         "var y: ((),()) = x.2\n"
         "var z: () = y.2\n"
-        "call _stdo_Unit z\n"
+        "call _stdout_Unit z\n"
     ));
     assert(all(
         "a",
@@ -850,6 +850,11 @@ void t_all (void) {
         "call _puts x.2\n"
     ));
     // OUTPUT
+    assert(all(
+        "(ln 2, col 8): unexpected `()´ : wanted variable identifier",
+        "var x: () = ()\n"
+        "output () x\n"
+    ));
     assert(all(
         "()\n",
         "var x: () = ()\n"
@@ -1185,8 +1190,8 @@ void t_all (void) {
     ));
     // ENV
     assert(all(
-        "(ln 1, col 1): expected statement : have \"_stdo_Unit\"",
-        "_stdo_Unit(x)\n"
+        "(ln 1, col 1): expected statement : have \"_stdout_Unit\"",
+        "_stdout_Unit(x)\n"
     ));
     assert(all(
         "(ln 1, col 12): undeclared variable \"x\"",

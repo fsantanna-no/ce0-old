@@ -1,11 +1,18 @@
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "all.h"
 
 int err_expected (const char* v) {
     sprintf(ALL.err, "(ln %ld, col %ld): expected %s : have %s",
         ALL.tk1.lin, ALL.tk1.col, v, lexer_tk2str(&ALL.tk1));
+    return 0;
+}
+
+int err_unexpected (const char* v) {
+    sprintf(ALL.err, "(ln %ld, col %ld): unexpected %s : wanted %s",
+        ALL.tk0.lin, ALL.tk0.col, lexer_tk2str(&ALL.tk0), v);
     return 0;
 }
 
@@ -212,12 +219,21 @@ int parser_expr_ (Expr** ret)
 
 int parser_expr (Expr** ret, int canpre) {
     int ispre = canpre && (accept(TK_CALL) || accept(TK_INPUT) || accept(TK_OUTPUT));
+    Tk pre = ALL.tk0;
 
     Expr* cur;
     if (!parser_expr_(&cur)) {
         return 0;
     }
     *ret = cur;
+
+    if (ispre && pre.enu!=TK_CALL) {
+        if (cur->sub != EXPR_VAR) {
+            return err_unexpected("variable identifier");
+        }
+        strcat(cur->Var.tk.val.s, "_");
+        strcat(cur->Var.tk.val.s, pre.val.s);
+    }
 
     while (1)
     {
@@ -604,7 +620,7 @@ int parser (Stmt** ret) {
         static Type tp_stdo  = { TYPE_FUNC, .Func={&tp_alias,&Type_Unit} };
         static Stmt stdo = (Stmt) {   // std ()
             0, STMT_FUNC, NULL, {NULL,NULL},
-            .Func = { {TX_VAR,{.s="std"},0,__COUNTER__}, &tp_stdo, &none }
+            .Func = { {TX_VAR,{.s="std_output"},0,__COUNTER__}, &tp_stdo, &none }
         };
         *ret = enseq(*ret, &stdo);
     }
