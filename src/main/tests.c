@@ -539,10 +539,14 @@ void t_parser_stmt (void) {
         fclose(ALL.inp);
     }
     {
-        all_init(NULL, stropen("r", 0, "{ call () }"));
+        all_init(NULL, stropen("r", 0, "call ()"));
         Stmt* s;
-        assert(!parser_stmt(&s));
-        assert(!strcmp(ALL.err, "(ln 1, col 8): expected call expression : have `()´"));
+        //assert(!parser_stmt(&s));
+        //assert(!strcmp(ALL.err, "(ln 1, col 8): expected call expression : have `()´"));
+        assert(parser_stmt(&s));
+        assert(s->sub == STMT_CALL);
+        assert(s->Call->Call.func->sub == EXPR_UNIT);
+        assert(s->Call->Call.arg->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
     // STMT_IF

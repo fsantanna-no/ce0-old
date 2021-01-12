@@ -257,7 +257,6 @@ int parser_expr (Expr** ret, int maypre) {
             assert(arg != NULL);
             *arg = (Expr) { ALL.nn++, EXPR_UNIT, .Unit={TK_UNIT,{},0,ALL.nn++} };
             *new = (Expr) { ALL.nn++, EXPR_CALL, 0, .Call={cur,arg} };
-            break;
 
         } else {
             free(new);
@@ -271,6 +270,7 @@ int parser_expr (Expr** ret, int maypre) {
             }
         }
 
+        iscall = 0;     // just works for first iteration
         *ret = new;
         cur = new;
     }
