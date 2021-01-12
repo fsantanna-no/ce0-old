@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DEBUG
+//#define DEBUG
 //#define VALGRIND
 
 #include "../all.h"
@@ -861,6 +861,14 @@ void t_all (void) {
         "((),())\n",
         "var x: ((),()) = ((),())\n"
         "output Std x\n"
+    ));
+    assert(all(
+        "((),())\n",
+        "type Output {\n"
+        "   X: Int\n"
+        "}\n"
+        "func output_: Output -> Int {\n"
+        "output X 10\n"
     ));
     // TYPE
     assert(all(

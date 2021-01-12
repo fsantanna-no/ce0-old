@@ -237,9 +237,10 @@ output Draw Pixel (0,0)     -- draws a pixel on the screen
 The `input` & `output` expressions can appear on assignments and statements,
 but not in the middle of expressions.
 
-The supported constructors and associated behaviors dependend on the platform.
-The special constructor `Std` works for the standard input & output devices and
-accepts any value as argument:
+The supported constructors and associated behaviors dependend on the platform
+and must be specified through the [`Input` and `Output`](TODO) user types.
+The special constructor `Std` works for both standard input & output devices
+and accepts any value as argument:
 
 ```
 var x: Int = input Std      -- reads an `Int` from stdin
@@ -329,6 +330,25 @@ The prefix `$` yields the null subtype of all recursive types, e.g., `$Tree` is
 the null subtype of `Tree`.
 The null subtype can be used in a
 [constructor, discriminator, or predicate](TODO).
+
+### Input & Output
+
+The `Input` and `Output` user types specify the available constructors for
+communicating with external devices:
+
+```
+type Input {
+    Std:   ()       -- implicit stdin device always available
+    Delay: Int      -- sleep for a number of milliseconds
+}
+
+type Output {
+    Std: ?
+    Beep: Int       -- beep for a number of milliseconds
+}
+```
+
+`TODO: no return value yet // in the future use tuple (inp,out)`
 
 ## Variable declaration
 

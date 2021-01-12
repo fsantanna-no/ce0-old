@@ -499,9 +499,9 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
             break;
 
         case EXPR_IO:
-            assert(e->Io.io.enu == TK_OUTPUT);
             assert(e->Io.cons->sub == EXPR_CONS);
             if (!strcmp(e->Io.cons->Cons.subtype.val.s,"Std")) {
+                assert(e->Io.io.enu == TK_OUTPUT);
                 out("stdo_");
                 code_to_ce(env_expr_to_type(env, e->Io.cons->Cons.arg));
                 out("(");
@@ -835,9 +835,9 @@ void code_stmt (Stmt* s) {
 
         case STMT_IO:
             assert(s->Io->sub == EXPR_IO);
-            assert(s->Io->Io.io.enu == TK_OUTPUT);
             assert(s->Io->Io.cons->sub == EXPR_CONS);
             if (!strcmp(s->Io->Io.cons->Cons.subtype.val.s,"Std")) {
+                assert(s->Io->Io.io.enu == TK_OUTPUT);
                 visit_expr(s->env, s->Io->Io.cons->Cons.arg, code_expr_pre);
             } else {
                 visit_expr(s->env, s->Io, code_expr_pre);
