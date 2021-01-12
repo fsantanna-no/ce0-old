@@ -80,6 +80,9 @@ const char* lexer_tk2str (Tk* tk) {
         case TX_NATIVE:
             sprintf(str, "\"_%s\"", tk->val.s);
             break;
+        case TX_NUM:
+            sprintf(str, "\"%d\"", tk->val.n);
+            break;
         case TX_VAR:
         case TX_USER:
         case TX_NULL:
@@ -92,6 +95,7 @@ const char* lexer_tk2str (Tk* tk) {
            } else if (tk->enu > TK_RESERVED) {
                 sprintf(str, "`%s´", reserved[tk->enu-TK_RESERVED-1]);
             } else {
+//printf(">>> %d\n", tk->enu);
                 assert(0 && "TODO");
             }
             break;

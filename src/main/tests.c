@@ -753,12 +753,10 @@ void t_all (void) {
         "(ln 1, col 1): expected statement : have \"/\"",
         "//call std()\n"
     ));
-puts("-=-=-=-");
     assert(all(
         "(ln 1, col 27): undeclared variable \"x\"",
         "func f: () -> () { return x }\n"
     ));
-assert(0);
     assert(all(
         "(ln 1, col 9): undeclared type \"Nat\"",
         "func f: Nat -> () { return () }\n"
@@ -861,14 +859,6 @@ assert(0);
         "((),())\n",
         "var x: ((),()) = ((),())\n"
         "output std x\n"
-    ));
-    assert(all(
-        "((),())\n",
-        "type Output {\n"
-        "   X: Int\n"
-        "}\n"
-        "func output_: Output -> Int {\n"
-        "output X 10\n"
     ));
     // TYPE
     assert(all(
@@ -1829,7 +1819,7 @@ assert(0);
         "var x: X = X1 &l1\n"
     ));
     assert(all(
-        "$\n",
+        "(ln 7, col 13): invalid access to \"l1\" : ownership was transferred (ln 6)",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"

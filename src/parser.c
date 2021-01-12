@@ -601,7 +601,7 @@ int parser (Stmt** ret) {
         *ret = enseq(*ret, &Int);
     }
     {
-        static Type tp_stdo  = { TYPE_FUNC, .Func={&tp_stdo,&Type_Unit} };
+        static Type tp_stdo  = { TYPE_FUNC, .Func={&tp_alias,&Type_Unit} };
         static Stmt stdo = (Stmt) {   // std ()
             0, STMT_FUNC, NULL, {NULL,NULL},
             .Func = { {TX_VAR,{.s="std"},0,__COUNTER__}, &tp_stdo, &none }
