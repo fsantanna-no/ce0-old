@@ -604,44 +604,37 @@ int parser_stmts (TK opt, Stmt** ret) {
 }
 
 int parser (Stmt** ret) {
-    static Type Type_Unit  = { TYPE_UNIT, 0 };
+    //static Type Type_Unit  = { TYPE_UNIT, 0 };
+    static Type tp_any = { TYPE_ANY, 0 };
 
     *ret = NULL;
 
-    // Int, clone, show
+    // Int, Std, clone
     {
-        static Type tp_any   = { TYPE_ANY, 0 };
+        static Stmt Int = (Stmt) {   // Int
+            0, STMT_USER, NULL, {NULL,NULL},
+            .User = { 0, {TX_USER,{.s="Int"},0,__COUNTER__}, 0, NULL }
+        };
+        *ret = enseq(*ret, &Int);
+    }
+    {
+        static Sub vec[] = { {{TX_VAR,{.s="Std"},0,__COUNTER__},&tp_any} };
+        static Stmt Std_ = (Stmt) {   // Int
+            0, STMT_USER, NULL, {NULL,NULL},
+            .User = { 0, {TX_USER,{.s="Std_"},0,__COUNTER__}, 1, vec }
+        };
+        *ret = enseq(*ret, &Std_);
+    }
+    {
         static Type tp_alias = { TYPE_ANY, 1 };
         static Type tp_clone = { TYPE_FUNC, .Func={&tp_alias,&tp_any} };
-        static Type tp_show  = { TYPE_FUNC, .Func={&tp_alias,&Type_Unit} };
         static Stmt none     = { 0, STMT_NONE };
 
-        Stmt* Int = malloc(sizeof(Stmt));
-        assert(Int != NULL);
-        *Int = (Stmt) {   // Int
-            0, STMT_USER, NULL, {NULL,NULL},
-            .User = { 0, {TX_USER,{.s="Int"},0,ALL.nn++}, 0, NULL }
-        };
-
-        *ret = enseq(*ret, Int);
-
-        Stmt* clone = malloc(sizeof(Stmt));
-        assert(clone != NULL);
-        *clone = (Stmt) {   // clone ()
+        static Stmt clone = (Stmt) {   // clone ()
             0, STMT_FUNC, NULL, {NULL,NULL},
-            .Func = { {TX_VAR,{.s="clone"},0,ALL.nn++}, &tp_clone, &none }
+            .Func = { {TX_VAR,{.s="clone"},0,__COUNTER__}, &tp_clone, &none }
         };
-
-        *ret = enseq(*ret, clone);
-
-        Stmt* show = malloc(sizeof(Stmt));
-        assert(show != NULL);
-        *show = (Stmt) {   // show ()
-            0, STMT_FUNC, NULL, {NULL,NULL},
-            .Func = { {TX_VAR,{.s="show"},0,ALL.nn++}, &tp_show, &none }
-        };
-
-        *ret = enseq(*ret, show);
+        *ret = enseq(*ret, &clone);
     }
 
     Stmt* tmp;
