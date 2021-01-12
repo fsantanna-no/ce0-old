@@ -122,7 +122,7 @@ int parser_type (Type** ret) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int parser_expr_ (Expr** ret)
+int parser_expr_ (Expr** ret, int canio)
 {
     Expr* e = malloc(sizeof(Expr));
     assert(e != NULL);
@@ -155,14 +155,14 @@ int parser_expr_ (Expr** ret)
 // ALIAS
     } else if (accept('&')) {
         Expr* alias;
-        if (!parser_expr(&alias)) {
+        if (!parser_expr(&alias,0)) {
             return 0;
         }
         *e = (Expr) { ALL.nn++, EXPR_ALIAS, 0, .Alias=alias };
 
 // EXPR_PARENS / EXPR_TUPLE
     } else if (accept('(')) {
-        if (!parser_expr(ret)) {
+        if (!parser_expr(ret,0)) {
             return 0;
         }
 
@@ -185,7 +185,7 @@ int parser_expr_ (Expr** ret)
 
         do {
             Expr* e2;
-            if (!parser_expr(&e2)) {
+            if (!parser_expr(&e2,0)) {
                 return 0;
             }
             n++;
@@ -201,13 +201,13 @@ int parser_expr_ (Expr** ret)
         *ret = e;
 
 // EXPR_IO
-    } else if (accept(TK_INPUT) || accept(TK_OUTPUT)) {
+    } else if (canio && (accept(TK_INPUT) || accept(TK_OUTPUT))) {
         Tk tk = ALL.tk0;
         if (!check_err(TX_USER)) {
             return 0;
         }
         Expr* cons;
-        if (!parser_expr(&cons)) {
+        if (!parser_expr(&cons,0)) {
             return 0;
         }
         *e = (Expr) { ALL.nn++, EXPR_IO, .Io={tk,cons} };
@@ -217,7 +217,7 @@ int parser_expr_ (Expr** ret)
         Tk sub = ALL.tk0;
 
         Expr* arg;
-        if (!parser_expr(&arg)) {   // ()
+        if (!parser_expr(&arg,0)) {   // ()
             arg = malloc(sizeof(Expr));
             assert(arg != NULL);
             *arg = (Expr) { ALL.nn++, EXPR_UNIT, .Unit={TK_UNIT,{},0,ALL.nn++} };
@@ -231,9 +231,9 @@ int parser_expr_ (Expr** ret)
     return 1;
 }
 
-int parser_expr (Expr** ret) {
+int parser_expr (Expr** ret, int canio) {
     Expr* cur;
-    if (!parser_expr_(&cur)) {
+    if (!parser_expr_(&cur,canio)) {
         return 0;
     }
     *ret = cur;
@@ -269,7 +269,7 @@ int parser_expr (Expr** ret) {
             }
 
 // EXPR_CALL
-        } else if (parser_expr(&arg)) {
+        } else if (parser_expr(&arg,0)) {
             *new = (Expr) { ALL.nn++, EXPR_CALL, 0, .Call={cur,arg} };
 
         } else {
@@ -359,7 +359,7 @@ int parser_stmt (Stmt** ret) {
         }
 
         Expr* e;
-        if (!parser_expr(&e)) {
+        if (!parser_expr(&e,1)) {
             return 0;
         }
 
@@ -412,7 +412,7 @@ int parser_stmt (Stmt** ret) {
         Tk tk = ALL.tk0;
 
         Expr* dst;
-        if (!parser_expr(&dst)) {
+        if (!parser_expr(&dst,0)) {
             return 0;
         }
 
@@ -421,7 +421,7 @@ int parser_stmt (Stmt** ret) {
         }
 
         Expr* src;
-        if (!parser_expr(&src)) {
+        if (!parser_expr(&src,1)) {
             return 0;
         }
 
@@ -431,7 +431,7 @@ int parser_stmt (Stmt** ret) {
     } else if (accept(TK_CALL)) {
         Tk tk = ALL.tk0;
         Expr* e;
-        if (!parser_expr(&e)) {
+        if (!parser_expr(&e,0)) {
             return 0;
         }
         *s = (Stmt) { ALL.nn++, STMT_CALL, NULL, {NULL,NULL}, tk, .Call=e };
@@ -442,7 +442,7 @@ int parser_stmt (Stmt** ret) {
 
     } else if (check(TK_INPUT) || check(TK_OUTPUT)) {
         Expr* e;
-        if (!parser_expr(&e)) {
+        if (!parser_expr(&e,1)) {
             return 0;
         }
         *s = (Stmt) { ALL.nn++, STMT_IO, NULL, {NULL,NULL}, e->Io.io, .Io=e };
@@ -452,7 +452,7 @@ int parser_stmt (Stmt** ret) {
         Tk tk = ALL.tk0;
 
         Expr* e;
-        if (!parser_expr(&e)) {         // x
+        if (!parser_expr(&e,0)) {         // x
             return 0;
         }
 
@@ -537,7 +537,7 @@ int parser_stmt (Stmt** ret) {
     } else if (accept(TK_RETURN)) {
         Tk tk = ALL.tk0;
         Expr* e;
-        if (!parser_expr(&e)) {
+        if (!parser_expr(&e,0)) {
             return 0;
         }
         *s = (Stmt) { ALL.nn++, STMT_RETURN, NULL, {NULL,NULL}, tk, .Return=e };

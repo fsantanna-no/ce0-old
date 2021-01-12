@@ -206,12 +206,14 @@ A call invokes an expression as a [function](TODO) with the given argument:
 
 ```
 f ()                    -- f   receives unit     ()
-call (id) x             -- id  receives variable x
+(id) x                  -- id  receives variable x
 add (x,y)               -- add receives tuple    (x,y)
 ```
 
+<!--
 The prefix keyword `call` can appear on assignments and statements, but not in
 the middle of expressions.
+-->
 
 The special function `clone` copies the contents of its argument.
 If the value is of a recursive type, the copy is also recursive:
@@ -223,14 +225,17 @@ var x: List = clone y           -- `x` becomes "Item Item $List"
 
 ## Input & Output
 
-The the `input` & `output` keywords also invoke [user type constructors](TODO)
-as system calls with the purpose of communicating with external devices, such
-as the keyboard and screen:
+The `input` & `output` expressions invoke [user type constructors](TODO) as
+system calls with the purpose of communicating with external devices, such as
+the keyboard and screen:
 
 ```
 input Delay 2000            -- waits 2 seconds
 output Draw Pixel (0,0)     -- draws a pixel on the screen
 ```
+
+The `input` & `output` expressions can appear on assignments and statements,
+but not in the middle of expressions.
 
 The supported constructors and associated behaviors dependend on the platform.
 The special constructor `Std` works for the standard input & output devices and
@@ -238,12 +243,6 @@ accepts any value as argument:
 
 ```
 var x: Int = input Std      -- reads an `Int` from stdin
-type Input {
-    Delay: Int
-    Event: (Events,&Event_)
-    Event_Timeout: (Events,&Event_,Int)
-}
-
 output Std x                -- writes the value of `x` to stdout
 ```
 
