@@ -240,7 +240,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "()"));
         Expr* e;
-        assert(parser_expr(&e));
+        assert(parser_expr(&e,0));
         assert(e->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
@@ -248,42 +248,42 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "(())"));
         Expr* e;
-        assert(parser_expr(&e));
+        assert(parser_expr(&e,0));
         assert(e->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "("));
         Expr* e;
-        assert(!parser_expr(&e));
+        assert(!parser_expr(&e,0));
         assert(!strcmp(ALL.err, "(ln 1, col 2): expected expression : have end of file"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "(x"));
         Expr* e;
-        assert(!parser_expr(&e));
+        assert(!parser_expr(&e,0));
         assert(!strcmp(ALL.err, "(ln 1, col 3): expected `,´ : have end of file"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "( () )"));
         Expr* e;
-        assert(parser_expr(&e));
+        assert(parser_expr(&e,0));
         assert(e->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "(("));
         Expr* e;
-        assert(!parser_expr(&e));
+        assert(!parser_expr(&e,0));
         assert(!strcmp(ALL.err, "(ln 1, col 3): expected expression : have end of file"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "(\n( \n"));
         Expr* e;
-        assert(!parser_expr(&e));
+        assert(!parser_expr(&e,0));
         assert(!strcmp(ALL.err, "(ln 3, col 1): expected expression : have end of file"));
         fclose(ALL.inp);
     }
@@ -291,7 +291,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "x"));
         Expr* e;
-        assert(parser_expr(&e));
+        assert(parser_expr(&e,0));
         assert(e->sub == EXPR_VAR); assert(!strcmp(e->Var.tk.val.s,"x"));
         fclose(ALL.inp);
     }
@@ -299,7 +299,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "_x"));
         Expr* e;
-        assert(parser_expr(&e));
+        assert(parser_expr(&e,0));
         assert(e->sub == EXPR_NATIVE); assert(!strcmp(e->Var.tk.val.s,"x"));
         fclose(ALL.inp);
     }
@@ -307,28 +307,28 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "((),x,"));
         Expr* e;
-        assert(!parser_expr(&e));
+        assert(!parser_expr(&e,0));
         assert(!strcmp(ALL.err, "(ln 1, col 7): expected expression : have end of file"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "((),)"));
         Expr* e;
-        assert(!parser_expr(&e));
+        assert(!parser_expr(&e,0));
         assert(!strcmp(ALL.err, "(ln 1, col 5): expected expression : have `)´"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "((),x:"));
         Expr* e;
-        assert(!parser_expr(&e));
+        assert(!parser_expr(&e,0));
         assert(!strcmp(ALL.err, "(ln 1, col 6): expected `)´ : have `:´"));
         fclose(ALL.inp);
     }
     {
         all_init(NULL, stropen("r", 0, "((),x,())"));
         Expr* e;
-        assert(parser_expr(&e));
+        assert(parser_expr(&e,0));
         assert(e->sub == EXPR_TUPLE);
         assert(e->Tuple.size == 3);
         assert(e->Tuple.vec[1]->sub == EXPR_VAR && !strcmp(e->Tuple.vec[1]->Var.tk.val.s,"x"));
@@ -339,7 +339,17 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "xxx ()"));
         Expr* e;
-        assert(parser_expr(&e));
+        assert(parser_expr(&e,0));
+        assert(e->sub == EXPR_CALL);
+        assert(e->Call.func->sub == EXPR_VAR);
+        assert(!strcmp(e->Call.func->Var.tk.val.s, "xxx"));
+        assert(e->Call.arg->sub == EXPR_UNIT);
+        fclose(ALL.inp);
+    }
+    {
+        all_init(NULL, stropen("r", 0, "call xxx ()"));
+        Expr* e;
+        assert(parser_expr(&e,1));
         assert(e->sub == EXPR_CALL);
         assert(e->Call.func->sub == EXPR_VAR);
         assert(!strcmp(e->Call.func->Var.tk.val.s, "xxx"));
@@ -349,7 +359,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "f()\n()\n()")); // f [() [() ()]]
         Expr* e;
-        assert(parser_expr(&e));
+        assert(parser_expr(&e,0));
         assert(e->sub == EXPR_CALL);
         assert(e->Call.func->sub == EXPR_VAR);
         assert(!strcmp(e->Call.func->Var.tk.val.s, "f"));
@@ -360,7 +370,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "True ()"));
         Expr* e;
-        assert(parser_expr(&e));
+        assert(parser_expr(&e,0));
         assert(e->sub == EXPR_CONS);
         assert(!strcmp(e->Cons.subtype.val.s,"True"));
         assert(e->Cons.arg->sub == EXPR_UNIT);
@@ -369,7 +379,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "Zz1 ((),())"));
         Expr* e;
-        assert(parser_expr(&e));
+        assert(parser_expr(&e,0));
         assert(e->sub == EXPR_CONS);
         assert(!strcmp(e->Cons.subtype.val.s,"Zz1"));
         assert(e->Cons.arg->sub == EXPR_TUPLE);
@@ -379,7 +389,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "x.1"));
         Expr* e;
-        assert(parser_expr(&e));
+        assert(parser_expr(&e,0));
         assert(e->sub == EXPR_INDEX);
         assert(e->Index.val->sub == EXPR_VAR);
         assert(e->Index.index.val.n == 1);
@@ -388,7 +398,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "x () .1 ()"));  // x [[() .1] ()]
         Expr* e;
-        assert(parser_expr(&e));
+        assert(parser_expr(&e,0));
         assert(e->sub == EXPR_CALL);
         assert(e->Call.func->sub == EXPR_VAR);
         assert(e->Call.arg->sub == EXPR_CALL);
@@ -398,7 +408,7 @@ void t_parser_expr (void) {
     {
         all_init(NULL, stropen("r", 0, "x().."));
         Expr* e;
-        assert(!parser_expr(&e));
+        assert(!parser_expr(&e,0));
         assert(!strcmp(ALL.err, "(ln 1, col 5): expected index or subtype : have `.´"));
         fclose(ALL.inp);
     }
@@ -495,10 +505,10 @@ void t_parser_stmt (void) {
     }
     // STMT_CALL
     {
-        all_init(NULL, stropen("r", 0, "show()"));
+        all_init(NULL, stropen("r", 0, "std()"));
         Stmt* s;
         assert(!parser_stmt(&s));
-        assert(!strcmp(ALL.err, "(ln 1, col 1): expected statement : have \"show\""));
+        assert(!strcmp(ALL.err, "(ln 1, col 1): expected statement : have \"std\""));
         fclose(ALL.inp);
     }
     {
@@ -644,7 +654,7 @@ void t_code (void) {
         char out[8192] = "";
         all_init (
             stropen("w", sizeof(out), out),
-            stropen("r", 0, "var a : () = () ; call _show a")
+            stropen("r", 0, "var a : () = () ; call _stdo a")
         );
         Stmt* s;
         assert(parser_stmts(TK_EOF,&s));
@@ -659,13 +669,13 @@ void t_code (void) {
             "#include <stdio.h>\n"
             "#include <stdlib.h>\n"
             "typedef int Int;\n"
-            "#define show_Unit_() printf(\"()\")\n"
-            "#define show_Unit()  (show_Unit_(), puts(\"\"))\n"
-            "#define show_Int_(x) printf(\"%d\",x)\n"
-            "#define show_Int(x)  (show_Int_(x), puts(\"\"))\n"
+            "#define stdo_Unit_() printf(\"()\")\n"
+            "#define stdo_Unit()  (stdo_Unit_(), puts(\"\"))\n"
+            "#define stdo_Int_(x) printf(\"%d\",x)\n"
+            "#define stdo_Int(x)  (stdo_Int_(x), puts(\"\"))\n"
             "int main (void) {\n"
             "\n"
-            "show();\n"
+            "stdo();\n"
             "\n"
             "}\n";
         assert(!strcmp(out,ret));
@@ -686,16 +696,16 @@ void t_code (void) {
             "#include <stdio.h>\n"
             "#include <stdlib.h>\n"
             "typedef int Int;\n"
-            "#define show_Unit_() printf(\"()\")\n"
-            "#define show_Unit()  (show_Unit_(), puts(\"\"))\n"
-            "#define show_Int_(x) printf(\"%d\",x)\n"
-            "#define show_Int(x)  (show_Int_(x), puts(\"\"))\n"
+            "#define stdo_Unit_() printf(\"()\")\n"
+            "#define stdo_Unit()  (stdo_Unit_(), puts(\"\"))\n"
+            "#define stdo_Int_(x) printf(\"%d\",x)\n"
+            "#define stdo_Int(x)  (stdo_Int_(x), puts(\"\"))\n"
             "int main (void) {\n"
             "\n"
             "struct Bool;\n"
             "typedef struct Bool Bool;\n"
             "auto Bool clone_Bool (Bool v);\n"
-            "auto void show_Bool_ (Bool v);\n"
+            "auto void stdo_Bool_ (Bool v);\n"
             "\n"
             "typedef enum {\n"
             "    False,\n"
@@ -713,7 +723,7 @@ void t_code (void) {
             "assert(0);\n"
             "}\n"
             "\n"
-            "void show_Bool_ (Bool v) {\n"
+            "void stdo_Bool_ (Bool v) {\n"
             "    switch (v.sub) {\n"
             "        case False:\n"
             "            printf(\"False\");\n"
@@ -727,8 +737,8 @@ void t_code (void) {
             "            break;\n"
             "    }\n"
             "}\n"
-            "void show_Bool (Bool v) {\n"
-            "    show_Bool_(v);\n"
+            "void stdo_Bool (Bool v) {\n"
+            "    stdo_Bool_(v);\n"
             "    puts(\"\");\n"
             "}\n"
             "\n"
@@ -741,7 +751,7 @@ void t_all (void) {
     // ERROR
     assert(all(
         "(ln 1, col 1): expected statement : have \"/\"",
-        "//call show()\n"
+        "//call std()\n"
     ));
     assert(all(
         "(ln 1, col 27): undeclared variable \"x\"",
@@ -754,17 +764,17 @@ void t_all (void) {
     // UNIT
     assert(all(
         "()\n",
-        "call show()\n"
+        "output std()\n"
     ));
     assert(all(
         "()\n",
         "var x: () = ()\n"
-        "call show x\n"
+        "output std x\n"
     ));
     assert(all(
         "10\n",
         "var x: Int = 10\n"
-        "call show x\n"
+        "output std x\n"
     ));
     // NATIVE
     assert(all(
@@ -789,11 +799,11 @@ void t_all (void) {
     assert(all(
         "1\n",
         "var x: Int = _abs(1)\n"
-        "call show x\n"
+        "output std x\n"
     ));
     assert(all(
         "1\n",
-        "call _show_Int _abs(1)\n"
+        "call _stdo_Int _abs(1)\n"
     ));
     assert(all(
         "A",
@@ -804,19 +814,11 @@ void t_all (void) {
         "()\n",
         "var x: ((),()) = ((),())\n"
         "var y: () = x.1\n"
-        "call _show_Unit y\n"
+        "call _stdo_Unit y\n"
     ));
     assert(all(
         "()\n",
-        "call show (((),()).1)\n"
-    ));
-    assert(all(
-        "()\n",
-        "var v: ((),()) = ((),())\n"
-        "var x: ((),((),())) = ((),v)\n"
-        "var y: ((),()) = x.2\n"
-        "var z: () = y.2\n"
-        "call _show_Unit z\n"
+        "output std (((),()).1)\n"
     ));
     assert(all(
         "()\n",
@@ -824,7 +826,15 @@ void t_all (void) {
         "var x: ((),((),())) = ((),v)\n"
         "var y: ((),()) = x.2\n"
         "var z: () = y.2\n"
-        "call _show_Unit z\n"
+        "call _stdo_Unit z\n"
+    ));
+    assert(all(
+        "()\n",
+        "var v: ((),()) = ((),())\n"
+        "var x: ((),((),())) = ((),v)\n"
+        "var y: ((),()) = x.2\n"
+        "var z: () = y.2\n"
+        "call _stdo_Unit z\n"
     ));
     assert(all(
         "a",
@@ -843,19 +853,19 @@ void t_all (void) {
     assert(all(
         "()\n",
         "var x: () = ()\n"
-        "call show x\n"
+        "output std x\n"
     ));
     assert(all(
         "((),())\n",
         "var x: ((),()) = ((),())\n"
-        "call show x\n"
+        "output std x\n"
     ));
     // TYPE
     assert(all(
         "False\n",
         "type Bool { False: () ; True: () }\n"
         "var b : Bool = False()\n"
-        "call show b\n"
+        "output std b\n"
     ));
     assert(all(
         "Zz1\n",
@@ -867,7 +877,7 @@ void t_all (void) {
         "var x : Xx = Xx1 y\n"
         "var yy: Yy = x.Xx1!\n"
         "var zz: Zz = yy.Yy1!\n"
-        "call show zz\n"
+        "output std zz\n"
     ));
     assert(all(
         "(ln 6, col 11): undeclared subtype \"Set_\"",
@@ -876,7 +886,7 @@ void t_all (void) {
         "    Color_BG: _int\n"
         "    Color_FG: _int\n"
         "}\n"
-        "call show(Set_(_1,_2,_3,_4))\n"
+        "output std(Set_(_1,_2,_3,_4))\n"
     ));
     assert(all(
         "Size (?,?,?,?)\n",
@@ -889,14 +899,14 @@ void t_all (void) {
         "var y: _int = _2\n"
         "var w: _int = _3\n"
         "var z: _int = _4\n"
-        "call show(Size (x,y,w,x))\n"
+        "output std(Size (x,y,w,x))\n"
     ));
     assert(all(
         "Zz1 ((),())\n",
         "type Zz { Zz1:((),()) }\n"
         "var a : ((),()) = ((),())\n"
         "var x : Zz = Zz1 a\n"
-        "call show x\n"
+        "output std x\n"
     ));
     assert(all(
         "(ln 1, col 8): undeclared type \"Bool\"",
@@ -911,14 +921,14 @@ void t_all (void) {
         "var z: Zz = Zz1()\n"
         "var a: (Yy,Zz) = (y,z)\n"
         "var x: Xx = Xx1 a\n"
-        "call show x\n"
+        "output std x\n"
     ));
     assert(all(
         "Xx1 (Yy1,Zz1)\n",
         "type Zz { Zz1:() }\n"
         "type Yy { Yy1:() }\n"
         "type Xx { Xx1:(Yy,Zz) }\n"
-        "call show (Xx1 (Yy1,Zz1))\n"
+        "output std (Xx1 (Yy1,Zz1))\n"
     ));
     assert(all(
         "True\n",
@@ -929,7 +939,7 @@ void t_all (void) {
         "var x: Input = Event ()\n"
         "var x_: &Input = &x\n"
         "var y: Bool = x_.Event?\n"
-        "call show y\n"
+        "output std y\n"
     ));
     assert(all(
         "True\n",
@@ -943,7 +953,7 @@ void t_all (void) {
         "var e: Event_ = Any\n"
         "var x: Input = Event &e\n"
         "var y: Bool = x.Event!.Any?\n"
-        "call show y\n"
+        "output std y\n"
     ));
     assert(all(
         "True\n",
@@ -957,7 +967,7 @@ void t_all (void) {
         "var e: Event_ = Any\n"
         "var x: Input = Event (&e,())\n"
         "var y: Bool = x.Event!.1.Any?\n"
-        "call show y\n"
+        "output std y\n"
     ));
 
     // ALIAS
@@ -970,25 +980,25 @@ void t_all (void) {
         "var x: Bool = False\n"
         "var y: &Bool = &x\n"
         "set y = True\n"
-        "call show x\n"
+        "output std x\n"
     ));
 
     // TUPLE
     assert(all(
         "((1,2),(3,4))\n",
         "var x: ((Int,Int),(Int,Int)) = ((1,2),(3,4))\n"
-        "call show x\n"
+        "output std x\n"
     ));
     assert(all(
         "(1,2)\n",
         "var x0: Int = 1\n"
         "var tup: (Int,Int) = (x0,2)\n"
-        "call show tup\n"
+        "output std tup\n"
     ));
 #if 0
     assert(all(
         "((1,2),(3,4))\n",
-        "call show ((1,2),(3,4))\n"
+        "output std ((1,2),(3,4))\n"
     ));
 #endif
 
@@ -997,18 +1007,18 @@ void t_all (void) {
         "()\n",
         "type Bool { False: () ; True: () }\n"
         "var b : Bool = False()\n"
-        "if b { } else { call show() }\n"
+        "if b { } else { output std() }\n"
     ));
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
-        "if False { } else { call show() }\n"
+        "if False { } else { output std() }\n"
     ));
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
         "var b : Bool = True()\n"
-        "if b { call show() }\n"
+        "if b { output std() }\n"
     ));
     // PREDICATE
     assert(all(
@@ -1016,20 +1026,20 @@ void t_all (void) {
         "type Bool { False: () ; True: () }\n"
         "var b : Bool = True()\n"
         "var tst: Bool = b.True?\n"
-        "if tst { call show () }\n"
+        "if tst { output std () }\n"
     ));
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
         "var b : Bool = True()\n"
         "var tst: Bool = b.False?\n"
-        "if tst {} else { call show() }\n"
+        "if tst {} else { output std() }\n"
     ));
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
         "var b : Bool = True()\n"
-        "if b.False? {} else { call show() }\n"
+        "if b.False? {} else { output std() }\n"
     ));
     assert(all(
         "(ln 1, col 18): undeclared subtype \"Event\"",
@@ -1040,7 +1050,7 @@ void t_all (void) {
         "type Bool { False: () ; True: () }\n"
         "var b : Bool = True()\n"
         "var c : &Bool = &b\n"
-        "if c.False? {} else { call show() }\n"
+        "if c.False? {} else { output std() }\n"
     ));
     assert(all(
         "()\n",
@@ -1048,14 +1058,14 @@ void t_all (void) {
         "var b : Bool = True()\n"
         "var c : &Bool = &b\n"
         "var d : () = c.True!\n"
-        "call show d\n"
+        "output std d\n"
     ));
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
         "var b : Bool = True()\n"
         "var c : &Bool = &b\n"
-        "call show c.True!\n"
+        "output std c.True!\n"
     ));
     // DISCRIMINATOR
     assert(all(
@@ -1063,7 +1073,7 @@ void t_all (void) {
         "type Bool { False: () ; True: () }\n"
         "var b : Bool = True()\n"
         "var u : () = b.True!\n"
-        "call show u\n"
+        "output std u\n"
     ));
     assert(all(
         "",     // ERROR
@@ -1082,13 +1092,13 @@ void t_all (void) {
         "1\n",
         "func f : _int -> _int { return arg }\n"
         "var v: Int = f 1\n"
-        "call show v\n"
+        "output std v\n"
     ));
     assert(all(
         "()\n",
         "func f : () -> () { return arg }\n"
         "var v: () = f()\n"
-        "call show v\n"
+        "output std v\n"
     ));
     assert(all(
         "(ln 1, col 26): invalid return : type mismatch",
@@ -1118,7 +1128,7 @@ void t_all (void) {
         "}\n"
         "var a: Bool = True()\n"
         "var b: Bool = inv a\n"
-        "call show b\n"
+        "output std b\n"
     ));
     assert(all(
         "2\n",
@@ -1126,7 +1136,7 @@ void t_all (void) {
         "   set arg = _(arg+1)\n"
         "   return arg\n"
         "}\n"
-        "call show f 1\n"
+        "output std f 1\n"
     ));
     assert(all(
         "2\n",
@@ -1136,7 +1146,7 @@ void t_all (void) {
         "}\n"
         "var x: Int = 1\n"
         "call f &x\n"
-        "call show x\n"
+        "output std x\n"
     ));
     assert(all(
         "True\n",
@@ -1150,7 +1160,7 @@ void t_all (void) {
         "}\n"
         "var x: Bool = True\n"
         "call f &x\n"
-        "call show x\n"
+        "output std x\n"
     ));
     assert(all(
         "True\n",
@@ -1171,26 +1181,26 @@ void t_all (void) {
         "}\n"
         "var x: Bool = False\n"
         "call f &x\n"
-        "call show x\n"
+        "output std x\n"
     ));
     // ENV
     assert(all(
-        "(ln 1, col 1): expected statement : have \"_show_Unit\"",
-        "_show_Unit(x)\n"
+        "(ln 1, col 1): expected statement : have \"_stdo_Unit\"",
+        "_stdo_Unit(x)\n"
     ));
     assert(all(
         "(ln 1, col 11): undeclared variable \"x\"",
-        "call show x\n"
+        "output std x\n"
     ));
     assert(all(
         "(ln 2, col 11): undeclared variable \"x\"",
         "func f : ()->() { var x:()=(); return x }\n"
-        "call show x\n"
+        "output std x\n"
     ));
     assert(all(
         "(ln 2, col 11): undeclared variable \"x\"",
         "if () { var x:()=() }\n"
-        "call show x\n"
+        "output std x\n"
     ));
     assert(all(
         "(ln 1, col 8): undeclared type \"Xx\"",
@@ -1201,11 +1211,11 @@ void t_all (void) {
         "(ln 2, col 15): undeclared subtype \"Item\"",
         "type List { Cons:() }\n"
         "var l: List = Item ()\n"
-        "call show l\n"
+        "output std l\n"
     ));
     assert(all(
         "(ln 1, col 11): undeclared type \"List\"",
-        "call show $List\n"
+        "output std $List\n"
     ));
     assert(all(
         "$\n",
@@ -1214,7 +1224,7 @@ void t_all (void) {
         "}\n"
         "var n: Nat = $Nat\n"
         "var n_: &Nat = &n\n"
-        "call show n_\n"
+        "output std n_\n"
     ));
     assert(all(
         "Succ ($)\n",
@@ -1223,7 +1233,7 @@ void t_all (void) {
         "}\n"
         "var n: Nat = Succ $Nat\n"
         "var n_: &Nat = &n\n"
-        "call show n_\n"
+        "output std n_\n"
     ));
     assert(all(
         "XNat1 (Succ ($))\n",
@@ -1236,7 +1246,7 @@ void t_all (void) {
         "var n: Nat = Succ $Nat\n"
         "var x: XNat = XNat1 n\n"
         "var x_: &XNat = &x\n"
-        "call show x_\n"
+        "output std x_\n"
     ));
     assert(all(
         "Succ ($)\n",
@@ -1244,7 +1254,7 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "var c: Nat = Succ $Nat\n"
-        "call show &c\n"
+        "output std &c\n"
     ));
     assert(all(
         "Succ (Succ ($))\n",
@@ -1252,7 +1262,7 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "var c: Nat = Succ Succ $Nat\n"
-        "call show &c\n"
+        "output std &c\n"
     ));
     assert(all(
         "Succ ($)\n",
@@ -1260,7 +1270,7 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "var c: Nat = Succ Succ $Nat\n"
-        "call show &c.Succ!\n"
+        "output std &c.Succ!\n"
     ));
     assert(all(
         "Succ ($)\n",
@@ -1270,7 +1280,7 @@ void t_all (void) {
         "var d: Nat = Succ $Nat\n"
         "var c: Nat = Succ d\n"
         "var b: &Nat = &c.Succ!\n"
-        "call show b\n"
+        "output std b\n"
     ));
     assert(all(
         "(Succ ($),$)\n",
@@ -1282,7 +1292,7 @@ void t_all (void) {
         "var b: &Nat = &c\n"
         "var a: (Nat,&Nat) = (d,b)\n"       // precisa desalocar o d
         "var a_: &(Nat,&Nat) = &a\n"
-        "call show a_\n"
+        "output std a_\n"
     ));
     assert(all(
         "$\n",
@@ -1291,7 +1301,7 @@ void t_all (void) {
         "}\n"
         "var a: (Nat,Nat) = ($Nat,$Nat)\n"
         "var b: &Nat = &a.2\n"
-        "call show b\n"
+        "output std b\n"
     ));
     assert(all(
         "(ln 6, col 14): invalid access to \"c\" : ownership was transferred (ln 5)",
@@ -1311,7 +1321,7 @@ void t_all (void) {
         "var a: (Nat,Nat) = ($Nat,c)\n"
         "var b: (Nat,Nat) = a\n"        // tx a
         "var d: &Nat = &a.2\n"          // no: a is txed
-        "call show d\n"
+        "output std d\n"
     ));
     assert(all(
         "$\n",
@@ -1322,7 +1332,7 @@ void t_all (void) {
         "var a: (Nat,Nat) = ($Nat,c)\n"
         "var b: Nat = a.2\n"            // zera a.2 (a se mantem sem tx)
         "var d: &Nat = &a.2\n"
-        "call show d\n"                 // ok: $Nat
+        "output std d\n"                 // ok: $Nat
     ));
     assert(all(
         "Succ ($)\n",
@@ -1334,7 +1344,7 @@ void t_all (void) {
         "var a: (Nat,Nat) = (e,c)\n"
         "var b: Nat = a.2\n"
         "var d: &Nat = &a.1\n"
-        "call show d\n"             // ok: e
+        "output std d\n"             // ok: e
     ));
     assert(all(
         "(ln 7, col 14): invalid transfer of \"c\" : active alias in scope (ln 6)",
@@ -1355,7 +1365,7 @@ void t_all (void) {
         "var c: Nat = Succ d\n"
         "var b: Nat = c.Succ!\n"
         "var e: &Nat = &c\n"
-        "call show e\n"
+        "output std e\n"
     ));
     assert(all(
         "XNat1 ($)\n",
@@ -1370,7 +1380,7 @@ void t_all (void) {
         "var i: XNat = XNat1 c\n"
         "var j: Nat = i.XNat1!\n"
         "var k: &XNat = &i\n"
-        "call show k\n"
+        "output std k\n"
     ));
     assert(all(
         "XNat1 (Succ (Succ ($)))\n",
@@ -1389,7 +1399,7 @@ void t_all (void) {
         "var j: YNat = YNat1 i\n"
         "var k: XNat = j.YNat1!\n"
         "var k_: &XNat = &k\n"
-        "call show k_\n"
+        "output std k_\n"
     ));
     assert(all(
         "$\n",
@@ -1400,7 +1410,7 @@ void t_all (void) {
         "var b: (Nat,(Nat,Nat)) = ($Nat,a)\n"
         "var c: Nat = b.1\n"
         "var c_: &Nat = &c\n"
-        "call show c_\n"
+        "output std c_\n"
     ));
     assert(all(
         "(ln 9, col 17): undeclared type \"Naty\"",
@@ -1420,7 +1430,7 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "var n: Nat = $Nat\n"
-        "call show n.$Nat!\n"
+        "output std n.$Nat!\n"
     ));
     assert(all(
         "True\n",
@@ -1433,7 +1443,7 @@ void t_all (void) {
         "}\n"
         "var n: Nat = $Nat\n"
         "var tst: Bool = n.$Nat?\n"
-        "call show tst\n"
+        "output std tst\n"
     ));
     assert(all(
         "Succ (Succ ($))\n",
@@ -1443,7 +1453,7 @@ void t_all (void) {
         "var a: Nat = Succ $Nat\n"
         "var n: Nat = Succ a\n"
         "var n_: &Nat = &n\n"
-        "call show n_\n"
+        "output std n_\n"
     ));
     assert(all(
         "Succ (Succ ($))\n",
@@ -1453,7 +1463,7 @@ void t_all (void) {
         "var a: Nat = Succ $Nat\n"
         "var n: Nat = Succ a\n"
         "var n_: &Nat = &n\n"
-        "call show n_\n"
+        "output std n_\n"
     ));
     assert(all(
         "$\n",
@@ -1462,7 +1472,7 @@ void t_all (void) {
         "}\n"
         "var x: Nat = $Nat\n"
         "var x_: &Nat = &x\n"
-        "call show x_\n"
+        "output std x_\n"
     ));
     assert(all(
         "Succ ($)\n",
@@ -1471,7 +1481,7 @@ void t_all (void) {
         "}\n"
         "var n: Nat = Succ $Nat\n"
         "var n_: &Nat = &n\n"
-        "call show n_\n"
+        "output std n_\n"
     ));
     assert(all(
         "$\n",
@@ -1484,7 +1494,7 @@ void t_all (void) {
         "}\n"
         "var v: Nat = f()\n"
         "var v_: &Nat = &v\n"
-        "call show v_\n"
+        "output std v_\n"
     ));
     assert(all(
         "Succ (Succ ($))\n",
@@ -1498,7 +1508,7 @@ void t_all (void) {
         "}\n"
         "var y: Nat = f()\n"
         "var y_: &Nat = &y\n"
-        "call show y_\n"
+        "output std y_\n"
     ));
     assert(all(
         "Succ (Succ ($))\n",
@@ -1512,7 +1522,7 @@ void t_all (void) {
         "}\n"
         "var y: Nat = f()\n"
         "var y_: &Nat = &y\n"
-        "call show y_\n"
+        "output std y_\n"
     ));
     assert(all(
         "Succ (Succ ($))\n",
@@ -1526,7 +1536,7 @@ void t_all (void) {
         "}\n"
         "var y: Nat = f()\n"
         "var y_: &Nat = &y\n"
-        "call show y_\n"
+        "output std y_\n"
     ));
     assert(all(
         "Succ (Succ ($))\n",
@@ -1540,7 +1550,7 @@ void t_all (void) {
         "}\n"
         "var y: Nat = f()\n"
         "var y_: &Nat = &y\n"
-        "call show y_\n"
+        "output std y_\n"
     ));
     assert(all(
         "$\n",
@@ -1557,7 +1567,7 @@ void t_all (void) {
         "var a: Nat = Succ $Nat\n"
         "var y: Nat = len a\n"
         "var y_: &Nat = &y\n"
-        "call show y_\n"
+        "output std y_\n"
     ));
     assert(all(
         "$\n",
@@ -1565,7 +1575,7 @@ void t_all (void) {
         "    Succ: Nat\n"
         "}\n"
         "var n: Nat = $Nat\n"
-        "call show &n\n"
+        "output std &n\n"
         "var z: Nat = n\n"
     ));
     assert(all(
@@ -1588,7 +1598,7 @@ void t_all (void) {
         "}\n"
         "var x: Nat = Succ Succ Succ $Nat\n"
         "var y: Nat = len &x\n"
-        "call show &y\n"
+        "output std &y\n"
     ));
     assert(all(
         "Succ (Succ ($))\n",
@@ -1597,7 +1607,7 @@ void t_all (void) {
         "}\n"
         "var x: Nat = Succ Succ Succ $Nat\n"
         "var y: Nat = x.Succ!\n"
-        "call show &y\n"
+        "output std &y\n"
     ));
     assert(all(
         "Succ (Succ (Succ ($)))\n",
@@ -1617,7 +1627,7 @@ void t_all (void) {
         "}\n"
         "var x: Nat = Succ Succ Succ $Nat\n"
         "var y: Nat = len x\n"
-        "call show &y\n"
+        "output std &y\n"
     ));
 
     // OWNERSHIP / BORROWING
@@ -1637,7 +1647,7 @@ void t_all (void) {
         "}\n"
         "var x: Nat = $Nat   -- owner\n"
         "var z: &Nat = &x    -- borrow\n"
-        "call show z\n"
+        "output std z\n"
     ));
     assert(all(
         "(ln 6, col 14): invalid transfer of \"x\" : active alias in scope (ln 5)",
@@ -1659,7 +1669,7 @@ void t_all (void) {
         "}\n"
         "var y: Nat = x       -- ok: borrow is inactive\n"
         "var y_: &Nat = &y\n"
-        "call show y_\n"
+        "output std y_\n"
     ));
     assert(all(
         "(ln 8, col 14): invalid access to \"x\" : ownership was transferred (ln 6)",
@@ -1672,7 +1682,7 @@ void t_all (void) {
         "}\n"
         "var y: Nat = x             -- no: x->z\n"
         "var y_: &Nat = &y\n"
-        "call show y_\n"
+        "output std y_\n"
     ));
     assert(all(
         "(ln 8, col 12): invalid return : cannot return local alias \"l\" (ln 5)",
@@ -1694,7 +1704,7 @@ void t_all (void) {
         "var a: List = Item Item $List\n"
         "var b: List = a.Item!.Item!\n"
         "var c: List = a.Item!\n"
-        "call show &c\n"
+        "output std &c\n"
     ));
     assert(all(
         "Succ ($)\n",
@@ -1715,7 +1725,7 @@ void t_all (void) {
         "var a: (Nat,&Nat) = (x,y_)\n"
         "var z: Nat = add a\n"
         "var z_: &Nat = &z\n"
-        "call show z_\n"
+        "output std z_\n"
     ));
     assert(all(
         "Succ ($)\n",
@@ -1737,7 +1747,7 @@ void t_all (void) {
         "var a: XNat = XNat1 x\n"
         "var z: Nat = add a\n"
         "var z_: &Nat = &z\n"
-        "call show z_\n"
+        "output std z_\n"
     ));
 
     // CLONE
@@ -1749,7 +1759,7 @@ void t_all (void) {
         "}\n"
         "var x: Bool = True ()\n"
         "var y: Bool = clone x\n"
-        "call show y\n"
+        "output std y\n"
     ));
     assert(all(
         "Succ ($)\n",
@@ -1760,7 +1770,7 @@ void t_all (void) {
         "var x_: &Nat = &x\n"
         "var y: Nat = clone x_\n"
         "var y_: &Nat = &y\n"
-        "call show y_\n"
+        "output std y_\n"
     ));
 
     // EXPR_UNK
@@ -1768,14 +1778,14 @@ void t_all (void) {
         "10\n",
         "var x: Int = ?\n"
         "set x = 10\n"
-        "call show x\n"
+        "output std x\n"
     ));
 
     // INT
     assert(all(
         "-10\n",
         "var x: Int = -10\n"
-        "call show x\n"
+        "output std x\n"
     ));
 
     // SET
@@ -1783,7 +1793,7 @@ void t_all (void) {
         "20\n",
         "var v: Int = 10\n"
         "set v = 20\n"
-        "call show v\n"
+        "output std v\n"
     ));
     assert(all(
         "Item (Item ($))\n",
@@ -1793,7 +1803,7 @@ void t_all (void) {
         "var l1: List = Item Item $List\n"
         "var l2: List = Item $List\n"
         "set l2 = l1\n"
-        "call show &l2\n"
+        "output std &l2\n"
     ));
     assert(all(
         "(ln 7, col 12): invalid access to \"l1\" : ownership was transferred (ln 6)",
@@ -1803,7 +1813,7 @@ void t_all (void) {
         "var l1: List = $List\n"
         "var l2: List = $List\n"
         "set l2 = l1\n"
-        "call show &l1\n"
+        "output std &l1\n"
     ));
     assert(all(
         "(ln 8, col 14): invalid assignment : cannot hold local alias \"l2\" (ln 7)",
@@ -1826,7 +1836,7 @@ void t_all (void) {
         "loop {\n"
         "   break\n"
         "}\n"
-        "call show 20\n"
+        "output std 20\n"
     ));
     assert(all(
         "15\n",
@@ -1847,19 +1857,19 @@ void t_all (void) {
         "        break\n"
         "    }\n"
         "}\n"
-        "call show n    -- shows 10\n"
+        "output std n    -- shows 10\n"
     ));
 
 #if TODO-as
     assert(all(
         "a",
         "var x: ((Int,Int),_int) = ((1,1),_1 as _int)\n"
-        "call show x.1\n"
+        "output std x.1\n"
     ));
     assert(all(
         "a",
         "var x: ((Int,Int),_{char*}) = ((1,1),_(\"oi\") as _(char*))\n"
-        "call show x.1\n"
+        "output std x.1\n"
     ));
 #endif
 
@@ -1871,7 +1881,7 @@ void t_all (void) {
         "    Color_BG: _int\n"
         "    Color_FG: _int\n"
         "}\n"
-        "call show(Size(_1,_2,_3,_4))\n"
+        "output std(Size(_1,_2,_3,_4))\n"
     ));
 #endif
 
@@ -1890,7 +1900,7 @@ void t_all (void) {
         "var xy: (Nat,Bool) = (x,y)\n"
         "var z: (Nat,Bool) = clone xy\n"
         "var z_: &(Nat,Bool) = &z\n"
-        "call show z_\n"
+        "output std z_\n"
     ));
 #endif
 
@@ -1909,7 +1919,7 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "func f: () -> Nat {}\n"
-        "call show(f())\n"
+        "output std(f())\n"
     ));
     assert(all(
         "(ln 5, col 6): missing pool for return of \"f\"",

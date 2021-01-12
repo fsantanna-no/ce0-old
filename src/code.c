@@ -277,12 +277,12 @@ int ftp_tuples (Env* env, Type* tp) {
     {
         int hasrec1 = env_type_hasrec(env, tp, 0);
         fprintf (ALL.out,
-            "#ifndef __show_%s__\n"
-            "#define __show_%s__\n",
+            "#ifndef __stdo_%s__\n"
+            "#define __stdo_%s__\n",
             tp_ce, tp_ce
         );
         fprintf(ALL.out,
-            "void show_%s_ (%s%s v) {\n"
+            "void stdo_%s_ (%s%s v) {\n"
             "    printf(\"(\");\n",
             tp_ce, tp_c, (hasrec1 ? "*" : "")
         );
@@ -305,17 +305,17 @@ int ftp_tuples (Env* env, Type* tp) {
             if (sub->sub == TYPE_NATIVE) {
                 fprintf(ALL.out, "    putchar('?');\n");
             } else if (sub->sub == TYPE_UNIT) {
-                fprintf(ALL.out, "    show_Unit_();\n");
+                fprintf(ALL.out, "    stdo_Unit_();\n");
             } else {
-                fprintf(ALL.out, "    show_%s_(%sv%s_%d);\n",
+                fprintf(ALL.out, "    stdo_%s_(%sv%s_%d);\n",
                     to_ce(sub), op2, (hasrec1 ? "->" : "."), i+1);
             }
         }
         fprintf(ALL.out,
             "    printf(\")\");\n"
             "}\n"
-            "void show_%s (%s%s v) {\n"
-            "    show_%s_(v);\n"
+            "void stdo_%s (%s%s v) {\n"
+            "    stdo_%s_(v);\n"
             "    puts(\"\");\n"
             "}\n",
             tp_ce, tp_c, (hasrec1 ? "*" : ""),
@@ -506,8 +506,8 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
             } else {
                 assert(e->Call.func->sub == EXPR_VAR);
 
-                if (!strcmp(e->Call.func->Var.tk.val.s,"show")) {
-                    out("show_");
+                if (!strcmp(e->Call.func->Var.tk.val.s,"std")) {
+                    out("stdo_");
                     code_to_ce(env_expr_to_type(env, e->Call.arg));
                 } else if (!strcmp(e->Call.func->Var.tk.val.s,"clone")) {
                     out("clone_");
@@ -597,12 +597,12 @@ void code_user (Stmt* s) {
     const char* SUP = strupper(s->User.tk.val.s);
     int isrec = s->User.isrec;
 
-    // show must receive & from ishasrec, otherwise it would receive ownership
+    // stdo must receive & from ishasrec, otherwise it would receive ownership
     int ishasrec = env_user_ishasrec(s->env, s);
 
     // struct Bool;
     // typedef struct Bool Bool;
-    // void show_Bool_ (Bool v);
+    // void stdo_Bool_ (Bool v);
     // Bool clone_Bool_  (Bool v);
     {
         // struct { BOOL sub; union { ... } } Bool;
@@ -620,7 +620,7 @@ void code_user (Stmt* s) {
         );
 
         fprintf(ALL.out,
-            "auto void show_%s_ (%s%s v);\n", // auto: https://stackoverflow.com/a/7319417
+            "auto void stdo_%s_ (%s%s v);\n", // auto: https://stackoverflow.com/a/7319417
             sup, sup, (ishasrec ? "*" : "")
         );
     }
@@ -728,9 +728,9 @@ void code_user (Stmt* s) {
     {
         char* op = (ishasrec ? "->" : ".");
 
-        // _show_Bool (Bool v)
+        // _stdo_Bool (Bool v)
         fprintf(ALL.out,
-            "void show_%s_ (%s%s v) {\n",
+            "void stdo_%s_ (%s%s v) {\n",
             sup, sup, (ishasrec ? "*" : "")
         );
         if (isrec) {
@@ -767,14 +767,14 @@ void code_user (Stmt* s) {
                     break;
                 case TYPE_USER:
                     yes = par = 1;
-                    sprintf(arg, "show_%s_(%sv%s_%s)",
+                    sprintf(arg, "stdo_%s_(%sv%s_%s)",
                         sub->type->User.val.s, op2,
                         op, sub->tk.val.s);
                     break;
                 case TYPE_TUPLE:
                     yes = 1;
                     par = 0;
-                    sprintf(arg, "show_%s_(%sv%s_%s)",
+                    sprintf(arg, "stdo_%s_(%sv%s_%s)",
                         to_ce(sub->type), op2,
                         op, sub->tk.val.s);
                     break;
@@ -794,8 +794,8 @@ void code_user (Stmt* s) {
         out("    }\n");
         out("}\n");
         fprintf(ALL.out,
-            "void show_%s (%s%s v) {\n"
-            "    show_%s_(v);\n"
+            "void stdo_%s (%s%s v) {\n"
+            "    stdo_%s_(v);\n"
             "    puts(\"\");\n"
             "}\n",
             sup, sup, (ishasrec ? "*" : ""),
@@ -909,7 +909,7 @@ void code_stmt (Stmt* s) {
             assert(s->Func.type->sub == TYPE_FUNC);
 
             if (!strcmp(s->Func.tk.val.s,"clone")) break;
-            if (!strcmp(s->Func.tk.val.s,"show" )) break;
+            if (!strcmp(s->Func.tk.val.s,"std")) break;
 
             visit_type(s->env, s->Func.type, ftp_tuples);
 
@@ -967,10 +967,10 @@ void code (Stmt* s) {
         "#include <stdio.h>\n"
         "#include <stdlib.h>\n"
         "typedef int Int;\n"
-        "#define show_Unit_() printf(\"()\")\n"
-        "#define show_Unit()  (show_Unit_(), puts(\"\"))\n"
-        "#define show_Int_(x) printf(\"%d\",x)\n"
-        "#define show_Int(x)  (show_Int_(x), puts(\"\"))\n"
+        "#define stdo_Unit_() printf(\"()\")\n"
+        "#define stdo_Unit()  (stdo_Unit_(), puts(\"\"))\n"
+        "#define stdo_Int_(x) printf(\"%d\",x)\n"
+        "#define stdo_Int(x)  (stdo_Int_(x), puts(\"\"))\n"
         "int main (void) {\n"
         "\n"
     );

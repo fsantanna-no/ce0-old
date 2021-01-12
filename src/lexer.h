@@ -21,13 +21,14 @@ typedef enum {
     TK_ELSE,
     TK_FUNC,
     TK_IF,
+    TK_INPUT,
     TK_LOOP,
     TK_NATIVE,
+    TK_OUTPUT,
     TK_PRE,
     TK_REC,
     TK_RETURN,
     TK_SET,
-    //TK_SHOW,
     TK_TYPE,
     TK_VAR
 } TK;

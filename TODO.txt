@@ -1,4 +1,6 @@
 - input/output vs call input / call output
+    - output Type ...
+    - input  Type
 
 plain   isrec   hasrec
 &plain  &isrec  &hasrec

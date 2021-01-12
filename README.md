@@ -27,8 +27,10 @@ The following keywords are reserved:
     else        -- conditional statement
     func        -- function declaration
     if          -- conditional statement
+    input       -- input invocation
     loop        -- loop statement
     native      -- native statement
+    output      -- output invocation
     pre         -- native pre declaration
     rec         -- type recursive declaration
     return      -- function return
@@ -199,15 +201,18 @@ position:
 (x,()).2                -- yields ()
 ```
 
-## Call
+## Call, Input & Output
 
 A call invokes an expression as a [function](TODO) with the given argument:
 
 ```
 f ()                    -- f   receives unit     ()
-(id) x                  -- id  receives variable x
+call (id) x             -- id  receives variable x
 add (x,y)               -- add receives tuple    (x,y)
 ```
+
+The prefix keyword `call` can appear on assignments and statements, but not in
+the middle of expressions.
 
 The special function `clone` copies the contents of its argument.
 If the value is of a recursive type, the copy is also recursive:
@@ -217,11 +222,22 @@ var y: List = Item Item $List
 var x: List = clone y           -- `x` becomes "Item Item $List"
 ```
 
-The special function `show` outputs the given argument to the screen:
+Just like a `call`, the `input` & `output` keywords also invoke expressions as
+functions, but with the purpose of communicating with external devices, such as
+the keyboard and screen:
 
 ```
-var x: ((),()) = ((),())
-show x          -- outputs "((),())" to the screen
+input delay 2000            -- waits 2 seconds
+output draw Pixel (0,0)     -- draws a pixel on the screen
+```
+
+The supported functions and associated behaviors dependend on the platform.
+The special function `std` works for the standard input & output devices and
+accepts any value as argument:
+
+```
+var x: Int = input std      -- reads an `Int` from stdin
+output std x                -- writes the value of `x` to stdout
 ```
 
 ## Constructor, Discriminator, Predicate
@@ -332,13 +348,18 @@ set tup.1 = n
 set x.Student! = ()
 ```
 
-## Call
+## Call, Input & Output
 
-A call statement invokes a call expression:
+The `call`, `input` & `output` statements invoke the respective
+[expressions](#TODO):
 
 ```
-call f()    -- calls f passing ()
+call f()        -- calls f passing ()
+input std       -- input from stdin
+output std 10   -- output to stdout
 ```
+
+### Input & Output
 
 ## Sequence
 
@@ -432,7 +453,8 @@ Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: ()
             { USER `:´ Type [`;´] }     --    subtypes                 Cons: List
          `}´                                                        }
       |  `set´ Expr `=´ Expr            -- assignment               set x = 1
-      |  `call´ Expr                    -- call                     call f()
+      |  (`call´ | `input´ |` output´)  -- call                     call f()
+            Expr [Expr]                 -- input & output           input std
       |  `if´ Expr `{´ Stmt `}´         -- conditional              if x { call f() } else { call g() }
       |  `loop´ `{´ Stmt `}´            -- loop                     loop { break }
       |  `break´                        -- break                    break
@@ -452,7 +474,8 @@ Expr ::= `(´ `)´                        -- unit value               ()
       |  `&´ Expr                       -- alias                    &x
       |  `(´ Expr {`,´ Expr} `)´        -- tuple                    (x,())
       |  USER [Expr]                    -- constructor              True ()
-      |  Expr Expr                      -- call                     f(x)
+      |  [`call´ | `input´ | `output´]  -- call                     f(x)
+            Expr [Expr]                 -- input & output           output std 10
       |  Expr `.´ NUM                   -- tuple index              x.1
       |  Expr `.´ [`$´] USER `!´        -- discriminator            x.True!
       |  Expr `.´ [`$´] USER `?´        -- predicate                x.False?

@@ -14,14 +14,16 @@ static char* reserved[] = {
     "else",
     "func",
     "if",
+    "input",
     //"Int",
     "loop",
     "native",
+    "output",
     "pre",
     "rec",
     "return",
-    //"show",
     "set",
+    //"Std",
     "type",
     "var"
 };

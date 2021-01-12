@@ -146,14 +146,14 @@ int parser_expr_ (Expr** ret)
 // ALIAS
     } else if (accept('&')) {
         Expr* alias;
-        if (!parser_expr(&alias)) {
+        if (!parser_expr(&alias,0)) {
             return 0;
         }
         *e = (Expr) { ALL.nn++, EXPR_ALIAS, 0, .Alias=alias };
 
 // EXPR_PARENS / EXPR_TUPLE
     } else if (accept('(')) {
-        if (!parser_expr(ret)) {
+        if (!parser_expr(ret,0)) {
             return 0;
         }
 
@@ -176,7 +176,7 @@ int parser_expr_ (Expr** ret)
 
         do {
             Expr* e2;
-            if (!parser_expr(&e2)) {
+            if (!parser_expr(&e2,0)) {
                 return 0;
             }
             n++;
@@ -196,7 +196,7 @@ int parser_expr_ (Expr** ret)
         Tk sub = ALL.tk0;
 
         Expr* arg;
-        if (!parser_expr(&arg)) {   // ()
+        if (!parser_expr(&arg,0)) {   // ()
             arg = malloc(sizeof(Expr));
             assert(arg != NULL);
             *arg = (Expr) { ALL.nn++, EXPR_UNIT, .Unit={TK_UNIT,{},0,ALL.nn++} };
@@ -210,7 +210,9 @@ int parser_expr_ (Expr** ret)
     return 1;
 }
 
-int parser_expr (Expr** ret) {
+int parser_expr (Expr** ret, int maypre) {
+    int iscall = maypre && (accept(TK_CALL) || accept(TK_INPUT) || accept(TK_OUTPUT));
+
     Expr* cur;
     if (!parser_expr_(&cur)) {
         return 0;
@@ -248,8 +250,14 @@ int parser_expr (Expr** ret) {
             }
 
 // EXPR_CALL
-        } else if (parser_expr(&arg)) {
+        } else if (parser_expr(&arg,0)) {
             *new = (Expr) { ALL.nn++, EXPR_CALL, 0, .Call={cur,arg} };
+        } else if (iscall) {
+            arg = malloc(sizeof(Expr));
+            assert(arg != NULL);
+            *arg = (Expr) { ALL.nn++, EXPR_UNIT, .Unit={TK_UNIT,{},0,ALL.nn++} };
+            *new = (Expr) { ALL.nn++, EXPR_CALL, 0, .Call={cur,arg} };
+            break;
 
         } else {
             free(new);
@@ -338,7 +346,7 @@ int parser_stmt (Stmt** ret) {
         }
 
         Expr* e;
-        if (!parser_expr(&e)) {
+        if (!parser_expr(&e,1)) {
             return 0;
         }
 
@@ -391,7 +399,7 @@ int parser_stmt (Stmt** ret) {
         Tk tk = ALL.tk0;
 
         Expr* dst;
-        if (!parser_expr(&dst)) {
+        if (!parser_expr(&dst,0)) {
             return 0;
         }
 
@@ -400,17 +408,17 @@ int parser_stmt (Stmt** ret) {
         }
 
         Expr* src;
-        if (!parser_expr(&src)) {
+        if (!parser_expr(&src,1)) {
             return 0;
         }
 
         *s = (Stmt) { ALL.nn++, STMT_SET, NULL, {NULL,NULL}, tk, .Set={dst,src} };
 
     // STMT_CALL
-    } else if (accept(TK_CALL)) {
+    } else if (check(TK_CALL) || check(TK_INPUT) || check(TK_OUTPUT)) {
         Tk tk = ALL.tk0;
         Expr* e;
-        if (!parser_expr(&e)) {
+        if (!parser_expr(&e,1)) {
             return 0;
         }
         *s = (Stmt) { ALL.nn++, STMT_CALL, NULL, {NULL,NULL}, tk, .Call=e };
@@ -424,7 +432,7 @@ int parser_stmt (Stmt** ret) {
         Tk tk = ALL.tk0;
 
         Expr* e;
-        if (!parser_expr(&e)) {         // x
+        if (!parser_expr(&e,0)) {         // x
             return 0;
         }
 
@@ -509,7 +517,7 @@ int parser_stmt (Stmt** ret) {
     } else if (accept(TK_RETURN)) {
         Tk tk = ALL.tk0;
         Expr* e;
-        if (!parser_expr(&e)) {
+        if (!parser_expr(&e,0)) {
             return 0;
         }
         *s = (Stmt) { ALL.nn++, STMT_RETURN, NULL, {NULL,NULL}, tk, .Return=e };
@@ -580,12 +588,12 @@ int parser (Stmt** ret) {
 
     *ret = NULL;
 
-    // Int, clone, show
+    // Int, clone, stdo
     {
         static Type tp_any   = { TYPE_ANY, 0 };
         static Type tp_alias = { TYPE_ANY, 1 };
         static Type tp_clone = { TYPE_FUNC, .Func={&tp_alias,&tp_any} };
-        static Type tp_show  = { TYPE_FUNC, .Func={&tp_alias,&Type_Unit} };
+        static Type tp_stdo  = { TYPE_FUNC, .Func={&tp_alias,&Type_Unit} };
         static Stmt none     = { 0, STMT_NONE };
 
         Stmt* Int = malloc(sizeof(Stmt));
@@ -606,14 +614,14 @@ int parser (Stmt** ret) {
 
         *ret = enseq(*ret, clone);
 
-        Stmt* show = malloc(sizeof(Stmt));
-        assert(show != NULL);
-        *show = (Stmt) {   // show ()
+        Stmt* stdo = malloc(sizeof(Stmt));
+        assert(stdo != NULL);
+        *stdo = (Stmt) {   // output std ()
             0, STMT_FUNC, NULL, {NULL,NULL},
-            .Func = { {TX_VAR,{.s="show"},0,ALL.nn++}, &tp_show, &none }
+            .Func = { {TX_VAR,{.s="std"},0,ALL.nn++}, &tp_stdo, &none }
         };
 
-        *ret = enseq(*ret, show);
+        *ret = enseq(*ret, stdo);
     }
 
     Stmt* tmp;
