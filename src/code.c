@@ -236,15 +236,18 @@ void code_null_tuple (Env* env, Type* tp) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int ftp_tuples (Env* env, Type* tp) {
-    if (tp->sub != TYPE_TUPLE) {
+int ftp_tuples (Env* env, Type* tp_) {
+    if (tp_->sub != TYPE_TUPLE) {
         return VISIT_CONTINUE;
     }
 
+    Type tp = *tp_;
+    tp.isalias = 0;
+
     char tp_c [256];
     char tp_ce[256];
-    strcpy(tp_c,  to_c (env,tp));
-    strcpy(tp_ce, to_ce(tp));
+    strcpy(tp_c,  to_c (env,&tp));
+    strcpy(tp_ce, to_ce(&tp));
 
     // IFDEF
     out("#ifndef __"); out(tp_ce); out("__\n");
@@ -252,12 +255,12 @@ int ftp_tuples (Env* env, Type* tp) {
 
     // STRUCT
     out("typedef struct {\n");
-    for (int i=0; i<tp->Tuple.size; i++) {
-        Type* sub = tp->Tuple.vec[i];
+    for (int i=0; i<tp.Tuple.size; i++) {
+        Type* sub = tp.Tuple.vec[i];
         if (sub->sub == TYPE_UNIT) {
             // do not generate anything
         } else {
-            out(to_c(env,tp->Tuple.vec[i]));
+            out(to_c(env,tp.Tuple.vec[i]));
             fprintf(ALL.out, " _%d;\n", i+1);
         }
     }
@@ -265,17 +268,17 @@ int ftp_tuples (Env* env, Type* tp) {
     out(tp_ce);
     out(";\n");
 
-    int ishasrec = env_type_ishasrec(env, tp, 0);
+    int ishasrec = env_type_ishasrec(env, &tp, 0);
 
     // FREE, NULL
     if (ishasrec) {
-        code_free_tuple(env, tp);
-        code_null_tuple(env, tp);
+        code_free_tuple(env, &tp);
+        code_null_tuple(env, &tp);
     }
 
     // STDO
     {
-        int hasrec1 = env_type_hasrec(env, tp, 0);
+        int hasrec1 = env_type_hasrec(env, &tp, 0);
         fprintf (ALL.out,
             "#ifndef __stdout_%s__\n"
             "#define __stdout_%s__\n",
@@ -286,11 +289,11 @@ int ftp_tuples (Env* env, Type* tp) {
             "    printf(\"(\");\n",
             tp_ce, tp_c, (hasrec1 ? "*" : "")
         );
-        for (int i=0; i<tp->Tuple.size; i++) {
+        for (int i=0; i<tp.Tuple.size; i++) {
             if (i > 0) {
                 fprintf(ALL.out, "    printf(\",\");\n");
             }
-            Type* sub = tp->Tuple.vec[i];
+            Type* sub = tp.Tuple.vec[i];
 
             char* op2 = ""; {
                 int ishasrec = env_type_ishasrec(env, sub, 1);
@@ -506,7 +509,7 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
             } else {
                 assert(e->Call.func->sub == EXPR_VAR);
 
-                if (!strcmp(e->Call.func->Var.tk.val.s,"std_output")) {
+                if (!strcmp(e->Call.func->Var.tk.val.s,"output_std")) {
                     out("stdout_");
                     code_to_ce(env_expr_to_type(env, e->Call.arg));
                 } else if (!strcmp(e->Call.func->Var.tk.val.s,"clone")) {
@@ -910,7 +913,7 @@ void code_stmt (Stmt* s) {
             assert(s->Func.type->sub == TYPE_FUNC);
 
             if (!strcmp(s->Func.tk.val.s,"clone")) break;
-            if (!strcmp(s->Func.tk.val.s,"std_output")) break;
+            if (!strcmp(s->Func.tk.val.s,"output_std")) break;
 
             visit_type(s->env, s->Func.type, ftp_tuples);
 

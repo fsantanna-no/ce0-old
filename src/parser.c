@@ -231,8 +231,11 @@ int parser_expr (Expr** ret, int canpre) {
         if (cur->sub != EXPR_VAR) {
             return err_unexpected("variable identifier");
         }
-        strcat(cur->Var.tk.val.s, "_");
-        strcat(cur->Var.tk.val.s, pre.val.s);
+        char tmp[256];
+        strcpy(tmp, pre.val.s);
+        strcat(tmp, "_");
+        strcat(tmp, cur->Var.tk.val.s);
+        strcpy(cur->Var.tk.val.s, tmp);
     }
 
     while (1)
@@ -620,7 +623,7 @@ int parser (Stmt** ret) {
         static Type tp_stdo  = { TYPE_FUNC, .Func={&tp_alias,&Type_Unit} };
         static Stmt stdo = (Stmt) {   // std ()
             0, STMT_FUNC, NULL, {NULL,NULL},
-            .Func = { {TX_VAR,{.s="std_output"},0,__COUNTER__}, &tp_stdo, &none }
+            .Func = { {TX_VAR,{.s="output_std"},0,__COUNTER__}, &tp_stdo, &none }
         };
         *ret = enseq(*ret, &stdo);
     }

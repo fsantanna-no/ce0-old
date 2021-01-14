@@ -1,10 +1,3 @@
-- teste de IO em tests.c
-    - native output function
-- input/output vs call input / call output
-    - retorno vai ser fixo Int ou vai ser 1o campo do User?
-    - output Type ...
-    - input  Type
-
 plain   isrec   hasrec
 &plain  &isrec  &hasrec
 
@@ -12,7 +5,8 @@ plain:  declarado em C como plain, usado em Ce como plain
 isrec:  declarado em C como ptr,   usado em Ce como ptr
 hasrec: declarado em C como plain, usado em Ce como ptr
 
-- call output Draw Text ((0,5), _("Hello!") as _(char*))
+- as
+    - call output Draw Text ((0,5), _("Hello!") as _(char*))
 - defer
 - unificar op2
 - set

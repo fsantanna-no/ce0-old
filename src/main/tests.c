@@ -865,6 +865,11 @@ void t_all (void) {
         "var x: ((),()) = ((),())\n"
         "output std x\n"
     ));
+    assert(all(
+        "10\n",
+        "func output_f: Int -> () { output std arg }\n"
+        "output f 10\n"
+    ));
     // TYPE
     assert(all(
         "False\n",
@@ -1006,6 +1011,20 @@ void t_all (void) {
         "output std ((1,2),(3,4))\n"
     ));
 #endif
+
+    assert(all(
+        "(1,2)\n",
+        "var x: (Int,Int) = (1,2)\n"
+        "var y: &(Int,Int) = &x\n"
+        "output std y\n"
+    ));
+    assert(all(
+        "1\n",
+        "type Tp {\n"
+        "   Sub: &(Int,Int)\n"
+        "}\n"
+        "output std 1\n"
+    ));
 
     // IF
     assert(all(
