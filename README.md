@@ -242,6 +242,8 @@ output std x                -- writes the value of `x` to stdout
 The `input` & `output` expressions can appear on assignments and statements,
 but not in the middle of expressions.
 
+`TODO: input_f, output_f`
+
 ## Constructor, Discriminator, Predicate
 
 ### Constructor

@@ -1,3 +1,9 @@
+var y: Int = 10
+var x: &Int = &y
+set x = z
+set x = &z
+
+
 plain   isrec   hasrec
 &plain  &isrec  &hasrec
 
