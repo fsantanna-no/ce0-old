@@ -297,8 +297,8 @@ int ftp_tuples (Env* env, Type* tp_) {
 
             char* op2 = ""; {
                 int ishasrec = env_type_ishasrec(env, sub, 1);
-                int hasrec = env_type_hasrec(env, sub, 0);
-                if (hasrec && !sub->isptr) {
+                //int hasrec = env_type_hasrec(env, sub, 0);
+                if (ishasrec && !sub->isptr) {
                     op2 = "&";
                 } else if (!ishasrec && sub->isptr) {
                     op2 = "*";
@@ -626,7 +626,7 @@ void code_user (Stmt* s) {
             "auto %s%s clone_%s (%s%s v);\n",
             sup, (ishasrec ? "*" : ""),
             sup,
-            sup, (ishasrec ? "*" : "")
+            sup, (isrec ? "**" : (ishasrec ? "*" : ""))
         );
 
         fprintf(ALL.out,
@@ -691,23 +691,25 @@ void code_user (Stmt* s) {
 
     // CLONE
     {
+        char* v = (isrec ? "(*v)" : "v");
         fprintf(ALL.out,
             "%s%s clone_%s (%s%s v) {\n",
             sup, (ishasrec ? "*" : ""),
             sup,
-            sup, (ishasrec ? "*" : "")
+            sup, (isrec ? "**" : (ishasrec ? "*" : ""))
         );
         if (!ishasrec) {
             out("return v;\n");
         } else {
             if (isrec) {
-                out (
-                    "if (v == NULL) {\n"
+                fprintf (ALL.out,
+                    "if (%s == NULL) {\n"
                     "   return v;\n"
-                    "}\n"
+                    "}\n",
+                    v
                 );
             }
-            out("switch (v->sub) {\n");
+            fprintf(ALL.out, "switch (%s->sub) {\n", v);
             for (int i=0; i<s->User.size; i++) {
                 Sub* sub = &s->User.vec[i];
                 char* id = sub->tk.val.s;
@@ -715,7 +717,7 @@ void code_user (Stmt* s) {
                     "case %s: {\n"
                     "   %s* ret = malloc(sizeof(%s));\n"
                     "   assert(ret!=NULL && \"not enough memory\");\n"
-                    "   *ret = (%s) { %s, {._%s=%sclone_%s(%sv->_%s)} };\n"
+                    "   *ret = (%s) { %s, {._%s=%sclone_%s(%s%s->_%s)} };\n"
                     "   return ret;\n"
                     "}\n",
                     id,
@@ -724,6 +726,7 @@ void code_user (Stmt* s) {
                     env_type_hasrec(s->env,sub->type,0) ? "*" : "",
                     to_ce(sub->type),
                     (env_type_isrec(s->env,sub->type,0) ? "" : "&"),
+                    v,
                     id
                 );
             }

@@ -1671,7 +1671,7 @@ void t_all (void) {
         "}\n"
         "var x: Nat = Succ Succ Succ $Nat\n"
         "var y: Nat = x.Succ!\n"
-        "output std \\y\n"
+        "output std (\\y)\n"
     ));
     assert(all(
         "Succ (Succ (Succ ($)))\n",
@@ -1691,7 +1691,7 @@ void t_all (void) {
         "}\n"
         "var x: Nat = Succ Succ Succ $Nat\n"
         "var y: Nat = len x\n"
-        "output std \\y\n"
+        "output std (\\y)\n"
     ));
     assert(all(
         "Item (1, Item (2, $))\n",
@@ -1699,7 +1699,7 @@ void t_all (void) {
         "    Item: (Int,List)\n"
         "}\n"
         "var x: List = Item (1, Item (2, $List))\n"
-        "output std \\x\n"
+        "output std (\\x)\n"
     ));
 
     // OWNERSHIP / BORROWING
