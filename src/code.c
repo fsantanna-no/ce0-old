@@ -234,6 +234,31 @@ void code_null_tuple (Env* env, Type* tp) {
     out("}\n");
 }
 
+void code_clone_tuple (Env* env, Type* tp) {
+    assert(tp->sub == TYPE_TUPLE);
+    assert(env_type_ishasrec(env,tp,0));
+
+    char* tp_ = to_ce(tp);
+    fprintf (ALL.out,
+        "%s clone_%s (%s* p) {\n"
+        "   return (%s) {",
+        tp_, tp_, tp_, tp_
+    );
+    for (int i=0; i<tp->Tuple.size; i++) {
+        Type* sub = tp->Tuple.vec[i];
+        if (env_type_ishasrec(env,sub,0)) {
+            fprintf (ALL.out,
+                "%s clone_%s(&p->_%d)\n",
+                (i != 0 ? "," : ""),
+                to_ce(sub), i+1
+            );
+        } else {
+            fprintf(ALL.out, "%s p->_%d\n", (i != 0 ? "," : ""), i+1);
+        }
+    }
+    out("   };\n}\n");
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 int ftp_tuples (Env* env, Type* tp_) {
@@ -274,6 +299,7 @@ int ftp_tuples (Env* env, Type* tp_) {
     if (ishasrec) {
         code_free_tuple(env, &tp);
         code_null_tuple(env, &tp);
+        code_clone_tuple(env, &tp);
     }
 
     // STDO
@@ -635,7 +661,7 @@ void code_user (Stmt* s) {
 
         fprintf(ALL.out,
             "auto %s%s clone_%s (%s%s v);\n",
-            sup, (ishasrec ? "*" : ""),
+            sup, (isrec ? "*" : ""),
             sup,
             sup, (isrec ? "**" : (ishasrec ? "*" : ""))
         );
@@ -705,7 +731,7 @@ void code_user (Stmt* s) {
         char* v = (isrec ? "(*v)" : "v");
         fprintf(ALL.out,
             "%s%s clone_%s (%s%s v) {\n",
-            sup, (ishasrec ? "*" : ""),
+            sup, (isrec ? "*" : ""),
             sup,
             sup, (isrec ? "**" : (ishasrec ? "*" : ""))
         );
@@ -720,25 +746,38 @@ void code_user (Stmt* s) {
                     v
                 );
             }
-            fprintf(ALL.out, "switch (%s->sub /* xxx */) {\n", v);
+            fprintf(ALL.out, "switch (%s->sub) {\n", v);
             for (int i=0; i<s->User.size; i++) {
                 Sub* sub = &s->User.vec[i];
                 char* id = sub->tk.val.s;
-                fprintf (ALL.out,
-                    "case %s: {\n"
-                    "   %s* ret = malloc(sizeof(%s));\n"
-                    "   assert(ret!=NULL && \"not enough memory\");\n"
-                    "   *ret = (%s) { %s, {._%s=%sclone_%s(&%s->_%s)} };\n"
-                    "   return ret;\n"
-                    "}\n",
-                    id,
-                    sup, sup,
-                    sup, id, id,
-                    env_type_hasrec(s->env,sub->type,0) ? "*" : "",
-                    to_ce(sub->type),
-                    v,
-                    id
-                );
+                fprintf(ALL.out, "case %s:\n", id);
+                if (ishasrec) {
+                    if (isrec) {
+                        fprintf (ALL.out,
+                            "{\n"
+                            "   %s* ret = malloc(sizeof(%s));\n"
+                            "   assert(ret!=NULL && \"not enough memory\");\n"
+                            "   *ret = (%s) { %s, {._%s=clone_%s(&%s->_%s)} };\n"
+                            "   return ret;\n"
+                            "}\n",
+                            sup, sup,
+                            sup, id, id,
+                            to_ce(sub->type),
+                            v,
+                            id
+                        );
+                    } else {
+                        fprintf (ALL.out,
+                            "return (%s) { %s, {._%s=clone_%s(&%s->_%s)} };\n",
+                            sup, id, id,
+                            to_ce(sub->type),
+                            v,
+                            id
+                        );
+                    }
+                } else {
+                    fprintf(ALL.out, "return %s;\n", id);
+                }
             }
             out("}\n");
         }

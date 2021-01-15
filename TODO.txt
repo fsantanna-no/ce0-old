@@ -1,8 +1,4 @@
-var y: Int = 10
-var x: \Int = \y
-set x\ = z
-set x = &z
-
+- isrec w/ payload problems
 
 plain   isrec   hasrec
 &plain  &isrec  &hasrec

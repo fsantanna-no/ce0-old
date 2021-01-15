@@ -1693,16 +1693,14 @@ void t_all (void) {
         "var y: Nat = len x\n"
         "output std (\\y)\n"
     ));
-#if 0
     assert(all(
-        "Item (1, Item (2, $))\n",
+        "Item (1,Item (2,$))\n",
         "type rec List {\n"
         "    Item: (Int,List)\n"
         "}\n"
         "var x: List = Item (1, Item (2, $List))\n"
         "output std (\\x)\n"
     ));
-#endif
 
     // OWNERSHIP / BORROWING
     assert(all(
