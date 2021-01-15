@@ -1319,7 +1319,7 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "var c: Nat = Succ $Nat\n"
-        "output std \\c\n"
+        "output std (\\c)\n"
     ));
     assert(all(
         "Succ (Succ ($))\n",
@@ -1327,7 +1327,7 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "var c: Nat = Succ Succ $Nat\n"
-        "output std \\c\n"
+        "output std (\\c)\n"
     ));
     assert(all(
         "Succ ($)\n",
@@ -1335,7 +1335,7 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "var c: Nat = Succ Succ $Nat\n"
-        "output std \\c.Succ!\n"
+        "output std (\\c.Succ!)\n"
     ));
     assert(all(
         "Succ ($)\n",
@@ -1640,7 +1640,7 @@ void t_all (void) {
         "    Succ: Nat\n"
         "}\n"
         "var n: Nat = $Nat\n"
-        "output std \\n\n"
+        "output std (\\n)\n"
         "var z: Nat = n\n"
     ));
     assert(all(
@@ -1653,17 +1653,16 @@ void t_all (void) {
         "    Succ: Nat\n"
         "}\n"
         "func len: \\Nat -> Nat {\n"
-        "    if arg.$Nat? {\n"
+        "    if arg\\.$Nat? {\n"
         "        return $Nat\n"
         "    } else {\n"
-        "        var x: \\Nat = arg.Succ!\n"
-        "        var n: Nat = len \\arg.Succ!\n"
+        "        var n: Nat = len (\\arg\\.Succ!)\n"
         "        return Succ n\n"
         "    }\n"
         "}\n"
         "var x: Nat = Succ Succ Succ $Nat\n"
-        "var y: Nat = len \\x\n"
-        "output std \\y\n"
+        "var y: Nat = len (\\x)\n"
+        "output std (\\y)\n"
     ));
     assert(all(
         "Succ (Succ ($))\n",

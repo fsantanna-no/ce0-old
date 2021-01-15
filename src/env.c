@@ -986,7 +986,6 @@ int check_owner_alias (Stmt* S) {
         int alias_escape (void) {
             switch (s->sub) {
                 case STMT_VAR: {    // track all aliases to S
-assert(!s->Var.type->isptr);
                     if (!s->Var.type->isptr) {
                         break;
                     }
@@ -994,7 +993,6 @@ assert(!s->Var.type->isptr);
                     // var S: T = ...
                     // var s: &T = &y;      <-- if y reaches S, so does s
                     Type* tp = env_expr_to_type(s->env, s->Var.init);
-assert(!tp->isptr);
                     assert(tp->isptr);
 
                     // get "var" being aliased

@@ -98,7 +98,7 @@ void to_c_ (char* out, Env* env, Type* tp) {
         case TYPE_FUNC:
             assert(0 && "TODO");
     }
-    if (tp->isptr && !isrec) {
+    if (tp->isptr) {
         strcat(out, "*");
     }
 }
@@ -462,7 +462,7 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
     }
 
     int isrec    = env_type_isrec(env,TP,1);
-    int ishasrec = env_type_ishasrec(env,TP,1);
+    //int ishasrec = env_type_ishasrec(env,TP,1);
     int deref = (deref_ishasrec && isrec);
     //int deref = (deref_ishasrec && (isrec || (TP->isptr && ishasrec))) ||
     //            (e->sub!=EXPR_UPREF && TP->isptr && !ishasrec);
@@ -490,11 +490,9 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
             break;
 
         case EXPR_UPREF: {
-            Type* tp = env_expr_to_type(env, e->Upref);
-            if (!env_type_isrec(env,tp,1)) {
-                out("&");
-            }
+            out("(&(");
             code_expr(env, e->Upref, 0);
+            out("))");
             break;
         }
 
@@ -633,7 +631,7 @@ void code_user (Stmt* s) {
 
         fprintf(ALL.out,
             "auto void stdout_%s_ (%s%s v);\n", // auto: https://stackoverflow.com/a/7319417
-            sup, sup, (ishasrec ? "*" : "")
+            sup, sup, (isrec ? "**" : (ishasrec ? "*" : ""))
         );
     }
     out("\n");
@@ -738,22 +736,23 @@ void code_user (Stmt* s) {
 
     // STDO
     {
-        char* op = (ishasrec ? "->" : ".");
-
         // _stdout_Bool (Bool v)
         fprintf(ALL.out,
             "void stdout_%s_ (%s%s v) {\n",
-            sup, sup, (ishasrec ? "*" : "")
+            sup, sup, (isrec ? "**" : (ishasrec ? "*" : ""))
         );
         if (isrec) {
             out (
-                "if (v == NULL) {\n"
+                "if (*v == NULL) {\n"
                 "    printf(\"$\");\n"
                 "    return;\n"
                 "}\n"
             );
         }
-        fprintf(ALL.out, "    switch (v%ssub) {\n", op);
+
+        char* v = (isrec ? "(*v)->" : (ishasrec ? "v->" : "v."));
+
+        fprintf(ALL.out, "    switch (%ssub) {\n", v);
         for (int i=0; i<s->User.size; i++) {
             Sub* sub = &s->User.vec[i];
 
@@ -762,10 +761,10 @@ void code_user (Stmt* s) {
             int par = 0;
 
             char* op2 = ""; {
-                int hasrec = env_type_hasrec(s->env, sub->type, 0);
-                if (hasrec && !sub->type->isptr) {
+                int ishasrec = env_type_ishasrec(s->env, sub->type, 0);
+                if (ishasrec && !sub->type->isptr) {
                     op2 = "&";
-                } else if (!hasrec && sub->type->isptr) {
+                } else if (!ishasrec && sub->type->isptr) {
                     op2 = "*";
                 }
             }
@@ -779,16 +778,16 @@ void code_user (Stmt* s) {
                     break;
                 case TYPE_USER:
                     yes = par = 1;
-                    sprintf(arg, "stdout_%s_(%sv%s_%s)",
+                    sprintf(arg, "stdout_%s_(%s%s_%s)",
                         sub->type->User.val.s, op2,
-                        op, sub->tk.val.s);
+                        v, sub->tk.val.s);
                     break;
                 case TYPE_TUPLE:
                     yes = 1;
                     par = 0;
-                    sprintf(arg, "stdout_%s_(%sv%s_%s)",
+                    sprintf(arg, "stdout_%s_(%s%s_%s)",
                         to_ce(sub->type), op2,
-                        op, sub->tk.val.s);
+                        v, sub->tk.val.s);
                     break;
                 default:
                     assert(0 && "bug found");
@@ -810,7 +809,7 @@ void code_user (Stmt* s) {
             "    stdout_%s_(v);\n"
             "    puts(\"\");\n"
             "}\n",
-            sup, sup, (ishasrec ? "*" : ""),
+            sup, sup, (isrec ? "**" : (ishasrec ? "*" : "")),
             sup
         );
     }
