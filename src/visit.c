@@ -41,18 +41,7 @@ int visit_type (Env* env, Type* tp, F_Type ft) {
 
 // 0=error, 1=success
 
-int visit_stmt (Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
-    if (fs != NULL) {
-        switch (fs(s)) {
-            case VISIT_ERROR:
-                return 0;
-            case VISIT_CONTINUE:
-                break;
-            case VISIT_BREAK:
-                return 1;
-        }
-    }
-
+int visit_stmt_ (Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
     switch (s->sub) {
         case STMT_NONE:
         case STMT_NATIVE:
@@ -96,6 +85,40 @@ int visit_stmt (Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
     assert(0 && "bug found");
 }
 
+#if 0
+int visit_stmt (Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
+    if (fs != NULL) {
+        switch (fs(s)) {
+            case VISIT_ERROR:
+                return 0;
+            case VISIT_CONTINUE:
+                break;
+            case VISIT_BREAK:
+                return 1;
+        }
+    }
+    return visit_stmt_(s, fs, fe, ft);
+}
+#endif
+
+int visit_stmt (Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
+    int ret = visit_stmt_(s, fs, fe, ft);
+    if (ret != VISIT_CONTINUE) {
+        return ret;
+    }
+    if (fs != NULL) {
+        switch (fs(s)) {
+            case VISIT_ERROR:
+                return 0;
+            case VISIT_CONTINUE:
+                break;
+            case VISIT_BREAK:
+                return 1;
+        }
+    }
+    return 1;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 int visit_expr_ (Env* env, Expr* e, F_Expr fe) {
@@ -118,8 +141,10 @@ int visit_expr_ (Env* env, Expr* e, F_Expr fe) {
             return visit_expr(env, e->Index.val, fe);
         case EXPR_CALL:
             return visit_expr(env,e->Call.func,fe) && visit_expr(env,e->Call.arg,fe);
-        case EXPR_ALIAS:
-            return visit_expr(env, e->Alias, fe);
+        case EXPR_UPREF:
+            return visit_expr(env, e->Upref, fe);
+        case EXPR_DNREF:
+            return visit_expr(env, e->Dnref, fe);
         case EXPR_CONS:
             return visit_expr(env, e->Cons.arg, fe);
         case EXPR_DISC:
