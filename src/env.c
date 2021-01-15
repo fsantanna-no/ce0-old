@@ -389,7 +389,7 @@ int set_seqs (Stmt* s) {
 int set_envs (Stmt* s) {
     int DEPTH = 0;
     auto int set_envs_ (Stmt* s);
-    return visit_stmt(s,set_envs_,NULL,NULL);
+    return visit_stmt(0,s,set_envs_,NULL,NULL);
 
     int set_envs_ (Stmt* s) {
         s->env = ALL.env;
@@ -430,7 +430,7 @@ int set_envs (Stmt* s) {
                     *new = (Env) { s, ALL.env, DEPTH };
                     ALL.env = new;
                 }
-                visit_stmt(s->Block, set_envs_, NULL, NULL);
+                visit_stmt(0,s->Block, set_envs_, NULL, NULL);
                 DEPTH--;
                 ALL.env = save;
                 return VISIT_BREAK;                 // do not re-visit children, I just did them
@@ -446,7 +446,7 @@ int set_envs (Stmt* s) {
 
                 if (s->Func.body != NULL) {
                     Env* save = ALL.env;
-                    visit_stmt(s->Func.body, set_envs_, NULL, NULL);
+                    visit_stmt(0,s->Func.body, set_envs_, NULL, NULL);
                     ALL.env = save;
                 }
 
@@ -921,7 +921,7 @@ int check_owner_alias (Stmt* S) {
             case STMT_CALL:
             case STMT_IF:
             case STMT_RETURN: {
-                int ret = visit_stmt(s, NULL, var_access, NULL);
+                int ret = visit_stmt(0, s, NULL, var_access, NULL);
                 if (ret != EXEC_CONTINUE) {
                     return ret;
                 }
@@ -1116,17 +1116,16 @@ assert(!tp->isptr);
 ///////////////////////////////////////////////////////////////////////////////
 
 int env (Stmt* s) {
-    assert(visit_stmt(s,set_seqs,NULL,NULL));
+    assert(visit_stmt(0, s,set_seqs,NULL,NULL));
     assert(set_envs(s));
-//dump_stmt(s);
-    if (!visit_stmt(s,NULL,check_decls_expr,check_decls_type)) {
+    if (!visit_stmt(0, s,NULL,check_decls_expr,check_decls_type)) {
         return 0;
     }
-    if (!visit_stmt(s,check_types_stmt,check_types_expr,NULL)) {
+    if (!visit_stmt(1, s,check_types_stmt,check_types_expr,NULL)) {
         return 0;
     }
-    assert(visit_stmt(s,set_istx_stmt,NULL,NULL));
-    if (!visit_stmt(s,check_owner_alias,NULL,NULL)) {
+    assert(visit_stmt(0,s,set_istx_stmt,NULL,NULL));
+    if (!visit_stmt(0,s,check_owner_alias,NULL,NULL)) {
         return 0;
     }
     return 1;

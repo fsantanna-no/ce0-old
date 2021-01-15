@@ -974,7 +974,7 @@ int code_native_pre (Stmt* s) {
 }
 
 void code (Stmt* s) {
-    assert(visit_stmt(s,code_native_pre,NULL,NULL));
+    assert(visit_stmt(0,s,code_native_pre,NULL,NULL));
     out (
         "#include <assert.h>\n"
         "#include <stdio.h>\n"

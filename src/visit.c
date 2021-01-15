@@ -41,7 +41,7 @@ int visit_type (Env* env, Type* tp, F_Type ft) {
 
 // 0=error, 1=success
 
-int visit_stmt_ (Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
+int visit_stmt_ (int ord, Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
     switch (s->sub) {
         case STMT_NONE:
         case STMT_NATIVE:
@@ -68,55 +68,48 @@ int visit_stmt_ (Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
             return 1;
 
         case STMT_SEQ:
-            return visit_stmt(s->Seq.s1,fs,fe,ft) && visit_stmt(s->Seq.s2,fs,fe,ft);
+            return visit_stmt(ord,s->Seq.s1,fs,fe,ft) && visit_stmt(ord,s->Seq.s2,fs,fe,ft);
 
         case STMT_IF:
-            return visit_expr(s->env,s->If.tst,fe) && visit_stmt(s->If.true,fs,fe,ft) && visit_stmt(s->If.false,fs,fe,ft);
+            return visit_expr(s->env,s->If.tst,fe) && visit_stmt(ord,s->If.true,fs,fe,ft) && visit_stmt(ord,s->If.false,fs,fe,ft);
 
         case STMT_LOOP:
-            return visit_stmt(s->Loop,fs,fe,ft);
+            return visit_stmt(ord,s->Loop,fs,fe,ft);
 
         case STMT_FUNC:
-            return visit_type(s->env,s->Func.type,ft) && visit_stmt(s->Func.body,fs,fe,ft);
+            return visit_type(s->env,s->Func.type,ft) && visit_stmt(ord,s->Func.body,fs,fe,ft);
 
         case STMT_BLOCK:
-            return visit_stmt(s->Block, fs,fe,ft);
+            return visit_stmt(ord,s->Block, fs,fe,ft);
     }
     assert(0 && "bug found");
 }
 
-#if 0
-int visit_stmt (Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
-    if (fs != NULL) {
-        switch (fs(s)) {
-            case VISIT_ERROR:
-                return 0;
-            case VISIT_CONTINUE:
-                break;
-            case VISIT_BREAK:
-                return 1;
+int visit_stmt (int ord, Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
+    if (ord == 0) {
+        if (fs != NULL) {
+            switch (fs(s)) {
+                case VISIT_ERROR:
+                    return 0;
+                case VISIT_CONTINUE:
+                    break;
+                case VISIT_BREAK:
+                    return 1;
+            }
+        }
+        return visit_stmt_(ord, s, fs, fe, ft);
+    } else {
+        int ret = visit_stmt_(ord, s, fs, fe, ft);
+//printf(">>> visit_stmt %d lin=%ld ret=%d\n", s->sub, s->tk.lin, ret);
+        if (ret != VISIT_CONTINUE) {
+            return ret;
+        }
+        if (fs!=NULL && fs(s)==VISIT_ERROR) {
+            return 0;
+        } else {
+            return 1;
         }
     }
-    return visit_stmt_(s, fs, fe, ft);
-}
-#endif
-
-int visit_stmt (Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
-    int ret = visit_stmt_(s, fs, fe, ft);
-    if (ret != VISIT_CONTINUE) {
-        return ret;
-    }
-    if (fs != NULL) {
-        switch (fs(s)) {
-            case VISIT_ERROR:
-                return 0;
-            case VISIT_CONTINUE:
-                break;
-            case VISIT_BREAK:
-                return 1;
-        }
-    }
-    return 1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
