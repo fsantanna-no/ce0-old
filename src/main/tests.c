@@ -947,7 +947,18 @@ void t_all (void) {
         "    Event: ()\n"
         "}\n"
         "var x: Input = Event ()\n"
-        "var x_: &Input = &x\n"
+        "var x_: \\Input = \\x\n"
+        "var y: Bool = x_\\.Event?\n"
+        "output std y\n"
+    ));
+    assert(all(
+        "(ln 7, col 18): invalid `.´ : expected user type",
+        "type Bool { False: () ; True: () }\n"
+        "type Input {\n"
+        "    Event: ()\n"
+        "}\n"
+        "var x: Input = Event ()\n"
+        "var x_: \\Input = \\x\n"
         "var y: Bool = x_.Event?\n"
         "output std y\n"
     ));
@@ -958,11 +969,11 @@ void t_all (void) {
         "    Any: ()\n"
         "}\n"
         "type Input {\n"
-        "    Event: &Event_\n"
+        "    Event: \\Event_\n"
         "}\n"
         "var e: Event_ = Any\n"
-        "var x: Input = Event &e\n"
-        "var y: Bool = x.Event!.Any?\n"
+        "var x: Input = Event \\e\n"
+        "var y: Bool = x.Event!\\.Any?\n"
         "output std y\n"
     ));
     assert(all(
@@ -972,15 +983,30 @@ void t_all (void) {
         "    Any: ()\n"
         "}\n"
         "type Input {\n"
-        "    Event: (&Event_,())\n"
+        "    Event: (\\Event_,())\n"
         "}\n"
         "var e: Event_ = Any\n"
-        "var x: Input = Event (&e,())\n"
-        "var y: Bool = x.Event!.1.Any?\n"
+        "var x: Input = Event (\\e,())\n"
+        "var y: Bool = x.Event!.1\\.Any?\n"
         "output std y\n"
     ));
 
-    // ALIAS
+    // ALIAS / POINTER
+
+    assert(all(
+        "(ln 3, col 5): invalid assignment to \"y\" : type mismatch",
+        "var x: Int = 10\n"
+        "var y: \\Int = \\x\n"
+        "set y = 10\n"
+        "output std x\n"
+    ));
+    assert(all(
+        "10\n",
+        "var x: Int = 10\n"
+        "var y: \\Int = \\x\n"
+        "set y\\ = 10\n"
+        "output std x\n"
+    ));
     assert(all(
         "True\n",
         "type Bool {\n"
@@ -988,8 +1014,8 @@ void t_all (void) {
         "    True:  ()\n"
         "}\n"
         "var x: Bool = False\n"
-        "var y: &Bool = &x\n"
-        "set y = True\n"
+        "var y: \\Bool = \\x\n"
+        "set y\\ = True\n"
         "output std x\n"
     ));
 
@@ -1015,15 +1041,30 @@ void t_all (void) {
     assert(all(
         "(1,2)\n",
         "var x: (Int,Int) = (1,2)\n"
-        "var y: &(Int,Int) = &x\n"
-        "output std y\n"
+        "var y: \\(Int,Int) = \\x\n"
+        "output std y\\\n"
     ));
     assert(all(
         "1\n",
         "type Tp {\n"
-        "   Sub: &(Int,Int)\n"
+        "   Sub: \\(Int,Int)\n"
         "}\n"
         "output std 1\n"
+    ));
+    assert(all(
+        "(ln 2, col 15): invalid `.´ : expected tuple type",
+        "var x: Int = 1\n"
+        "var y: () = x.1\n"
+    ));
+    assert(all(
+        "(ln 2, col 15): invalid `.´ : index is out of range",
+        "var x: (Int,Int) = (1,2)\n"
+        "var y: () = x.3\n"
+    ));
+    assert(all(
+        "(ln 2, col 5): invalid assignment to \"y\" : type mismatch",
+        "var x: (Int,Int) = (1,2)\n"
+        "var y: () = x.2\n"
     ));
 
     // IF
@@ -1073,23 +1114,23 @@ void t_all (void) {
         "()\n",
         "type Bool { False: () ; True: () }\n"
         "var b : Bool = True()\n"
-        "var c : &Bool = &b\n"
-        "if c.False? {} else { output std() }\n"
+        "var c : \\Bool = \\b\n"
+        "if c\\.False? {} else { output std() }\n"
     ));
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
         "var b : Bool = True()\n"
-        "var c : &Bool = &b\n"
-        "var d : () = c.True!\n"
+        "var c : \\Bool = \\b\n"
+        "var d : () = c\\.True!\n"
         "output std d\n"
     ));
     assert(all(
         "()\n",
         "type Bool { False: () ; True: () }\n"
         "var b : Bool = True()\n"
-        "var c : &Bool = &b\n"
-        "output std c.True!\n"
+        "var c : \\Bool = \\b\n"
+        "output std c\\.True!\n"
     ));
     // DISCRIMINATOR
     assert(all(
@@ -1164,12 +1205,12 @@ void t_all (void) {
     ));
     assert(all(
         "2\n",
-        "func f : &Int -> () {\n"
+        "func f : \\Int -> () {\n"
         "   set arg = _(*arg+1)\n"
         "   return ()\n"
         "}\n"
         "var x: Int = 1\n"
-        "call f &x\n"
+        "call f \\x\n"
         "output std x\n"
     ));
     assert(all(
@@ -1178,12 +1219,12 @@ void t_all (void) {
         "    False: ()\n"
         "    True:  ()\n"
         "}\n"
-        "func f : &Bool -> () {\n"
+        "func f : \\Bool -> () {\n"
         "   set arg = arg\n"
         "   return ()\n"
         "}\n"
         "var x: Bool = True\n"
-        "call f &x\n"
+        "call f \\x\n"
         "output std x\n"
     ));
     assert(all(
@@ -1199,12 +1240,12 @@ void t_all (void) {
         "        return True\n"
         "    }\n"
         "}\n"
-        "func f : &Bool -> () {\n"
+        "func f : \\Bool -> () {\n"
         "   set arg = True\n"
         "   return ()\n"
         "}\n"
         "var x: Bool = False\n"
-        "call f &x\n"
+        "call f \\x\n"
         "output std x\n"
     ));
     // ENV
@@ -1247,7 +1288,7 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "var n: Nat = $Nat\n"
-        "var n_: &Nat = &n\n"
+        "var n_: \\Nat = \\n\n"
         "output std n_\n"
     ));
     assert(all(
@@ -1256,7 +1297,7 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "var n: Nat = Succ $Nat\n"
-        "var n_: &Nat = &n\n"
+        "var n_: \\Nat = \\n\n"
         "output std n_\n"
     ));
     assert(all(
@@ -1269,7 +1310,7 @@ void t_all (void) {
         "}\n"
         "var n: Nat = Succ $Nat\n"
         "var x: XNat = XNat1 n\n"
-        "var x_: &XNat = &x\n"
+        "var x_: \\XNat = \\x\n"
         "output std x_\n"
     ));
     assert(all(
@@ -1278,7 +1319,7 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "var c: Nat = Succ $Nat\n"
-        "output std &c\n"
+        "output std \\c\n"
     ));
     assert(all(
         "Succ (Succ ($))\n",
@@ -1286,7 +1327,7 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "var c: Nat = Succ Succ $Nat\n"
-        "output std &c\n"
+        "output std \\c\n"
     ));
     assert(all(
         "Succ ($)\n",
@@ -1294,7 +1335,7 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "var c: Nat = Succ Succ $Nat\n"
-        "output std &c.Succ!\n"
+        "output std \\c.Succ!\n"
     ));
     assert(all(
         "Succ ($)\n",
@@ -1303,7 +1344,7 @@ void t_all (void) {
         "}\n"
         "var d: Nat = Succ $Nat\n"
         "var c: Nat = Succ d\n"
-        "var b: &Nat = &c.Succ!\n"
+        "var b: \\Nat = \\c.Succ!\n"
         "output std b\n"
     ));
     assert(all(
@@ -1313,9 +1354,9 @@ void t_all (void) {
         "}\n"
         "var d: Nat = Succ $Nat\n"
         "var c: Nat = $Nat\n"
-        "var b: &Nat = &c\n"
-        "var a: (Nat,&Nat) = (d,b)\n"       // precisa desalocar o d
-        "var a_: &(Nat,&Nat) = &a\n"
+        "var b: \\Nat = \\c\n"
+        "var a: (Nat,\\Nat) = (d,b)\n"       // precisa desalocar o d
+        "var a_: \\(Nat,\\Nat) = \\a\n"
         "output std a_\n"
     ));
     assert(all(
@@ -1324,7 +1365,7 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "var a: (Nat,Nat) = ($Nat,$Nat)\n"
-        "var b: &Nat = &a.2\n"
+        "var b: \\Nat = \\a.2\n"
         "output std b\n"
     ));
     assert(all(
@@ -1344,7 +1385,7 @@ void t_all (void) {
         "var c: Nat = Succ $Nat\n"
         "var a: (Nat,Nat) = ($Nat,c)\n"
         "var b: (Nat,Nat) = a\n"        // tx a
-        "var d: &Nat = &a.2\n"          // no: a is txed
+        "var d: \\Nat = \\a.2\n"          // no: a is txed
         "output std d\n"
     ));
     assert(all(
@@ -1355,7 +1396,7 @@ void t_all (void) {
         "var c: Nat = Succ $Nat\n"
         "var a: (Nat,Nat) = ($Nat,c)\n"
         "var b: Nat = a.2\n"            // zera a.2 (a se mantem sem tx)
-        "var d: &Nat = &a.2\n"
+        "var d: \\Nat = \\a.2\n"
         "output std d\n"                 // ok: $Nat
     ));
     assert(all(
@@ -1367,7 +1408,7 @@ void t_all (void) {
         "var e: Nat = Succ $Nat\n"
         "var a: (Nat,Nat) = (e,c)\n"
         "var b: Nat = a.2\n"
-        "var d: &Nat = &a.1\n"
+        "var d: \\Nat = \\a.1\n"
         "output std d\n"             // ok: e
     ));
     assert(all(
@@ -1377,7 +1418,7 @@ void t_all (void) {
         "}\n"
         "var d: Nat = Succ $Nat\n"
         "var c: Nat = Succ d\n"
-        "var b: &Nat = &c.Succ!\n"      // borrow de c
+        "var b: \\Nat = \\c.Succ!\n"      // borrow de c
         "var e: Nat = c\n"              // erro
     ));
     assert(all(
@@ -1388,7 +1429,7 @@ void t_all (void) {
         "var d: Nat = Succ $Nat\n"
         "var c: Nat = Succ d\n"
         "var b: Nat = c.Succ!\n"
-        "var e: &Nat = &c\n"
+        "var e: \\Nat = \\c\n"
         "output std e\n"
     ));
     assert(all(
@@ -1403,7 +1444,7 @@ void t_all (void) {
         "var c: Nat = Succ d\n"
         "var i: XNat = XNat1 c\n"
         "var j: Nat = i.XNat1!\n"
-        "var k: &XNat = &i\n"
+        "var k: \\XNat = \\i\n"
         "output std k\n"
     ));
     assert(all(
@@ -1422,7 +1463,7 @@ void t_all (void) {
         "var i: XNat = XNat1 c\n"
         "var j: YNat = YNat1 i\n"
         "var k: XNat = j.YNat1!\n"
-        "var k_: &XNat = &k\n"
+        "var k_: \\XNat = \\k\n"
         "output std k_\n"
     ));
     assert(all(
@@ -1433,7 +1474,7 @@ void t_all (void) {
         "var a: (Nat,Nat) = ($Nat,$Nat)\n"
         "var b: (Nat,(Nat,Nat)) = ($Nat,a)\n"
         "var c: Nat = b.1\n"
-        "var c_: &Nat = &c\n"
+        "var c_: \\Nat = \\c\n"
         "output std c_\n"
     ));
     assert(all(
@@ -1476,7 +1517,7 @@ void t_all (void) {
         "}\n"
         "var a: Nat = Succ $Nat\n"
         "var n: Nat = Succ a\n"
-        "var n_: &Nat = &n\n"
+        "var n_: \\Nat = \\n\n"
         "output std n_\n"
     ));
     assert(all(
@@ -1486,7 +1527,7 @@ void t_all (void) {
         "}\n"
         "var a: Nat = Succ $Nat\n"
         "var n: Nat = Succ a\n"
-        "var n_: &Nat = &n\n"
+        "var n_: \\Nat = \\n\n"
         "output std n_\n"
     ));
     assert(all(
@@ -1495,7 +1536,7 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "var x: Nat = $Nat\n"
-        "var x_: &Nat = &x\n"
+        "var x_: \\Nat = \\x\n"
         "output std x_\n"
     ));
     assert(all(
@@ -1504,7 +1545,7 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "var n: Nat = Succ $Nat\n"
-        "var n_: &Nat = &n\n"
+        "var n_: \\Nat = \\n\n"
         "output std n_\n"
     ));
     assert(all(
@@ -1517,7 +1558,7 @@ void t_all (void) {
         "    return x\n"
         "}\n"
         "var v: Nat = f()\n"
-        "var v_: &Nat = &v\n"
+        "var v_: \\Nat = \\v\n"
         "output std v_\n"
     ));
     assert(all(
@@ -1531,7 +1572,7 @@ void t_all (void) {
         "    return b\n"
         "}\n"
         "var y: Nat = f()\n"
-        "var y_: &Nat = &y\n"
+        "var y_: \\Nat = \\y\n"
         "output std y_\n"
     ));
     assert(all(
@@ -1545,7 +1586,7 @@ void t_all (void) {
         "    return b\n"
         "}\n"
         "var y: Nat = f()\n"
-        "var y_: &Nat = &y\n"
+        "var y_: \\Nat = \\y\n"
         "output std y_\n"
     ));
     assert(all(
@@ -1559,7 +1600,7 @@ void t_all (void) {
         "    return b\n"
         "}\n"
         "var y: Nat = f()\n"
-        "var y_: &Nat = &y\n"
+        "var y_: \\Nat = \\y\n"
         "output std y_\n"
     ));
     assert(all(
@@ -1573,7 +1614,7 @@ void t_all (void) {
         "    return b\n"
         "}\n"
         "var y: Nat = f()\n"
-        "var y_: &Nat = &y\n"
+        "var y_: \\Nat = \\y\n"
         "output std y_\n"
     ));
     assert(all(
@@ -1590,7 +1631,7 @@ void t_all (void) {
         "}\n"
         "var a: Nat = Succ $Nat\n"
         "var y: Nat = len a\n"
-        "var y_: &Nat = &y\n"
+        "var y_: \\Nat = \\y\n"
         "output std y_\n"
     ));
     assert(all(
@@ -1599,7 +1640,7 @@ void t_all (void) {
         "    Succ: Nat\n"
         "}\n"
         "var n: Nat = $Nat\n"
-        "output std &n\n"
+        "output std \\n\n"
         "var z: Nat = n\n"
     ));
     assert(all(
@@ -1611,18 +1652,18 @@ void t_all (void) {
         "type rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
-        "func len: &Nat -> Nat {\n"
+        "func len: \\Nat -> Nat {\n"
         "    if arg.$Nat? {\n"
         "        return $Nat\n"
         "    } else {\n"
-        "        var x: &Nat = arg.Succ!\n"
-        "        var n: Nat = len &arg.Succ!\n"
+        "        var x: \\Nat = arg.Succ!\n"
+        "        var n: Nat = len \\arg.Succ!\n"
         "        return Succ n\n"
         "    }\n"
         "}\n"
         "var x: Nat = Succ Succ Succ $Nat\n"
-        "var y: Nat = len &x\n"
-        "output std &y\n"
+        "var y: Nat = len \\x\n"
+        "output std \\y\n"
     ));
     assert(all(
         "Succ (Succ ($))\n",
@@ -1631,7 +1672,7 @@ void t_all (void) {
         "}\n"
         "var x: Nat = Succ Succ Succ $Nat\n"
         "var y: Nat = x.Succ!\n"
-        "output std &y\n"
+        "output std \\y\n"
     ));
     assert(all(
         "Succ (Succ (Succ ($)))\n",
@@ -1651,7 +1692,7 @@ void t_all (void) {
         "}\n"
         "var x: Nat = Succ Succ Succ $Nat\n"
         "var y: Nat = len x\n"
-        "output std &y\n"
+        "output std \\y\n"
     ));
     assert(all(
         "Item (1, Item (2, $))\n",
@@ -1659,7 +1700,7 @@ void t_all (void) {
         "    Item: (Int,List)\n"
         "}\n"
         "var x: List = Item (1, Item (2, $List))\n"
-        "output std &x\n"
+        "output std \\x\n"
     ));
 
     // OWNERSHIP / BORROWING
@@ -1678,7 +1719,7 @@ void t_all (void) {
         "    Succ: Nat\n"
         "}\n"
         "var x: Nat = $Nat   -- owner\n"
-        "var z: &Nat = &x    -- borrow\n"
+        "var z: \\Nat = \\x    -- borrow\n"
         "output std z\n"
     ));
     assert(all(
@@ -1687,7 +1728,7 @@ void t_all (void) {
         "    Succ: Nat\n"
         "}\n"
         "var x: Nat = $Nat   -- owner\n"
-        "var z: &Nat = &x    -- borrow\n"
+        "var z: \\Nat = \\x    -- borrow\n"
         "var y: Nat = x      -- error: transfer while borrow is active\n"
     ));
     assert(all(
@@ -1697,10 +1738,10 @@ void t_all (void) {
         "}\n"
         "var x: Nat = Succ $Nat    -- owner\n"
         "{\n"
-        "    var z: &Nat = &x -- borrow\n"
+        "    var z: \\Nat = \\x -- borrow\n"
         "}\n"
         "var y: Nat = x       -- ok: borrow is inactive\n"
-        "var y_: &Nat = &y\n"
+        "var y_: \\Nat = \\y\n"
         "output std y_\n"
     ));
     assert(all(
@@ -1713,7 +1754,7 @@ void t_all (void) {
         "    var z: Nat = x         -- tx: new owner\n"
         "}\n"
         "var y: Nat = x             -- no: x->z\n"
-        "var y_: &Nat = &y\n"
+        "var y_: \\Nat = \\y\n"
         "output std y_\n"
     ));
     assert(all(
@@ -1721,10 +1762,10 @@ void t_all (void) {
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
-        "func f: () -> &List {\n"
+        "func f: () -> \\List {\n"
         "    var l: List = $List   -- `l` is the owner\n"
-        "    var a: &List = &l\n"
-        "    var b: &List = a\n"
+        "    var a: \\List = \\l\n"
+        "    var b: \\List = a\n"
         "    return b             -- error: cannot return alias to deallocated value\n"
         "}\n"
     ));
@@ -1736,7 +1777,7 @@ void t_all (void) {
         "var a: List = Item Item $List\n"
         "var b: List = a.Item!.Item!\n"
         "var c: List = a.Item!\n"
-        "output std &c\n"
+        "output std \\c\n"
     ));
     assert(all(
         "Succ ($)\n",
@@ -1747,16 +1788,16 @@ void t_all (void) {
         "type rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
-        "func add: (Nat,&Nat) -> Nat {\n"
+        "func add: (Nat,\\Nat) -> Nat {\n"
         "        var x: Nat = arg.1\n"
         "        return x\n"
         "}\n"
         "var x: Nat = Succ $Nat\n"
         "var y: Nat = $Nat\n"
-        "var y_: &Nat = &y\n"
-        "var a: (Nat,&Nat) = (x,y_)\n"
+        "var y_: \\Nat = \\y\n"
+        "var a: (Nat,\\Nat) = (x,y_)\n"
         "var z: Nat = add a\n"
-        "var z_: &Nat = &z\n"
+        "var z_: \\Nat = \\z\n"
         "output std z_\n"
     ));
     assert(all(
@@ -1778,7 +1819,7 @@ void t_all (void) {
         "var x: Nat = Succ $Nat\n"
         "var a: XNat = XNat1 x\n"
         "var z: Nat = add a\n"
-        "var z_: &Nat = &z\n"
+        "var z_: \\Nat = \\z\n"
         "output std z_\n"
     ));
 
@@ -1799,9 +1840,9 @@ void t_all (void) {
         "    Succ: Nat\n"
         "}\n"
         "var x: Nat = Succ $Nat\n"
-        "var x_: &Nat = &x\n"
+        "var x_: \\Nat = \\x\n"
         "var y: Nat = clone x_\n"
-        "var y_: &Nat = &y\n"
+        "var y_: \\Nat = \\y\n"
         "output std y_\n"
     ));
 
@@ -1835,7 +1876,7 @@ void t_all (void) {
         "var l1: List = Item Item $List\n"
         "var l2: List = Item $List\n"
         "set l2 = l1\n"
-        "output std &l2\n"
+        "output std \\l2\n"
     ));
     assert(all(
         "(ln 10, col 16): invalid access to \"l1\" : ownership was transferred (ln 9)",
@@ -1843,12 +1884,12 @@ void t_all (void) {
         "    Item: List\n"
         "}\n"
         "type X {\n"
-        "    X1: &List\n"
+        "    X1: \\List\n"
         "}\n"
         "var l1: List = $List\n"
         "var l2: List = $List\n"
         "set l2 = l1\n"
-        "var x: X = X1 &l1\n"
+        "var x: X = X1 \\l1\n"
     ));
     assert(all(
         "(ln 7, col 13): invalid access to \"l1\" : ownership was transferred (ln 6)",
@@ -1858,7 +1899,7 @@ void t_all (void) {
         "var l1: List = $List\n"
         "var l2: List = $List\n"
         "set l2 = l1\n"
-        "output std &l1\n"
+        "output std \\l1\n"
     ));
     assert(all(
         "(ln 8, col 14): invalid assignment : cannot hold local alias \"l2\" (ln 7)",
@@ -1866,10 +1907,10 @@ void t_all (void) {
         "    Item: List\n"
         "}\n"
         "var l1: List = $List\n"
-        "var r: &List = &l1\n"
+        "var r: \\List = \\l1\n"
         "{\n"
         "    var l2: List = $List\n"
-        "    set r = &l2  -- error\n"
+        "    set r = \\l2  -- error\n"
         "}\n"
     ));
 //puts("-=-=-=-=-");
@@ -1944,7 +1985,7 @@ void t_all (void) {
         "var y: Bool = False ()\n"
         "var xy: (Nat,Bool) = (x,y)\n"
         "var z: (Nat,Bool) = clone xy\n"
-        "var z_: &(Nat,Bool) = &z\n"
+        "var z_: \\(Nat,Bool) = \\z\n"
         "output std z_\n"
     ));
 #endif

@@ -1,6 +1,6 @@
 var y: Int = 10
-var x: &Int = &y
-set x = z
+var x: \Int = \y
+set x\ = z
 set x = &z
 
 

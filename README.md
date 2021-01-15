@@ -50,7 +50,7 @@ The following symbols are valid:
     =           -- variable assignment
     ,           -- tuple separator
     .           -- tuple index, type predicate & discriminator
-    &           -- alias prefix
+    \           -- pointer type, upref & dnref operation
     $           -- null subtype
     !           -- type discriminator
     ?           -- type predicate, unknown initialization
@@ -121,11 +121,10 @@ A user type is a [new type](TODO) introduced by the programmer.
 A user type holds values created from [subtype constructors](TODO) also
 introduced by the programmer.
 
-A user type identifier starts with an uppercase letter and might be prefixed
-with an ampersand `&` if an alias:
+A user type identifier starts with an uppercase letter:
 
 ```
-List    Int     Tree
+List    Int    Tree
 ```
 
 The type `Int` is a primitive type that holds [integer values](TODO).
@@ -150,12 +149,12 @@ output types separated by an arrow `->`:
 (List,List) -> ()
 ```
 
-## Alias
+## Pointer
 
-An alias type can be applied to any other type with the prefix ampersand `&`:
+A pointer type can be applied to any other type with the prefix backslash `\`:
 
 ```
-&Int    &List
+\Int    \List
 ```
 
 # 3. Expressions
@@ -290,13 +289,16 @@ x = Professor
 b = x.Professor?    -- yields True
 ```
 
-## Alias
+## Pointer up-reference and down-reference
 
-An alias is a [reference](TODO) to another value acquired with the prefix
-ampersand `&`:
+A pointer holds the address of a variable with a value.
+An *upref* acquires the address of a variable with the prefix backslash `\`.
+A *dnref* recovers the value given an address with the sufix backslash `\`:
 
 ```
-var y: &List = &x    -- alias to `x`
+var x: Int = 10
+var y: \Int = \x    -- acquires the address of `x`
+output std y\       -- recovers the value of `x`
 ```
 
 # 4. Statements
@@ -449,7 +451,7 @@ native pre _{
 # 5. Syntax
 
 ```
-Stmt ::= `var´ VAR `:´ [`&´] Type       -- variable declaration     var x: () = ()
+Stmt ::= `var´ VAR `:´ [`\´] Type       -- variable declaration     var x: () = ()
             `=´ (Expr | `?´)
       |  `type´ [`rec´] USER `{`        -- user type declaration    type rec List {
             { USER `:´ Type [`;´] }     --    subtypes                 Cons: List
@@ -473,7 +475,8 @@ Expr ::= `(´ `)´                        -- unit value               ()
       |  NATIVE                         -- native expression        _printf
       |  `$´ USER                       -- null constructor         $List
       |  VAR                            -- variable identifier      i
-      |  `&´ Expr                       -- alias                    &x
+      |  `\´ Expr                       -- upref                    \x
+      |  Expr `\´                       -- dnref                    x\
       |  `(´ Expr {`,´ Expr} `)´        -- tuple                    (x,())
       |  USER [Expr]                    -- constructor              True ()
       |  [`call´ | `input´ | `output´]  -- call                     f(x)
@@ -528,10 +531,10 @@ value.
 Deallocation occurs automatically when the scope of the owner terminates.
 Ownership can be transferred by reassigning the value to another assignee,
 which can live in another scope.
-A value can also be shared with an alias without transferring ownership.
+A value can also be shared with a pointer without transferring ownership.
 
-*Ce* ensures that deallocation occurs exactly once at the very moment when there
-are no more active references to the value.
+*Ce* ensures that deallocation occurs exactly once at the very moment when
+there are no more active pointers to the value.
 In particular the following cases must be prevented:
 
 - Memory leak: when a value cannot be referenced but is not deallocated and remains in memory.
@@ -566,7 +569,7 @@ type rec List {         -- a list is either empty ($List) or
 var l: List = Item (1, Item (2,$List))   -- list `1 -> 2 -> null`
 ```
 
-A variable of a recursive type holds a reference to its value, since
+A variable of a recursive type holds a *strong reference* to its value, since
 constructors are always dynamically allocated in the heap:
 
 ```
@@ -590,24 +593,27 @@ automatically deallocated when the enclosing scope terminates:
 -- scope terminates, memory pointed by `x` is deallocated
 ```
 
-A variable can be aliased or *borrowed* with the prefix ampersand `&`.
-In this case, both the owner and the alias refer to the same allocated value:
+A variable can be pointed or *borrowed* with the prefix backslash `\`.
+In this case, both the owner and the pointer refer to the same allocated value:
 
 ```
 var x: List  = Item(1, $List)
-var y: &List = &x    |
+var y: \List = \x    |
     |              __|__
-   / \            /     \
+   / \   ref      /     \
   | x |--------> |   1   | <-- actual allocated memory with the linked list
    \_/       /   |  null |
     |       /     \_____/
     |      /         |
   stack   /         heap
-    |    /
+    |    / ptr
    / \  /
   | y |-
    \_/
 ```
+
+We distinguish a strong reference from a pointer in the sense that the former
+owns the value and does not use [pointer operations](TODO) to manipulate it.
 
 ## Ownership and Borrowing
 
@@ -618,12 +624,12 @@ of rules:
     - The owner is a variable that lives in the stack and reaches the allocated value.
 2. When the owner goes out of scope, the allocated memory is automatically
    deallocated.
-3. An alias cannot escape or survive outside the scope of its owner.
+3. A pointer cannot escape or survive outside the scope of its owner.
 4. Ownership can be transferred in three ways:
     - Assigning the owner to another variable, which becomes the new owner (e.g. `new = old`).
     - Passing the owner to a function call argument, which becomes the new owner (e.g. `f(old)`).
     - Returning the owner from a function call to an assignee, which becomes the new owner (e.g. `new = f()`).
-5. Ownership cannot be transferred with an active alias in scope.
+5. Ownership cannot be transferred with an active pointer in scope.
 6. The original owner is invalidated after transferring its ownership.
 
 All rules are verified at compile time, i.e., there are no runtime checks or
@@ -644,7 +650,7 @@ rejects further accesses to it:
 ```
 
 Ownership transfer ensures that rule 1 is preserved.
-If ownership were shared among multiple references, deallocation in rule 2
+If ownership were shared among multiple pointers, deallocation in rule 2
 would be ambiguous or cause a double free, since owners could be in different
 scopes:
 
@@ -692,48 +698,48 @@ a value to a narrower scope for temporary manipulation:
 
 ```
 var l: List = ...       -- `l` is the owner
-... length(&l) ...      -- `l` is borrowed on call and unborrowed on return
+... length(\l) ...      -- `l` is borrowed on call and unborrowed on return
 ... l ...               -- `l` is still the owner
 
-func length: (&List -> Int) {
-    ... -- use alias, which is destroyed on termination
+func length: (\List -> Int) {
+    ... -- use pointer, which is destroyed on termination
 }
 ```
 
-Rule 3 states that an alias cannot escape or survive outside the scope of its
+Rule 3 states that a pointer cannot escape or survive outside the scope of its
 owner:
 
 ```
-func f: () -> &List {
+func f: () -> \List {
     var l: List = ...       -- `l` is the owner
-    return &l               -- error: cannot return alias to deallocated value
+    return \l               -- error: cannot return pointer to deallocated value
 }
 ```
 
 ```
-var x: &List = ...          -- outer scope
+var x: \List = ...          -- outer scope
 {
     var l2: List = ...
-    set x = &l2             -- error: cannot hold reference from inner scope
+    set x = \l2             -- error: cannot hold pointer from inner scope
 }
 ... x ...                   -- use-after-free
 ```
 
-If surviving aliases were allowed, they would refer to deallocated values,
+If surviving pointers were allowed, they would refer to deallocated values,
 resulting in a dangling reference (i.e, *use-after-free*).
 
-Rule 5 states that if there is an active alias to a value, then its ownership
+Rule 5 states that if there is an active pointer to a value, then its ownership
 cannot be transferred:
 
 ```
 var l: List = ...       -- owner
-var x: &List = &l       -- active alias
-call g(l)               -- error: cannot transfer with active alias
+var x: \List = \l       -- active pointer
+call g(l)               -- error: cannot transfer with active pointer
 ... x ...               -- use-after-free
 ```
 
 This rule prevents that a transfer eventually deallocates a value that is still
-reachable through an active alias (i.e, *use-after-free*).
+reachable through an active pointer (i.e, *use-after-free*).
 
 <!--
 All dependencies of an assignment are tracked and all constructors are

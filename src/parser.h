@@ -14,7 +14,8 @@ typedef enum {
     EXPR_NULL,
     EXPR_INT,
     EXPR_VAR,
-    EXPR_ALIAS,
+    EXPR_UPREF,
+    EXPR_DNREF,
     EXPR_TUPLE,
     EXPR_INDEX,
     EXPR_CALL,
@@ -43,7 +44,7 @@ typedef enum {
 
 typedef struct Type {
     TYPE sub;
-    int isalias;
+    int isptr;
     union {
         Tk Native;      // TYPE_NATIVE
         Tk User;        // TYPE_USER
@@ -74,7 +75,8 @@ typedef struct Expr {
         Tk Native;      // EXPR_NATIVE
         Tk Null;        // EXPR_NULL
         Tk Int;         // EXPR_INT
-        struct Expr* Alias;  // EXPR_ALIAS
+        struct Expr* Upref;  // EXPR_UPREF
+        struct Expr* Dnref;  // EXPR_DNREF
         struct {        // EXPR_VAR
             Tk tk;
             TXBW txbw;  // evaluate var ownership accesses

@@ -45,7 +45,7 @@ int parser_type (Type** ret) {
     assert(tp != NULL);
     *ret = tp;
 
-    int isalias = accept('&');
+    int isalias = accept('\\');
 
 // TYPE_UNIT
     if (accept(TK_UNIT)) {
@@ -150,13 +150,13 @@ int parser_expr_ (Expr** ret)
     } else if (accept(TX_VAR)) {
         *e = (Expr) { ALL.nn++, EXPR_VAR, 0, .Var={ALL.tk0,NO} };
 
-// ALIAS
-    } else if (accept('&')) {
-        Expr* alias;
-        if (!parser_expr(&alias,0)) {
+// EXPR_UPREF
+    } else if (accept('\\')) {
+        Expr* dnref;
+        if (!parser_expr(&dnref,0)) {
             return 0;
         }
-        *e = (Expr) { ALL.nn++, EXPR_ALIAS, 0, .Alias=alias };
+        *e = (Expr) { ALL.nn++, EXPR_UPREF, 0, .Upref=dnref };
 
 // EXPR_PARENS / EXPR_TUPLE
     } else if (accept('(')) {
@@ -267,6 +267,10 @@ int parser_expr (Expr** ret, int canpre) {
             } else {
                 return err_expected("index or subtype");
             }
+
+        } else if (accept('\\')) {
+// EXPR_DNREF
+            *new = (Expr) { ALL.nn++, EXPR_DNREF, 0, .Dnref=cur };
 
 // EXPR_CALL
         } else if (parser_expr(&arg,0)) {

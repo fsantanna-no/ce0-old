@@ -130,13 +130,25 @@ Type* env_expr_to_type (Env* env, Expr* e) {
             return &tp;
         }
 
-        case EXPR_ALIAS: {
-            Type* tp = env_expr_to_type(env, e->Alias);
+        case EXPR_UPREF: {
+            Type* tp = env_expr_to_type(env, e->Upref);
             assert(tp != NULL);
+            assert(!tp->isptr);
             Type* ret = malloc(sizeof(Expr));
             assert(ret != NULL);
             *ret = *tp;
-            ret->isalias = 1;
+            ret->isptr = 1;
+            return ret;
+        }
+
+        case EXPR_DNREF: {
+            Type* tp = env_expr_to_type(env, e->Upref);
+            assert(tp != NULL);
+            assert(tp->isptr);
+            Type* ret = malloc(sizeof(Expr));
+            assert(ret != NULL);
+            *ret = *tp;
+            ret->isptr = 0;
             return ret;
         }
 
@@ -161,7 +173,8 @@ Type* env_expr_to_type (Env* env, Expr* e) {
                     Type* ret = malloc(sizeof(Type));
                     assert(ret != NULL);
                     *ret = *env_expr_to_type(env, e->Call.arg);
-                    ret->isalias = 0;
+assert(!ret->isptr);
+                    ret->isptr = 0;
                     return ret;
                 } else {
                     return tp->Func.out;
@@ -226,8 +239,8 @@ Type* env_expr_to_type (Env* env, Expr* e) {
                 return &Type_Unit;
             }
             Type* tp = env_sub_id_to_user_type(env, e->Disc.subtype.val.s);
-            //assert(!tp->isalias && "bug found : `&´ inside subtype");
-            if (!val->isalias) {
+            //assert(!tp->isptr && "bug found : `&´ inside subtype");
+            if (!val->isptr) {
                 return tp;
             } else if (!env_type_ishasrec(env,tp,0)) {
                 // only keep & if sub hasalloc:
@@ -238,7 +251,7 @@ Type* env_expr_to_type (Env* env, Expr* e) {
                 Type* ret = malloc(sizeof(Type));
                 assert(ret != NULL);
                 *ret = *tp;
-                ret->isalias = 1;
+                ret->isptr = 1;
                 return ret;
             }
             assert(0 && "bug found");
@@ -265,7 +278,7 @@ int env_type_hasrec (Env* env, Type* tp, int okalias) {
     return (!env_type_isrec(env,tp,0) && aux(env,tp,okalias));
 
     int aux (Env* env, Type* tp, int okalias) {
-        if (!okalias && tp->isalias) {
+        if (!okalias && tp->isptr) {
             return 0;
         }
         switch (tp->sub) {
@@ -301,7 +314,7 @@ int env_type_hasrec (Env* env, Type* tp, int okalias) {
 }
 
 int env_type_isrec (Env* env, Type* tp, int okalias) {
-    if (!okalias && tp->isalias) {
+    if (!okalias && tp->isptr) {
         return 0;
     }
     switch (tp->sub) {
@@ -542,7 +555,7 @@ int type_is_sup_sub (Type* sup, Type* sub, int isset) {
     if (sup->sub != sub->sub) {
         return 0;   // different TYPE_xxx
     }
-    if (!isset && sup->isalias!=sub->isalias) {
+    if (sup->isptr != sub->isptr) {
         return 0;
     }
     switch (sup->sub) {
@@ -577,16 +590,46 @@ int check_types_expr (Env* env, Expr* e) {
         case EXPR_TUPLE:
         case EXPR_NULL:
         case EXPR_INT:
-        case EXPR_ALIAS:
+        case EXPR_UPREF:
             break;
 
-        case EXPR_INDEX:
-        case EXPR_DISC:
-        case EXPR_PRED:
-            TODO("TODO [check_types]: EXPR_INDEX/EXPR_DISC/EXPR_PRED\n");
-            // TODO: check if e->tuple is really a tuple and that e->index is in range
-            TODO("TODO [check_types]: (x,y,z).1\n");
+        case EXPR_DNREF: {
+            Type* tp = env_expr_to_type(env, e->Dnref);
+            if (!tp->isptr) {
+// TODO: ALL.tk0
+                return err_message(&ALL.tk0, "invalid `\\´ : expected pointer type");
+            }
             break;
+        }
+
+        case EXPR_INDEX: {
+            Type* tp = env_expr_to_type(env, e->Index.val);
+            if (tp->sub!=TYPE_TUPLE || tp->isptr) {
+                return err_message(&e->Index.index, "invalid `.´ : expected tuple type");
+            }
+            if (0>e->Index.index.val.n || e->Index.index.val.n>tp->Tuple.size) {
+                return err_message(&e->Index.index, "invalid `.´ : index is out of range");
+            }
+            break;
+        }
+
+        case EXPR_DISC: {
+            Type* tp = env_expr_to_type(env, e->Disc.val);
+            if (tp->sub!=TYPE_USER || tp->isptr) {
+                return err_message(&e->Index.index, "invalid `.´ : expected user type");
+            }
+// TODO: check if user type has subtype
+            break;
+        }
+
+        case EXPR_PRED: {
+            Type* tp = env_expr_to_type(env, e->Pred.val);
+            if (tp->sub!=TYPE_USER || tp->isptr) {
+                return err_message(&e->Index.index, "invalid `.´ : expected user type");
+            }
+// TODO: check if user type has subtype
+            break;
+        }
 
         case EXPR_CALL: {
             Type* func = env_expr_to_type(env, e->Call.func);
@@ -646,8 +689,9 @@ int check_types_stmt (Stmt* s) {
         case STMT_SET:
             if (!type_is_sup_sub(env_expr_to_type(s->env,s->Set.dst), env_expr_to_type(s->env,s->Set.src), 1)) {
                 char err[512];
-                sprintf(err, "invalid assignment to \"%s\" : type mismatch", s->Var.tk.val.s);
-                return err_message(&s->Var.tk, err);
+                assert(s->Set.dst->sub == EXPR_VAR);
+                sprintf(err, "invalid assignment to \"%s\" : type mismatch", s->Set.dst->Var.tk.val.s);
+                return err_message(&s->Set.dst->Var.tk, err);
             }
             return 1;
 
@@ -674,8 +718,10 @@ int check_types_stmt (Stmt* s) {
 
 Expr* expr_leftmost (Expr* e) {
     switch (e->sub) {
-        case EXPR_ALIAS:
-            return expr_leftmost(e->Alias);
+        case EXPR_UPREF:
+            return expr_leftmost(e->Upref);
+        case EXPR_DNREF:
+            return expr_leftmost(e->Dnref);
         case EXPR_INDEX:
             return expr_leftmost(e->Index.val);
         case EXPR_DISC:
@@ -686,7 +732,7 @@ Expr* expr_leftmost (Expr* e) {
 }
 
 void set_txbx (Env* env, Expr* E, int notx, int nobw) {
-    Type* tp = env_expr_to_type(env, (E->sub==EXPR_ALIAS ? E->Alias : E));
+    Type* tp = env_expr_to_type(env, (E->sub==EXPR_UPREF ? E->Upref : E));
     assert(tp != NULL);
     if (env_type_ishasrec(env,tp,0)) {
         if (!notx) {
@@ -697,10 +743,10 @@ void set_txbx (Env* env, Expr* E, int notx, int nobw) {
         assert(left != NULL);
         if (left->sub == EXPR_VAR) {
             //left->Var.txbw = NO; (dont set explicitly to avoid unset previous set)
-            if (E->sub==EXPR_ALIAS && !nobw) {
+            if (E->sub==EXPR_UPREF && !nobw) {
                 left->Var.txbw = BW;
             }
-            if (E->sub!=EXPR_ALIAS && E==left && !notx) { // TX only for root vars (E==left)
+            if (E->sub!=EXPR_UPREF && E==left && !notx) { // TX only for root vars (E==left)
                 left->Var.txbw = TX;
             }
         }
@@ -711,8 +757,8 @@ int set_istx_expr (Env* env, Expr* e, int notx, int nobw) {
     set_txbx(env, e, notx, nobw);
 
     switch (e->sub) {
-        case EXPR_ALIAS:
-            set_istx_expr(env, e->Alias, 1, 1);
+        case EXPR_UPREF:
+            set_istx_expr(env, e->Upref, 1, 1);
             break;
 
         case EXPR_TUPLE:
@@ -940,14 +986,16 @@ int check_owner_alias (Stmt* S) {
         int alias_escape (void) {
             switch (s->sub) {
                 case STMT_VAR: {    // track all aliases to S
-                    if (!s->Var.type->isalias) {
+assert(!s->Var.type->isptr);
+                    if (!s->Var.type->isptr) {
                         break;
                     }
 
                     // var S: T = ...
                     // var s: &T = &y;      <-- if y reaches S, so does s
                     Type* tp = env_expr_to_type(s->env, s->Var.init);
-                    assert(tp->isalias);
+assert(!tp->isptr);
+                    assert(tp->isptr);
 
                     // get "var" being aliased
                     Tk* var = NULL;
@@ -955,7 +1003,7 @@ int check_owner_alias (Stmt* S) {
                         case EXPR_VAR:
                             var = &s->Var.init->Var.tk;
                             break;
-                        case EXPR_ALIAS:
+                        case EXPR_UPREF:
                         case EXPR_INDEX:
                         case EXPR_DISC: {
                             Expr* left = expr_leftmost(s->Var.init);
@@ -993,7 +1041,8 @@ int check_owner_alias (Stmt* S) {
 
                 case STMT_SET: {
                     Type* tp = env_expr_to_type(s->env, s->Set.src);
-                    if (!tp->isalias) {
+assert(!tp->isptr);
+                    if (!tp->isptr) {
                         break;
                     }
 
@@ -1031,7 +1080,8 @@ int check_owner_alias (Stmt* S) {
 
                 case STMT_RETURN: {     // check if returning one of the aliases to S
                     Type* tp = env_expr_to_type(s->env, s->Return);
-                    if (!tp->isalias) {
+assert(!tp->isptr);
+                    if (!tp->isptr) {
                         break;          // OK: not an alias
                     }
 

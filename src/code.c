@@ -98,7 +98,7 @@ void to_c_ (char* out, Env* env, Type* tp) {
         case TYPE_FUNC:
             assert(0 && "TODO");
     }
-    if (tp->isalias && !isrec) {
+    if (tp->isptr && !isrec) {
         strcat(out, "*");
     }
 }
@@ -242,7 +242,7 @@ int ftp_tuples (Env* env, Type* tp_) {
     }
 
     Type tp = *tp_;
-    tp.isalias = 0;
+    tp.isptr = 0;
 
     char tp_c [256];
     char tp_ce[256];
@@ -298,9 +298,9 @@ int ftp_tuples (Env* env, Type* tp_) {
             char* op2 = ""; {
                 int ishasrec = env_type_ishasrec(env, sub, 1);
                 int hasrec = env_type_hasrec(env, sub, 0);
-                if (hasrec && !sub->isalias) {
+                if (hasrec && !sub->isptr) {
                     op2 = "&";
-                } else if (!ishasrec && sub->isalias) {
+                } else if (!ishasrec && sub->isptr) {
                     op2 = "*";
                 }
             }
@@ -342,7 +342,8 @@ int code_expr_pre (Env* env, Expr* e) {
         case EXPR_NATIVE:
         case EXPR_NULL:
         case EXPR_INT:
-        case EXPR_ALIAS:
+        case EXPR_UPREF:
+        case EXPR_DNREF:
         case EXPR_TUPLE:
         case EXPR_CALL:
         case EXPR_PRED:
@@ -462,11 +463,12 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
 
     int isrec    = env_type_isrec(env,TP,1);
     int ishasrec = env_type_ishasrec(env,TP,1);
-    int deref = (deref_ishasrec && (isrec || (TP->isalias && ishasrec))) ||
-                (e->sub!=EXPR_ALIAS && TP->isalias && !ishasrec);
-    //int deref = (deref_ishasrec && isrec) || (TP->isalias && !ishasrec);
+    int deref = (deref_ishasrec && isrec);
+    //int deref = (deref_ishasrec && (isrec || (TP->isptr && ishasrec))) ||
+    //            (e->sub!=EXPR_UPREF && TP->isptr && !ishasrec);
+    //int deref = (deref_ishasrec && isrec) || (TP->isptr && !ishasrec);
     //
-    //int deref = (deref_ishasrec && (TP->isalias || env_type_isrec(env,TP,0)));
+    //int deref = (deref_ishasrec && (TP->isptr || env_type_isrec(env,TP,0)));
     if (deref) {
         out("(*(");
     }
@@ -487,12 +489,19 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
             out(e->Native.val.s);
             break;
 
-        case EXPR_ALIAS: {
-            Type* tp = env_expr_to_type(env, e->Alias);
+        case EXPR_UPREF: {
+            Type* tp = env_expr_to_type(env, e->Upref);
             if (!env_type_isrec(env,tp,1)) {
                 out("&");
             }
-            code_expr(env, e->Alias, 0);
+            code_expr(env, e->Upref, 0);
+            break;
+        }
+
+        case EXPR_DNREF: {
+            out("(*(");
+            code_expr(env, e->Dnref, 0);
+            out("))");
             break;
         }
 
@@ -754,9 +763,9 @@ void code_user (Stmt* s) {
 
             char* op2 = ""; {
                 int hasrec = env_type_hasrec(s->env, sub->type, 0);
-                if (hasrec && !sub->type->isalias) {
+                if (hasrec && !sub->type->isptr) {
                     op2 = "&";
-                } else if (!hasrec && sub->type->isalias) {
+                } else if (!hasrec && sub->type->isptr) {
                     op2 = "*";
                 }
             }

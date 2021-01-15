@@ -11,8 +11,8 @@ void dump_spc (void) {
 }
 
 void dump_type (Type* tp) {
-    if (tp->isalias) {
-        putchar('&');
+    if (tp->isptr) {
+        putchar('\\');
     }
     switch (tp->sub) {
         case TYPE_ANY:
@@ -56,9 +56,13 @@ void dump_expr (Expr* e) {
         case EXPR_VAR:
             printf("%s", e->Var.tk.val.s);
             break;
-        case EXPR_ALIAS:
-            putchar('&');
-            dump_expr(e->Alias);
+        case EXPR_UPREF:
+            putchar('\\');
+            dump_expr(e->Upref);
+            break;
+        case EXPR_DNREF:
+            dump_expr(e->Dnref);
+            putchar('\\');
             break;
         case EXPR_TUPLE:
             printf("(...)");
