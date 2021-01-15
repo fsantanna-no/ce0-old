@@ -1206,11 +1206,11 @@ void t_all (void) {
     assert(all(
         "2\n",
         "func f : \\Int -> () {\n"
-        "   set arg = _(*arg+1)\n"
+        "   set arg\\ = _(*arg+1)\n"
         "   return ()\n"
         "}\n"
         "var x: Int = 1\n"
-        "call f \\x\n"
+        "call f (\\x)\n"
         "output std x\n"
     ));
     assert(all(
@@ -1224,7 +1224,7 @@ void t_all (void) {
         "   return ()\n"
         "}\n"
         "var x: Bool = True\n"
-        "call f \\x\n"
+        "call f (\\x)\n"
         "output std x\n"
     ));
     assert(all(
@@ -1241,11 +1241,11 @@ void t_all (void) {
         "    }\n"
         "}\n"
         "func f : \\Bool -> () {\n"
-        "   set arg = True\n"
+        "   set arg\\ = True\n"
         "   return ()\n"
         "}\n"
         "var x: Bool = False\n"
-        "call f \\x\n"
+        "call f (\\x)\n"
         "output std x\n"
     ));
     // ENV

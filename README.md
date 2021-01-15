@@ -201,7 +201,7 @@ position:
 
 ## Call, Input & Output
 
-A call invokes an expression as a [function](TODO) with the given argument:
+A call invokes a [function](TODO) with the given argument:
 
 ```
 f ()                    -- f   receives unit     ()
@@ -220,8 +220,8 @@ var y: List = Item Item $List
 var x: List = clone y           -- `x` becomes "Item Item $List"
 ```
 
-Just like a `call`, the `input` & `output` keywords also invoke expressions as
-functions, but with the purpose of communicating with external I/O devices:
+Just like a `call`, the `input` & `output` keywords also invoke functions, but
+with the purpose of communicating with external I/O devices:
 
 ```
 input libsdl Delay 2000            -- waits 2 seconds
@@ -356,8 +356,7 @@ set x.Student! = ()
 
 ## Call, Input & Output
 
-The `call`, `input` & `output` statements invoke the respective
-[expressions](#TODO):
+The `call`, `input` & `output` statements invoke [functions](#TODO):
 
 ```
 call f()        -- calls f passing ()
