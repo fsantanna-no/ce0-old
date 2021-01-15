@@ -1693,6 +1693,7 @@ void t_all (void) {
         "var y: Nat = len x\n"
         "output std (\\y)\n"
     ));
+#if 0
     assert(all(
         "Item (1, Item (2, $))\n",
         "type rec List {\n"
@@ -1701,6 +1702,7 @@ void t_all (void) {
         "var x: List = Item (1, Item (2, $List))\n"
         "output std (\\x)\n"
     ));
+#endif
 
     // OWNERSHIP / BORROWING
     assert(all(
@@ -1776,7 +1778,7 @@ void t_all (void) {
         "var a: List = Item Item $List\n"
         "var b: List = a.Item!.Item!\n"
         "var c: List = a.Item!\n"
-        "output std \\c\n"
+        "output std (\\c)\n"
     ));
     assert(all(
         "Succ ($)\n",
@@ -1875,7 +1877,7 @@ void t_all (void) {
         "var l1: List = Item Item $List\n"
         "var l2: List = Item $List\n"
         "set l2 = l1\n"
-        "output std \\l2\n"
+        "output std (\\l2)\n"
     ));
     assert(all(
         "(ln 10, col 16): invalid access to \"l1\" : ownership was transferred (ln 9)",
@@ -1891,14 +1893,14 @@ void t_all (void) {
         "var x: X = X1 \\l1\n"
     ));
     assert(all(
-        "(ln 7, col 13): invalid access to \"l1\" : ownership was transferred (ln 6)",
+        "(ln 7, col 14): invalid access to \"l1\" : ownership was transferred (ln 6)",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
         "var l1: List = $List\n"
         "var l2: List = $List\n"
         "set l2 = l1\n"
-        "output std \\l1\n"
+        "output std (\\l1)\n"
     ));
     assert(all(
         "(ln 8, col 14): invalid assignment : cannot hold local alias \"l2\" (ln 7)",

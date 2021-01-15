@@ -173,7 +173,6 @@ Type* env_expr_to_type (Env* env, Expr* e) {
                     Type* ret = malloc(sizeof(Type));
                     assert(ret != NULL);
                     *ret = *env_expr_to_type(env, e->Call.arg);
-assert(!ret->isptr);
                     ret->isptr = 0;
                     return ret;
                 } else {
@@ -1039,7 +1038,6 @@ int check_owner_alias (Stmt* S) {
 
                 case STMT_SET: {
                     Type* tp = env_expr_to_type(s->env, s->Set.src);
-assert(!tp->isptr);
                     if (!tp->isptr) {
                         break;
                     }
