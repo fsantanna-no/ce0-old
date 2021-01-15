@@ -1078,7 +1078,6 @@ assert(!tp->isptr);
 
                 case STMT_RETURN: {     // check if returning one of the aliases to S
                     Type* tp = env_expr_to_type(s->env, s->Return);
-assert(!tp->isptr);
                     if (!tp->isptr) {
                         break;          // OK: not an alias
                     }

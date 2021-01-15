@@ -612,6 +612,8 @@ void code_user (Stmt* s) {
 
     // struct Bool;
     // typedef struct Bool Bool;
+    // void List_free (struct List** p);
+    // void List_null (struct List** p);
     // void stdout_Bool_ (Bool v);
     // Bool clone_Bool_  (Bool v);
     {
@@ -621,6 +623,15 @@ void code_user (Stmt* s) {
             "typedef struct %s %s;\n",
             sup, sup, sup
         );
+
+        if (isrec) {
+            fprintf (ALL.out,
+                "auto void %s_free (struct %s** p);\n"
+                "auto void %s_null (struct %s%s* p);\n",
+                sup, sup,
+                sup, sup, (isrec ? "*" : "")
+            );
+        }
 
         fprintf(ALL.out,
             "auto %s%s clone_%s (%s%s v);\n",
@@ -704,12 +715,12 @@ void code_user (Stmt* s) {
             if (isrec) {
                 fprintf (ALL.out,
                     "if (%s == NULL) {\n"
-                    "   return v;\n"
+                    "   return NULL;\n"
                     "}\n",
                     v
                 );
             }
-            fprintf(ALL.out, "switch (%s->sub) {\n", v);
+            fprintf(ALL.out, "switch (%s->sub /* xxx */) {\n", v);
             for (int i=0; i<s->User.size; i++) {
                 Sub* sub = &s->User.vec[i];
                 char* id = sub->tk.val.s;
