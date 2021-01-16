@@ -1,3 +1,7 @@
+- env.c: 1131 lines
+- rule 5
+- all rules when starting from hasrec
+- f \x vs f\ x
 - isrec w/ payload problems
 
 plain   isrec   hasrec

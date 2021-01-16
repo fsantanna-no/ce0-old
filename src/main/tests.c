@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DEBUG
+//#define DEBUG
 //#define VALGRIND
 
 #include "../all.h"
@@ -1422,6 +1422,21 @@ void t_all (void) {
         "var b: \\Nat = \\c.Succ!\n"      // borrow de c
         "var e: Nat = c\n"              // erro
     ));
+#if 0
+    assert(all(
+        "(ln 7, col 14): invalid transfer of \"c\" : active alias in scope (ln 6)",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "var d: Nat = Succ $Nat\n"
+        "var c: Nat = Succ d\n"
+        "var b: \\Nat = ?\n"
+        "{\n"
+        "   set b = \\c.Succ!\n"      // borrow de c
+        "}\n"
+        "var e: Nat = c\n"              // erro
+    ));
+#endif
     assert(all(
         "Succ ($)\n",
         "type rec Nat {\n"
@@ -1913,8 +1928,40 @@ void t_all (void) {
         "    set r = \\l2  -- error\n"
         "}\n"
     ));
-//puts("-=-=-=-=-");
-//assert(0);
+
+    // CYCLE
+    assert(all(
+        "Item (Item ($))\n",            // ok: not cycle
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "var l: List = Item $List\n"
+        "var m: List = Item $List\n"
+        "var p: \\List = \\l.Item!\n"
+        "set p\\ = m\n"
+        "output std (\\l)\n"
+    ));
+#if 0
+puts("-=-=-=-=-");
+    assert(all(
+        "xxx",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "var l: List = Item $List\n"
+        "set l.Item! = l\n"
+    ));
+assert(0);
+    assert(all(
+        "xxx",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "var l: List = Item $List\n"
+        "var m: \\List = \\l.Item!\n"
+        "set m\\ = l\n"
+    ));
+#endif
 
     // LOOP
     assert(all(

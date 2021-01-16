@@ -457,7 +457,7 @@ Stmt ::= `var´ VAR `:´ [`\´] Type       -- variable declaration     var x: ()
          `}´                                                        }
       |  `set´ Expr `=´ Expr            -- assignment               set x = 1
       |  (`call´ | `input´ |` output´)  -- call                     call f()
-            Expr [Expr]                 -- input & output           input std ; output std 10
+            (VAR|NATIVE) [Expr]         -- input & output           input std ; output std 10
       |  `if´ Expr `{´ Stmt `}´         -- conditional              if x { call f() } else { call g() }
       |  `loop´ `{´ Stmt `}´            -- loop                     loop { break }
       |  `break´                        -- break                    break
@@ -479,7 +479,7 @@ Expr ::= `(´ `)´                        -- unit value               ()
       |  `(´ Expr {`,´ Expr} `)´        -- tuple                    (x,())
       |  USER [Expr]                    -- constructor              True ()
       |  [`call´ | `input´ | `output´]  -- call                     f(x)
-            Expr [Expr]                 -- input & output           input std ; output std 10
+            (VAR|NATIVE) [Expr]         -- input & output           input std ; output std 10
       |  Expr `.´ NUM                   -- tuple index              x.1
       |  Expr `.´ [`$´] USER `!´        -- discriminator            x.True!
       |  Expr `.´ [`$´] USER `?´        -- predicate                x.False?
@@ -527,10 +527,14 @@ scope portability, need to be addressed somehow.
 semantics and scoped memory management.
 Allocation is bound to the scope of the assignee, which is the owner of the
 value.
+A value has exactly one owner at any given time, which implies that recursive
+values can only form trees of ownerships (but not graphs with cycles or even
+generic DAGs).
 Deallocation occurs automatically when the scope of the owner terminates.
 Ownership can be transferred by reassigning the value to another assignee,
 which can live in another scope.
-A value can also be shared with a pointer without transferring ownership.
+A value can also be shared with a pointer without transferring ownership, in
+which case generic graphs are possible.
 
 *Ce* ensures that deallocation occurs exactly once at the very moment when
 there are no more active pointers to the value.
@@ -539,8 +543,6 @@ In particular the following cases must be prevented:
 - Memory leak: when a value cannot be referenced but is not deallocated and remains in memory.
 - Dangling reference: when a value is deallocated but can still be referenced (aka. *use-after-free*).
 - Double free: when a value is deallocated multiple times.
-
-TODO: limitations (trees, aliasing rules)
 
 ## Basics
 
@@ -623,20 +625,21 @@ of rules:
     - The owner is a variable that lives in the stack and reaches the allocated value.
 2. When the owner goes out of scope, the allocated memory is automatically
    deallocated.
-3. A pointer cannot escape or survive outside the scope of its owner.
-4. Ownership can be transferred in three ways:
+3. Ownership can be transferred in three ways:
     - Assigning the owner to another variable, which becomes the new owner (e.g. `new = old`).
     - Passing the owner to a function call argument, which becomes the new owner (e.g. `f(old)`).
     - Returning the owner from a function call to an assignee, which becomes the new owner (e.g. `new = f()`).
-5. Ownership cannot be transferred with an active pointer in scope.
-6. The original owner is invalidated after transferring its ownership.
+4. The original owner is invalidated after transferring its ownership.
+5. Ownership cannot be transferred to its own subtree.
+6. Ownership cannot be transferred with an active pointer in scope.
+7. A pointer cannot escape or survive outside the scope of its owner.
 
 All rules are verified at compile time, i.e., there are no runtime checks or
 extra overheads.
 
 ### Ownership transfer
 
-As stated in rule 6, an ownership transfer invalidates the original owner and
+As stated in rule 4, an ownership transfer invalidates the original owner and
 rejects further accesses to it:
 
 ```
@@ -649,9 +652,8 @@ rejects further accesses to it:
 ```
 
 Ownership transfer ensures that rule 1 is preserved.
-If ownership were shared among multiple pointers, deallocation in rule 2
-would be ambiguous or cause a double free, since owners could be in different
-scopes:
+If ownership could be shared, deallocation in rule 2 would be ambiguous or
+cause a double free, since owners could be in different scopes:
 
 ```
 {
@@ -671,6 +673,17 @@ func build: () -> List {
     return tmp              -- `return` transfers ownership (we don't want to deallocate it now)
 }
 var l: List = build()       -- `l` is the new owner
+```
+
+As stated in rule 5, the owner of a value cannot be transferred to its own
+subtree.
+This also takes into account pointers to the subtree.
+This rule prevents cycles, which also ensures that rule 1 is preserved:
+
+```
+var l: List = Item $List
+var p: \List = \l.Item!     -- `p` points to the end of `l`
+set p\ = l                  -- error: cannot transfer `l` to the end of itself
 ```
 
 It is possible to transfer only part of a recursive value.
@@ -705,7 +718,7 @@ func length: (\List -> Int) {
 }
 ```
 
-Rule 3 states that a pointer cannot escape or survive outside the scope of its
+Rule 7 states that a pointer cannot escape or survive outside the scope of its
 owner:
 
 ```
@@ -727,7 +740,7 @@ var x: \List = ...          -- outer scope
 If surviving pointers were allowed, they would refer to deallocated values,
 resulting in a dangling reference (i.e, *use-after-free*).
 
-Rule 5 states that if there is an active pointer to a value, then its ownership
+Rule 6 states that if there is an active pointer to a value, then its ownership
 cannot be transferred:
 
 ```

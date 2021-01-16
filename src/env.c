@@ -821,15 +821,15 @@ int set_istx_stmt (Stmt* s) {
 ///////////////////////////////////////////////////////////////////////////////
 
 // How to detect ownership violations?
-//  - Rule 6: transfer ownership and then access again:
+//  - Rule 4: transfer ownership and then access again:
 //      var x: Nat = ...            -- owner
 //      var z: Nat = add(x,...)     -- transfer
 //      ... x or &x ...             -- error: access after ownership transfer
-//  - Rule 5: save reference and then pass ownership:
+//  - Rule 6: save reference and then pass ownership:
 //      var x: Nat = ...            -- owner
 //      var z: Nat = &x             -- borrow
 //      ... x ...                   -- error: transfer while borrow is active
-//  - Rule 3: return alias pointing to local owner
+//  - Rule 7: return alias pointing to local owner
 //      func f: () -> &List {
 //          var l: List = build()   -- `l` is the owner
 //          return &l               -- error: cannot return alias to deallocated value
@@ -912,7 +912,7 @@ int check_owner_alias (Stmt* S) {
             }
         }
 
-        // Rule 5/6: check var accesses starting from VAR/SET/CALL/IF/RETURN
+        // Rule 6/4: check var accesses starting from VAR/SET/CALL/IF/RETURN
         auto int var_access (Env* env, Expr* var);
         switch (s->sub) {
             case STMT_VAR:
@@ -930,7 +930,7 @@ int check_owner_alias (Stmt* S) {
                 break;
         }
 
-        // Rule 3
+        // Rule 7
         auto int alias_escape (void);
         return alias_escape();
 
@@ -952,7 +952,7 @@ int check_owner_alias (Stmt* S) {
             switch (state) {
                 case NONE:
                     break;
-                case TRANSFERRED: {  // Rule 6
+                case TRANSFERRED: {  // Rule 4
                     // if already moved, it doesn't matter, any access is invalid
                     assert(tk1 != NULL);
                     char err[1024];
@@ -961,7 +961,7 @@ int check_owner_alias (Stmt* S) {
                     err_message(&var->Var.tk, err);
                     return VISIT_ERROR;
                 }
-                case BORROWED: {    // Rule 5
+                case BORROWED: {    // Rule 6
                     assert(tk1 != NULL);
                     if (var->Var.txbw == TX) {
                         char err[1024];
@@ -986,6 +986,9 @@ int check_owner_alias (Stmt* S) {
             switch (s->sub) {
                 case STMT_VAR: {    // track all aliases to S
                     if (!s->Var.type->isptr) {
+                        break;
+                    }
+                    if (s->Var.init->sub == EXPR_UNK) {
                         break;
                     }
 
@@ -1049,7 +1052,8 @@ int check_owner_alias (Stmt* S) {
                     Expr* dst = expr_leftmost(s->Set.dst);
                     assert(dst != NULL);
                     assert(dst->sub == EXPR_VAR);
-                    Stmt* dst_decl = env_id_to_stmt(S->env, dst->Var.tk.val.s);
+                    Stmt* dst_decl = env_id_to_stmt(s->env, dst->Var.tk.val.s);
+dump_stmt(s);
                     assert(dst_decl != NULL);
 
                     if (S->env->depth <= dst_decl->env->depth) {
