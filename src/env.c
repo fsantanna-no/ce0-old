@@ -375,7 +375,7 @@ int set_seqs (Stmt* s) {
         default:
             break;
     }
-    return 1;
+    return VISIT_CONTINUE;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -449,6 +449,46 @@ int set_envs (Stmt* s) {
         }
         return 1;
     }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+int env_type_hasptr (Env* env, Type* tp) {
+    switch (tp->sub) {
+        case TYPE_ANY:
+        case TYPE_UNIT:
+        case TYPE_NATIVE:
+        case TYPE_FUNC:
+            return 0;
+        case TYPE_TUPLE:
+            for (int i=0; i<tp->Tuple.size; i++) {
+                if (env_type_hasptr(env,tp->Tuple.vec[i])) {
+                    return 1;
+                }
+            }
+            return 0;
+        case TYPE_USER: {
+            Stmt* user = env_id_to_stmt(env, tp->User.val.s);
+            assert(user!=NULL && user->sub==STMT_USER);
+            for (int i=0; i<user->User.size; i++) {
+                if (env_type_hasptr(env,user->User.vec[i].type)) {
+                    return 1;
+                }
+            }
+            return 0;
+        }
+    }
+}
+
+int set_ptr_deepest (Stmt* s) {
+    switch (s->sub) {
+        case STMT_VAR:
+        case STMT_SET:
+            break;
+        default:
+            break;
+    }
+    return VISIT_CONTINUE;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -866,6 +906,7 @@ int set_istx_stmt (Stmt* s) {
 int env (Stmt* s) {
     assert(visit_stmt(0,s,set_seqs,NULL,NULL));
     assert(set_envs(s));
+    assert(visit_stmt(0,s,set_ptr_deepest,NULL,NULL));
     if (!visit_stmt(0,s,NULL,check_decls_expr,check_decls_type)) {
         return 0;
     }

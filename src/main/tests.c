@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
+//#define ALL
 #define DEBUG
 //#define VALGRIND
 
@@ -1935,6 +1936,39 @@ void t_all (void) {
         "}\n"
     ));
 
+    // POINTER
+    assert(all(
+        "10\n",
+        "var x: \\Int = ?\n"
+        "var y: Int = 10\n"
+        "{\n"
+        "    set x = \\y\n"
+        "}\n"
+        "output std (x\\)\n"
+    ));
+    assert(all(
+        "10\n",
+        "var y: Int = 10\n"
+        "var x: (Int,\\Int) = (10,\\y)\n"
+        "{\n"
+        "    set x.2 = \\y\n"
+        "}\n"
+        "output std x.2\\\n"
+    ));
+#ifdef ALL
+    assert(all(
+        "ERROR",
+        "type X {\n"
+        "    X1: (Int,\\Int)\n"
+        "}\n"
+        "var x: X = ?\n"
+        "{\n"
+        "    var y: Int = 10\n"
+        "    set x = X1(10,\\y)\n"
+        "}\n"
+    ));
+#endif
+
     // CYCLE
     assert(all(
         "Item (Item ($))\n",            // ok: not cycle
@@ -1947,7 +1981,7 @@ void t_all (void) {
         "set p\\ = m\n"
         "output std (\\l)\n"
     ));
-#if 0
+#ifdef ALL
 puts("-=-=-=-=-");
     assert(all(
         "xxx",
