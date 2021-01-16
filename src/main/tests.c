@@ -542,7 +542,8 @@ void t_parser_stmt (void) {
         all_init(NULL, stropen("r", 0, "{ call () }"));
         Stmt* s;
         assert(!parser_stmt(&s));
-        assert(!strcmp(ALL.err, "(ln 1, col 8): expected call expression : have `()´"));
+        //assert(!strcmp(ALL.err, "(ln 1, col 8): expected call expression : have `()´"));
+        assert(!strcmp(ALL.err, "(ln 1, col 8): unexpected `()´ : wanted variable identifier"));
         fclose(ALL.inp);
     }
     // STMT_IF

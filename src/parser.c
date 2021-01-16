@@ -227,8 +227,10 @@ int parser_expr (Expr** ret, int canpre) {
     }
     *ret = cur;
 
+    int isvarnat = (cur->sub==EXPR_VAR || cur->sub==EXPR_NATIVE);
+
     if (ispre) {
-        if (cur->sub != EXPR_VAR) {
+        if (!isvarnat) {
             return err_unexpected("variable identifier");
         }
         if (pre.enu != TK_CALL) {
@@ -246,8 +248,7 @@ int parser_expr (Expr** ret, int canpre) {
         assert(new != NULL);
         Expr* arg;
 
-        int lin = ALL.tk0.lin;
-        int col = ALL.tk0.col;
+        Tk tk_bef = ALL.tk0;
 
         if (accept('.')) {
 // EXPR_INDEX
@@ -275,27 +276,25 @@ int parser_expr (Expr** ret, int canpre) {
             *new = (Expr) { ALL.nn++, EXPR_DNREF, 0, .Dnref=cur };
 
 // EXPR_CALL
-        } else if (cur->sub==EXPR_VAR && parser_expr(&arg,0)) {
+        } else if (isvarnat && parser_expr(&arg,0)) {
             *new = (Expr) { ALL.nn++, EXPR_CALL, 0, .Call={cur,arg} };
-        } else if (cur->sub==EXPR_VAR && ispre) {
+        } else if (isvarnat && ispre) {
             arg = malloc(sizeof(Expr));
             assert(arg != NULL);
             *arg = (Expr) { ALL.nn++, EXPR_UNIT, .Unit={TK_UNIT,{},0,ALL.nn++} };
             *new = (Expr) { ALL.nn++, EXPR_CALL, 0, .Call={cur,arg} };
+            break;
 
         } else {
             free(new);
-
-            int lin_ = ALL.tk0.lin;
-            int col_ = ALL.tk0.col;
-            if (lin==lin_ && col==col_) {
-                break;
+            if (tk_bef.lin==ALL.tk0.lin && tk_bef.col==ALL.tk0.col) {
+                break;      // nothing extra read: OK!
             } else {
-                return 0;
+                return 0;   // extra token read:   NO!
             }
         }
 
-        //ispre = 0;      // ony on first iteration (EXPR_VAR test above implies this)
+        isvarnat = 0; // only on first iteration
         *ret = new;
         cur = new;
     }
@@ -595,7 +594,11 @@ int parser_stmts (TK opt, Stmt** ret) {
     while (1) {
         accept(';');    // optional
         Stmt* p;
+        Tk tk_bef = ALL.tk0;
         if (!parser_stmt(&p)) {
+            if (tk_bef.lin!=ALL.tk0.lin || tk_bef.col!=ALL.tk0.col) {
+                return 0;   // extra token read:   NO!
+            }
             if (check(opt)) {
                 break;
             } else {
