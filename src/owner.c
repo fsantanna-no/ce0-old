@@ -40,9 +40,13 @@ int FS (Stmt* S) {
 
     // STMT_VAR: recursive user type
 
-    // var n: Nat = ...         // starting from each declaration
+    // var x: Nat = ...         // starting from each declaration
 
-    int istxd = 0;      // once trasferred, never fallback, reject further accesses
+    // Tracks if x has been transferred:
+    //      var y: Nat = x
+    //  - once trasferred, never fallback
+    //  - reject further accesses
+    int istxd = 0;
 
     typedef enum { NONE, BORROWED } State;
     State state = NONE;
@@ -142,20 +146,14 @@ int FS (Stmt* S) {
                         var->Var.tk.val.s, tk1->lin);
                 err_message(&var->Var.tk, err);
                 return VISIT_ERROR;
-            }
-
-            switch (state) {
-                case NONE:
-                    break;
-                case BORROWED: {    // Rule 6
-                    assert(tk1 != NULL);
-                    if (var->Var.txbw == TX) {
-                        char err[1024];
-                        sprintf(err, "invalid transfer of \"%s\" : active alias in scope (ln %ld)",
-                                var->Var.tk.val.s, tk1->lin);
-                        err_message(&var->Var.tk, err);
-                        return VISIT_ERROR;
-                    }
+            } else if (state == BORROWED) {    // Rule 6
+                assert(tk1 != NULL);
+                if (var->Var.txbw == TX) {
+                    char err[1024];
+                    sprintf(err, "invalid transfer of \"%s\" : active alias in scope (ln %ld)",
+                            var->Var.tk.val.s, tk1->lin);
+                    err_message(&var->Var.tk, err);
+                    return VISIT_ERROR;
                 }
             }
             tk1 = &var->Var.tk;

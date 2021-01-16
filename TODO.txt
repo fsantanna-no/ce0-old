@@ -1,4 +1,5 @@
-- env.c: 1131 lines
+- tirar BORROWED, manter lista de borrows ativos
+- owner.c: 306 lines
 - rule 5
 - all rules when starting from hasrec
 - f \x vs f\ x
