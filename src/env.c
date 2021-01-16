@@ -710,7 +710,9 @@ int check_types_stmt (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// Rule 7:
 // set DST = \SRC
+// return \SRC
 //  - check if scope of DST<=S
 
 int check_set_ret_pointer_scope (Stmt* s) {

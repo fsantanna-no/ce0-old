@@ -127,12 +127,6 @@ int FS (Stmt* S) {
                 break;
         }
 
-        // Rule 7
-        auto int alias_escape (void);
-        return alias_escape();
-
-        //int set_alias (Env* env, Expr* var)
-
         int var_access (Env* env, Expr* var) {
             if (var->sub != EXPR_VAR) {
                 return VISIT_CONTINUE;
@@ -172,68 +166,6 @@ int FS (Stmt* S) {
                 istx = 1;
             }
             return VISIT_CONTINUE;
-        }
-
-        int alias_escape (void) {
-            switch (s->sub) {
-                case STMT_VAR: {    // track all aliases to S
-                    if (!s->Var.type->isptr) {
-                        break;
-                    }
-                    if (s->Var.init->sub == EXPR_UNK) {
-                        break;
-                    }
-
-                    // var S: T = ...
-                    // var s: &T = &y;      <-- if y reaches S, so does s
-                    Type* tp = env_expr_to_type(s->env, s->Var.init);
-                    assert(tp->isptr);
-
-                    // get "var" being aliased
-                    Tk* var = NULL;
-                    switch (s->Var.init->sub) {
-                        case EXPR_VAR:
-                            var = &s->Var.init->Var.tk;
-                            break;
-                        case EXPR_UPREF:
-                        case EXPR_INDEX:
-                        case EXPR_DISC: {
-                            Expr* left = expr_leftmost(s->Var.init);
-                            assert(left != NULL);
-                            assert(left->sub == EXPR_VAR);
-                            var = &left->Var.tk;
-                            break;
-                        }
-                        case EXPR_CALL:
-                            break;          // TODO?
-                        case EXPR_TUPLE:
-                            break;          // TODO?
-                        default:
-                            assert(0);
-                    }
-                    if (var == NULL) {
-                        break;
-                    }
-
-                    assert(var->enu == TX_VAR);
-                    Stmt* decl = env_id_to_stmt(s->env, var->val.s);
-                    assert(decl != NULL);
-
-                    // check if "y" reaches "S"
-                    // if reaches, include "s" also in the list
-                    for (int i=0; i<aliases_n; i++) {
-                        if (aliases[i] == decl) {
-                            assert(aliases_n < 256);
-                            aliases[aliases_n++] = s;
-                            break;
-                        }
-                    }
-                    break;
-                }
-                default:
-                    break;
-            }
-            return EXEC_CONTINUE;
         }
     }
 }
