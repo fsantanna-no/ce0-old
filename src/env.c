@@ -713,36 +713,59 @@ int check_types_stmt (Stmt* s) {
 // set DST = \SRC
 //  - check if scope of DST<=S
 
-int check_set_scope (Stmt* s) {
-    if (s->sub != STMT_SET) {
-        return VISIT_CONTINUE;
+int check_set_ret_scope (Stmt* s) {
+    switch (s->sub) {
+        case STMT_SET: {
+            Type* tp = env_expr_to_type(s->env, s->Set.dst);
+            if (!tp->isptr) {
+                return VISIT_CONTINUE;
+            }
+
+            Expr* dst = expr_leftmost(s->Set.dst);
+            assert(dst != NULL);
+            assert(dst->sub == EXPR_VAR);
+            Stmt* dst_decl = env_id_to_stmt(s->env, dst->Var.tk.val.s);
+            assert(dst_decl != NULL);
+
+            Expr* src = expr_leftmost(s->Set.src);
+            assert(src != NULL);
+            assert(src->sub == EXPR_VAR);
+            Stmt* src_decl = env_id_to_stmt(s->env, src->Var.tk.val.s);
+            assert(src_decl != NULL);
+
+            if (dst_decl->env->depth < src_decl->env->depth) {
+                char err[1024];
+                sprintf(err, "invalid assignment : cannot hold local pointer \"%s\" (ln %ld)",
+                        src->Var.tk.val.s, src_decl->tk.lin);
+                err_message(&src->Var.tk, err);
+                return VISIT_ERROR;
+            }
+            break;
+        }
+        case STMT_RETURN: {
+            Type* tp = env_expr_to_type(s->env, s->Return);
+            if (!tp->isptr) {
+                break;
+            }
+
+            Expr* src = expr_leftmost(s->Return);
+            assert(src != NULL);
+            assert(src->sub == EXPR_VAR);
+            Stmt* src_decl = env_id_to_stmt(s->env, src->Var.tk.val.s);
+
+            if (s->env->depth <= src_decl->env->depth) {
+                char err[1024];
+                sprintf(err, "invalid return : cannot return local pointer \"%s\" (ln %ld)",
+                        src->Var.tk.val.s, src_decl->tk.lin);
+                err_message(&src->Var.tk, err);
+                return VISIT_ERROR;
+            }
+            assert(0); // never tested outer scope before: just remove this assert and go on...
+            break;
+        }
+        default:
+            break;
     }
-
-    Type* tp = env_expr_to_type(s->env, s->Set.dst);
-    if (!tp->isptr) {
-        return VISIT_CONTINUE;
-    }
-
-    Expr* dst = expr_leftmost(s->Set.dst);
-    assert(dst != NULL);
-    assert(dst->sub == EXPR_VAR);
-    Stmt* dst_decl = env_id_to_stmt(s->env, dst->Var.tk.val.s);
-    assert(dst_decl != NULL);
-
-    Expr* src = expr_leftmost(s->Set.src);
-    assert(src != NULL);
-    assert(src->sub == EXPR_VAR);
-    Stmt* src_decl = env_id_to_stmt(s->env, src->Var.tk.val.s);
-    assert(src_decl != NULL);
-
-    if (dst_decl->env->depth < src_decl->env->depth) {
-        char err[1024];
-        sprintf(err, "invalid assignment : cannot hold local pointer \"%s\" (ln %ld)",
-                src->Var.tk.val.s, src_decl->tk.lin);
-        err_message(&src->Var.tk, err);
-        return VISIT_ERROR;
-    }
-
     return VISIT_CONTINUE;
 }
 
@@ -847,7 +870,7 @@ int env (Stmt* s) {
     if (!visit_stmt(1,s,check_types_stmt,check_types_expr,NULL)) {
         return 0;
     }
-    if (!visit_stmt(0,s,check_set_scope,NULL,NULL)) {
+    if (!visit_stmt(0,s,check_set_ret_scope,NULL,NULL)) {
         return 0;
     }
     assert(visit_stmt(0,s,set_istx_stmt,NULL,NULL));

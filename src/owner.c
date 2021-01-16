@@ -230,33 +230,6 @@ int FS (Stmt* S) {
                     }
                     break;
                 }
-
-                case STMT_RETURN: {     // check if returning one of the aliases to S
-                    Type* tp = env_expr_to_type(s->env, s->Return);
-                    if (!tp->isptr) {
-                        break;          // OK: not an alias
-                    }
-
-                    Expr* var = expr_leftmost(s->Return);
-                    assert(var != NULL);
-                    assert(var->sub == EXPR_VAR);
-                    Stmt* decl = env_id_to_stmt(s->env, var->Var.tk.val.s);
-
-                    for (int i=0; i<aliases_n; i++) {
-                        if (aliases[i] == decl) {
-                            char err[1024];
-                            assert(decl->env->depth == s->env->depth);
-                                // never caught outer scope before
-                                // this should never be required: should not track aliases to outer scopes
-                            sprintf(err, "invalid return : cannot return local pointer \"%s\" (ln %ld)",
-                                    S->Var.tk.val.s, S->Var.tk.lin);
-                            err_message(&var->Var.tk, err);
-                            return EXEC_ERROR;
-                        }
-                    }
-
-                    break;
-                }
                 default:
                     break;
             }

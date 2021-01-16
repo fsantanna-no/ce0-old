@@ -1779,7 +1779,7 @@ void t_all (void) {
         "output std y_\n"
     ));
     assert(all(
-        "(ln 8, col 12): invalid return : cannot return local pointer \"l\" (ln 5)",
+        "(ln 8, col 12): invalid return : cannot return local pointer \"b\" (ln 7)",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
