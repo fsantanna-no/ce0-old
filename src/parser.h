@@ -165,6 +165,8 @@ typedef struct Stmt {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Expr* expr_leftmost (Expr* e);
+
 int parser_type   (Type** ret);
 int parser_expr   (Expr** ret, int canpre);
 int parser_stmt   (Stmt** ret);

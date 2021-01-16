@@ -37,6 +37,12 @@ int all (const char* xp, char* src) {
 #endif
         return !strcmp(ALL.err, xp);
     }
+    if (!owner(s)) {
+#ifdef DEBUG
+        puts(ALL.err);
+#endif
+        return !strcmp(ALL.err, xp);
+    }
 
     code(s);
     fclose(ALL.out);

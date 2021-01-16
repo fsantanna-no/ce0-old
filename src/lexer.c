@@ -294,6 +294,11 @@ static void lx_blanks (void) {
     }
 }
 
+int err_message (Tk* tk, const char* v) {
+    sprintf(ALL.err, "(ln %ld, col %ld): %s", tk->lin, tk->col, v);
+    return 0;
+}
+
 void lexer (void) {
     ALL.tk0 = ALL.tk1;
     lx_blanks();

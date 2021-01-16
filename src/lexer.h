@@ -47,6 +47,7 @@ typedef struct {
     long  col;   // column at token
 } Tk;
 
+int err_message (Tk* tk, const char* v);
 const char* lexer_tk2str (Tk* tk);
 const char* lexer_tk2err (TK enu);
 void lexer (void);

@@ -38,6 +38,21 @@ int check (TK enu) {
     return (ALL.tk1.enu == enu);
 }
 
+Expr* expr_leftmost (Expr* e) {
+    switch (e->sub) {
+        case EXPR_UPREF:
+            return expr_leftmost(e->Upref);
+        case EXPR_DNREF:
+            return expr_leftmost(e->Dnref);
+        case EXPR_INDEX:
+            return expr_leftmost(e->Index.val);
+        case EXPR_DISC:
+            return expr_leftmost(e->Disc.val);
+        default:
+            return e;
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 int parser_type (Type** ret) {

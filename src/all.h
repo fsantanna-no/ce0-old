@@ -4,6 +4,7 @@
 #include "parser.h"
 #include "visit.h"
 #include "env.h"
+#include "owner.h"
 #include "code.h"
 #include "dump.h"
 

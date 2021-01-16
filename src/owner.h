@@ -1,0 +1,1 @@
+int owner (Stmt* s);
