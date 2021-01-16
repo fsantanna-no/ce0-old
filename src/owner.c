@@ -80,7 +80,7 @@ int FS (Stmt* S) {
 
     return exec(S->seqs[1], pre, stmt_var);
 
-    // ... n ...                // check all accesses to it
+    // ... x ...                // check all accesses to it
 
     int stmt_var (Stmt* s)
     {
