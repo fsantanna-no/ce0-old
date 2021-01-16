@@ -1419,7 +1419,7 @@ void t_all (void) {
         "output std d\n"             // ok: e
     ));
     assert(all(
-        "(ln 7, col 14): invalid transfer of \"c\" : active alias in scope (ln 6)",
+        "(ln 7, col 14): invalid transfer of \"c\" : active pointer in scope (ln 6)",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -1430,7 +1430,7 @@ void t_all (void) {
     ));
 #if 0
     assert(all(
-        "(ln 7, col 14): invalid transfer of \"c\" : active alias in scope (ln 6)",
+        "(ln 7, col 14): invalid transfer of \"c\" : active pointer in scope (ln 6)",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -1744,7 +1744,7 @@ void t_all (void) {
         "output std z\n"
     ));
     assert(all(
-        "(ln 6, col 14): invalid transfer of \"x\" : active alias in scope (ln 5)",
+        "(ln 6, col 14): invalid transfer of \"x\" : active pointer in scope (ln 5)",
         "type rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
@@ -1779,7 +1779,7 @@ void t_all (void) {
         "output std y_\n"
     ));
     assert(all(
-        "(ln 8, col 12): invalid return : cannot return local alias \"l\" (ln 5)",
+        "(ln 8, col 12): invalid return : cannot return local pointer \"l\" (ln 5)",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
@@ -1787,7 +1787,7 @@ void t_all (void) {
         "    var l: List = $List   -- `l` is the owner\n"
         "    var a: \\List = \\l\n"
         "    var b: \\List = a\n"
-        "    return b             -- error: cannot return alias to deallocated value\n"
+        "    return b             -- error: cannot return pointer to deallocated value\n"
         "}\n"
     ));
     assert(all(
@@ -1923,7 +1923,7 @@ void t_all (void) {
         "output std (\\l1)\n"
     ));
     assert(all(
-        "(ln 8, col 14): invalid assignment : cannot hold local alias \"l2\" (ln 7)",
+        "(ln 8, col 14): invalid assignment : cannot hold local pointer \"l2\" (ln 7)",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"

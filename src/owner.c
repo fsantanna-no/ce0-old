@@ -46,7 +46,14 @@ int FS (Stmt* S) {
     //      var y: Nat = x
     //  - once trasferred, never fallback
     //  - reject further accesses
-    int istxd = 0;
+    int istx = 0;
+
+    // Tracks borrows of x:
+    //      var y: \Nat = \x
+    //  - if active borrow (bws_n > 0), cannot be transferred
+    //  - clean bws on block exit
+    Stmt* bws[256] = {};
+    int bws_n = 0;
 
     typedef enum { NONE, BORROWED } State;
     State state = NONE;
@@ -62,7 +69,8 @@ int FS (Stmt* S) {
     auto int stmt_var (Stmt* s);
 
     void pre (void) {
-        istxd = 0;
+        istx = 0;
+        bws_n = 0;
         state = NONE;
         tk1 = NULL;
         stack_n = 0;
@@ -138,7 +146,7 @@ int FS (Stmt* S) {
             Stmt* decl = env_id_to_stmt(env, var->Var.tk.val.s);
             assert(decl!=NULL && decl==S);
 
-            if (istxd) { // Rule 4
+            if (istx) { // Rule 4
                 // if already moved, it doesn't matter, any access is invalid
                 assert(tk1 != NULL);
                 char err[1024];
@@ -150,7 +158,7 @@ int FS (Stmt* S) {
                 assert(tk1 != NULL);
                 if (var->Var.txbw == TX) {
                     char err[1024];
-                    sprintf(err, "invalid transfer of \"%s\" : active alias in scope (ln %ld)",
+                    sprintf(err, "invalid transfer of \"%s\" : active pointer in scope (ln %ld)",
                             var->Var.tk.val.s, tk1->lin);
                     err_message(&var->Var.tk, err);
                     return VISIT_ERROR;
@@ -158,10 +166,10 @@ int FS (Stmt* S) {
             }
             tk1 = &var->Var.tk;
             if (var->Var.txbw == BW) {
-                assert(!istxd && "bug found");
+                assert(!istx && "bug found");
                 state = BORROWED;
             } else if (var->Var.txbw == TX) {
-                istxd = 1;
+                istx = 1;
             }
             return VISIT_CONTINUE;
         }
@@ -252,7 +260,7 @@ int FS (Stmt* S) {
                     for (int i=0; i<aliases_n; i++) {
                         if (aliases[i] == src_decl) {
                             char err[1024];
-                            sprintf(err, "invalid assignment : cannot hold local alias \"%s\" (ln %ld)",
+                            sprintf(err, "invalid assignment : cannot hold local pointer \"%s\" (ln %ld)",
                                     S->Var.tk.val.s, S->Var.tk.lin);
                             err_message(&src->Var.tk, err);
                             return EXEC_ERROR;
@@ -278,7 +286,7 @@ int FS (Stmt* S) {
                             assert(decl->env->depth == s->env->depth);
                                 // never caught outer scope before
                                 // this should never be required: should not track aliases to outer scopes
-                            sprintf(err, "invalid return : cannot return local alias \"%s\" (ln %ld)",
+                            sprintf(err, "invalid return : cannot return local pointer \"%s\" (ln %ld)",
                                     S->Var.tk.val.s, S->Var.tk.lin);
                             err_message(&var->Var.tk, err);
                             return EXEC_ERROR;
