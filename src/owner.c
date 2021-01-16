@@ -4,7 +4,7 @@
 
 #include "all.h"
 
-int check_owner_alias (Stmt* S) {
+int FS (Stmt* S) {
 
     // visit all var declarations
 
@@ -277,7 +277,7 @@ dump_stmt(s);
 ///////////////////////////////////////////////////////////////////////////////
 
 int owner (Stmt* s) {
-    if (!visit_stmt(0,s,check_owner_alias,NULL,NULL)) {
+    if (!visit_stmt(0,s,FS,NULL,NULL)) {
         return 0;
     }
     return 1;
