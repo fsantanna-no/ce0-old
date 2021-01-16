@@ -42,7 +42,9 @@ int FS (Stmt* S) {
 
     // var n: Nat = ...         // starting from each declaration
 
-    typedef enum { NONE, TRANSFERRED, BORROWED } State;
+    int istxd = 0;      // once trasferred, never fallback, reject further accesses
+
+    typedef enum { NONE, BORROWED } State;
     State state = NONE;
     Tk* tk1 = NULL;
 
@@ -56,6 +58,7 @@ int FS (Stmt* S) {
     auto int stmt_var (Stmt* s);
 
     void pre (void) {
+        istxd = 0;
         state = NONE;
         tk1 = NULL;
         stack_n = 0;
@@ -91,9 +94,7 @@ int FS (Stmt* S) {
         if (s == stack[stack_n-1].stop) {      // leave block: pop state
             stack_n--;
             aliases_n = stack[stack_n].aliases_n;
-            if (state != TRANSFERRED) {
-                state = stack[stack_n].state;
-            }
+            state = stack[stack_n].state;
         }
 
         // Rule 6/4: check var accesses starting from VAR/SET/CALL/IF/RETURN
@@ -133,18 +134,19 @@ int FS (Stmt* S) {
             Stmt* decl = env_id_to_stmt(env, var->Var.tk.val.s);
             assert(decl!=NULL && decl==S);
 
+            if (istxd) { // Rule 4
+                // if already moved, it doesn't matter, any access is invalid
+                assert(tk1 != NULL);
+                char err[1024];
+                sprintf(err, "invalid access to \"%s\" : ownership was transferred (ln %ld)",
+                        var->Var.tk.val.s, tk1->lin);
+                err_message(&var->Var.tk, err);
+                return VISIT_ERROR;
+            }
+
             switch (state) {
                 case NONE:
                     break;
-                case TRANSFERRED: {  // Rule 4
-                    // if already moved, it doesn't matter, any access is invalid
-                    assert(tk1 != NULL);
-                    char err[1024];
-                    sprintf(err, "invalid access to \"%s\" : ownership was transferred (ln %ld)",
-                            var->Var.tk.val.s, tk1->lin);
-                    err_message(&var->Var.tk, err);
-                    return VISIT_ERROR;
-                }
                 case BORROWED: {    // Rule 6
                     assert(tk1 != NULL);
                     if (var->Var.txbw == TX) {
@@ -158,10 +160,10 @@ int FS (Stmt* S) {
             }
             tk1 = &var->Var.tk;
             if (var->Var.txbw == BW) {
-                assert(state != TRANSFERRED && "bug found");
+                assert(!istxd && "bug found");
                 state = BORROWED;
             } else if (var->Var.txbw == TX) {
-                state = TRANSFERRED;
+                istxd = 1;
             }
             return VISIT_CONTINUE;
         }
@@ -237,7 +239,6 @@ int FS (Stmt* S) {
                     assert(dst != NULL);
                     assert(dst->sub == EXPR_VAR);
                     Stmt* dst_decl = env_id_to_stmt(s->env, dst->Var.tk.val.s);
-dump_stmt(s);
                     assert(dst_decl != NULL);
 
                     if (S->env->depth <= dst_decl->env->depth) {
