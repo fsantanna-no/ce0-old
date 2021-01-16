@@ -63,8 +63,6 @@ int FS (Stmt* S) {
     Stack stack[256];
     int stack_n = 0;
 
-    auto int stmt_var (Stmt* s);
-
     void pre (void) {
         istx = 0;
         bws_n = 0;
@@ -73,14 +71,13 @@ int FS (Stmt* S) {
         stack_n = 0;
     }
 
-    return exec(S->seqs[1], pre, stmt_var);
+    auto int fs (Stmt* s);
+    return exec(S->seqs[1], pre, fs);
 
-    // ... x ...                // check all accesses to it
+    // y = \x ...                // check all accesses to it
 
-    int stmt_var (Stmt* s)
-    {
+    int fs (Stmt* s) {
         // stop when tracked STMT_VAR is out of scope
-
         Stmt* decl = env_id_to_stmt(s->env, S->Var.tk.val.s);
         if (decl!=NULL && decl==S) {
             // ok: S is still in scope
@@ -89,7 +86,6 @@ int FS (Stmt* S) {
         }
 
         // push/pop stack
-
         if (s->sub == STMT_BLOCK) {         // enter block: push state
             stack[stack_n].stop  = s->seqs[0];
             stack[stack_n].state = state;
@@ -97,14 +93,13 @@ int FS (Stmt* S) {
             assert(stack_n < 256);
             stack_n++;
         }
-
         if (s == stack[stack_n-1].stop) {   // leave block: pop state
             stack_n--;
             bws_n = stack[stack_n].bws_n;
             state = stack[stack_n].state;
         }
 
-        // Rule 6/4: check var accesses starting from VAR/SET/CALL/IF/RETURN
+        // Rules 4/5/6
         auto int var_access (Env* env, Expr* var);
         switch (s->sub) {
             case STMT_VAR:
