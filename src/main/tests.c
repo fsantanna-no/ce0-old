@@ -1320,7 +1320,7 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "var c: Nat = Succ $Nat\n"
-        "output std \\c\n"
+        "output std (\\c)\n"
     ));
     assert(all(
         "Succ (Succ ($))\n",
@@ -1336,7 +1336,7 @@ void t_all (void) {
         "   Succ: Nat\n"
         "}\n"
         "var c: Nat = Succ Succ $Nat\n"
-        "output std \\c.Succ!\n"
+        "output std (\\c.Succ!)\n"
     ));
     assert(all(
         "Succ ($)\n",
@@ -1663,7 +1663,7 @@ void t_all (void) {
         "}\n"
         "var x: Nat = Succ Succ Succ $Nat\n"
         "var y: Nat = len (\\x)\n"
-        "output std \\y\n"
+        "output std (\\y)\n"
     ));
     assert(all(
         "Succ (Succ ($))\n",
@@ -1692,7 +1692,7 @@ void t_all (void) {
         "}\n"
         "var x: Nat = Succ Succ Succ $Nat\n"
         "var y: Nat = len x\n"
-        "output std \\y\n"
+        "output std (\\y)\n"
     ));
     assert(all(
         "Item (1,Item (2,$))\n",
@@ -1876,7 +1876,7 @@ void t_all (void) {
         "var l1: List = Item Item $List\n"
         "var l2: List = Item $List\n"
         "set l2 = l1\n"
-        "output std \\l2\n"
+        "output std (\\l2)\n"
     ));
     assert(all(
         "(ln 10, col 16): invalid access to \"l1\" : ownership was transferred (ln 9)",
@@ -1899,7 +1899,7 @@ void t_all (void) {
         "var l1: List = $List\n"
         "var l2: List = $List\n"
         "set l2 = l1\n"
-        "output std \\l1\n"
+        "output std (\\l1)\n"
     ));
     assert(all(
         "(ln 8, col 14): invalid assignment : cannot hold local alias \"l2\" (ln 7)",
