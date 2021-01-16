@@ -4,6 +4,8 @@ typedef struct Env {
     int depth;
 } Env;
 
+int type_is_sup_sub (Type* sup, Type* sub, int isset);
+
 Stmt* env_id_to_stmt    (Env* env, const char* id);
 Type* env_tk_to_type    (Env* env, Tk* tk);
 Type* env_expr_to_type  (Env* env, Expr* e);

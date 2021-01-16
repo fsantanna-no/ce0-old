@@ -1,3 +1,5 @@
+- invalid return local pointer
+- quero remover set_istx_stmt
 - tirar BORROWED, manter lista de borrows ativos
 - owner.c: 306 lines
 - rule 5

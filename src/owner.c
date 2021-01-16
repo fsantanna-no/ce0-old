@@ -231,44 +231,6 @@ int FS (Stmt* S) {
                     break;
                 }
 
-                case STMT_SET: {
-                    Type* tp = env_expr_to_type(s->env, s->Set.src);
-                    if (!tp->isptr) {
-                        break;
-                    }
-
-                    // set DST = SRC
-                    // check if scope of DST<=S
-                    // otherwise assert that SRC is in *not* in the set of aliases to S
-
-                    Expr* dst = expr_leftmost(s->Set.dst);
-                    assert(dst != NULL);
-                    assert(dst->sub == EXPR_VAR);
-                    Stmt* dst_decl = env_id_to_stmt(s->env, dst->Var.tk.val.s);
-                    assert(dst_decl != NULL);
-
-                    if (S->env->depth <= dst_decl->env->depth) {
-                        break;  // OK: S >= dst
-                    }
-
-                    Expr* src = expr_leftmost(s->Set.src);
-                    assert(src != NULL);
-                    assert(src->sub == EXPR_VAR);
-                    Stmt* src_decl = env_id_to_stmt(s->env, src->Var.tk.val.s);
-                    assert(src_decl != NULL);
-
-                    for (int i=0; i<aliases_n; i++) {
-                        if (aliases[i] == src_decl) {
-                            char err[1024];
-                            sprintf(err, "invalid assignment : cannot hold local pointer \"%s\" (ln %ld)",
-                                    S->Var.tk.val.s, S->Var.tk.lin);
-                            err_message(&src->Var.tk, err);
-                            return EXEC_ERROR;
-                        }
-                    }
-                    break;
-                }
-
                 case STMT_RETURN: {     // check if returning one of the aliases to S
                     Type* tp = env_expr_to_type(s->env, s->Return);
                     if (!tp->isptr) {

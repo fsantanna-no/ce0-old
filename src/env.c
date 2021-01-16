@@ -710,6 +710,44 @@ int check_types_stmt (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// set DST = \SRC
+//  - check if scope of DST<=S
+
+int check_set_scope (Stmt* s) {
+    if (s->sub != STMT_SET) {
+        return VISIT_CONTINUE;
+    }
+
+    Type* tp = env_expr_to_type(s->env, s->Set.dst);
+    if (!tp->isptr) {
+        return VISIT_CONTINUE;
+    }
+
+    Expr* dst = expr_leftmost(s->Set.dst);
+    assert(dst != NULL);
+    assert(dst->sub == EXPR_VAR);
+    Stmt* dst_decl = env_id_to_stmt(s->env, dst->Var.tk.val.s);
+    assert(dst_decl != NULL);
+
+    Expr* src = expr_leftmost(s->Set.src);
+    assert(src != NULL);
+    assert(src->sub == EXPR_VAR);
+    Stmt* src_decl = env_id_to_stmt(s->env, src->Var.tk.val.s);
+    assert(src_decl != NULL);
+
+    if (dst_decl->env->depth < src_decl->env->depth) {
+        char err[1024];
+        sprintf(err, "invalid assignment : cannot hold local pointer \"%s\" (ln %ld)",
+                src->Var.tk.val.s, src_decl->tk.lin);
+        err_message(&src->Var.tk, err);
+        return VISIT_ERROR;
+    }
+
+    return VISIT_CONTINUE;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 void set_txbx (Env* env, Expr* E, int notx, int nobw) {
     Type* tp = env_expr_to_type(env, (E->sub==EXPR_UPREF ? E->Upref : E));
     assert(tp != NULL);
@@ -801,12 +839,15 @@ int set_istx_stmt (Stmt* s) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int env (Stmt* s) {
-    assert(visit_stmt(0, s,set_seqs,NULL,NULL));
+    assert(visit_stmt(0,s,set_seqs,NULL,NULL));
     assert(set_envs(s));
-    if (!visit_stmt(0, s,NULL,check_decls_expr,check_decls_type)) {
+    if (!visit_stmt(0,s,NULL,check_decls_expr,check_decls_type)) {
         return 0;
     }
-    if (!visit_stmt(1, s,check_types_stmt,check_types_expr,NULL)) {
+    if (!visit_stmt(1,s,check_types_stmt,check_types_expr,NULL)) {
+        return 0;
+    }
+    if (!visit_stmt(0,s,check_set_scope,NULL,NULL)) {
         return 0;
     }
     assert(visit_stmt(0,s,set_istx_stmt,NULL,NULL));
