@@ -59,12 +59,9 @@ int FS (Stmt* S) {
     State state = NONE;
     Tk* tk1 = NULL;
 
-    typedef struct { Stmt* stop; int state; int aliases_n; } Stack;
+    typedef struct { Stmt* stop; int state; int bws_n; } Stack;
     Stack stack[256];
     int stack_n = 0;
-
-    Stmt* aliases[256] = { S }; // list of declarations that reach me, start with myself
-    int aliases_n = 1;          // if someneone points to theses, it also points to myself
 
     auto int stmt_var (Stmt* s);
 
@@ -74,8 +71,6 @@ int FS (Stmt* S) {
         state = NONE;
         tk1 = NULL;
         stack_n = 0;
-        aliases[0] = S;
-        aliases_n = 1;
     }
 
     return exec(S->seqs[1], pre, stmt_var);
@@ -93,19 +88,19 @@ int FS (Stmt* S) {
             return EXEC_HALT;           // no: S is not in scope
         }
 
-        // push/pop state/aliases stack
+        // push/pop stack
 
-        if (s->sub == STMT_BLOCK) {        // enter block: push state
-            stack[stack_n].stop      = s->seqs[0];
-            stack[stack_n].state     = state;
-            stack[stack_n].aliases_n = aliases_n;
+        if (s->sub == STMT_BLOCK) {         // enter block: push state
+            stack[stack_n].stop  = s->seqs[0];
+            stack[stack_n].state = state;
+            stack[stack_n].bws_n = bws_n;
             assert(stack_n < 256);
             stack_n++;
         }
 
-        if (s == stack[stack_n-1].stop) {      // leave block: pop state
+        if (s == stack[stack_n-1].stop) {   // leave block: pop state
             stack_n--;
-            aliases_n = stack[stack_n].aliases_n;
+            bws_n = stack[stack_n].bws_n;
             state = stack[stack_n].state;
         }
 
