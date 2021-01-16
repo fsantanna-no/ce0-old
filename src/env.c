@@ -713,7 +713,7 @@ int check_types_stmt (Stmt* s) {
 // set DST = \SRC
 //  - check if scope of DST<=S
 
-int check_set_ret_scope (Stmt* s) {
+int check_set_ret_pointer_scope (Stmt* s) {
     switch (s->sub) {
         case STMT_SET: {
             Type* tp = env_expr_to_type(s->env, s->Set.dst);
@@ -870,7 +870,7 @@ int env (Stmt* s) {
     if (!visit_stmt(1,s,check_types_stmt,check_types_expr,NULL)) {
         return 0;
     }
-    if (!visit_stmt(0,s,check_set_ret_scope,NULL,NULL)) {
+    if (!visit_stmt(0,s,check_set_ret_pointer_scope,NULL,NULL)) {
         return 0;
     }
     assert(visit_stmt(0,s,set_istx_stmt,NULL,NULL));
