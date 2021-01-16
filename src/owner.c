@@ -4,6 +4,28 @@
 
 #include "all.h"
 
+// How to detect ownership violations?
+//  - Rule 4: transfer ownership and then access again:
+//      var x: Nat = ...            -- owner
+//      var z: Nat = add(x,...)     -- transfer
+//      ... x or &x ...             -- error: access after ownership transfer
+//  - Rule 6: save reference and then pass ownership:
+//      var x: Nat = ...            -- owner
+//      var z: Nat = &x             -- borrow
+//      ... x ...                   -- error: transfer while borrow is active
+//  - Rule 7: return alias pointing to local owner
+//      func f: () -> &List {
+//          var l: List = build()   -- `l` is the owner
+//          return &l               -- error: cannot return alias to deallocated value
+//      }
+//
+//  - Start from each STMT_VAR declaration: find all with `visit`.
+//      - only STMT_VAR.isrec
+//  - Call `exec` and stop when `env_id_to_stmt` fails.
+//      - track EXPR_VAR acesses:
+//          - transfer (istx)  // error if state=borrowed/moved // set state=moved
+//          - borrow   (!istx) // error if state=moved          // set state=borrowed
+
 int FS (Stmt* S) {
 
     // visit all var declarations
