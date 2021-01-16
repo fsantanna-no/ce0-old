@@ -227,15 +227,17 @@ int parser_expr (Expr** ret, int canpre) {
     }
     *ret = cur;
 
-    if (ispre && pre.enu!=TK_CALL) {
+    if (ispre) {
         if (cur->sub != EXPR_VAR) {
             return err_unexpected("variable identifier");
         }
-        char tmp[256];
-        strcpy(tmp, pre.val.s);
-        strcat(tmp, "_");
-        strcat(tmp, cur->Var.tk.val.s);
-        strcpy(cur->Var.tk.val.s, tmp);
+        if (pre.enu != TK_CALL) {
+            char tmp[256];
+            strcpy(tmp, pre.val.s);
+            strcat(tmp, "_");
+            strcat(tmp, cur->Var.tk.val.s);
+            strcpy(cur->Var.tk.val.s, tmp);
+        }
     }
 
     while (1)
@@ -273,14 +275,13 @@ int parser_expr (Expr** ret, int canpre) {
             *new = (Expr) { ALL.nn++, EXPR_DNREF, 0, .Dnref=cur };
 
 // EXPR_CALL
-        } else if (parser_expr(&arg,0)) {
+        } else if (cur->sub==EXPR_VAR && parser_expr(&arg,0)) {
             *new = (Expr) { ALL.nn++, EXPR_CALL, 0, .Call={cur,arg} };
-        } else if (ispre) {
+        } else if (cur->sub==EXPR_VAR && ispre) {
             arg = malloc(sizeof(Expr));
             assert(arg != NULL);
             *arg = (Expr) { ALL.nn++, EXPR_UNIT, .Unit={TK_UNIT,{},0,ALL.nn++} };
             *new = (Expr) { ALL.nn++, EXPR_CALL, 0, .Call={cur,arg} };
-            break;
 
         } else {
             free(new);
@@ -294,7 +295,7 @@ int parser_expr (Expr** ret, int canpre) {
             }
         }
 
-        ispre = 0;      // ony on first iteration
+        //ispre = 0;      // ony on first iteration (EXPR_VAR test above implies this)
         *ret = new;
         cur = new;
     }
