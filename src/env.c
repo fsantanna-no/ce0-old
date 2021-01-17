@@ -393,24 +393,38 @@ void env_held_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
         case EXPR_NATIVE:
         case EXPR_NULL:
         case EXPR_INT:
-        case EXPR_VAR:
             break;
+
+        case EXPR_VAR: {
+            Stmt* s = env_id_to_stmt(env, e->Var.tk.val.s);
+            assert(s != NULL);
+            if (s->Var.type->isptr) {
+                vars[(*vars_n)++] = e;
+            }
+            break;
+        }
 
         case EXPR_UPREF: {
             Expr* var = expr_leftmost(e);
             assert(var != NULL);
             assert(var->sub == EXPR_VAR);
+//printf(">>> %s\n", var->Var.tk.val.s);
             vars[(*vars_n)++] = var;
             break;
         }
 
         case EXPR_DNREF: {
             Type* tp = env_expr_to_type(env, e->Dnref);
-            assert(!tp->isptr);     // TODO: pointer to pointer?
+            assert(!tp->isptr); // TODO: pointer to pointer? need to hold it
+            break;
         }
-            //Stmt* s = env_id_to_stmt(env, e->Var.tk.val.s);
-            //assert(s != NULL);
-            //return (s->sub == STMT_VAR) ? s->Var.type : s->Func.type;
+
+        case EXPR_TUPLE:
+            for (int i=0; i<e->Tuple.size; i++) {
+                env_held_vars(env, e->Tuple.vec[i], vars_n, vars);
+            }
+            break;
+
         default:
             break;
     }
