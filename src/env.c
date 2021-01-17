@@ -395,6 +395,7 @@ void env_held_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
         case EXPR_NATIVE:
         case EXPR_NULL:
         case EXPR_INT:
+        case EXPR_PRED:
             break;
 
         case EXPR_VAR: {
@@ -426,6 +427,7 @@ void env_held_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
             }
             break;
 
+        case EXPR_DISC:
         case EXPR_INDEX:
             if (env_type_ishasptr(env,TP)) {
                 Expr* var = expr_leftmost(e);

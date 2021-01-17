@@ -745,15 +745,30 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(env(s));
-        dump_stmt(s->Seq.s2->Seq.s2);
+        //dump_stmt(s->Seq.s2->Seq.s2);
         int n=0; Expr* vars[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
         assert(n == 1);
         assert(!strcmp(vars[0]->Var.tk.val.s, "x"));
     }
-
-    puts("ok");
-    assert(0);
+    {
+        Stmt* s;
+        assert(all_init(NULL, stropen("r", 0,
+            "type Xx { Xx1: (Int,\\Int) }\n"
+            "var x: Int = 10\n"
+            "var y: \\Int = \\x\n"
+            "var t: (\\Int,(Int,\\Int)) = (\\x,(x,y))\n"
+            "var m: Xx = Xx1 t.2\n"
+            "var p: \\Int = m.Xx1!.2"
+        )));
+        assert(parser(&s));
+        assert(env(s));
+        dump_stmt(s->Seq.s2->Seq.s2);
+        int n=0; Expr* vars[256];
+        env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
+        assert(n == 1);
+        assert(!strcmp(vars[0]->Var.tk.val.s, "m"));
+    }
 }
 
 void t_code (void) {
