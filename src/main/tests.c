@@ -591,6 +591,35 @@ void t_parser_stmt (void) {
     }
 }
 
+void t_env (void) {
+    {
+        Stmt* s;
+        assert(all_init(NULL, stropen("r", 0, "var x: Int = 10")));
+        assert(parser(&s));
+        assert(env(s));
+        int n; Expr* vars[256];
+        env_held_vars(s->Seq.s2->env, s->Seq.s2->Var.init, &n, vars);
+        assert(n == 0);
+    }
+    {
+        Stmt* s;
+        assert(all_init(NULL, stropen("r", 0,
+            "var x: Int = 10\n"
+            "var y: \\Int = \\x"
+        )));
+        assert(parser(&s));
+        assert(env(s));
+        dump_stmt(s->Seq.s2->Seq.s2);
+        int n; Expr* vars[256];
+        env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
+        assert(n == 1);
+        assert(!strcmp(vars[0]->Var.tk.val.s, "x"));
+    }
+
+    puts("ok");
+    assert(0);
+}
+
 void t_code (void) {
     // EXPR_UNIT
     {
@@ -1983,6 +2012,24 @@ void t_all (void) {
         "output std x.2\\\n"
     ));
     assert(all(
+        "(ln 4, col 5): invalid assignment : cannot hold local pointer \"y\" (ln 3)",
+        "var x: (Int,\\Int) = (10,?)\n"
+        "{\n"
+        "    var y: (Int,\\Int) = (10,?)\n"
+        "    set x = (10,y.2)\n"
+        "}\n"
+        "output std x.2\\\n"
+    ));
+    assert(all(
+        "(ln 4, col 5): invalid assignment : cannot hold local pointer \"y\" (ln 3)",
+        "var x: (Int,\\Int) = (10,?)\n"
+        "{\n"
+        "    var y: (Int,Int) = (10,10)\n"
+        "    set x = (10,\\y.2)\n"
+        "}\n"
+        "output std x.2\\\n"
+    ));
+    assert(all(
         "(ln 7, col 5): invalid assignment : cannot hold local pointer \"y\" (ln 6)",
         "type Xx {\n"
         "    Xx1: (Int,\\Int)\n"
@@ -1992,6 +2039,48 @@ void t_all (void) {
         "    var y: Int = 10\n"
         "    set x = Xx1(10,\\y)\n"
         "}\n"
+    ));
+    assert(all(
+        "(ln 7, col 5): invalid assignment : cannot hold local pointer \"y\" (ln 6)",
+        "type Xx {\n"
+        "    Xx1: (Int,\\Int)\n"
+        "}\n"
+        "var x: Xx = ?\n"
+        "{\n"
+        "    var y: Xx1 = (10,?)\n"
+        "    set x = Xx1(10,y.Xx1!.2)\n"
+        "}\n"
+    ));
+    assert(all(
+        "(ln 7, col 5): invalid assignment : cannot hold local pointer \"y\" (ln 6)",
+        "type Xx {\n"
+        "    Xx1: (Int,\\Int)\n"
+        "}\n"
+        "var x: Xx = ?\n"
+        "{\n"
+        "    var y: Xx1 = (10,?)\n"
+        "    set x = Xx1(10,\\y.Xx1!.1)\n"
+        "}\n"
+    ));
+    assert(all(
+        "(ln 4, col 5): invalid assignment : cannot hold local pointer \"z\" (ln 3)",
+        "var x: \\Int = ?\n"
+        "func f: \\Int -> \\Int { return arg }\n"
+        "{\n"
+        "    var z: Int = 10\n"
+        "    set x = call f(\\z)\n"
+        "}\n"
+        "output std (x\\)\n"
+    ));
+    assert(all(
+        "10\n",
+        "var x: (\\Int,Int) = ?\n"
+        "func f: \\Int -> Int { return arg\\ }\n"
+        "{\n"
+        "    var z: Int = 10\n"
+        "    set x = (\\x, call f(\\z))\n"
+        "}\n"
+        "output std (x\\.2)\n"
     ));
 
     // CYCLE
@@ -2139,6 +2228,7 @@ void t_parser (void) {
 int main (void) {
     t_lexer();
     t_parser();
+    t_env();
     t_code();
     t_all();
     puts("OK");

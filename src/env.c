@@ -386,6 +386,33 @@ Stmt* env_expr_leftmost_decl (Env* env, Expr* e) {
     return left_decl;
 }
 
+void env_held_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
+    switch (e->sub) {
+        case EXPR_UNIT:
+        case EXPR_UNK:
+        case EXPR_NATIVE:
+        case EXPR_NULL:
+        case EXPR_INT:
+        case EXPR_VAR:
+            break;
+
+        case EXPR_UPREF: {
+            Expr* var = expr_leftmost(e);
+            assert(var != NULL);
+            assert(var->sub == EXPR_VAR);
+            vars[(*vars_n)++] = var;
+        }
+
+        case EXPR_DNREF: {
+        }
+            //Stmt* s = env_id_to_stmt(env, e->Var.tk.val.s);
+            //assert(s != NULL);
+            //return (s->sub == STMT_VAR) ? s->Var.type : s->Func.type;
+        default:
+            break;
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 int set_seqs (Stmt* s) {

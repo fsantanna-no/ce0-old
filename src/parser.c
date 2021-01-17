@@ -167,11 +167,11 @@ int parser_expr_ (Expr** ret)
 
 // EXPR_UPREF
     } else if (accept('\\')) {
-        Expr* dnref;
-        if (!parser_expr(&dnref,0)) {
+        Expr* val;
+        if (!parser_expr(&val,0)) {
             return 0;
         }
-        *e = (Expr) { ALL.nn++, EXPR_UPREF, 0, .Upref=dnref };
+        *e = (Expr) { ALL.nn++, EXPR_UPREF, 0, .Upref=val };
 
 // EXPR_PARENS / EXPR_TUPLE
     } else if (accept('(')) {
