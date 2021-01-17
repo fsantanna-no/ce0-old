@@ -435,6 +435,13 @@ void env_held_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
             }
             break;
 
+        case EXPR_CALL:
+            // arg is held if call returns ishasptr
+            if (env_type_ishasptr(env,TP)) {
+                env_held_vars(env, e->Call.arg, vars_n, vars);
+            }
+            break;
+
         default:
             break;
     }
@@ -851,8 +858,7 @@ void set_ptr_deepest_ (Env* env, Expr* src, Stmt** dst_deepest) {
                 set_ptr_deepest_(env, src->Cons.arg, dst_deepest);
                 break;
             default:
-                break;
-                //assert(0);
+                assert(0);
         }
     } else {
         // do nothing
@@ -1019,12 +1025,14 @@ int env (Stmt* s) {
     if (!visit_stmt(1,s,check_types_stmt,check_types_expr,NULL)) {
         return 0;
     }
+#if 0
     if (!visit_stmt(0,s,check_set_set_ptr_deepest,NULL,NULL)) {
         return 0;
     }
     if (!visit_stmt(0,s,check_ret_ptr_deepest,NULL,NULL)) {
         return 0;
     }
+#endif
     assert(visit_stmt(0,s,set_istx_stmt,NULL,NULL));
     return 1;
 }
