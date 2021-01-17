@@ -61,9 +61,10 @@
             return EXEC_CONTINUE;
         }
 
+- tirar BORROWED, manter lista de borrows ativos
+- ciclos
 - $Nat -> $
 - quero remover set_istx_stmt
-- tirar BORROWED, manter lista de borrows ativos
 - owner.c: 306 lines
 - rule 5
 - all rules when starting from hasrec

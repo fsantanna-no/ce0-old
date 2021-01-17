@@ -795,7 +795,7 @@ void set_ptr_deepest_ (Env* env, Expr* src, Stmt** dst_deepest) {
                 }
                 break;
             case EXPR_CONS:
-                puts("aqui");
+                set_ptr_deepest_(env, src->Cons.arg, dst_deepest);
                 break;
             default:
                 assert(0);

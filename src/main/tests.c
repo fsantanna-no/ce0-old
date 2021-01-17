@@ -1982,9 +1982,8 @@ void t_all (void) {
         "}\n"
         "output std x.2\\\n"
     ));
-puts("-=-=-=-=-");
     assert(all(
-        "ERROR",
+        "(ln 7, col 5): invalid assignment : cannot hold local pointer \"y\" (ln 6)",
         "type Xx {\n"
         "    Xx1: (Int,\\Int)\n"
         "}\n"
@@ -1994,7 +1993,6 @@ puts("-=-=-=-=-");
         "    set x = Xx1(10,\\y)\n"
         "}\n"
     ));
-assert(0);
 
     // CYCLE
     assert(all(
