@@ -173,14 +173,14 @@ int parser_expr_ (Expr** ret)
 // EXPR_UPREF
     } else if (accept('\\')) {
         Expr* val;
-        Tk tk = ALL.tk1;
+        Tk tk = ALL.tk0;
         if (!parser_expr(&val,0)) {
             return 0;
         }
         if (val->sub==EXPR_VAR || val->sub==EXPR_INDEX || val->sub==EXPR_DISC) {
             *e = (Expr) { ALL.nn++, EXPR_UPREF, 0, .Upref=val };
         } else {
-            return err(&tk, "expected variable");
+            return err(&tk, "unexpected operand to `\\´");
         }
 
 // EXPR_PARENS / EXPR_TUPLE
@@ -298,7 +298,14 @@ int parser_expr (Expr** ret, int canpre) {
 
         } else if (accept('\\')) {
 // EXPR_DNREF
-            *new = (Expr) { ALL.nn++, EXPR_DNREF, 0, .Dnref=cur };
+            if (cur->sub==EXPR_NATIVE || cur->sub==EXPR_VAR   ||
+                cur->sub==EXPR_UPREF  || cur->sub==EXPR_DNREF ||
+                cur->sub==EXPR_INDEX  || cur->sub==EXPR_CALL  ||
+                cur->sub==EXPR_DISC) {
+                *new = (Expr) { ALL.nn++, EXPR_DNREF, 0, .Dnref=cur };
+            } else {
+                return err(&ALL.tk0, "unexpected operand to `\\´");
+            }
 
 // EXPR_CALL
         } else if (isvarnat && parser_expr(&arg,0)) {

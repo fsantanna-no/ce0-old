@@ -401,9 +401,12 @@ void env_held_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
             assert(var != NULL);
             assert(var->sub == EXPR_VAR);
             vars[(*vars_n)++] = var;
+            break;
         }
 
         case EXPR_DNREF: {
+            Type* tp = env_expr_to_type(env, e->Dnref);
+            assert(!tp->isptr);     // TODO: pointer to pointer?
         }
             //Stmt* s = env_id_to_stmt(env, e->Var.tk.val.s);
             //assert(s != NULL);

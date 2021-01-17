@@ -419,7 +419,7 @@ void t_parser_expr (void) {
         assert(!strcmp(ALL.err, "(ln 1, col 5): expected index or subtype : have `.´"));
         fclose(ALL.inp);
     }
-    // EXPR_UPREF
+    // EXPR_UPREF, EXPR_DNREF
     {
         all_init(NULL, stropen("r", 0, "\\x.1"));
         Expr* e;
@@ -432,7 +432,14 @@ void t_parser_expr (void) {
         all_init(NULL, stropen("r", 0, "\\1"));
         Expr* e;
         assert(!parser_expr(&e,0));
-        assert(!strcmp(ALL.err, "(ln 1, col 2): expected variable"));
+        assert(!strcmp(ALL.err, "(ln 1, col 1): unexpected operand to `\\´"));
+        fclose(ALL.inp);
+    }
+    {
+        all_init(NULL, stropen("r", 0, "1\\"));
+        Expr* e;
+        assert(!parser_expr(&e,0));
+        assert(!strcmp(ALL.err, "(ln 1, col 2): unexpected operand to `\\´"));
         fclose(ALL.inp);
     }
 }
