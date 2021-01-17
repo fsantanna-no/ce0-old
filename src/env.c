@@ -331,6 +331,17 @@ int env_type_ishasrec (Env* env, Type* tp, int okalias) {
     return env_type_isrec(env,tp,okalias) || env_type_hasrec(env,tp,okalias);
 }
 
+//Stmt* expr_leftmost_decl (Env* env, Expr* e);
+Stmt* expr_leftmost_decl (Env* env, Expr* e) {
+    Expr* left = expr_leftmost(e);
+    assert(left != NULL);
+    assert(left->sub == EXPR_VAR);
+    Stmt* left_decl = env_id_to_stmt(env, left->Var.tk.val.s);
+    assert(left_decl != NULL);
+    assert(left_decl->sub == STMT_VAR);
+    return left_decl;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 int set_seqs (Stmt* s) {
@@ -763,32 +774,27 @@ int env_type_ishasptr (Env* env, Type* tp) {
 void set_ptr_deepest_ (Env* env, Expr* src, Stmt** dst_deepest) {
     Type* tp = env_expr_to_type(env, src);
 
-    Stmt* expr_leftmost_decl (Expr* e) {
-        Expr* left = expr_leftmost(e);
-        assert(left != NULL);
-        assert(left->sub == EXPR_VAR);
-        Stmt* left_decl = env_id_to_stmt(env, left->Var.tk.val.s);
-        assert(left_decl != NULL);
-        assert(left_decl->sub == STMT_VAR);
-        return left_decl;
-    }
-
     if (src->sub == EXPR_UPREF) {
-        Stmt* src_decl = expr_leftmost_decl(src);
+        Stmt* src_decl = expr_leftmost_decl(env, src);
         if (*dst_deepest==NULL || src_decl->env->depth<(*dst_deepest)->env->depth) {
             *dst_deepest = src_decl;
         }
     } else if (tp->isptr) {
-        Stmt* src_decl = expr_leftmost_decl(src);
+        Stmt* src_decl = expr_leftmost_decl(env, src);
         assert(src_decl->Var.ptr_deepest != NULL);
         if (*dst_deepest==NULL || src_decl->Var.ptr_deepest->env->depth<(*dst_deepest)->env->depth) {
             *dst_deepest = src_decl->Var.ptr_deepest;
         }
     } else if (env_type_ishasptr(env,tp)) {
+puts("###############");
+dump_expr(src);
+puts("");
         switch (src->sub) {
             case EXPR_TUPLE:
-assert(0);
                 for (int i=0; i<src->Tuple.size; i++) {
+puts("###");
+dump_expr(src->Tuple.vec[i]);
+puts("");
                     set_ptr_deepest_(env, src->Tuple.vec[i], dst_deepest);
                 }
                 break;
@@ -809,8 +815,14 @@ int set_ptr_deepest (Stmt* s) {
                 set_ptr_deepest_(s->env, s->Var.init, &s->Var.ptr_deepest);
             }
             break;
-        case STMT_SET:
+        case STMT_SET: {
+            Type* tp = env_expr_to_type(s->env, s->Set.dst);
+            if (env_type_ishasptr(s->env,tp)) {
+                Stmt* var = expr_leftmost_decl(s->env, s->Set.dst);
+                set_ptr_deepest_(s->env, s->Set.src, &var->Var.ptr_deepest);
+            }
             break;
+        }
         default:
             break;
     }
@@ -827,17 +839,9 @@ int check_set_ret_pointer_scope (Stmt* s) {
                 return VISIT_CONTINUE;
             }
 
-            Expr* dst = expr_leftmost(s->Set.dst);
-            assert(dst != NULL);
-            assert(dst->sub == EXPR_VAR);
-            Stmt* dst_decl = env_id_to_stmt(s->env, dst->Var.tk.val.s);
-            assert(dst_decl != NULL);
-
-            Expr* src = expr_leftmost(s->Set.src);
-            assert(src != NULL);
-            assert(src->sub == EXPR_VAR);
-            Stmt* src_decl = env_id_to_stmt(s->env, src->Var.tk.val.s);
-            assert(src_decl != NULL);
+            Stmt* dst_decl = expr_leftmost_decl(s->env, s->Set.dst);
+            Expr* src      = expr_leftmost(s->Set.src);
+            Stmt* src_decl = expr_leftmost_decl(s->env, s->Set.src);
 
             int src_depth; {
                 if (s->Set.src->sub == EXPR_UPREF) {
@@ -863,10 +867,8 @@ int check_set_ret_pointer_scope (Stmt* s) {
                 break;
             }
 
-            Expr* src = expr_leftmost(s->Return);
-            assert(src != NULL);
-            assert(src->sub == EXPR_VAR);
-            Stmt* src_decl = env_id_to_stmt(s->env, src->Var.tk.val.s);
+            Expr* src      = expr_leftmost(s->Return);
+            Stmt* src_decl = expr_leftmost_decl(s->env, s->Return);
             assert(src_decl->Var.ptr_deepest != NULL);
 
             if (s->env->depth <= src_decl->Var.ptr_deepest->env->depth) {
@@ -905,6 +907,8 @@ void set_txbx (Env* env, Expr* E, int notx, int nobw) {
             if (E->sub!=EXPR_UPREF && E==left && !notx) { // TX only for root vars (E==left)
                 left->Var.txbw = TX;
             }
+        } else {
+            // ok
         }
     }
 }
