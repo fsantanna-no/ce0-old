@@ -442,6 +442,11 @@ void env_held_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
             }
             break;
 
+        case EXPR_CONS: {
+            env_held_vars(env, e->Cons.arg, vars_n, vars);
+            break;
+        }
+
         default:
             break;
     }
