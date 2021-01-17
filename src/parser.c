@@ -547,7 +547,7 @@ int parser_stmt (Stmt** ret) {
                 { TX_VAR, {.s="arg"}, id.lin, id.col },
                 tp->Func.inp,
                 expr,
-                NULL
+                s       // ptr_deepest of "arg" is the scope of its enclosing function
             }
         };
 

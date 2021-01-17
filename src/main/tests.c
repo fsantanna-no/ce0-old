@@ -1221,7 +1221,6 @@ void t_all (void) {
         "call f (\\x)\n"
         "output std x\n"
     ));
-puts("-=-=-");
     assert(all(
         "True\n",
         "type Bool {\n"
@@ -1236,7 +1235,6 @@ puts("-=-=-");
         "call f (\\x)\n"
         "output std x\n"
     ));
-assert(0);
     assert(all(
         "True\n",
         "type Bool {\n"
@@ -1949,7 +1947,7 @@ assert(0);
         "output std (x\\)\n"
     ));
     assert(all(
-        "ERROR\n",
+        "(ln 4, col 14): invalid assignment : cannot hold local pointer \"z\" (ln 3)",
         "var x: \\Int = ?\n"
         "{\n"
         "    var z: Int = 10\n"
@@ -1957,9 +1955,11 @@ assert(0);
         "}\n"
         "output std (x\\)\n"
     ));
+//puts("-=-=-");
+//assert(0);
     assert(all(
-        "ERROR\n",
-        "var x: (Int,\\Int) = (10,\\y)\n"
+        "(ln 4, col 16): invalid assignment : cannot hold local pointer \"y\" (ln 3)",
+        "var x: (Int,\\Int) = (10,?)\n"
         "{\n"
         "    var y: Int = 10\n"
         "    set x.2 = \\y\n"

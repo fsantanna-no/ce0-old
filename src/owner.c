@@ -127,6 +127,7 @@ int FS (Stmt* S) {
             default:
                 break;
         }
+        return EXEC_CONTINUE;
 
         int var_access (Env* env, Expr* var) {
             if (var->sub != EXPR_VAR) {
@@ -168,7 +169,6 @@ int FS (Stmt* S) {
             }
             return VISIT_CONTINUE;
         }
-        assert(0);
     }
 }
 
