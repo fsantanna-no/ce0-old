@@ -603,6 +603,8 @@ int check_types_expr (Env* env, Expr* e) {
             if (!tp->isptr) {
 // TODO: ALL.tk0
                 return err_message(&ALL.tk0, "invalid `\\´ : expected pointer type");
+
+                //return err_message(e->tk, "invalid `\\´ : expected pointer type");
             }
             break;
         }
@@ -793,6 +795,7 @@ void set_ptr_deepest_ (Env* env, Expr* src, Stmt** dst_deepest) {
                 }
                 break;
             case EXPR_CONS:
+                puts("aqui");
                 break;
             default:
                 assert(0);
@@ -819,7 +822,6 @@ puts("noo");
 
 dump_stmt(s);
             Stmt* dst_decl = expr_leftmost_decl(s->env, s->Set.dst);
-            Expr* src      = expr_leftmost(s->Set.src);
             set_ptr_deepest_(s->env, s->Set.src, &dst_decl->Var.ptr_deepest);
             Stmt* src_decl = dst_decl->Var.ptr_deepest;
 printf(">>> %d vs %d\n", dst_decl->env->depth, dst_decl->Var.ptr_deepest->env->depth);
@@ -828,7 +830,7 @@ printf(">>> %d vs %d\n", dst_decl->env->depth, dst_decl->Var.ptr_deepest->env->d
                 char err[1024];
                 sprintf(err, "invalid assignment : cannot hold local pointer \"%s\" (ln %ld)",
                         src_decl->Var.tk.val.s, src_decl->Var.tk.lin);
-                err_message(&src->Var.tk, err);
+                err_message(&s->tk, err);
                 return VISIT_ERROR;
             }
             break;

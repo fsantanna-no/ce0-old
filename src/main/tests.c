@@ -1924,7 +1924,7 @@ void t_all (void) {
         "output std (\\l1)\n"
     ));
     assert(all(
-        "(ln 8, col 14): invalid assignment : cannot hold local pointer \"l2\" (ln 7)",
+        "(ln 8, col 5): invalid assignment : cannot hold local pointer \"l2\" (ln 7)",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
@@ -1947,7 +1947,7 @@ void t_all (void) {
         "output std (x\\)\n"
     ));
     assert(all(
-        "(ln 4, col 14): invalid assignment : cannot hold local pointer \"z\" (ln 3)",
+        "(ln 4, col 5): invalid assignment : cannot hold local pointer \"z\" (ln 3)",
         "var x: \\Int = ?\n"
         "{\n"
         "    var z: Int = 10\n"
@@ -1956,7 +1956,7 @@ void t_all (void) {
         "output std (x\\)\n"
     ));
     assert(all(
-        "(ln 4, col 16): invalid assignment : cannot hold local pointer \"y\" (ln 3)",
+        "(ln 4, col 5): invalid assignment : cannot hold local pointer \"y\" (ln 3)",
         "var x: (Int,\\Int) = (10,?)\n"
         "{\n"
         "    var y: Int = 10\n"
@@ -1973,11 +1973,8 @@ void t_all (void) {
         "}\n"
         "output std x.2\\\n"
     ));
-#ifdef XXX
-#endif
-puts("-=-=-=-=-");
     assert(all(
-        "(ln 4, col 16): invalid assignment : cannot hold local pointer \"y\" (ln 3)",
+        "(ln 4, col 5): invalid assignment : cannot hold local pointer \"y\" (ln 3)",
         "var x: (Int,\\Int) = (10,?)\n"
         "{\n"
         "    var y: Int = 10\n"
@@ -1985,7 +1982,7 @@ puts("-=-=-=-=-");
         "}\n"
         "output std x.2\\\n"
     ));
-assert(0);
+puts("-=-=-=-=-");
     assert(all(
         "ERROR",
         "type Xx {\n"
@@ -1997,6 +1994,7 @@ assert(0);
         "    set x = Xx1(10,\\y)\n"
         "}\n"
     ));
+assert(0);
 
     // CYCLE
     assert(all(
