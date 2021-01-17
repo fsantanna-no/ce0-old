@@ -61,6 +61,7 @@
             return EXEC_CONTINUE;
         }
 
+- usar env_held_vars em deepest/borrows
 - tirar BORROWED, manter lista de borrows ativos
     - remove stack.state
 - ciclos

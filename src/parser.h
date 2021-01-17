@@ -131,7 +131,7 @@ typedef struct Stmt {
             Tk    tk;                    // ns
             Type* type;                  // : Nat
             Expr* init;                  // = n
-            struct Stmt* ptr_deepest;
+            struct Stmt* ptr_deepest; // TODO: int
         } Var;
         struct {            // STMT_USER
             int  isrec;                 // rec

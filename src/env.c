@@ -388,6 +388,7 @@ Stmt* env_expr_leftmost_decl (Env* env, Expr* e) {
 
 void env_held_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
     Type* TP = env_expr_to_type(env, e);
+    assert((*vars_n) < 255);
 
     switch (e->sub) {
         case EXPR_UNIT:
@@ -840,43 +841,22 @@ int check_types_stmt (Stmt* s) {
 // return \SRC
 //  - check if scope of DST<=S
 
-void set_ptr_deepest_ (Env* env, Expr* src, Stmt** dst_deepest) {
-    Type* tp = env_expr_to_type(env, src);
-
-    if (src->sub == EXPR_UPREF) {
-        Stmt* src_decl = env_expr_leftmost_decl(env, src);
-        if (*dst_deepest==NULL || src_decl->env->depth>(*dst_deepest)->env->depth) {
-            *dst_deepest = src_decl;
-        }
-    } else if (tp->isptr) {
-        Stmt* src_decl = env_expr_leftmost_decl(env, src);
-        assert(src_decl->Var.ptr_deepest != NULL);
-        if (*dst_deepest==NULL || src_decl->Var.ptr_deepest->env->depth<(*dst_deepest)->env->depth) {
-            *dst_deepest = src_decl->Var.ptr_deepest;
-        }
-    } else if (env_type_ishasptr(env,tp)) {
-        switch (src->sub) {
-            case EXPR_TUPLE:
-                for (int i=0; i<src->Tuple.size; i++) {
-                    set_ptr_deepest_(env, src->Tuple.vec[i], dst_deepest);
-                }
-                break;
-            case EXPR_CONS:
-                set_ptr_deepest_(env, src->Cons.arg, dst_deepest);
-                break;
-            default:
-                assert(0);
-        }
-    } else {
-        // do nothing
-    }
-}
-
 int check_set_set_ptr_deepest (Stmt* s) {
     switch (s->sub) {
-        case STMT_VAR:
-            set_ptr_deepest_(s->env, s->Var.init, &s->Var.ptr_deepest);
+        case STMT_VAR: {
+            int n=0; Expr* vars[256];
+            env_held_vars(s->env, s->Var.init, &n, vars);
+            for (int i=0; i<n; i++) {
+                Stmt* dcl = env_id_to_stmt(s->env, vars[i]->Var.tk.val.s);
+                assert(dcl != NULL);
+                assert(dcl->sub == STMT_VAR);
+                if (s->Var.ptr_deepest == NULL ||
+                    dcl->env->depth > s->Var.ptr_deepest->env->depth) {
+                    s->Var.ptr_deepest = dcl;
+                }
+            }
             break;
+        }
         case STMT_SET: {
             Type* tp = env_expr_to_type(s->env, s->Set.dst);
             if (!env_type_ishasptr(s->env,tp)) {
@@ -884,7 +864,22 @@ int check_set_set_ptr_deepest (Stmt* s) {
             }
 
             Stmt* dst_decl = env_expr_leftmost_decl(s->env, s->Set.dst);
-            set_ptr_deepest_(s->env, s->Set.src, &dst_decl->Var.ptr_deepest);
+            assert(dst_decl->sub == STMT_VAR);
+
+            {
+                int n=0; Expr* vars[256];
+                env_held_vars(s->env, s->Set.src, &n, vars);
+                for (int i=0; i<n; i++) {
+                    Stmt* dcl = env_id_to_stmt(s->env, vars[i]->Var.tk.val.s);
+                    assert(dcl != NULL);
+                    assert(dcl->sub == STMT_VAR);
+                    if (dst_decl->Var.ptr_deepest == NULL ||
+                        dcl->env->depth > dst_decl->Var.ptr_deepest->env->depth) {
+                        dst_decl->Var.ptr_deepest = dcl;
+                    }
+                }
+            }
+
             Stmt* src_decl = dst_decl->Var.ptr_deepest;
 
             if (dst_decl->env->depth < dst_decl->Var.ptr_deepest->env->depth) {
@@ -918,6 +913,7 @@ int check_ret_ptr_deepest (Stmt* s) {
     Stmt* src_decl = env_expr_leftmost_decl(s->env, s->Return);
     assert(src_decl->Var.ptr_deepest != NULL);
 
+printf("ret=%d vs src=%d\n", s->env->depth, src_decl->Var.ptr_deepest->env->depth);
     if (s->env->depth <= src_decl->Var.ptr_deepest->env->depth) {
         char err[1024];
         sprintf(err, "invalid return : cannot return local pointer \"%s\" (ln %ld)",
@@ -1032,14 +1028,12 @@ int env (Stmt* s) {
     if (!visit_stmt(1,s,check_types_stmt,check_types_expr,NULL)) {
         return 0;
     }
-#if 0
     if (!visit_stmt(0,s,check_set_set_ptr_deepest,NULL,NULL)) {
         return 0;
     }
     if (!visit_stmt(0,s,check_ret_ptr_deepest,NULL,NULL)) {
         return 0;
     }
-#endif
     assert(visit_stmt(0,s,set_istx_stmt,NULL,NULL));
     return 1;
 }

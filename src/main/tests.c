@@ -701,6 +701,7 @@ void t_env (void) {
         assert(n == 1);
         assert(!strcmp(vars[0]->Var.tk.val.s, "t"));
     }
+puts("-=-=-=-=-");
     {
         Stmt* s;
         assert(all_init(NULL, stropen("r", 0,
@@ -716,6 +717,7 @@ void t_env (void) {
         assert(n == 1);
         assert(!strcmp(vars[0]->Var.tk.val.s, "x"));
     }
+assert(0);
     {
         Stmt* s;
         assert(all_init(NULL, stropen("r", 0,
