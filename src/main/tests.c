@@ -669,6 +669,38 @@ void t_env (void) {
         assert(n == 2);
         assert(!strcmp(vars[1]->Var.tk.val.s, "y"));
     }
+    {
+        Stmt* s;
+        assert(all_init(NULL, stropen("r", 0,
+            "var x: Int = 10\n"
+            "var y: \\Int = \\x\n"
+            "var t: (\\Int,(Int,\\Int)) = (\\x,(x,y))\n"
+            "var p: (Int,\\Int) = t.2"
+        )));
+        assert(parser(&s));
+        assert(env(s));
+        //dump_stmt(s->Seq.s2->Seq.s2);
+        int n=0; Expr* vars[256];
+        env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
+        assert(n == 1);
+        assert(!strcmp(vars[0]->Var.tk.val.s, "t"));
+    }
+    {
+        Stmt* s;
+        assert(all_init(NULL, stropen("r", 0,
+            "var x: Int = 10\n"
+            "var y: \\Int = \\x\n"
+            "var t: (\\Int,(Int,\\Int)) = (\\x,(x,y))\n"
+            "var p: \\Int = t.2.2"
+        )));
+        assert(parser(&s));
+        assert(env(s));
+        dump_stmt(s->Seq.s2->Seq.s2);
+        int n=0; Expr* vars[256];
+        env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
+        assert(n == 1);
+        assert(!strcmp(vars[0]->Var.tk.val.s, "t"));
+    }
 
     puts("ok");
     assert(0);

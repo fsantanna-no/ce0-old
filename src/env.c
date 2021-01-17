@@ -387,6 +387,8 @@ Stmt* env_expr_leftmost_decl (Env* env, Expr* e) {
 }
 
 void env_held_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
+    Type* TP = env_expr_to_type(env, e);
+
     switch (e->sub) {
         case EXPR_UNIT:
         case EXPR_UNK:
@@ -408,7 +410,6 @@ void env_held_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
             Expr* var = expr_leftmost(e);
             assert(var != NULL);
             assert(var->sub == EXPR_VAR);
-//printf(">>> %s\n", var->Var.tk.val.s);
             vars[(*vars_n)++] = var;
             break;
         }
@@ -422,6 +423,15 @@ void env_held_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
         case EXPR_TUPLE:
             for (int i=0; i<e->Tuple.size; i++) {
                 env_held_vars(env, e->Tuple.vec[i], vars_n, vars);
+            }
+            break;
+
+        case EXPR_INDEX:
+            if (env_type_ishasptr(env,TP)) {
+                Expr* var = expr_leftmost(e);
+                assert(var != NULL);
+                assert(var->sub == EXPR_VAR);
+                vars[(*vars_n)++] = var;
             }
             break;
 
@@ -841,7 +851,8 @@ void set_ptr_deepest_ (Env* env, Expr* src, Stmt** dst_deepest) {
                 set_ptr_deepest_(env, src->Cons.arg, dst_deepest);
                 break;
             default:
-                assert(0);
+                break;
+                //assert(0);
         }
     } else {
         // do nothing
