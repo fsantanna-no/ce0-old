@@ -701,7 +701,6 @@ void t_env (void) {
         assert(n == 1);
         assert(!strcmp(vars[0]->Var.tk.val.s, "t"));
     }
-puts("-=-=-=-=-");
     {
         Stmt* s;
         assert(all_init(NULL, stropen("r", 0,
@@ -717,7 +716,6 @@ puts("-=-=-=-=-");
         assert(n == 1);
         assert(!strcmp(vars[0]->Var.tk.val.s, "x"));
     }
-assert(0);
     {
         Stmt* s;
         assert(all_init(NULL, stropen("r", 0,
@@ -2193,6 +2191,8 @@ void t_all (void) {
         "    set x = Xx1(10,\\y)\n"
         "}\n"
     ));
+//puts("-=-=-=-");
+//assert(0);
     assert(all(
         "(ln 7, col 5): invalid assignment : cannot hold local pointer \"y\" (ln 6)",
         "type Xx {\n"
@@ -2200,7 +2200,7 @@ void t_all (void) {
         "}\n"
         "var x: Xx = ?\n"
         "{\n"
-        "    var y: Xx1 = (10,?)\n"
+        "    var y: Xx = Xx1 (10,?)\n"
         "    set x = Xx1(10,y.Xx1!.2)\n"
         "}\n"
     ));
@@ -2211,12 +2211,12 @@ void t_all (void) {
         "}\n"
         "var x: Xx = ?\n"
         "{\n"
-        "    var y: Xx1 = (10,?)\n"
+        "    var y: Xx = Xx1 (10,?)\n"
         "    set x = Xx1(10,\\y.Xx1!.1)\n"
         "}\n"
     ));
     assert(all(
-        "(ln 4, col 5): invalid assignment : cannot hold local pointer \"z\" (ln 3)",
+        "(ln 5, col 5): invalid assignment : cannot hold local pointer \"z\" (ln 4)",
         "var x: \\Int = ?\n"
         "func f: \\Int -> \\Int { return arg }\n"
         "{\n"
@@ -2231,9 +2231,9 @@ void t_all (void) {
         "func f: \\Int -> Int { return arg\\ }\n"
         "{\n"
         "    var z: Int = 10\n"
-        "    set x = (\\x, call f(\\z))\n"
+        "    set x = (\\z, f(\\z))\n"
         "}\n"
-        "output std (x\\.2)\n"
+        "output std x.2\n"
     ));
 
     // CYCLE

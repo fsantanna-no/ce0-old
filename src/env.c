@@ -897,12 +897,12 @@ int check_set_set_ptr_deepest (Stmt* s) {
     return VISIT_CONTINUE;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-
 int check_ret_ptr_deepest (Stmt* s) {
     if (s->sub != STMT_RETURN) {
         return VISIT_CONTINUE;
     }
+
+    // STMT_RETURN
 
     Type* tp = env_expr_to_type(s->env, s->Return);
     if (!tp->isptr) {
@@ -913,7 +913,7 @@ int check_ret_ptr_deepest (Stmt* s) {
     Stmt* src_decl = env_expr_leftmost_decl(s->env, s->Return);
     assert(src_decl->Var.ptr_deepest != NULL);
 
-printf("ret=%d vs src=%d\n", s->env->depth, src_decl->Var.ptr_deepest->env->depth);
+//printf("ret=%d vs src=%d\n", s->env->depth, src_decl->Var.ptr_deepest->env->depth);
     if (s->env->depth <= src_decl->Var.ptr_deepest->env->depth) {
         char err[1024];
         sprintf(err, "invalid return : cannot return local pointer \"%s\" (ln %ld)",
@@ -921,8 +921,8 @@ printf("ret=%d vs src=%d\n", s->env->depth, src_decl->Var.ptr_deepest->env->dept
         err_message(&src->Var.tk, err);
         return VISIT_ERROR;
     }
-
-    assert(0); // never tested outer scope before: just remove this assert and go on...
+    //assert(0); // never tested outer scope before: just remove this assert and go on...
+    return VISIT_CONTINUE;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
