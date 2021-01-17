@@ -62,6 +62,7 @@
         }
 
 - tirar BORROWED, manter lista de borrows ativos
+    - remove stack.state
 - ciclos
 - $Nat -> $
 - quero remover set_istx_stmt

@@ -50,7 +50,8 @@ int FS (Stmt* S) {
 
     // Tracks borrows of x:
     //      var y: \Nat = \x
-    //  - if active borrow (bws_n > 0), cannot be transferred
+    //      var z: (Int,\Nat) = (1,\y)  -- x is borrowed by both y and z
+    //  - if x has active borrows (bws_n > 0), then it cannot be transferred
     //  - clean bws on block exit
     Stmt* bws[256] = {};
     int bws_n = 0;
@@ -99,16 +100,30 @@ int FS (Stmt* S) {
             state = stack[stack_n].state;
         }
 
-#if 0
+        // Add y/z in bws:
+        //  var y = ... \x ...
+        //  set z = ... y ...
+
+        void ins_bws (Stmt* var, Expr* e) {
+            //if (src->sub == 
+        }
+
         switch (s->sub) {
-            case STMT_VAR: {
-                if (!s->Var.tp->isptr) {
+            case STMT_VAR:
+                ins_bws(s, s->Var.init);
+                break;
+            case STMT_SET: {
+                Type* tp = env_expr_to_type(s->env, s->Set.dst);
+                if (!env_type_ishasptr(s->env,tp)) {
                     break;
                 }
-                Expr* init = expr_leftmost(s->Var.init);
+                Stmt* dst = env_expr_leftmost_decl(s->env, s->Set.dst);
+                ins_bws(dst, s->Set.src);
+                break;
             }
+            default:
+                break;
         }
-#endif
 
         // Rules 4/5/6
         auto int var_access (Env* env, Expr* var);

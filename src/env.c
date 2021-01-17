@@ -331,8 +331,52 @@ int env_type_ishasrec (Env* env, Type* tp, int okalias) {
     return env_type_isrec(env,tp,okalias) || env_type_hasrec(env,tp,okalias);
 }
 
-//Stmt* expr_leftmost_decl (Env* env, Expr* e);
-Stmt* expr_leftmost_decl (Env* env, Expr* e) {
+int env_type_ishasptr (Env* env, Type* tp) {
+    char* users[256];
+    int users_n = 0;
+    int aux (Env* env, Type* tp) {
+        if (tp->isptr) {
+            return 1;
+        }
+        switch (tp->sub) {
+            case TYPE_ANY:
+            case TYPE_UNIT:
+            case TYPE_NATIVE:
+            case TYPE_FUNC:
+                return 0;
+            case TYPE_TUPLE:
+                for (int i=0; i<tp->Tuple.size; i++) {
+                    if (aux(env,tp->Tuple.vec[i])) {
+                        return 1;
+                    }
+                }
+                return 0;
+            case TYPE_USER: {
+                Stmt* user = env_id_to_stmt(env, tp->User.val.s);
+                assert(user!=NULL && user->sub==STMT_USER);
+                if (user->User.isrec) {
+                    for (int i=0; i<users_n; i++) {
+                        if (!strcmp(user->tk.val.s,users[i])) {
+                            return 0;
+                        }
+                    }
+                    assert(users_n < 256);
+                    users[users_n++] = user->tk.val.s;
+                }
+                for (int i=0; i<user->User.size; i++) {
+                    if (aux(env,user->User.vec[i].type)) {
+                        return 1;
+                    }
+                }
+                return 0;
+            }
+        }
+        assert(0);
+    }
+    return aux(env, tp);
+}
+
+Stmt* env_expr_leftmost_decl (Env* env, Expr* e) {
     Expr* left = expr_leftmost(e);
     assert(left != NULL);
     assert(left->sub == EXPR_VAR);
@@ -728,61 +772,16 @@ int check_types_stmt (Stmt* s) {
 // return \SRC
 //  - check if scope of DST<=S
 
-int env_type_ishasptr (Env* env, Type* tp) {
-    char* users[256];
-    int users_n = 0;
-    int aux (Env* env, Type* tp) {
-        if (tp->isptr) {
-            return 1;
-        }
-        switch (tp->sub) {
-            case TYPE_ANY:
-            case TYPE_UNIT:
-            case TYPE_NATIVE:
-            case TYPE_FUNC:
-                return 0;
-            case TYPE_TUPLE:
-                for (int i=0; i<tp->Tuple.size; i++) {
-                    if (aux(env,tp->Tuple.vec[i])) {
-                        return 1;
-                    }
-                }
-                return 0;
-            case TYPE_USER: {
-                Stmt* user = env_id_to_stmt(env, tp->User.val.s);
-                assert(user!=NULL && user->sub==STMT_USER);
-                if (user->User.isrec) {
-                    for (int i=0; i<users_n; i++) {
-                        if (!strcmp(user->tk.val.s,users[i])) {
-                            return 0;
-                        }
-                    }
-                    assert(users_n < 256);
-                    users[users_n++] = user->tk.val.s;
-                }
-                for (int i=0; i<user->User.size; i++) {
-                    if (aux(env,user->User.vec[i].type)) {
-                        return 1;
-                    }
-                }
-                return 0;
-            }
-        }
-        assert(0);
-    }
-    return aux(env, tp);
-}
-
 void set_ptr_deepest_ (Env* env, Expr* src, Stmt** dst_deepest) {
     Type* tp = env_expr_to_type(env, src);
 
     if (src->sub == EXPR_UPREF) {
-        Stmt* src_decl = expr_leftmost_decl(env, src);
+        Stmt* src_decl = env_expr_leftmost_decl(env, src);
         if (*dst_deepest==NULL || src_decl->env->depth>(*dst_deepest)->env->depth) {
             *dst_deepest = src_decl;
         }
     } else if (tp->isptr) {
-        Stmt* src_decl = expr_leftmost_decl(env, src);
+        Stmt* src_decl = env_expr_leftmost_decl(env, src);
         assert(src_decl->Var.ptr_deepest != NULL);
         if (*dst_deepest==NULL || src_decl->Var.ptr_deepest->env->depth<(*dst_deepest)->env->depth) {
             *dst_deepest = src_decl->Var.ptr_deepest;
@@ -808,23 +807,17 @@ void set_ptr_deepest_ (Env* env, Expr* src, Stmt** dst_deepest) {
 int check_set_set_ptr_deepest (Stmt* s) {
     switch (s->sub) {
         case STMT_VAR:
-            if (env_type_ishasptr(s->env,s->Var.type)) {
-                set_ptr_deepest_(s->env, s->Var.init, &s->Var.ptr_deepest);
-            }
+            set_ptr_deepest_(s->env, s->Var.init, &s->Var.ptr_deepest);
             break;
         case STMT_SET: {
             Type* tp = env_expr_to_type(s->env, s->Set.dst);
             if (!env_type_ishasptr(s->env,tp)) {
-dump_stmt(s);
-puts("noo");
                 break;
             }
 
-dump_stmt(s);
-            Stmt* dst_decl = expr_leftmost_decl(s->env, s->Set.dst);
+            Stmt* dst_decl = env_expr_leftmost_decl(s->env, s->Set.dst);
             set_ptr_deepest_(s->env, s->Set.src, &dst_decl->Var.ptr_deepest);
             Stmt* src_decl = dst_decl->Var.ptr_deepest;
-printf(">>> %d vs %d\n", dst_decl->env->depth, dst_decl->Var.ptr_deepest->env->depth);
 
             if (dst_decl->env->depth < dst_decl->Var.ptr_deepest->env->depth) {
                 char err[1024];
@@ -854,7 +847,7 @@ int check_ret_ptr_deepest (Stmt* s) {
     }
 
     Expr* src      = expr_leftmost(s->Return);
-    Stmt* src_decl = expr_leftmost_decl(s->env, s->Return);
+    Stmt* src_decl = env_expr_leftmost_decl(s->env, s->Return);
     assert(src_decl->Var.ptr_deepest != NULL);
 
     if (s->env->depth <= src_decl->Var.ptr_deepest->env->depth) {

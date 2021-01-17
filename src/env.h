@@ -13,8 +13,10 @@ Stmt* env_stmt_to_func  (Stmt* s);
 int   env_type_isrec    (Env* env, Type* tp, int okalias);
 int   env_type_hasrec   (Env* env, Type* tp, int okalias);
 int   env_type_ishasrec (Env* env, Type* tp, int okalias);
+int   env_type_ishasptr (Env* env, Type* tp);
 Stmt* env_sub_id_to_user_stmt (Env* env, const char* sub);
 Type* env_sub_id_to_user_type (Env* env, const char* sub);
 Stmt* env_tk_to_type_to_user_stmt (Env* env, Tk* tk);
+Stmt* env_expr_leftmost_decl (Env* env, Expr* e);
 
 int env (Stmt* s);
