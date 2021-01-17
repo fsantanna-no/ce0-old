@@ -785,9 +785,17 @@ void set_ptr_deepest_ (Env* env, Expr* src, Stmt** dst_deepest) {
             *dst_deepest = src_decl->Var.ptr_deepest;
         }
     } else if (env_type_ishasptr(env,tp)) {
-        switch (tp->sub) {
-            //...
-            default: break;
+        switch (src->sub) {
+            case EXPR_TUPLE:
+assert(0);
+                for (int i=0; i<src->Tuple.size; i++) {
+                    set_ptr_deepest_(env, src->Tuple.vec[i], dst_deepest);
+                }
+                break;
+            case EXPR_CONS:
+                break;
+            default:
+                assert(0);
         }
     } else {
         // do nothing

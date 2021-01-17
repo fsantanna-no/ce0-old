@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-//#define ALL
+//#define XXX
 #define DEBUG
 //#define VALGRIND
 
@@ -1975,19 +1975,28 @@ void t_all (void) {
         "}\n"
         "output std x.2\\\n"
     ));
-#ifdef ALL
+#ifdef XXX
+#endif
     assert(all(
-        "ERROR",
-        "type X {\n"
-        "    X1: (Int,\\Int)\n"
-        "}\n"
-        "var x: X = ?\n"
+        "(ln 4, col 16): invalid assignment : cannot hold local pointer \"y\" (ln 3)",
+        "var x: (Int,\\Int) = (10,?)\n"
         "{\n"
         "    var y: Int = 10\n"
-        "    set x = X1(10,\\y)\n"
+        "    set x = (10,\\y)\n"
+        "}\n"
+        "output std x.2\\\n"
+    ));
+    assert(all(
+        "ERROR",
+        "type Xx {\n"
+        "    Xx1: (Int,\\Int)\n"
+        "}\n"
+        "var x: Xx = ?\n"
+        "{\n"
+        "    var y: Int = 10\n"
+        "    set x = Xx1(10,\\y)\n"
         "}\n"
     ));
-#endif
 
     // CYCLE
     assert(all(
@@ -2001,7 +2010,7 @@ void t_all (void) {
         "set p\\ = m\n"
         "output std (\\l)\n"
     ));
-#ifdef ALL
+#ifdef XXX
 puts("-=-=-=-=-");
     assert(all(
         "xxx",
