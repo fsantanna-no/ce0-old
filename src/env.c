@@ -812,20 +812,22 @@ int check_set_set_ptr_deepest (Stmt* s) {
         case STMT_SET: {
             Type* tp = env_expr_to_type(s->env, s->Set.dst);
             if (!env_type_ishasptr(s->env,tp)) {
+dump_stmt(s);
+puts("noo");
                 break;
             }
 
+dump_stmt(s);
             Stmt* dst_decl = expr_leftmost_decl(s->env, s->Set.dst);
             Expr* src      = expr_leftmost(s->Set.src);
-            Stmt* src_decl = expr_leftmost_decl(s->env, s->Set.src);
             set_ptr_deepest_(s->env, s->Set.src, &dst_decl->Var.ptr_deepest);
-dump_stmt(s);
+            Stmt* src_decl = dst_decl->Var.ptr_deepest;
 printf(">>> %d vs %d\n", dst_decl->env->depth, dst_decl->Var.ptr_deepest->env->depth);
 
             if (dst_decl->env->depth < dst_decl->Var.ptr_deepest->env->depth) {
                 char err[1024];
                 sprintf(err, "invalid assignment : cannot hold local pointer \"%s\" (ln %ld)",
-                        src->Var.tk.val.s, src_decl->tk.lin);
+                        src_decl->Var.tk.val.s, src_decl->Var.tk.lin);
                 err_message(&src->Var.tk, err);
                 return VISIT_ERROR;
             }
@@ -840,53 +842,28 @@ printf(">>> %d vs %d\n", dst_decl->env->depth, dst_decl->Var.ptr_deepest->env->d
 ///////////////////////////////////////////////////////////////////////////////
 
 int check_ret_ptr_deepest (Stmt* s) {
-    switch (s->sub) {
-#if 0
-        case STMT_SET: {
-            Type* tp = env_expr_to_type(s->env, s->Set.dst);
-            if (!tp->isptr) {
-                return VISIT_CONTINUE;
-            }
-
-            Stmt* dst_decl = expr_leftmost_decl(s->env, s->Set.dst);
-            Expr* src      = expr_leftmost(s->Set.src);
-            Stmt* src_decl = expr_leftmost_decl(s->env, s->Set.src);
-
-            int src_depth; {
-                if (s->Set.src->sub == EXPR_UPREF) {
-                    src_depth = src_decl->env->depth;
-                } else {
-                    assert(src_decl->Var.ptr_deepest != NULL);
-                    src_depth = src_decl->Var.ptr_deepest->env->depth;
-                }
-            }
-            break;
-        }
-#endif
-        case STMT_RETURN: {
-            Type* tp = env_expr_to_type(s->env, s->Return);
-            if (!tp->isptr) {
-                break;
-            }
-
-            Expr* src      = expr_leftmost(s->Return);
-            Stmt* src_decl = expr_leftmost_decl(s->env, s->Return);
-            assert(src_decl->Var.ptr_deepest != NULL);
-
-            if (s->env->depth <= src_decl->Var.ptr_deepest->env->depth) {
-                char err[1024];
-                sprintf(err, "invalid return : cannot return local pointer \"%s\" (ln %ld)",
-                        src->Var.tk.val.s, src_decl->tk.lin);
-                err_message(&src->Var.tk, err);
-                return VISIT_ERROR;
-            }
-            assert(0); // never tested outer scope before: just remove this assert and go on...
-            break;
-        }
-        default:
-            break;
+    if (s->sub != STMT_RETURN) {
+        return VISIT_CONTINUE;
     }
-    return VISIT_CONTINUE;
+
+    Type* tp = env_expr_to_type(s->env, s->Return);
+    if (!tp->isptr) {
+        return VISIT_CONTINUE;
+    }
+
+    Expr* src      = expr_leftmost(s->Return);
+    Stmt* src_decl = expr_leftmost_decl(s->env, s->Return);
+    assert(src_decl->Var.ptr_deepest != NULL);
+
+    if (s->env->depth <= src_decl->Var.ptr_deepest->env->depth) {
+        char err[1024];
+        sprintf(err, "invalid return : cannot return local pointer \"%s\" (ln %ld)",
+                src->Var.tk.val.s, src_decl->tk.lin);
+        err_message(&src->Var.tk, err);
+        return VISIT_ERROR;
+    }
+
+    assert(0); // never tested outer scope before: just remove this assert and go on...
 }
 
 ///////////////////////////////////////////////////////////////////////////////

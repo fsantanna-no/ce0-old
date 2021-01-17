@@ -1955,8 +1955,6 @@ void t_all (void) {
         "}\n"
         "output std (x\\)\n"
     ));
-//puts("-=-=-");
-//assert(0);
     assert(all(
         "(ln 4, col 16): invalid assignment : cannot hold local pointer \"y\" (ln 3)",
         "var x: (Int,\\Int) = (10,?)\n"
@@ -1977,6 +1975,7 @@ void t_all (void) {
     ));
 #ifdef XXX
 #endif
+puts("-=-=-=-=-");
     assert(all(
         "(ln 4, col 16): invalid assignment : cannot hold local pointer \"y\" (ln 3)",
         "var x: (Int,\\Int) = (10,?)\n"
@@ -1986,6 +1985,7 @@ void t_all (void) {
         "}\n"
         "output std x.2\\\n"
     ));
+assert(0);
     assert(all(
         "ERROR",
         "type Xx {\n"
