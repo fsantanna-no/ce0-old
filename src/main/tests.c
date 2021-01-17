@@ -2226,13 +2226,15 @@ void t_all (void) {
         "output std (x\\)\n"
     ));
     assert(all(
-        "10\n",
+        "1\n10\n",
         "var x: (\\Int,Int) = ?\n"
         "func f: \\Int -> Int { return arg\\ }\n"
+        "var y: Int = 1\n"
         "{\n"
         "    var z: Int = 10\n"
-        "    set x = (\\z, f(\\z))\n"
+        "    set x = (\\y, f(\\z))\n"
         "}\n"
+        "output std x.1\\\n"
         "output std x.2\n"
     ));
 
