@@ -4,6 +4,11 @@
 
 #include "all.h"
 
+int err (Tk* tk, const char* v) {
+    sprintf(ALL.err, "(ln %ld, col %ld): %s", tk->lin, tk->col, v);
+    return 0;
+}
+
 int err_expected (const char* v) {
     sprintf(ALL.err, "(ln %ld, col %ld): expected %s : have %s",
         ALL.tk1.lin, ALL.tk1.col, v, lexer_tk2str(&ALL.tk1));
@@ -168,10 +173,15 @@ int parser_expr_ (Expr** ret)
 // EXPR_UPREF
     } else if (accept('\\')) {
         Expr* val;
+        Tk tk = ALL.tk1;
         if (!parser_expr(&val,0)) {
             return 0;
         }
-        *e = (Expr) { ALL.nn++, EXPR_UPREF, 0, .Upref=val };
+        if (val->sub==EXPR_VAR || val->sub==EXPR_INDEX || val->sub==EXPR_DISC) {
+            *e = (Expr) { ALL.nn++, EXPR_UPREF, 0, .Upref=val };
+        } else {
+            return err(&tk, "expected variable");
+        }
 
 // EXPR_PARENS / EXPR_TUPLE
     } else if (accept('(')) {
