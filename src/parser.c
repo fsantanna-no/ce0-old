@@ -389,7 +389,7 @@ int parser_stmt (Stmt** ret) {
             return 0;
         }
 
-        *s = (Stmt) { ALL.nn++, STMT_VAR, NULL, {NULL,NULL}, tk, .Var={id,tp,e} };
+        *s = (Stmt) { ALL.nn++, STMT_VAR, NULL, {NULL,NULL}, tk, .Var={id,tp,e,NULL} };
 
     // STMT_USER
     } else if (accept(TK_TYPE)) {       // type
@@ -546,7 +546,8 @@ int parser_stmt (Stmt** ret) {
             .Var = {
                 { TX_VAR, {.s="arg"}, id.lin, id.col },
                 tp->Func.inp,
-                expr
+                expr,
+                NULL
             }
         };
 

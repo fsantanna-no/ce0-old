@@ -99,6 +99,17 @@ int FS (Stmt* S) {
             state = stack[stack_n].state;
         }
 
+#if 0
+        switch (s->sub) {
+            case STMT_VAR: {
+                if (!s->Var.tp->isptr) {
+                    break;
+                }
+                Expr* init = expr_leftmost(s->Var.init);
+            }
+        }
+#endif
+
         // Rules 4/5/6
         auto int var_access (Env* env, Expr* var);
         switch (s->sub) {
@@ -157,6 +168,7 @@ int FS (Stmt* S) {
             }
             return VISIT_CONTINUE;
         }
+        assert(0);
     }
 }
 

@@ -453,46 +453,6 @@ int set_envs (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int env_type_hasptr (Env* env, Type* tp) {
-    switch (tp->sub) {
-        case TYPE_ANY:
-        case TYPE_UNIT:
-        case TYPE_NATIVE:
-        case TYPE_FUNC:
-            return 0;
-        case TYPE_TUPLE:
-            for (int i=0; i<tp->Tuple.size; i++) {
-                if (env_type_hasptr(env,tp->Tuple.vec[i])) {
-                    return 1;
-                }
-            }
-            return 0;
-        case TYPE_USER: {
-            Stmt* user = env_id_to_stmt(env, tp->User.val.s);
-            assert(user!=NULL && user->sub==STMT_USER);
-            for (int i=0; i<user->User.size; i++) {
-                if (env_type_hasptr(env,user->User.vec[i].type)) {
-                    return 1;
-                }
-            }
-            return 0;
-        }
-    }
-}
-
-int set_ptr_deepest (Stmt* s) {
-    switch (s->sub) {
-        case STMT_VAR:
-        case STMT_SET:
-            break;
-        default:
-            break;
-    }
-    return VISIT_CONTINUE;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
 int ftk (Env* env, Tk* tk, char* var_type) {
     switch (tk->enu) {
         case TK_UNIT:
@@ -755,6 +715,84 @@ int check_types_stmt (Stmt* s) {
 // return \SRC
 //  - check if scope of DST<=S
 
+int env_type_ishasptr (Env* env, Type* tp) {
+    if (tp->isptr) {
+        return 1;
+    }
+    switch (tp->sub) {
+        case TYPE_ANY:
+        case TYPE_UNIT:
+        case TYPE_NATIVE:
+        case TYPE_FUNC:
+            return 0;
+        case TYPE_TUPLE:
+            for (int i=0; i<tp->Tuple.size; i++) {
+                if (env_type_ishasptr(env,tp->Tuple.vec[i])) {
+                    return 1;
+                }
+            }
+            return 0;
+        case TYPE_USER: {
+            Stmt* user = env_id_to_stmt(env, tp->User.val.s);
+            assert(user!=NULL && user->sub==STMT_USER);
+            for (int i=0; i<user->User.size; i++) {
+                if (env_type_ishasptr(env,user->User.vec[i].type)) {
+                    return 1;
+                }
+            }
+            return 0;
+        }
+    }
+    assert(0);
+}
+
+void set_ptr_deepest_ (Env* env, Expr* e, Stmt** deepest) {
+    Type* tp = env_expr_to_type(env, e);
+
+    if (e->sub == EXPR_UPREF) {
+        Expr* src = expr_leftmost(e);
+        assert(src != NULL);
+        assert(src->sub == EXPR_VAR);
+        Stmt* src_decl = env_id_to_stmt(env, src->Var.tk.val.s);
+        assert(src_decl != NULL);
+        assert(src_decl->sub == STMT_VAR);
+        if (*deepest==NULL || src_decl->env->depth<(*deepest)->env->depth) {
+            *deepest = src_decl;
+        }
+
+#if 0
+        assert(src_decl->Var.ptr_deepest != NULL);
+        if (*deepest==NULL || src_decl->Var.ptr_deepest->env->depth<(*deepest)->env->depth) {
+            *deepest = src_decl->Var.ptr_deepest;
+        }
+#endif
+    } else if (env_type_ishasptr(env,tp)) {
+        switch (tp->sub) {
+            //...
+            default: break;
+        }
+    } else {
+        // do nothing
+    }
+}
+
+int set_ptr_deepest (Stmt* s) {
+    switch (s->sub) {
+        case STMT_VAR:
+            if (env_type_ishasptr(s->env,s->Var.type)) {
+                set_ptr_deepest_(s->env, s->Var.init, &s->Var.ptr_deepest);
+            }
+            break;
+        case STMT_SET:
+            break;
+        default:
+            break;
+    }
+    return VISIT_CONTINUE;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 int check_set_ret_pointer_scope (Stmt* s) {
     switch (s->sub) {
         case STMT_SET: {
@@ -774,8 +812,9 @@ int check_set_ret_pointer_scope (Stmt* s) {
             assert(src->sub == EXPR_VAR);
             Stmt* src_decl = env_id_to_stmt(s->env, src->Var.tk.val.s);
             assert(src_decl != NULL);
+            assert(src_decl->Var.ptr_deepest != NULL);
 
-            if (dst_decl->env->depth < src_decl->env->depth) {
+            if (dst_decl->env->depth < src_decl->Var.ptr_deepest->env->depth) {
                 char err[1024];
                 sprintf(err, "invalid assignment : cannot hold local pointer \"%s\" (ln %ld)",
                         src->Var.tk.val.s, src_decl->tk.lin);
@@ -794,8 +833,9 @@ int check_set_ret_pointer_scope (Stmt* s) {
             assert(src != NULL);
             assert(src->sub == EXPR_VAR);
             Stmt* src_decl = env_id_to_stmt(s->env, src->Var.tk.val.s);
+            assert(src_decl->Var.ptr_deepest != NULL);
 
-            if (s->env->depth <= src_decl->env->depth) {
+            if (s->env->depth < src_decl->Var.ptr_deepest->env->depth) {
                 char err[1024];
                 sprintf(err, "invalid return : cannot return local pointer \"%s\" (ln %ld)",
                         src->Var.tk.val.s, src_decl->tk.lin);
@@ -906,13 +946,13 @@ int set_istx_stmt (Stmt* s) {
 int env (Stmt* s) {
     assert(visit_stmt(0,s,set_seqs,NULL,NULL));
     assert(set_envs(s));
-    assert(visit_stmt(0,s,set_ptr_deepest,NULL,NULL));
     if (!visit_stmt(0,s,NULL,check_decls_expr,check_decls_type)) {
         return 0;
     }
     if (!visit_stmt(1,s,check_types_stmt,check_types_expr,NULL)) {
         return 0;
     }
+    assert(visit_stmt(0,s,set_ptr_deepest,NULL,NULL));
     if (!visit_stmt(0,s,check_set_ret_pointer_scope,NULL,NULL)) {
         return 0;
     }

@@ -1221,6 +1221,7 @@ void t_all (void) {
         "call f (\\x)\n"
         "output std x\n"
     ));
+puts("-=-=-");
     assert(all(
         "True\n",
         "type Bool {\n"
@@ -1235,6 +1236,7 @@ void t_all (void) {
         "call f (\\x)\n"
         "output std x\n"
     ));
+assert(0);
     assert(all(
         "True\n",
         "type Bool {\n"
@@ -1945,6 +1947,24 @@ void t_all (void) {
         "    set x = \\y\n"
         "}\n"
         "output std (x\\)\n"
+    ));
+    assert(all(
+        "ERROR\n",
+        "var x: \\Int = ?\n"
+        "{\n"
+        "    var z: Int = 10\n"
+        "    set x = \\z\n"
+        "}\n"
+        "output std (x\\)\n"
+    ));
+    assert(all(
+        "ERROR\n",
+        "var x: (Int,\\Int) = (10,\\y)\n"
+        "{\n"
+        "    var y: Int = 10\n"
+        "    set x.2 = \\y\n"
+        "}\n"
+        "output std x.2\\\n"
     ));
     assert(all(
         "10\n",
