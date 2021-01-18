@@ -61,14 +61,9 @@
             return EXEC_CONTINUE;
         }
 
-- usar env_held_vars em deepest/borrows
-- tirar BORROWED, manter lista de borrows ativos
-    - remove stack.state
 - ciclos
-- $Nat -> $
-- quero remover set_istx_stmt
-- owner.c: 306 lines
 - rule 5
+- $Nat -> $
 - all rules when starting from hasrec
 - f \x vs f\ x
 - isrec w/ payload problems

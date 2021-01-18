@@ -154,11 +154,9 @@ int FS (Stmt* S) {
         return 0;
     }
 
-    typedef enum { NONE, BORROWED } State;
-    State state = NONE;
     Tk* tk1 = NULL;
 
-    typedef struct { Stmt* stop; int state; int bws_n; } Stack;
+    typedef struct { Stmt* stop; int bws_n; } Stack;
     Stack stack[256];
     int stack_n = 0;
 
@@ -166,7 +164,6 @@ int FS (Stmt* S) {
         istxd = 0;
         bws_n = 1;
         bws[0] = S;
-        state = NONE;
         tk1 = NULL;
         stack_n = 0;
     }
@@ -188,7 +185,6 @@ int FS (Stmt* S) {
         // push/pop stack
         if (s->sub == STMT_BLOCK) {         // enter block: push state
             stack[stack_n].stop  = s->seqs[0];
-            stack[stack_n].state = state;
             stack[stack_n].bws_n = bws_n;
             assert(stack_n < 256);
             stack_n++;
@@ -196,7 +192,6 @@ int FS (Stmt* S) {
         if (s == stack[stack_n-1].stop) {   // leave block: pop state
             stack_n--;
             bws_n = stack[stack_n].bws_n;
-            state = stack[stack_n].state;
         }
 
         // Rules 4/5/6
