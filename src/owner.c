@@ -11,14 +11,14 @@ void set_tx (Env* env, Expr* E, int cantx) {
     assert(tp != NULL);
     if (env_type_ishasrec(env,tp,0)) {
         if (cantx) {
-            E->istx = 1;
+            E->istx1 = 1;
         }
 
         Expr* left = expr_leftmost(E);
         assert(left != NULL);
         if (left->sub == EXPR_VAR) {
             if (E->sub!=EXPR_UPREF && E==left && cantx) { // TX only for root vars (E==left)
-                left->Var.istx = 1;
+                left->Var.istx2 = 1;
             }
         } else {
             // ok
@@ -62,7 +62,7 @@ int set_istx_expr (Env* env, Expr* e, int cantx) {
             break;
 
         default:
-            // istx = 0
+            // istx2 = 0
             break;
     }
     return VISIT_CONTINUE;
@@ -86,7 +86,7 @@ int set_istx_stmt (Stmt* s) {
             set_istx_expr(s->env, s->Return, 1);
             break;
         default:
-            // istx = 0
+            // istx2 = 0
             break;
     }
     return VISIT_CONTINUE;
@@ -288,7 +288,7 @@ __VAR_ACCESS__: {
                 }
                 if (!isbw) {
 #endif
-                if (var->Var.istx) {
+                if (var->Var.istx2) {
                     assert(tk1 != NULL);
                     char err[1024];
                     sprintf(err, "invalid transfer of \"%s\" : active pointer in scope (ln %ld)",
@@ -298,7 +298,7 @@ __VAR_ACCESS__: {
                 }
             }
             tk1 = &var->Var.tk;
-            if (var->Var.istx) {
+            if (var->Var.istx2) {
                 istxd = 1;
             }
             return VISIT_CONTINUE;

@@ -377,7 +377,7 @@ int code_expr_pre (Env* env, Expr* e) {
 
         case EXPR_VAR: {
             // this prevents "double free"
-            if (e->istx) {
+            if (e->istx1) {
                 char* id = e->Var.tk.val.s;
                 fprintf(ALL.out, "typeof(%s) _tmp_%d = %s;\n", id, e->N, id);
                 fprintf(ALL.out, "%s_null(&%s);\n", to_ce(TP), id);
@@ -429,8 +429,8 @@ int code_expr_pre (Env* env, Expr* e) {
 
         case EXPR_INDEX: // TODO: f(x).1
             // transfer ownership, prevents "double free"
-            if (e->istx) {
-                e->istx = 0;
+            if (e->istx1) {
+                e->istx1 = 0;
                 out("typeof(");
                 code_expr(env, e, 0);
                 fprintf(ALL.out, ") _tmp_%d = ", e->N);
@@ -441,7 +441,7 @@ int code_expr_pre (Env* env, Expr* e) {
                 out("_null(&");
                 code_expr(env, e, 0);
                 out(");\n");
-                e->istx = 1;
+                e->istx1 = 1;
             }
             break;
 
@@ -460,8 +460,8 @@ int code_expr_pre (Env* env, Expr* e) {
             }
 
             // transfer ownership, prevents "double free"
-            if (e->istx) {
-                e->istx = 0;
+            if (e->istx1) {
+                e->istx1 = 0;
                 out("typeof(");
                 code_expr(env, e, 0);
                 fprintf(ALL.out, ") _tmp_%d = ", e->N);
@@ -472,7 +472,7 @@ int code_expr_pre (Env* env, Expr* e) {
                 out("_null(&");
                 code_expr(env, e, 0);
                 out(");\n");
-                e->istx = 1;
+                e->istx1 = 1;
             }
             break;
         }
@@ -577,7 +577,7 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
             break;
 
         case EXPR_INDEX: {
-            if (e->istx) {
+            if (e->istx1) {
                 fprintf(ALL.out, "_tmp_%d", e->N);
             } else {
                 code_expr(env, e->Index.val, 1);
@@ -587,7 +587,7 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
         }
 
         case EXPR_VAR:
-            if (e->istx) {
+            if (e->istx1) {
                 fprintf(ALL.out, "_tmp_%d", e->N);
             } else {
                 out(e->Var.tk.val.s);
@@ -595,7 +595,7 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
             break;
 
         case EXPR_DISC:
-            if (e->istx) {
+            if (e->istx1) {
                 fprintf(ALL.out, "_tmp_%d", e->N);
             } else {
                 code_expr(env, e->Disc.val, 1);

@@ -64,7 +64,7 @@ extern int _N_;
 typedef struct Expr {
     int N;
     EXPR sub;
-    int istx;   // set to null on tx to avoid double free
+    int istx1;   // set to null on tx to avoid double free
     union {
         Tk Unit;        // EXPR_UNIT
         Tk Unk;         // EXPR_UNK
@@ -75,7 +75,7 @@ typedef struct Expr {
         struct Expr* Dnref;  // EXPR_DNREF
         struct {        // EXPR_VAR
             Tk tk;
-            int istx;  // evaluate var ownership accesses
+            int istx2;  // evaluate var ownership accesses
         } Var;
         struct {        // EXPR_TUPLE
             int size;                   // 2
