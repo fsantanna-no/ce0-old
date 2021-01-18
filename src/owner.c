@@ -48,13 +48,21 @@ int FS (Stmt* S) {
     //  - reject further accesses
     int istx = 0;
 
-    // Tracks borrows of x:
+    // Tracks borrows of x (who I am borrowed to):
     //      var y: \Nat = \x
     //      var z: (Int,\Nat) = (1,\y)  -- x is borrowed by both y and z
     //  - if x has active borrows (bws_n > 0), then it cannot be transferred
     //  - clean bws on block exit
-    Stmt* bws[256] = {};
-    int bws_n = 0;
+    Stmt* bws[256] = { S };
+    int bws_n = 1;
+    int bws_has (Stmt* s) {
+        for (int i=0; i<bws_n; i++) {
+            if (bws[i] == s) {
+                return 1;
+            }
+        }
+        return 0;
+    }
 
     typedef enum { NONE, BORROWED } State;
     State state = NONE;
@@ -66,7 +74,8 @@ int FS (Stmt* S) {
 
     void pre (void) {
         istx = 0;
-        bws_n = 0;
+        bws_n = 1;
+        bws[0] = S;
         state = NONE;
         tk1 = NULL;
         stack_n = 0;
@@ -100,39 +109,60 @@ int FS (Stmt* S) {
             state = stack[stack_n].state;
         }
 
+        // Rules 4/5/6
+        auto int var_access (Env* env, Expr* var);
+
         // Add y/z in bws:
         //  var y = ... \x ...
         //  set z = ... y ...
 
-        void ins_bws (Stmt* var, Expr* e) {
-            //if (src->sub == 
-        }
-
         switch (s->sub) {
-            case STMT_VAR:
-                ins_bws(s, s->Var.init);
+            case STMT_VAR: {
+                int n=0; Expr* vars[256];
+                env_held_vars(s->env, s->Var.init, &n, vars);
+                for (int i=0; i<n; i++) {
+                    Stmt* dcl = env_id_to_stmt(s->env, vars[i]->Var.tk.val.s);
+                    assert(dcl != NULL);
+                    if (bws_has(dcl)) {
+                        bws[bws_n++] = s;   // var y = ... \x ...
+                        break;
+                    }
+                }
+                goto __VAR_ACCESS__;
                 break;
+            }
             case STMT_SET: {
                 Type* tp = env_expr_to_type(s->env, s->Set.dst);
                 if (!env_type_ishasptr(s->env,tp)) {
+                    goto __VAR_ACCESS__;
                     break;
                 }
+
                 Stmt* dst = env_expr_leftmost_decl(s->env, s->Set.dst);
-                ins_bws(dst, s->Set.src);
+                assert(dst != NULL);
+                assert(dst->sub == STMT_VAR);
+
+                int n=0; Expr* vars[256];
+                env_held_vars(s->env, s->Set.src, &n, vars);
+                for (int i=0; i<n; i++) {
+                    Stmt* dcl = env_id_to_stmt(s->env, vars[i]->Var.tk.val.s);
+                    assert(dcl != NULL);
+                    if (bws_has(dcl)) {
+                        bws[bws_n++] = dst;   // set z = ... \x ...
+                        break;
+                    }
+                }
+
+                goto __VAR_ACCESS__;
                 break;
             }
-            default:
-                break;
-        }
 
-        // Rules 4/5/6
-        auto int var_access (Env* env, Expr* var);
-        switch (s->sub) {
-            case STMT_VAR:
-            case STMT_SET:
+            //case STMT_VAR:
+            //case STMT_SET:
             case STMT_CALL:
             case STMT_IF:
-            case STMT_RETURN: {
+            case STMT_RETURN:
+__VAR_ACCESS__: {
                 int ret = visit_stmt(0, s, NULL, var_access, NULL);
                 if (ret != EXEC_CONTINUE) {
                     return ret;
@@ -148,11 +178,9 @@ int FS (Stmt* S) {
             if (var->sub != EXPR_VAR) {
                 return VISIT_CONTINUE;
             }
-
             if (strcmp(S->Var.tk.val.s,var->Var.tk.val.s)) {
                 return VISIT_CONTINUE;
             }
-
             // ensure that EXPR_VAR is really same as STMT_VAR
             Stmt* decl = env_id_to_stmt(env, var->Var.tk.val.s);
             assert(decl!=NULL && decl==S);
@@ -165,9 +193,9 @@ int FS (Stmt* S) {
                         var->Var.tk.val.s, tk1->lin);
                 err_message(&var->Var.tk, err);
                 return VISIT_ERROR;
-            } else if (state == BORROWED) {    // Rule 6
-                assert(tk1 != NULL);
+            } else if (bws_n >= 2) {    // Rule 6
                 if (var->Var.txbw == TX) {
+                    assert(tk1 != NULL);
                     char err[1024];
                     sprintf(err, "invalid transfer of \"%s\" : active pointer in scope (ln %ld)",
                             var->Var.tk.val.s, tk1->lin);
@@ -176,10 +204,7 @@ int FS (Stmt* S) {
                 }
             }
             tk1 = &var->Var.tk;
-            if (var->Var.txbw == BW) {
-                assert(!istx && "bug found");
-                state = BORROWED;
-            } else if (var->Var.txbw == TX) {
+            if (var->Var.txbw == TX) {
                 istx = 1;
             }
             return VISIT_CONTINUE;
