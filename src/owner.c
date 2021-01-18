@@ -194,7 +194,16 @@ __VAR_ACCESS__: {
                 err_message(&var->Var.tk, err);
                 return VISIT_ERROR;
             } else if (bws_n >= 2) {    // Rule 6
-                if (var->Var.txbw == TX) {
+#if 0
+                int isbw = 0;
+                for (int i=0; i<bws_n; i++) {
+                    if (bws[i] == var) {
+                        isbw = 1;
+                    }
+                }
+                if (!isbw) {
+#endif
+                if (var->Var.istx) {
                     assert(tk1 != NULL);
                     char err[1024];
                     sprintf(err, "invalid transfer of \"%s\" : active pointer in scope (ln %ld)",
@@ -204,7 +213,7 @@ __VAR_ACCESS__: {
                 }
             }
             tk1 = &var->Var.tk;
-            if (var->Var.txbw == TX) {
+            if (var->Var.istx) {
                 istx = 1;
             }
             return VISIT_CONTINUE;

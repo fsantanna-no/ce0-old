@@ -788,7 +788,7 @@ void t_code (void) {
         Type tp = { TYPE_UNIT, 0 };
         Stmt var = { ALL.nn++, STMT_VAR, .Var={{TX_VAR,{.s="xxx"},0,0},&tp,NULL} };
         Env env = { &var, NULL };
-        Expr e = { ALL.nn++, EXPR_VAR, 0, .Var={{TX_VAR,{.s="xxx"},0,0},NO} };
+        Expr e = { ALL.nn++, EXPR_VAR, 0, .Var={{TX_VAR,{.s="xxx"},0,0},0} };
         code_expr(&env, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,""));
@@ -799,7 +799,7 @@ void t_code (void) {
         Type tp = { TYPE_NATIVE, 0 };
         Stmt var = { ALL.nn++, STMT_VAR, .Var={{TX_VAR,{.s="xxx"},0,0},&tp,NULL} };
         Env env = { &var, NULL };
-        Expr e = { ALL.nn++, EXPR_VAR, 0, .Var={{TX_VAR,{.s="xxx"},0,0},NO} };
+        Expr e = { ALL.nn++, EXPR_VAR, 0, .Var={{TX_VAR,{.s="xxx"},0,0},0} };
         code_expr(&env, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,"xxx"));
@@ -832,7 +832,7 @@ void t_code (void) {
         Stmt var = { ALL.nn++, STMT_VAR, .Var={{TX_VAR,{.s="x"},0,0},&tp,NULL} };
         Env env = { &var, NULL };
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr val = { ALL.nn++, EXPR_VAR, 0, .Var={{TX_VAR,{.s="x"},0,0},NO} };
+        Expr val = { ALL.nn++, EXPR_VAR, 0, .Var={{TX_VAR,{.s="x"},0,0},0} };
         Expr e = { ALL.nn++, EXPR_INDEX, 0, .Index={&val,{TX_NUM,{2},0,0}} };
         code_expr(&env, &e, 0);
         fclose(ALL.out);

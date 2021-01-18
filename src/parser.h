@@ -61,10 +61,6 @@ typedef struct Type {
 
 extern int _N_;
 
-typedef enum {
-    NO=0, TX, BW
-} TXBW;
-
 typedef struct Expr {
     int N;
     EXPR sub;
@@ -79,7 +75,7 @@ typedef struct Expr {
         struct Expr* Dnref;  // EXPR_DNREF
         struct {        // EXPR_VAR
             Tk tk;
-            TXBW txbw;  // evaluate var ownership accesses
+            int istx;  // evaluate var ownership accesses
         } Var;
         struct {        // EXPR_TUPLE
             int size;                   // 2
