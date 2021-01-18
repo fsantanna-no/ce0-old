@@ -927,18 +927,18 @@ int check_ret_ptr_deepest (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void set_txbx (Env* env, Expr* E, int notx) {
+void set_tx (Env* env, Expr* E, int cantx) {
     Type* tp = env_expr_to_type(env, (E->sub==EXPR_UPREF ? E->Upref : E));
     assert(tp != NULL);
     if (env_type_ishasrec(env,tp,0)) {
-        if (!notx) {
+        if (cantx) {
             E->istx = 1;
         }
 
         Expr* left = expr_leftmost(E);
         assert(left != NULL);
         if (left->sub == EXPR_VAR) {
-            if (E->sub!=EXPR_UPREF && E==left && !notx) { // TX only for root vars (E==left)
+            if (E->sub!=EXPR_UPREF && E==left && cantx) { // TX only for root vars (E==left)
                 left->Var.istx = 1;
             }
         } else {
@@ -947,39 +947,39 @@ void set_txbx (Env* env, Expr* E, int notx) {
     }
 }
 
-int set_istx_expr (Env* env, Expr* e, int notx) {
-    set_txbx(env, e, notx);
+int set_istx_expr (Env* env, Expr* e, int cantx) {
+    set_tx(env, e, cantx);
 
     switch (e->sub) {
         case EXPR_UPREF:
-            set_istx_expr(env, e->Upref, 1);
+            set_istx_expr(env, e->Upref, 0);
             break;
 
         case EXPR_TUPLE:
             for (int i=0; i<e->Tuple.size; i++) {
-                set_istx_expr(env, e->Tuple.vec[i], notx);
+                set_istx_expr(env, e->Tuple.vec[i], cantx);
             }
             break;
 
         case EXPR_INDEX:
-            set_istx_expr(env, e->Index.val, 1);
+            set_istx_expr(env, e->Index.val, 0);
             break;
 
         case EXPR_CALL:
-            set_istx_expr(env, e->Call.func, 1);
-            set_istx_expr(env, e->Call.arg, 0);
+            set_istx_expr(env, e->Call.func, 0);
+            set_istx_expr(env, e->Call.arg, 1);
             break;
 
         case EXPR_CONS:
-            set_istx_expr(env, e->Cons.arg, 0);
+            set_istx_expr(env, e->Cons.arg, 1);
             break;
 
         case EXPR_DISC:
-            set_istx_expr(env, e->Disc.val, 1);
+            set_istx_expr(env, e->Disc.val, 0);
             break;
 
         case EXPR_PRED:
-            set_istx_expr(env, e->Pred.val, 1);
+            set_istx_expr(env, e->Pred.val, 0);
             break;
 
         default:
@@ -992,19 +992,19 @@ int set_istx_expr (Env* env, Expr* e, int notx) {
 int set_istx_stmt (Stmt* s) {
     switch (s->sub) {
         case STMT_VAR:
-            set_istx_expr(s->env, s->Var.init, 0);
+            set_istx_expr(s->env, s->Var.init, 1);
             break;
         case STMT_SET:
-            set_istx_expr(s->env, s->Set.src, 0);
+            set_istx_expr(s->env, s->Set.src, 1);
             break;
         case STMT_CALL:
-            set_istx_expr(s->env, s->Call, 1);
+            set_istx_expr(s->env, s->Call, 0);
             break;
         case STMT_IF:
-            set_istx_expr(s->env, s->If.tst, 1);
+            set_istx_expr(s->env, s->If.tst, 0);
             break;
         case STMT_RETURN:
-            set_istx_expr(s->env, s->Return, 0);
+            set_istx_expr(s->env, s->Return, 1);
             break;
         default:
             // istx = 0

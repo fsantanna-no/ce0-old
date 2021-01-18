@@ -46,7 +46,7 @@ int FS (Stmt* S) {
     //      var y: Nat = x
     //  - once trasferred, never fallback
     //  - reject further accesses
-    int istx = 0;
+    int istxd = 0;
 
     // Tracks borrows of x (who I am borrowed to):
     //      var y: \Nat = \x
@@ -73,7 +73,7 @@ int FS (Stmt* S) {
     int stack_n = 0;
 
     void pre (void) {
-        istx = 0;
+        istxd = 0;
         bws_n = 1;
         bws[0] = S;
         state = NONE;
@@ -185,7 +185,7 @@ __VAR_ACCESS__: {
             Stmt* decl = env_id_to_stmt(env, var->Var.tk.val.s);
             assert(decl!=NULL && decl==S);
 
-            if (istx) { // Rule 4
+            if (istxd) { // Rule 4
                 // if already moved, it doesn't matter, any access is invalid
                 assert(tk1 != NULL);
                 char err[1024];
@@ -214,7 +214,7 @@ __VAR_ACCESS__: {
             }
             tk1 = &var->Var.tk;
             if (var->Var.istx) {
-                istx = 1;
+                istxd = 1;
             }
             return VISIT_CONTINUE;
         }
