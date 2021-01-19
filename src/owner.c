@@ -247,44 +247,40 @@ int check_txs (Stmt* S) {
         // EXPR_CALL, EXPR_CONS transfeir their argument (in any STMT_*).
 
         switch (s->sub) {
-            case STMT_VAR: {
+            case STMT_VAR:
                 add_bws(s->Var.init);
                 set_txs(s->Var.init);
                 goto __ACCS__;
-            }
-            case STMT_SET: {
+            case STMT_SET:
                 add_bws(s->Set.src);
                 set_txs(s->Set.src);
                 goto __ACCS__;
-            }
+            case STMT_RETURN:
+                set_txs(s->Return);
+                goto __ACCS__;
 
             case STMT_CALL:
             case STMT_IF:
-            case STMT_RETURN:
 __ACCS__: {
                 int fs (Env* env, Expr* var) {
-                    if (var->sub != EXPR_VAR) {
-                        return VISIT_CONTINUE;
-                    }
-                    if (strcmp(S->Var.tk.val.s,var->Var.tk.val.s)) {
-                        return VISIT_CONTINUE;
-                    }
-                    // ensure that EXPR_VAR is really same as STMT_VAR
-                    Stmt* decl = env_id_to_stmt(env, var->Var.tk.val.s);
-                    assert(decl!=NULL && decl==S);
+                    if (var->sub==EXPR_VAR && !strcmp(S->Var.tk.val.s,var->Var.tk.val.s)) {
+                        // ensure that EXPR_VAR is really same as STMT_VAR
+                        Stmt* decl = env_id_to_stmt(env, var->Var.tk.val.s);
+                        assert(decl!=NULL && decl==S);
 
-                    // Rule 6
-                    if (bws_n >= 2) {
-                        if (var->Var.tx_done) {
-                            assert(txed_tk != NULL);
-                            char err[1024];
-                            sprintf(err, "invalid transfer of \"%s\" : active pointer in scope (ln %ld)",
-                                    var->Var.tk.val.s, txed_tk->lin);
-                            err_message(&var->Var.tk, err);
-                            return VISIT_ERROR;
+                        // Rule 6
+                        if (bws_n >= 2) {
+                            if (var->Var.tx_done) {
+                                assert(txed_tk != NULL);
+                                char err[1024];
+                                sprintf(err, "invalid transfer of \"%s\" : active pointer in scope (ln %ld)",
+                                        var->Var.tk.val.s, txed_tk->lin);
+                                err_message(&var->Var.tk, err);
+                                return VISIT_ERROR;
+                            }
                         }
+                        txed_tk = &var->Var.tk;
                     }
-                    txed_tk = &var->Var.tk;
                     return VISIT_CONTINUE;
                 }
                 int ret = visit_stmt(0, s, NULL, fs, NULL);
