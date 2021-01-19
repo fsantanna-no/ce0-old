@@ -61,7 +61,10 @@
             return EXEC_CONTINUE;
         }
 
-- testar env_txed_vars
+- retomar owner.c.new
+    - descobrir tx_done em calls/accs
+        - remove tx_done
+- README: tirar regra que nao pode acc after TX
 - fazer env_txs_vars
     - somente ishasrec
     - somente EXPR_VAR e EXPR_DNREF de EXPR_VAR

@@ -74,8 +74,8 @@ typedef struct Expr {
         struct Expr* Dnref;  // EXPR_DNREF
         struct {        // EXPR_VAR
             Tk tk;
-            int istx1;   // set to null on tx to avoid double free
-            int istx2;  // evaluate var ownership accesses
+            int tx_setnull;   // set to null on tx to avoid double free
+            int tx_done;  // evaluate var ownership accesses
         } Var;
         struct {        // EXPR_TUPLE
             int size;                   // 2
@@ -84,7 +84,7 @@ typedef struct Expr {
         struct {        // EXPR_INDEX
             struct Expr* val;           // x
             Tk index;                   // .3
-            int istx1;   // set to null on tx to avoid double free
+            int tx_setnull;   // set to null on tx to avoid double free
         } Index;
         struct {        // EXPR_CALL
             struct Expr* func;          // f
@@ -97,7 +97,7 @@ typedef struct Expr {
         struct {        // EXPR_DISC
             struct Expr* val;           // x
             Tk subtype;                 // .True!
-            int istx1;   // set to null on tx to avoid double free
+            int tx_setnull;   // set to null on tx to avoid double free
         } Disc;
         struct {        // EXPR_PRED
             struct Expr* val;           // x

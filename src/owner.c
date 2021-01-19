@@ -13,13 +13,13 @@ void set_tx (Env* env, Expr* E, int cantx) {
         if (cantx) {
             switch (E->sub) {
                 case EXPR_VAR:
-                    E->Var.istx1 = 1;
+                    E->Var.tx_setnull = 1;
                     break;
                 case EXPR_INDEX:
-                    E->Index.istx1 = 1;
+                    E->Index.tx_setnull = 1;
                     break;
                 case EXPR_DISC:
-                    E->Disc.istx1 = 1;
+                    E->Disc.tx_setnull = 1;
                     break;
                 default:
                     break;
@@ -30,7 +30,7 @@ void set_tx (Env* env, Expr* E, int cantx) {
         assert(left != NULL);
         if (left->sub == EXPR_VAR) {
             if (E->sub!=EXPR_UPREF && E==left && cantx) { // TX only for root vars (E==left)
-                left->Var.istx2 = 1;
+                left->Var.tx_done = 1;
             }
         } else {
             // ok
@@ -48,7 +48,7 @@ int set_istx_expr (Env* env, Expr* e, int cantx) {
         case EXPR_NULL:
         case EXPR_INT:
         case EXPR_VAR:
-            // istx2 = 0
+            // tx_done = 0
             break;
 
         case EXPR_UPREF:
@@ -107,7 +107,7 @@ int set_istx_stmt (Stmt* s) {
             set_istx_expr(s->env, s->Return, 1);
             break;
         default:
-            // istx2 = 0
+            // tx_done = 0
             break;
     }
     return VISIT_CONTINUE;
@@ -294,7 +294,7 @@ __VAR_ACCESS__: {
                 }
                 if (!isbw) {
 #endif
-                if (var->Var.istx2) {
+                if (var->Var.tx_done) {
                     assert(tk1 != NULL);
                     char err[1024];
                     sprintf(err, "invalid transfer of \"%s\" : active pointer in scope (ln %ld)",
