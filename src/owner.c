@@ -169,7 +169,7 @@ int check_txs (Stmt* S) {
         return 0;
     }
 
-    Tk* tk1 = NULL;
+    Tk* txed_tk = NULL;
 
     typedef struct { Stmt* stop; int bws_n; } Stack;
     Stack stack[256];
@@ -178,7 +178,7 @@ int check_txs (Stmt* S) {
     void pre (void) {
         bws_n = 1;
         bws[0] = S;
-        tk1 = NULL;
+        txed_tk = NULL;
         stack_n = 0;
     }
 
@@ -208,61 +208,86 @@ int check_txs (Stmt* S) {
             bws_n = stack[stack_n].bws_n;
         }
 
-        // Rules 4/5/6
-        auto int var_access (Env* env, Expr* var);
-
         // Add y/z in bws:
         //  var y = ... \x ...
         //  set z = ... y ...
+        void add_bws (Expr* e) {
+            int n=0; Expr* vars[256];
+            env_held_vars(s->env, e, &n, vars);
+            for (int i=0; i<n; i++) {
+                Stmt* dcl = env_id_to_stmt(s->env, vars[i]->Var.tk.val.s);
+                assert(dcl != NULL);
+                if (bws_has(dcl)) {
+                    bws[bws_n++] = s;
+                    break;
+                }
+            }
+        }
+
+        // Set Var.tx_done
+        //  var y = x
+        void set_txs (Expr* e) {
+            // var y = x
+            int n=0; Expr* vars[256];
+            env_txed_vars(s->env, e, &n, vars);
+            for (int i=0; i<n; i++) {
+                Expr* e = vars[i];
+                if (e->sub == EXPR_DNREF) {
+                    // ignore, handled in TODO
+                } else {
+                    assert(e->sub == EXPR_VAR);
+                    if (!strcmp(e->Var.tk.val.s,S->Var.tk.val.s)) {
+                        e->Var.tx_done = 1;
+                    }
+                }
+            }
+        }
+
+        // STMT_VAR, STMT_SET, STMT_RETURN transfer their source expressions.
+        // EXPR_CALL, EXPR_CONS transfeir their argument (in any STMT_*).
 
         switch (s->sub) {
             case STMT_VAR: {
-                int n=0; Expr* vars[256];
-                env_held_vars(s->env, s->Var.init, &n, vars);
-                for (int i=0; i<n; i++) {
-                    Stmt* dcl = env_id_to_stmt(s->env, vars[i]->Var.tk.val.s);
-                    assert(dcl != NULL);
-                    if (bws_has(dcl)) {
-                        bws[bws_n++] = s;   // var y = ... \x ...
-                        break;
-                    }
-                }
-                goto __VAR_ACCESS__;
-                break;
+                add_bws(s->Var.init);
+                set_txs(s->Var.init);
+                goto __ACCS__;
             }
             case STMT_SET: {
-                Type* tp = env_expr_to_type(s->env, s->Set.dst);
-                if (!env_type_ishasptr(s->env,tp)) {
-                    goto __VAR_ACCESS__;
-                    break;
-                }
-
-                Stmt* dst = env_expr_leftmost_decl(s->env, s->Set.dst);
-                assert(dst != NULL);
-                assert(dst->sub == STMT_VAR);
-
-                int n=0; Expr* vars[256];
-                env_held_vars(s->env, s->Set.src, &n, vars);
-                for (int i=0; i<n; i++) {
-                    Stmt* dcl = env_id_to_stmt(s->env, vars[i]->Var.tk.val.s);
-                    assert(dcl != NULL);
-                    if (bws_has(dcl)) {
-                        bws[bws_n++] = dst;   // set z = ... \x ...
-                        break;
-                    }
-                }
-
-                goto __VAR_ACCESS__;
-                break;
+                add_bws(s->Set.src);
+                set_txs(s->Set.src);
+                goto __ACCS__;
             }
 
-            //case STMT_VAR:
-            //case STMT_SET:
             case STMT_CALL:
             case STMT_IF:
             case STMT_RETURN:
-__VAR_ACCESS__: {
-                int ret = visit_stmt(0, s, NULL, var_access, NULL);
+__ACCS__: {
+                int fs (Env* env, Expr* var) {
+                    if (var->sub != EXPR_VAR) {
+                        return VISIT_CONTINUE;
+                    }
+                    if (strcmp(S->Var.tk.val.s,var->Var.tk.val.s)) {
+                        return VISIT_CONTINUE;
+                    }
+                    // ensure that EXPR_VAR is really same as STMT_VAR
+                    Stmt* decl = env_id_to_stmt(env, var->Var.tk.val.s);
+                    assert(decl!=NULL && decl==S);
+
+                    // Rule 6
+                    if (bws_n >= 2) {
+                        if (var->Var.tx_done) {
+                            assert(txed_tk != NULL);
+                            char err[1024];
+                            sprintf(err, "invalid transfer of \"%s\" : active pointer in scope (ln %ld)",
+                                    var->Var.tk.val.s, txed_tk->lin);
+                            err_message(&var->Var.tk, err);
+                            return VISIT_ERROR;
+                        }
+                    }
+                    txed_tk = &var->Var.tk;
+                    return VISIT_CONTINUE;
+                }
+                int ret = visit_stmt(0, s, NULL, fs, NULL);
                 if (ret != EXEC_CONTINUE) {
                     return ret;
                 }
@@ -272,40 +297,6 @@ __VAR_ACCESS__: {
                 break;
         }
         return EXEC_CONTINUE;
-
-        int var_access (Env* env, Expr* var) {
-            if (var->sub != EXPR_VAR) {
-                return VISIT_CONTINUE;
-            }
-            if (strcmp(S->Var.tk.val.s,var->Var.tk.val.s)) {
-                return VISIT_CONTINUE;
-            }
-            // ensure that EXPR_VAR is really same as STMT_VAR
-            Stmt* decl = env_id_to_stmt(env, var->Var.tk.val.s);
-            assert(decl!=NULL && decl==S);
-
-            if (bws_n >= 2) {    // Rule 6
-#if 0
-                int isbw = 0;
-                for (int i=0; i<bws_n; i++) {
-                    if (bws[i] == var) {
-                        isbw = 1;
-                    }
-                }
-                if (!isbw) {
-#endif
-                if (var->Var.tx_done) {
-                    assert(tk1 != NULL);
-                    char err[1024];
-                    sprintf(err, "invalid transfer of \"%s\" : active pointer in scope (ln %ld)",
-                            var->Var.tk.val.s, tk1->lin);
-                    err_message(&var->Var.tk, err);
-                    return VISIT_ERROR;
-                }
-            }
-            tk1 = &var->Var.tk;
-            return VISIT_CONTINUE;
-        }
     }
 }
 

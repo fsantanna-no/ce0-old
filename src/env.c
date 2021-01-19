@@ -464,10 +464,11 @@ void env_txed_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
     }
 
     switch (e->sub) {
+        case EXPR_NULL:
+            break;
         case EXPR_UNIT:
         case EXPR_UNK:
         case EXPR_NATIVE:
-        case EXPR_NULL:
         case EXPR_INT:
         case EXPR_PRED:
         case EXPR_UPREF:
