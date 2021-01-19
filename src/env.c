@@ -476,7 +476,7 @@ void env_txed_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
             break;
 
         case EXPR_VAR:
-            //e->istx = 1;
+            e->Var.tx_setnull = 1;
             vars[(*vars_n)++] = e;
             break;
 
@@ -494,7 +494,12 @@ void env_txed_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
             break;
 
         case EXPR_DISC:
+            e->Disc.tx_setnull = 1;
+            break;
         case EXPR_INDEX:
+            e->Index.tx_setnull = 1;
+            break;
+
         case EXPR_CALL:     // tx for args is checked elsewhere
             break;
 

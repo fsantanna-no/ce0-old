@@ -6,115 +6,6 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void set_tx (Env* env, Expr* E, int cantx) {
-    Type* tp = env_expr_to_type(env, (E->sub==EXPR_UPREF ? E->Upref : E));
-    assert(tp != NULL);
-    if (env_type_ishasrec(env,tp,0)) {
-        if (cantx) {
-            switch (E->sub) {
-                case EXPR_VAR:
-                    E->Var.tx_setnull = 1;
-                    break;
-                case EXPR_INDEX:
-                    E->Index.tx_setnull = 1;
-                    break;
-                case EXPR_DISC:
-                    E->Disc.tx_setnull = 1;
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        Expr* left = expr_leftmost(E);
-        assert(left != NULL);
-        if (left->sub == EXPR_VAR) {
-            if (E->sub!=EXPR_UPREF && E==left && cantx) { // TX only for root vars (E==left)
-                left->Var.tx_done = 1;
-            }
-        } else {
-            // ok
-        }
-    }
-}
-
-int set_istx_expr (Env* env, Expr* e, int cantx) {
-    set_tx(env, e, cantx);
-
-    switch (e->sub) {
-        case EXPR_UNIT:
-        case EXPR_UNK:
-        case EXPR_NATIVE:
-        case EXPR_NULL:
-        case EXPR_INT:
-        case EXPR_VAR:
-            // tx_done = 0
-            break;
-
-        case EXPR_UPREF:
-            set_istx_expr(env, e->Upref, 0);
-            break;
-
-        case EXPR_DNREF:
-            set_istx_expr(env, e->Dnref, 1);
-            break;
-
-        case EXPR_TUPLE:
-            for (int i=0; i<e->Tuple.size; i++) {
-                set_istx_expr(env, e->Tuple.vec[i], cantx);
-            }
-            break;
-
-        case EXPR_INDEX:
-            set_istx_expr(env, e->Index.val, 0);
-            break;
-
-        case EXPR_CALL:
-            set_istx_expr(env, e->Call.func, 0);
-            set_istx_expr(env, e->Call.arg, 1);
-            break;
-
-        case EXPR_CONS:
-            set_istx_expr(env, e->Cons.arg, 1);
-            break;
-
-        case EXPR_DISC:
-            set_istx_expr(env, e->Disc.val, 0);
-            break;
-
-        case EXPR_PRED:
-            set_istx_expr(env, e->Pred.val, 0);
-            break;
-    }
-    return VISIT_CONTINUE;
-}
-
-int set_istx_stmt (Stmt* s) {
-    switch (s->sub) {
-        case STMT_VAR:
-            set_istx_expr(s->env, s->Var.init, 1);
-            break;
-        case STMT_SET:
-            set_istx_expr(s->env, s->Set.src, 1);
-            break;
-        case STMT_CALL:
-            set_istx_expr(s->env, s->Call, 0);
-            break;
-        case STMT_IF:
-            set_istx_expr(s->env, s->If.tst, 0);
-            break;
-        case STMT_RETURN:
-            set_istx_expr(s->env, s->Return, 1);
-            break;
-        default:
-            // tx_done = 0
-            break;
-    }
-    return VISIT_CONTINUE;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
 // How to detect ownership violations?
 //  - Rule 4: transfer ownership and then access again:
 //      var x: Nat = ...            -- owner
@@ -180,6 +71,12 @@ int check_txs (Stmt* S) {
         bws[0] = S;
         txed_tk = NULL;
         stack_n = 0;
+    }
+
+    // S.Var.init.tx_setnull = ?
+    {
+        int n=0; Expr* vars[256];
+        env_txed_vars(S->env, S->Var.init, &n, vars);
     }
 
     auto int fs (Stmt* s);
@@ -261,25 +158,37 @@ int check_txs (Stmt* S) {
 
             case STMT_CALL:
             case STMT_IF:
-__ACCS__: {
-                int fs (Env* env, Expr* var) {
-                    if (var->sub==EXPR_VAR && !strcmp(S->Var.tk.val.s,var->Var.tk.val.s)) {
-                        // ensure that EXPR_VAR is really same as STMT_VAR
-                        Stmt* decl = env_id_to_stmt(env, var->Var.tk.val.s);
-                        assert(decl!=NULL && decl==S);
+__ACCS__:
+            {
+                int fs (Env* env, Expr* e) {
+                    switch (e->sub) {
+                        case EXPR_CALL:
+                            set_txs(e->Call.arg);
+                            break;
+                        case EXPR_CONS:
+                            set_txs(e->Cons.arg);
+                            break;
+                        case EXPR_VAR:
+                            if (!strcmp(S->Var.tk.val.s,e->Var.tk.val.s)) {
+                                // ensure that EXPR_VAR is really same as STMT_VAR
+                                Stmt* decl = env_id_to_stmt(env, e->Var.tk.val.s);
+                                assert(decl!=NULL && decl==S);
 
-                        // Rule 6
-                        if (bws_n >= 2) {
-                            if (var->Var.tx_done) {
-                                assert(txed_tk != NULL);
-                                char err[1024];
-                                sprintf(err, "invalid transfer of \"%s\" : active pointer in scope (ln %ld)",
-                                        var->Var.tk.val.s, txed_tk->lin);
-                                err_message(&var->Var.tk, err);
-                                return VISIT_ERROR;
+                                // Rule 6
+                                if (bws_n >= 2) {
+                                    if (e->Var.tx_done) {
+                                        assert(txed_tk != NULL);
+                                        char err[1024];
+                                        sprintf(err, "invalid transfer of \"%s\" : active pointer in scope (ln %ld)",
+                                                e->Var.tk.val.s, txed_tk->lin);
+                                        err_message(&e->Var.tk, err);
+                                        return VISIT_ERROR;
+                                    }
+                                }
+                                txed_tk = &e->Var.tk;
                             }
-                        }
-                        txed_tk = &var->Var.tk;
+                        default:
+                            break;
                     }
                     return VISIT_CONTINUE;
                 }
@@ -299,7 +208,6 @@ __ACCS__: {
 ///////////////////////////////////////////////////////////////////////////////
 
 int owner (Stmt* s) {
-    assert(visit_stmt(0,s,set_istx_stmt,NULL,NULL));
     if (!visit_stmt(0,s,check_txs,NULL,NULL)) {
         return 0;
     }
