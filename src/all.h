@@ -8,7 +8,7 @@
 #include "code.h"
 #include "dump.h"
 
-#define GCC "gcc -Wall -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-local-typedefs -Wno-unused-function -Wno-format-zero-length"
+#define GCC "gcc -Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-local-typedefs -Wno-unused-function -Wno-format-zero-length"
 
 //#define TODO(msg) fprintf(stderr, msg)
 #define TODO(msg)

@@ -813,7 +813,7 @@ void code_user (Stmt* s) {
             int par = 0;
 
             char* op2 = ""; {
-                int ishasrec = env_type_ishasrec(s->env, sub->type, 0);
+                int ishasrec = env_type_ishasrec(s->env, sub->type, 1);
                 if (ishasrec && !sub->type->isptr) {
                     op2 = "&";
                 } else if (!ishasrec && sub->type->isptr) {
