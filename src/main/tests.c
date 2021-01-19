@@ -615,6 +615,7 @@ void t_parser_stmt (void) {
 }
 
 void t_env (void) {
+    // ENV_HELD_VARS
     {
         Stmt* s;
         assert(all_init(NULL, stropen("r", 0, "var x: Int = 10")));
@@ -632,7 +633,6 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(env(s));
-        //dump_stmt(s->Seq.s2->Seq.s2);
         int n=0; Expr* vars[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
         assert(n == 1);
@@ -648,7 +648,6 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(env(s));
-        //dump_stmt(s->Seq.s2->Seq.s2);
         int n=0; Expr* vars[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
         assert(n == 2);
@@ -663,7 +662,6 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(env(s));
-        //dump_stmt(s->Seq.s2->Seq.s2);
         int n=0; Expr* vars[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
         assert(n == 2);
@@ -679,7 +677,6 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(env(s));
-        //dump_stmt(s->Seq.s2->Seq.s2);
         int n=0; Expr* vars[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
         assert(n == 1);
@@ -695,7 +692,6 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(env(s));
-        //dump_stmt(s->Seq.s2->Seq.s2);
         int n=0; Expr* vars[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
         assert(n == 1);
@@ -710,7 +706,6 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(env(s));
-        //dump_stmt(s->Seq.s2->Seq.s2);
         int n=0; Expr* vars[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
         assert(n == 1);
@@ -727,7 +722,6 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(env(s));
-        //dump_stmt(s->Seq.s2->Seq.s2);
         int n=0; Expr* vars[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
         assert(n == 1);
@@ -745,7 +739,6 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(env(s));
-        //dump_stmt(s->Seq.s2->Seq.s2);
         int n=0; Expr* vars[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
         assert(n == 1);
@@ -763,11 +756,96 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(env(s));
-        dump_stmt(s->Seq.s2->Seq.s2);
         int n=0; Expr* vars[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
         assert(n == 1);
         assert(!strcmp(vars[0]->Var.tk.val.s, "m"));
+    }
+
+    // ENV_TXED_VARS
+    {
+        Stmt* s;
+        assert(all_init(NULL, stropen("r", 0, "var x: Int = 10")));
+        assert(parser(&s));
+        assert(env(s));
+        int n=0; Expr* vars[256];
+        env_txed_vars(s->Seq.s2->env, s->Seq.s2->Var.init, &n, vars);
+        assert(n == 0);
+    }
+    {
+        Stmt* s;
+        assert(all_init(NULL, stropen("r", 0,
+            "var x: Int = 10\n"
+            "var y: Int = x\n"
+        )));
+        assert(parser(&s));
+        assert(env(s));
+        int n=0; Expr* vars[256];
+        env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
+        assert(n == 0);
+    }
+    {
+        Stmt* s;
+        assert(all_init(NULL, stropen("r", 0,
+            "type rec Nat { Succ: Nat }\n"
+            "var x: Nat = $Nat\n"
+            "var y: Nat = x\n"
+        )));
+        assert(parser(&s));
+        assert(env(s));
+        int n=0; Expr* vars[256];
+        env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
+        assert(n == 1);
+        assert(!strcmp(vars[0]->Var.tk.val.s, "x"));
+    }
+    {
+        Stmt* s;
+        assert(all_init(NULL, stropen("r", 0,
+            "type rec Nat { Succ: Nat }\n"
+            "var x: Nat = $Nat\n"
+            "var y: \\Nat = \\x\n"
+            "var z: Nat = y\\\n"
+        )));
+        assert(parser(&s));
+        assert(env(s));
+        int n=0; Expr* vars[256];
+        env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
+        assert(n == 1);
+        assert(vars[0]->sub==EXPR_DNREF);
+    }
+    {
+        Stmt* s;
+        assert(all_init(NULL, stropen("r", 0,
+            "type rec Nat { Succ: Nat }\n"
+            "var x: Nat = $Nat\n"
+            "var y: \\Nat = \\x\n"
+            "var z: (Nat,\\Nat,Nat) = (x,y,y\\)\n"
+        )));
+        assert(parser(&s));
+        assert(env(s));
+        int n=0; Expr* vars[256];
+        env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
+        assert(n == 2);
+        assert(!strcmp(vars[0]->Var.tk.val.s, "x"));
+        assert(vars[1]->sub==EXPR_DNREF);
+    }
+    {
+        Stmt* s;
+        assert(all_init(NULL, stropen("r", 0,
+            "type rec Nat { Succ: Nat }\n"
+            "type Xx { Xx1: Nat }\n"
+            "var x: Nat = $Nat\n"
+            "var y: \\Nat = \\x\n"
+            "var z: (Nat,\\Nat,Xx) = (x,y,Xx1 y\\)\n"
+        )));
+        assert(parser(&s));
+        assert(env(s));
+        int n=0; Expr* vars[256];
+        //dump_stmt(s->Seq.s2->Seq.s2);
+        env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
+        assert(n == 2);
+        assert(!strcmp(vars[0]->Var.tk.val.s, "x"));
+        assert(vars[1]->sub==EXPR_DNREF);
     }
 }
 
@@ -2237,6 +2315,16 @@ void t_all (void) {
         "output std x.1\\\n"
         "output std x.2\n"
     ));
+#ifdef XXX
+puts("-=-=-=-");
+    assert(all(
+        "(ln 4, col 5): invalid assignment : cannot hold local pointer \"y\" (ln 3)",
+        "var x: Int = 10\n"
+        "var y: \\Int = \\x\n"
+        "var z: \\Int = y\n"
+        "var p: Int = z\\\n"
+    ));
+assert(0);
 
     // CYCLE
     assert(all(
@@ -2250,7 +2338,6 @@ void t_all (void) {
         "set p\\ = m\n"
         "output std (\\l)\n"
     ));
-#ifdef XXX
 puts("-=-=-=-=-");
     assert(all(
         "xxx",
@@ -2269,6 +2356,16 @@ assert(0);
         "var l: List = Item $List\n"
         "var m: \\List = \\l.Item!\n"
         "set m\\ = l\n"
+    ));
+    assert(all(
+        "xxx",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "func f: List->List { return arg }\n"
+        "var l: List = Item $List\n"
+        "var m: \\List = \\l.Item!\n"
+        "set m\\ = f l\n"
     ));
 #endif
 

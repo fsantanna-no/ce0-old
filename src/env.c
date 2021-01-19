@@ -386,6 +386,8 @@ Stmt* env_expr_leftmost_decl (Env* env, Expr* e) {
     return left_decl;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
 void env_held_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
     Type* TP = env_expr_to_type(env, e);
     assert((*vars_n) < 255);
@@ -417,8 +419,7 @@ void env_held_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
         }
 
         case EXPR_DNREF: {
-            Type* tp = env_expr_to_type(env, e->Dnref);
-            assert(!tp->isptr); // TODO: pointer to pointer? need to hold it
+            assert(!TP->isptr); // TODO: pointer to pointer? need to hold it
             break;
         }
 
@@ -447,6 +448,57 @@ void env_held_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
 
         case EXPR_CONS: {
             env_held_vars(env, e->Cons.arg, vars_n, vars);
+            break;
+        }
+
+        default:
+            break;
+    }
+}
+
+void env_txed_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
+    assert((*vars_n) < 255);
+    Type* TP = env_expr_to_type(env, e);
+    if (!env_type_ishasrec(env,TP,0)) {
+        return;
+    }
+
+    switch (e->sub) {
+        case EXPR_UNIT:
+        case EXPR_UNK:
+        case EXPR_NATIVE:
+        case EXPR_NULL:
+        case EXPR_INT:
+        case EXPR_PRED:
+        case EXPR_UPREF:
+            assert(0);      // cannot be ishasrec
+            break;
+
+        case EXPR_VAR:
+            //e->istx = 1;
+            vars[(*vars_n)++] = e;
+            break;
+
+        case EXPR_DNREF: {
+            if (e->Dnref->sub == EXPR_VAR) {
+                vars[(*vars_n)++] = e;
+            }
+            break;
+        }
+
+        case EXPR_TUPLE:
+            for (int i=0; i<e->Tuple.size; i++) {
+                env_txed_vars(env, e->Tuple.vec[i], vars_n, vars);
+            }
+            break;
+
+        case EXPR_DISC:
+        case EXPR_INDEX:
+        case EXPR_CALL:     // tx for args is checked elsewhere
+            break;
+
+        case EXPR_CONS: {
+            env_txed_vars(env, e->Cons.arg, vars_n, vars);
             break;
         }
 

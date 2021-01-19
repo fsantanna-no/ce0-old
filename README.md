@@ -752,6 +752,14 @@ call g(l)               -- error: cannot transfer with active pointer
 
 This rule prevents that a transfer eventually deallocates a value that is still
 reachable through an active pointer (i.e, *use-after-free*).
+This rule implies that a pointer *dnref* can never be transferred because the
+pointer must be pointing to some value, and hence is active:
+
+```
+var l: List = ...       -- owner
+var x: \List = \l       -- active pointer
+var y: List = x\        -- error: cannot transfer with active pointer
+```
 
 <!--
 All dependencies of an assignment are tracked and all constructors are
