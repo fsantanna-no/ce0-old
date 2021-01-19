@@ -11,7 +11,19 @@ void set_tx (Env* env, Expr* E, int cantx) {
     assert(tp != NULL);
     if (env_type_ishasrec(env,tp,0)) {
         if (cantx) {
-            E->istx1 = 1;
+            switch (E->sub) {
+                case EXPR_VAR:
+                    E->Var.istx1 = 1;
+                    break;
+                case EXPR_INDEX:
+                    E->Index.istx1 = 1;
+                    break;
+                case EXPR_DISC:
+                    E->Disc.istx1 = 1;
+                    break;
+                default:
+                    break;
+            }
         }
 
         Expr* left = expr_leftmost(E);

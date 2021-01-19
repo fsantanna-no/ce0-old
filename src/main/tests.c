@@ -854,7 +854,7 @@ void t_code (void) {
     {
         char out[256] = "";
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr e = { ALL.nn++, EXPR_UNIT, 0, .Unit={TK_UNIT,{},0,0} };
+        Expr e = { ALL.nn++, EXPR_UNIT, .Unit={TK_UNIT,{},0,0} };
         code_expr(NULL, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,""));
@@ -866,7 +866,7 @@ void t_code (void) {
         Type tp = { TYPE_UNIT, 0 };
         Stmt var = { ALL.nn++, STMT_VAR, .Var={{TX_VAR,{.s="xxx"},0,0},&tp,NULL} };
         Env env = { &var, NULL };
-        Expr e = { ALL.nn++, EXPR_VAR, 0, .Var={{TX_VAR,{.s="xxx"},0,0},0} };
+        Expr e = { ALL.nn++, EXPR_VAR, .Var={{TX_VAR,{.s="xxx"},0,0},0,0} };
         code_expr(&env, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,""));
@@ -877,7 +877,7 @@ void t_code (void) {
         Type tp = { TYPE_NATIVE, 0 };
         Stmt var = { ALL.nn++, STMT_VAR, .Var={{TX_VAR,{.s="xxx"},0,0},&tp,NULL} };
         Env env = { &var, NULL };
-        Expr e = { ALL.nn++, EXPR_VAR, 0, .Var={{TX_VAR,{.s="xxx"},0,0},0} };
+        Expr e = { ALL.nn++, EXPR_VAR, .Var={{TX_VAR,{.s="xxx"},0,0},0,0} };
         code_expr(&env, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,"xxx"));
@@ -886,7 +886,7 @@ void t_code (void) {
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr e = { ALL.nn++, EXPR_NATIVE, 0, .Native={TX_NATIVE,{},0,0} };
+        Expr e = { ALL.nn++, EXPR_NATIVE, .Native={TX_NATIVE,{},0,0} };
             strcpy(e.Native.val.s, "printf");
         code_expr(NULL, &e, 0);
         fclose(ALL.out);
@@ -896,9 +896,9 @@ void t_code (void) {
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr unit = { ALL.nn++, EXPR_UNIT, 0, .Unit={TK_UNIT,{},0,0} };
+        Expr unit = { ALL.nn++, EXPR_UNIT, .Unit={TK_UNIT,{},0,0} };
         Expr* es[2] = {&unit, &unit};
-        Expr e = { ALL.nn++, EXPR_TUPLE, 0, .Tuple={2,es} };
+        Expr e = { ALL.nn++, EXPR_TUPLE, .Tuple={2,es} };
         code_expr(NULL, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,"((TUPLE__Unit__Unit) {  })"));
@@ -910,8 +910,8 @@ void t_code (void) {
         Stmt var = { ALL.nn++, STMT_VAR, .Var={{TX_VAR,{.s="x"},0,0},&tp,NULL} };
         Env env = { &var, NULL };
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr val = { ALL.nn++, EXPR_VAR, 0, .Var={{TX_VAR,{.s="x"},0,0},0} };
-        Expr e = { ALL.nn++, EXPR_INDEX, 0, .Index={&val,{TX_NUM,{2},0,0}} };
+        Expr val = { ALL.nn++, EXPR_VAR, .Var={{TX_VAR,{.s="x"},0,0},0,0} };
+        Expr e = { ALL.nn++, EXPR_INDEX, .Index={&val,{TX_NUM,{2},0,0}} };
         code_expr(&env, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,"x._2"));

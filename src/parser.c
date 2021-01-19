@@ -148,27 +148,27 @@ int parser_expr_ (Expr** ret)
 
 // EXPR_UNIT
     if (accept(TK_UNIT)) {
-        *e = (Expr) { ALL.nn++, EXPR_UNIT, 0, .Unit=ALL.tk0 };
+        *e = (Expr) { ALL.nn++, EXPR_UNIT, .Unit=ALL.tk0 };
 
 // EXPR_UNK
     } else if (accept('?')) {
-        *e = (Expr) { ALL.nn++, EXPR_UNK, 0, .Unk=ALL.tk0 };
+        *e = (Expr) { ALL.nn++, EXPR_UNK, .Unk=ALL.tk0 };
 
 // EXPR_NULL
     } else if (accept(TX_NULL)) {   // $Nat
-        *e = (Expr) { ALL.nn++, EXPR_NULL, 0, .Null=ALL.tk0 };
+        *e = (Expr) { ALL.nn++, EXPR_NULL, .Null=ALL.tk0 };
 
 // EXPR_INT
     } else if (accept(TX_NUM)) {    // 10
-        *e = (Expr) { ALL.nn++, EXPR_INT, 0, .Int=ALL.tk0 };
+        *e = (Expr) { ALL.nn++, EXPR_INT, .Int=ALL.tk0 };
 
 // EXPR_NATIVE
     } else if (accept(TX_NATIVE)) {
-        *e = (Expr) { ALL.nn++, EXPR_NATIVE, 0, .Native=ALL.tk0 };
+        *e = (Expr) { ALL.nn++, EXPR_NATIVE, .Native=ALL.tk0 };
 
 // EXPR_VAR
     } else if (accept(TX_VAR)) {
-        *e = (Expr) { ALL.nn++, EXPR_VAR, 0, .Var={ALL.tk0,0} };
+        *e = (Expr) { ALL.nn++, EXPR_VAR, .Var={ALL.tk0,0,0} };
 
 // EXPR_UPREF
     } else if (accept('\\')) {
@@ -178,7 +178,7 @@ int parser_expr_ (Expr** ret)
             return 0;
         }
         if (val->sub==EXPR_VAR || val->sub==EXPR_INDEX || val->sub==EXPR_DISC) {
-            *e = (Expr) { ALL.nn++, EXPR_UPREF, 0, .Upref=val };
+            *e = (Expr) { ALL.nn++, EXPR_UPREF, .Upref=val };
         } else {
             return err(&tk, "unexpected operand to `\\´");
         }
@@ -278,16 +278,16 @@ int parser_expr (Expr** ret, int canpre) {
         if (accept('.')) {
 // EXPR_INDEX
             if (accept(TX_NUM)) {
-                *new = (Expr) { ALL.nn++, EXPR_INDEX, 0, .Index={cur,ALL.tk0} };
+                *new = (Expr) { ALL.nn++, EXPR_INDEX, .Index={cur,ALL.tk0} };
 
 // EXPR_DISC / EXPR_PRED
             } else if (accept(TX_USER) || accept(TX_NULL)) {
                 Tk tk = ALL.tk0;
 
                 if (accept('?')) {
-                    *new = (Expr) { ALL.nn++, EXPR_PRED, 0, .Pred={cur,tk} };
+                    *new = (Expr) { ALL.nn++, EXPR_PRED, .Pred={cur,tk} };
                 } else if (accept('!')) {
-                    *new = (Expr) { ALL.nn++, EXPR_DISC, 0, .Disc={cur,tk} };
+                    *new = (Expr) { ALL.nn++, EXPR_DISC, .Disc={cur,tk} };
                 } else {
                     return err_expected("`?´ or `!´");
                 }
@@ -302,19 +302,19 @@ int parser_expr (Expr** ret, int canpre) {
                 cur->sub==EXPR_UPREF  || cur->sub==EXPR_DNREF ||
                 cur->sub==EXPR_INDEX  || cur->sub==EXPR_CALL  ||
                 cur->sub==EXPR_DISC) {
-                *new = (Expr) { ALL.nn++, EXPR_DNREF, 0, .Dnref=cur };
+                *new = (Expr) { ALL.nn++, EXPR_DNREF, .Dnref=cur };
             } else {
                 return err(&ALL.tk0, "unexpected operand to `\\´");
             }
 
 // EXPR_CALL
         } else if (isvarnat && parser_expr(&arg,0)) {
-            *new = (Expr) { ALL.nn++, EXPR_CALL, 0, .Call={cur,arg} };
+            *new = (Expr) { ALL.nn++, EXPR_CALL, .Call={cur,arg} };
         } else if (isvarnat && ispre) {
             arg = malloc(sizeof(Expr));
             assert(arg != NULL);
             *arg = (Expr) { ALL.nn++, EXPR_UNIT, .Unit={TK_UNIT,{},0,ALL.nn++} };
-            *new = (Expr) { ALL.nn++, EXPR_CALL, 0, .Call={cur,arg} };
+            *new = (Expr) { ALL.nn++, EXPR_CALL, .Call={cur,arg} };
             break;
 
         } else {
@@ -558,7 +558,7 @@ int parser_stmt (Stmt** ret) {
 
         *blk1 = (Stmt) { ALL.nn++, STMT_BLOCK, NULL, {NULL,NULL}, tk, .Block=seq1 };
         *seq1 = (Stmt) { ALL.nn++, STMT_SEQ,   NULL, {NULL,NULL}, tk, .Seq={arg,blk2} };
-        *expr = (Expr) { ALL.nn++, EXPR_NATIVE, 0, {.Native={TX_NATIVE,{.s="_arg_"},id.lin,id.col}} };
+        *expr = (Expr) { ALL.nn++, EXPR_NATIVE, {.Native={TX_NATIVE,{.s="_arg_"},id.lin,id.col}} };
         *arg  = (Stmt) { ALL.nn++, STMT_VAR,   NULL, {NULL,NULL}, tk,
             .Var = {
                 { TX_VAR, {.s="arg"}, id.lin, id.col },
