@@ -2373,6 +2373,22 @@ void t_all (void) {
         "var m: \\List = \\l.Item!\n"
         "set m\\ = f l\n"
     ));
+    assert(all(
+        "1\n2\n",
+        "{\n"
+        "   output std 1\n"
+        "   output std 2\n"
+        "}\n"
+    ));
+    assert(all(
+        "(ln 6, col 34): invalid dnref : cannot transfer value",
+        "type rec List {\n"
+        "    Item: ((Int,Int),List)\n"
+        "}\n"
+        "var l: List = Item ((10,0),$List)\n"
+        "var m: \\List = \\l.Item!.2\n"
+        "{ set m\\.Item!.2 = Item ((10,10),m\\) ; output std 10 }\n"
+    ));
 
     // LOOP
     assert(all(

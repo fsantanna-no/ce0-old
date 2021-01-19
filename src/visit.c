@@ -100,7 +100,6 @@ int visit_stmt (int ord, Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
         return visit_stmt_(ord, s, fs, fe, ft);
     } else {
         int ret = visit_stmt_(ord, s, fs, fe, ft);
-//printf(">>> visit_stmt %d lin=%ld ret=%d\n", s->sub, s->tk.lin, ret);
         if (ret != VISIT_CONTINUE) {
             return ret;
         }

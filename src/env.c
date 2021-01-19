@@ -464,7 +464,12 @@ int set_seqs (Stmt* s) {
             s->seqs[1] = s->Block;
             break;
 
+        case STMT_LOOP:
+            s->seqs[1] = s->Loop;
+            break;
+
         case STMT_SEQ:
+            s->seqs[1] = s->Seq.s1;
             s->Seq.s1->seqs[0] = s->Seq.s2;
 
             void aux (Stmt* cur, Stmt* nxt) {
@@ -479,6 +484,9 @@ int set_seqs (Stmt* s) {
                     case STMT_IF:
                         aux(cur->If.true,  nxt);
                         aux(cur->If.false, nxt);
+                        break;
+                    case STMT_LOOP:
+                        aux(cur->Loop, nxt);
                         break;
                     default:
                         cur->seqs[1] = nxt;
