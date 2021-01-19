@@ -50,17 +50,12 @@ int main (int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    if (!parser(&s)) {
+    if (!parser(&s) || !env(s) || !owner(s)) {
         fprintf(stderr, "%s\n", ALL.err);
         fputs("int main (void) {}", fout);
         exit(EXIT_FAILURE);
     }
 
-    if (!env(s)) {
-        fprintf(stderr, "%s\n", ALL.err);
-        fputs("int main (void) {}", fout);
-        exit(EXIT_FAILURE);
-    }
     code(s);
 
     return 0;
