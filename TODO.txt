@@ -136,6 +136,7 @@ hasrec: declarado em C como plain, usado em Ce como ptr
             - confusão com entendimento da memória em determinado momento
             - ter um ponteiro único nao ajuda necessariamente a entender
         4.2 Permite bounded pool
+    5. Rust nao consegue modificar uma lista!
 - closures explicitas precisa de new+ref para tuplas
 
 - check_txs nao avalia funcoes que acessam ambiente externo

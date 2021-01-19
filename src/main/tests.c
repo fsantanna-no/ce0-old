@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <string.h>
 
-//#define XXX
 #define DEBUG
 //#define VALGRIND
 
@@ -2332,8 +2331,6 @@ void t_all (void) {
         "var z: \\Nat = y\n"
         "var p: Nat = z\\\n"
     ));
-puts("-=-=-=-");
-//assert(0);
 
     // CYCLE
     assert(all(
@@ -2347,19 +2344,18 @@ puts("-=-=-=-");
         "set p\\ = m\n"
         "output std (\\l)\n"
     ));
-#ifdef XXX
-puts("-=-=-=-=-");
     assert(all(
-        "xxx",
+        "(ln 5, col 15): invalid assignment : cannot transfer ownsership to itself",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
         "var l: List = Item $List\n"
         "set l.Item! = l\n"
     ));
-assert(0);
+//puts("-=-=-=-=-");
+//assert(0);
     assert(all(
-        "xxx",
+        "(ln 6, col 10): invalid assignment : cannot transfer ownsership to itself",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
@@ -2368,7 +2364,7 @@ assert(0);
         "set m\\ = l\n"
     ));
     assert(all(
-        "xxx",
+        "(ln 7, col 12): invalid assignment : cannot transfer ownsership to itself",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
@@ -2377,7 +2373,6 @@ assert(0);
         "var m: \\List = \\l.Item!\n"
         "set m\\ = f l\n"
     ));
-#endif
 
     // LOOP
     assert(all(

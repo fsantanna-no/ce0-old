@@ -50,7 +50,10 @@ void env_txed_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
             e->Index.tx_setnull = 1;
             break;
 
-        case EXPR_CALL:     // tx for args is checked elsewhere
+        case EXPR_CALL: // tx for args is checked elsewhere (here, only if return type is also ishasrec)
+            // func may transfer its argument back
+            // set x.2 = f(x) where f: T1->T2 { return arg.2 }
+            env_txed_vars(env, e->Call.arg, vars_n, vars);
             break;
 
         case EXPR_CONS: {
@@ -182,7 +185,7 @@ int check_txs (Stmt* S) {
 
         // Set Var.tx_done
         //  var y = x
-        int set_txs (Expr* e) {
+        int set_txs (Expr* e, int iscycle) {
             // var y = x
             int n=0; Expr* vars[256];
             env_txed_vars(s->env, e, &n, vars);
@@ -197,6 +200,11 @@ int check_txs (Stmt* S) {
                     assert(e->sub == EXPR_VAR);
                     if (!strcmp(e->Var.tk.val.s,S->Var.tk.val.s)) {
                         e->Var.tx_done = 1;
+                        if (iscycle) {
+                            char err[1024];
+                            sprintf(err, "invalid assignment : cannot transfer ownsership to itself");
+                            return err_message(&e->Var.tk, err);
+                        }
                     }
                 }
             }
@@ -209,14 +217,28 @@ int check_txs (Stmt* S) {
         switch (s->sub) {
             case STMT_VAR:
                 add_bws(s->Var.init);
-                if (!set_txs(s->Var.init)) return EXEC_ERROR;
+                if (!set_txs(s->Var.init,0)) return EXEC_ERROR;
                 goto __ACCS__;
-            case STMT_SET:
+
+            case STMT_SET: {
+                int iscycle = 0; { // Rule 5: cycles can only occur in STMT_SET
+                    Expr* dst = expr_leftmost(s->Set.dst);
+                    assert(dst->sub == EXPR_VAR);
+                    for (int i=0; i<bws_n; i++) {
+                        if (!strcmp(dst->Var.tk.val.s,bws[i]->Var.tk.val.s)) {
+                            iscycle = 1;
+                            break;
+                        }
+                    }
+                }
                 add_bws(s->Set.src);
-                if (!set_txs(s->Set.src)) return EXEC_ERROR;
+                if (!set_txs(s->Set.src,iscycle)) return EXEC_ERROR;
+
                 goto __ACCS__;
+            }
+
             case STMT_RETURN:
-                if (!set_txs(s->Return)) return EXEC_ERROR;
+                if (!set_txs(s->Return,0)) return EXEC_ERROR;
                 goto __ACCS__;
 
             case STMT_CALL:
@@ -226,10 +248,10 @@ __ACCS__:
                 int fs (Env* env, Expr* e) {
                     switch (e->sub) {
                         case EXPR_CALL:
-                            if (!set_txs(e->Call.arg)) return EXEC_ERROR;
+                            if (!set_txs(e->Call.arg,0)) return EXEC_ERROR;
                             break;
                         case EXPR_CONS:
-                            if (!set_txs(e->Cons.arg)) return EXEC_ERROR;
+                            if (!set_txs(e->Cons.arg,0)) return EXEC_ERROR;
                             break;
                         case EXPR_VAR:
                             if (!strcmp(S->Var.tk.val.s,e->Var.tk.val.s)) {
