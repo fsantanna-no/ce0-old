@@ -30,8 +30,21 @@ int set_istx_expr (Env* env, Expr* e, int cantx) {
     set_tx(env, e, cantx);
 
     switch (e->sub) {
+        case EXPR_UNIT:
+        case EXPR_UNK:
+        case EXPR_NATIVE:
+        case EXPR_NULL:
+        case EXPR_INT:
+        case EXPR_VAR:
+            // istx2 = 0
+            break;
+
         case EXPR_UPREF:
             set_istx_expr(env, e->Upref, 0);
+            break;
+
+        case EXPR_DNREF:
+            set_istx_expr(env, e->Dnref, 1);
             break;
 
         case EXPR_TUPLE:
@@ -59,10 +72,6 @@ int set_istx_expr (Env* env, Expr* e, int cantx) {
 
         case EXPR_PRED:
             set_istx_expr(env, e->Pred.val, 0);
-            break;
-
-        default:
-            // istx2 = 0
             break;
     }
     return VISIT_CONTINUE;
@@ -116,7 +125,7 @@ int set_istx_stmt (Stmt* s) {
 //          - transfer (istx)  // error if state=borrowed/moved // set state=moved
 //          - borrow   (!istx) // error if state=moved          // set state=borrowed
 
-int FS (Stmt* S) {
+int check_txs (Stmt* S) {
 
     // visit all var declarations
 
@@ -310,7 +319,7 @@ __VAR_ACCESS__: {
 
 int owner (Stmt* s) {
     assert(visit_stmt(0,s,set_istx_stmt,NULL,NULL));
-    if (!visit_stmt(0,s,FS,NULL,NULL)) {
+    if (!visit_stmt(0,s,check_txs,NULL,NULL)) {
         return 0;
     }
     return 1;

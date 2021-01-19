@@ -61,8 +61,17 @@
             return EXEC_CONTINUE;
         }
 
-- ciclos
-- rule 5
+- testar env_txed_vars
+- fazer env_txs_vars
+    - somente ishasrec
+    - somente EXPR_VAR e EXPR_DNREF de EXPR_VAR
+        - recursivamente p/ tuples
+    - chamar em
+        - set, var, ret, cons
+        - fazer visit EXPR_CALL
+
+- rule 6 para x\
+- rule 5 ciclos
 - $Nat -> $
 - all rules when starting from hasrec
 - f \x vs f\ x
@@ -128,6 +137,8 @@ hasrec: declarado em C como plain, usado em Ce como ptr
         - problema ortogonal
     2. ADTs em rust sao ruins
     3. Rust nao consegue mover partes de estruturas recursivas
+        - var z: (Nat,Nat) = ...
+        - var x: Nat = z.1          -- z.1=$
     4. Ce terá pools (pool xs[]:Nat ; var x:Nat in xs = ...)
         4.1 Limita escopo da memória
             - o sistema de ownership não respeita escopo mínimo, sempre posso retornar.

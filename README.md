@@ -630,6 +630,7 @@ of rules:
     - Passing the owner to a function call argument, which becomes the new owner (e.g. `f(old)`).
     - Returning the owner from a function call to an assignee, which becomes the new owner (e.g. `new = f()`).
 4. The original owner is invalidated after transferring its ownership.
+    - `TODO: remover essa regra`
 5. Ownership cannot be transferred to its own subtree.
 6. Ownership cannot be transferred with an active pointer in scope.
 7. A pointer cannot escape or survive outside the scope of its owner.
