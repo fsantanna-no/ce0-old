@@ -182,14 +182,17 @@ int check_txs (Stmt* S) {
 
         // Set Var.tx_done
         //  var y = x
-        void set_txs (Expr* e) {
+        int set_txs (Expr* e) {
             // var y = x
             int n=0; Expr* vars[256];
             env_txed_vars(s->env, e, &n, vars);
             for (int i=0; i<n; i++) {
                 Expr* e = vars[i];
                 if (e->sub == EXPR_DNREF) {
-                    // ignore, handled in TODO
+                    assert(e->Dnref->sub == EXPR_VAR);
+                    char err[1024];
+                    sprintf(err, "invalid dnref : cannot transfer value");
+                    return err_message(&e->Dnref->Var.tk, err);
                 } else {
                     assert(e->sub == EXPR_VAR);
                     if (!strcmp(e->Var.tk.val.s,S->Var.tk.val.s)) {
@@ -197,6 +200,7 @@ int check_txs (Stmt* S) {
                     }
                 }
             }
+            return 1;
         }
 
         // STMT_VAR, STMT_SET, STMT_RETURN transfer their source expressions.
@@ -205,14 +209,14 @@ int check_txs (Stmt* S) {
         switch (s->sub) {
             case STMT_VAR:
                 add_bws(s->Var.init);
-                set_txs(s->Var.init);
+                if (!set_txs(s->Var.init)) return EXEC_ERROR;
                 goto __ACCS__;
             case STMT_SET:
                 add_bws(s->Set.src);
-                set_txs(s->Set.src);
+                if (!set_txs(s->Set.src)) return EXEC_ERROR;
                 goto __ACCS__;
             case STMT_RETURN:
-                set_txs(s->Return);
+                if (!set_txs(s->Return)) return EXEC_ERROR;
                 goto __ACCS__;
 
             case STMT_CALL:
@@ -222,10 +226,10 @@ __ACCS__:
                 int fs (Env* env, Expr* e) {
                     switch (e->sub) {
                         case EXPR_CALL:
-                            set_txs(e->Call.arg);
+                            if (!set_txs(e->Call.arg)) return EXEC_ERROR;
                             break;
                         case EXPR_CONS:
-                            set_txs(e->Cons.arg);
+                            if (!set_txs(e->Cons.arg)) return EXEC_ERROR;
                             break;
                         case EXPR_VAR:
                             if (!strcmp(S->Var.tk.val.s,e->Var.tk.val.s)) {

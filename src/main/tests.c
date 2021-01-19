@@ -2324,16 +2324,16 @@ void t_all (void) {
         "output std x.1\\\n"
         "output std x.2\n"
     ));
-#ifdef XXX
-puts("-=-=-=-");
     assert(all(
-        "(ln 4, col 5): invalid assignment : cannot hold local pointer \"y\" (ln 3)",
-        "var x: Int = 10\n"
-        "var y: \\Int = \\x\n"
-        "var z: \\Int = y\n"
-        "var p: Int = z\\\n"
+        "(ln 5, col 14): invalid dnref : cannot transfer value",
+        "type rec Nat { Succ: Nat }\n"
+        "var x: Nat = $Nat\n"
+        "var y: \\Nat = \\x\n"
+        "var z: \\Nat = y\n"
+        "var p: Nat = z\\\n"
     ));
-assert(0);
+puts("-=-=-=-");
+//assert(0);
 
     // CYCLE
     assert(all(
@@ -2347,6 +2347,7 @@ assert(0);
         "set p\\ = m\n"
         "output std (\\l)\n"
     ));
+#ifdef XXX
 puts("-=-=-=-=-");
     assert(all(
         "xxx",
