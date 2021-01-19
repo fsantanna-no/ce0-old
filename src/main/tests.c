@@ -1635,16 +1635,19 @@ void t_all (void) {
         "output std b\n"
     ));
     assert(all(
-        "(ln 6, col 14): invalid access to \"c\" : ownership was transferred (ln 5)",
+        //"(ln 6, col 14): invalid access to \"c\" : ownership was transferred (ln 5)",
+        "$\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var c: Nat = Succ $Nat\n"
         "var a: (Nat,Nat) = ($Nat,c)\n" // precisa transferir o c
-        "var d: Nat = c\n"               // erro
+        //"var d: Nat = c\n"               // erro
+        "output std (\\c)\n"
     ));
     assert(all(
-        "(ln 7, col 16): invalid access to \"a\" : ownership was transferred (ln 6)",
+        //"(ln 7, col 16): invalid access to \"a\" : ownership was transferred (ln 6)",
+        "$\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -1985,13 +1988,15 @@ void t_all (void) {
 
     // OWNERSHIP / BORROWING
     assert(all(
-        "(ln 6, col 14): invalid access to \"i\" : ownership was transferred (ln 5)",
+        //"(ln 6, col 14): invalid access to \"i\" : ownership was transferred (ln 5)",
+        "$\n",
         "type rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
         "var i: Nat = Succ $Nat\n"
         "var j: Nat = i  -- tx\n"
         "var k: Nat = i  -- erro\n"
+        "output std (\\i)\n"
     ));
     assert(all(
         "$\n",
@@ -2025,7 +2030,8 @@ void t_all (void) {
         "output std y_\n"
     ));
     assert(all(
-        "(ln 8, col 14): invalid access to \"x\" : ownership was transferred (ln 6)",
+        //"(ln 8, col 14): invalid access to \"x\" : ownership was transferred (ln 6)",
+        "$\n",
         "type rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
@@ -2159,20 +2165,23 @@ void t_all (void) {
         "output std (\\l2)\n"
     ));
     assert(all(
-        "(ln 10, col 16): invalid access to \"l1\" : ownership was transferred (ln 9)",
+        //"(ln 10, col 16): invalid access to \"l1\" : ownership was transferred (ln 9)",
+        "$\n",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
-        "type X {\n"
-        "    X1: \\List\n"
+        "type Xx {\n"
+        "    Xx1: \\List\n"
         "}\n"
         "var l1: List = $List\n"
         "var l2: List = $List\n"
         "set l2 = l1\n"
-        "var x: X = X1 \\l1\n"
+        "var x: Xx = Xx1 \\l1\n"
+        "output std x.Xx1!\n"
     ));
     assert(all(
-        "(ln 7, col 14): invalid access to \"l1\" : ownership was transferred (ln 6)",
+        //"(ln 7, col 14): invalid access to \"l1\" : ownership was transferred (ln 6)",
+        "$\n",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
