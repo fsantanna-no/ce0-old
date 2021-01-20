@@ -15,9 +15,9 @@ memory management.
 
 # 1. LEXICAL RULES
 
-## Comment
+## Comments
 
-A comment starts with `--` and runs until the end of the line:
+A comment starts with a double hyphen `--` and runs until the end of the line:
 
 ```
 -- this is a single line comment
@@ -40,7 +40,7 @@ The following keywords are reserved:
     native      -- native statement
     output      -- output invocation
     pre         -- native pre declaration
-    rec         -- type recursive declaration
+    rec         -- recursive type declaration
     return      -- function return
     set         -- assignment statement
     type        -- new type declaration
@@ -90,7 +90,7 @@ A number is a sequence of digits:
 
 Numbers are used in values of [type `Int`](TODO) and in [tuple indexes](TODO):
 
-## Native token
+## Native tokens
 
 A native token starts with an underscore `_` and might contain letters,
 digits, and underscores:
@@ -99,8 +99,9 @@ digits, and underscores:
 _char    _printf    _errno      -- native identifiers
 ```
 
-A native token may also be enclosed by curly braces `{` and `}` or parenthesis
-`(` and `)` to contain any other characters:
+A native token may also be enclosed with curly braces `{` and `}` or
+parenthesis `(` and `)`.
+In this case, a native token can contain any other characters:
 
 ```
 _(1 + 1)     _{2 * (1+1)}
@@ -110,7 +111,7 @@ _(1 + 1)     _{2 * (1+1)}
 
 ## Unit
 
-The unit type `()` only allows the [single value](TODO) `()`.
+The unit type `()` only has the [single value](TODO) `()`.
 
 ## Native
 
@@ -139,12 +140,13 @@ The type `Int` is a primitive type that holds [integer values](TODO).
 
 ## Tuple
 
-A tuple type holds [compound values](TODO) from a fixed number of other types:
-A tuple type identifier is a comma-separated list of types, enclosed in
+A tuple type holds [compound values](TODO) from a fixed number of other types.
+A tuple type identifier is a comma-separated list of types enclosed with
 parentheses:
 
 ```
-((),())     (Int,(Tree,Tree))
+((),(),())          -- type is a triple of unit types
+(Int,(Tree,Tree))   -- type is a pair containing another pair
 ```
 
 ## Function
@@ -153,16 +155,18 @@ A function type holds a [function](TODO) value and is composed of an input and
 output types separated by an arrow `->`:
 
 ```
-() -> Tree
-(List,List) -> ()
+() -> Tree          -- input is unit and output is Tree
+(List,List) -> ()   -- input is a pair and output is unit
 ```
 
-## Pointer
+## Pointers
 
-A pointer type can be applied to any other type with the prefix backslash `\`:
+A pointer type holds references and can be applied to any other type with the
+prefix backslash `\`:
 
 ```
-\Int    \List
+\Int        -- pointer to Int
+\List       -- pointer to List
 ```
 
 # 3. EXPRESSIONS
@@ -175,15 +179,22 @@ The unit value is the single value of the [unit type](TODO):
 ()
 ```
 
-## Native expression
+## Native expressions
 
-A native expression holds a value from a [host language type](TODO):
+A native expression holds a value of a [host language type](TODO):
 
 ```
 _printf    _(2+2)     _{f(x,y)}
 ```
 
-## Variable
+Symbols defined in *Ce* can also be accessed inside native expressions:
+
+```
+var x: Int = 10
+output std _(x + 10)    -- outputs 20
+```
+
+## Variables
 
 A variable holds a value of its [type](TODO):
 
@@ -191,7 +202,7 @@ A variable holds a value of its [type](TODO):
 i    myCounter    x_10
 ```
 
-## Tuple and Index
+## Tuples and Indexes
 
 A tuple holds a fixed number of values of a compound [tuple type](TODO):
 
@@ -200,14 +211,14 @@ A tuple holds a fixed number of values of a compound [tuple type](TODO):
 (x,(),y)                -- a triple
 ```
 
-A tuple index suffix a tuple with a dot `.` and holds the value at the given
-position:
+A tuple index suffixes a tuple with a dot `.` and evaluates to the value at the
+given position:
 
 ```
 (x,()).2                -- yields ()
 ```
 
-## Call, Input & Output
+## Calls, Input & Output
 
 A call invokes a [function](TODO) with the given argument:
 
@@ -236,40 +247,47 @@ input libsdl Delay 2000            -- waits 2 seconds
 output libsdl Draw Pixel (0,0)     -- draws a pixel on the screen
 ```
 
-The supported device functions and associated behaviors dependend on the
+The supported I/O functions and associated behaviors dependend on the
 platform in use.
 The special device `std` works for the standard input & output devices and
 accepts any value as argument:
 
 ```
-var x: Int = input std      -- reads an `Int` from stdin
+var x: Int = input std      -- reads an `Int` from stdin (`TODO: not implemented`)
 output std x                -- writes the value of `x` to stdout
 ```
 
 The `input` & `output` expressions can appear on assignments and statements,
 but not in the middle of expressions.
 
-`TODO: input_f, output_f`
+The declarations for the I/O functions must prefix their identifiers `input_`
+or `output_`:
 
-## Constructor, Discriminator, Predicate
+```
+func output_libsdl: IO_Sdl -> () {
+    ...
+}
+```
 
-### Constructor
+## Constructors, Discriminators & Predicates
+
+### Constructors
 
 A constructor creates a value of a [user type](TODO) given one subcase and its
 argument:
 
 ```
-True ()                 -- value of type Bool
+True ()                 -- value of type `Bool`
 False                   -- () is optional
-Car (True,())           -- subcase Car holds a tuple
+Item (Int,List)         -- subcase `Item` holds a tuple
 ```
 
-### Discriminator
+### Discriminators
 
 A discriminator accesses the value of a [user type](TODO) as one of its
 subcases.
-It suffixes the value with a dot `.`, a subcase identifier, and an exclamation
-mark `!`:
+A discriminator expression suffixes the value to access with a dot `.`, a
+subcase identifier, and an exclamation mark `!`:
 
 ```
 (True ()).True!         -- yields ()
@@ -279,33 +297,35 @@ x.Node!.2               -- yields ()
 x.$True                 -- error: `x` is a `Node`
 ```
 
-An error occurs during execution if the discriminated subcase does not match
-the actual value.
+If the discriminated subcase does not match the actual value, the attempted
+access raises a runtime error.
 
-### Predicate
+### Predicates
 
 A predicate checks if the value of a [user type](TODO) is of its given subcase.
-It suffixes the value with a dot `.`, a subcase identifier, and a question mark
-`?`:
+A predicate expression suffixes the value to test with a dot `.`, a subcase
+identifier, and a question mark `?`:
 
 ```
 type Member {
     Student:   ()
     Professor: ()
 }
-x = Professor
-b = x.Professor?    -- yields True
+var x: Member = Professor
+var b: Bool = x.Professor?    -- yields True
 ```
 
-## Pointer up-reference and down-reference
+## Pointer uprefs & dnrefs
 
-A pointer holds the address of a variable with a value.
-An *upref* acquires the address of a variable with the prefix backslash `\`.
-A *dnref* recovers the value given an address with the sufix backslash `\`:
+A pointer holds a reference to a variable with a value.
+An *upref* (up reference) acquires a reference of a variable with the prefix
+backslash `\`.
+A *dnref* (down reference) recovers the value given a reference with the sufix
+backslash `\`:
 
 ```
 var x: Int = 10
-var y: \Int = \x    -- acquires the address of `x`
+var y: \Int = \x    -- acquires a reference to `x`
 output std y\       -- recovers the value of `x`
 ```
 
