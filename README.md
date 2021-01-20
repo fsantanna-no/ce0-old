@@ -1,14 +1,14 @@
 # Ce
 
 A simple language with algebraic data types, ownership semantics, and scoped
-memory management (i.e. no garbage collection).
+memory management.
 
-- Install
+- Install & Use
 - [Manual](manual.md)
 - [Memory management](memory.md)
 - [Comparison with Rust](rust.md)
 
-# INSTALL
+# Install
 
 ```
 $ git clone https://github.com/fsantanna/ce0
@@ -19,7 +19,7 @@ $ make main
 $ sudo make install
 ```
 
-# USE
+# Use
 
 ```
 $ vi /tmp/test.ce

@@ -1,9 +1,9 @@
 # Ce
 
 A simple language with algebraic data types, ownership semantics, and scoped
-memory management (i.e. no garbage collection).
+memory management.
 
-- [Install](README.md)
+- [Install & Use](README.md)
 - Manual
     1. [Lexical rules](TODO)
     2. [Types](TODO)
