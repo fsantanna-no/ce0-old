@@ -5,13 +5,13 @@ memory management (i.e. no garbage collection).
 
 - [Install](README.md)
 - Manual
-    1. [Lexical Rules](TODO)
+    1. [Lexical rules](TODO)
     2. [Types](TODO)
     3. [Expressions](TODO)
     4. [Statements](TODO)
     5. [Syntax](TODO)
 - [Memory management](memory.md)
-- [Comparison with other languages](other.md)
+- [Comparison with Rust](rust.md)
 
 # 1. LEXICAL RULES
 

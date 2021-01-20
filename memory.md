@@ -6,7 +6,7 @@ memory management (i.e. no garbage collection).
 - [Install](README.md)
 - [Manual](manual.md)
 - Memory management
-- [Comparison with other languages](other.md)
+- [Comparison with Rust](rust.md)
 
 <!--
 # A. Pools and recursive types
@@ -28,7 +28,7 @@ Pools enable to the following properties for recursive types:
 - no garbage collection
 -->
 
-# Dynamic memory management
+# Memory management
 
 Values of recursive types, such as lists and trees, require dynamic memory
 allocation since their sizes are unbounded.

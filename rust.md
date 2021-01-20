@@ -6,8 +6,8 @@ memory management (i.e. no garbage collection).
 - [Install](README.md)
 - [Manual](manual.md)
 - [Memory management](memory.md)
-- Comparison with other languages
+- Comparison with Rust
 
-# COMPARISON
+# Comparison with Rust
 
 `TODO`
