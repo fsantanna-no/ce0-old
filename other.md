@@ -5,6 +5,8 @@ memory management (i.e. no garbage collection).
 
 - [Manual](manual.md)
 - [Memory management](memory.md)
-- [Comparison with other languages](other.md)
+- Comparison with other languages
 
-# INSTALL
+# COMPARISON
+
+`TODO`
