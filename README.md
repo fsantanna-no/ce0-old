@@ -51,7 +51,7 @@ The following symbols are valid:
     ,           -- tuple separator
     .           -- tuple index, type predicate & discriminator
     \           -- pointer type, upref & dnref operation
-    $           -- null subtype
+    $           -- empty subcase
     !           -- type discriminator
     ?           -- type predicate, unknown initialization
 ```
@@ -118,7 +118,7 @@ _char     _int    _{FILE*}
 ## User
 
 A user type is a [new type](TODO) introduced by the programmer.
-A user type holds values created from [subtype constructors](TODO) also
+A user type holds values created from [subcase constructors](TODO) also
 introduced by the programmer.
 
 A user type identifier starts with an uppercase letter:
@@ -247,20 +247,20 @@ but not in the middle of expressions.
 
 ### Constructor
 
-A constructor creates a value of a [user type](TODO) given one subtype and its
+A constructor creates a value of a [user type](TODO) given one subcase and its
 argument:
 
 ```
 True ()                 -- value of type Bool
 False                   -- () is optional
-Car (True,())           -- subtype Car holds a tuple
+Car (True,())           -- subcase Car holds a tuple
 ```
 
 ### Discriminator
 
 A discriminator accesses the value of a [user type](TODO) as one of its
-subtypes.
-It suffixes the value with a dot `.`, a subtype identifier, and an exclamation
+subcases.
+It suffixes the value with a dot `.`, a subcase identifier, and an exclamation
 mark `!`:
 
 ```
@@ -271,13 +271,13 @@ x.Node!.2               -- yields ()
 x.$True                 -- error: `x` is a `Node`
 ```
 
-An error occurs during execution if the discriminated subtype does not match
+An error occurs during execution if the discriminated subcase does not match
 the actual value.
 
 ### Predicate
 
-A predicate checks if the value of a [user type](TODO) is of its given subtype.
-It suffixes the value with a dot `.`, a subtype identifier, and a question mark
+A predicate checks if the value of a [user type](TODO) is of its given subcase.
+It suffixes the value with a dot `.`, a subcase identifier, and a question mark
 `?`:
 
 ```
@@ -306,29 +306,29 @@ output std y\       -- recovers the value of `x`
 ## Type declaration
 
 A type declaration creates a new [user type](TODO).
-Each case in the type declaration defines a subtype of it:
+Each declaration inside the type defines a subcase of it:
 
 ```
 type Bool {
-    False: ()       -- subtype False holds unit value
-    True:  ()       -- subtype True  holds unit value
+    False: ()       -- subcase False holds unit value
+    True:  ()       -- subcase True  holds unit value
 }
 ```
 
 A recursive type uses a `rec` modifier and always contains the implicit base
-null subtype with the prefix `$´:
+empty subcase with the prefix `$´:
 
 ```
 type rec Tree {
-    -- $Tree: ()            -- implicit null subtype always present
-    Node: (Tree,(),Tree)    -- subtype Node holds left subtree, unit value, and right subtree
+    -- $Tree: ()            -- implicit empty subcase always present
+    Node: (Tree,(),Tree)    -- subcase Node holds left subtree, unit value, and right subtree
 }
 ```
 
-The prefix `$` yields the null subtype of all recursive types, e.g., `$Tree` is
-the null subtype of `Tree`.
-The null subtype can be used in a
-[constructor, discriminator, or predicate](TODO).
+The prefix `$` yields the empty subcase of all recursive types, e.g., `$Tree`
+is the empty subcase of `Tree`.
+The empty subcase can be used in
+[constructors, discriminators, or predicates](TODO).
 
 ## Variable declaration
 
@@ -453,7 +453,7 @@ native pre _{
 Stmt ::= `var´ VAR `:´ [`\´] Type       -- variable declaration     var x: () = ()
             `=´ (Expr | `?´)
       |  `type´ [`rec´] USER `{`        -- user type declaration    type rec List {
-            { USER `:´ Type [`;´] }     --    subtypes                 Cons: List
+            { USER `:´ Type [`;´] }     --    subcases                 Cons: List
          `}´                                                        }
       |  `set´ Expr `=´ Expr            -- assignment               set x = 1
       |  (`call´ | `input´ |` output´)  -- call                     call f()
@@ -472,7 +472,7 @@ Stmt ::= `var´ VAR `:´ [`\´] Type       -- variable declaration     var x: ()
 
 Expr ::= `(´ `)´                        -- unit value               ()
       |  NATIVE                         -- native expression        _printf
-      |  `$´ USER                       -- null constructor         $List
+      |  `$´ USER                       -- empty constructor        $List
       |  VAR                            -- variable identifier      i
       |  `\´ Expr                       -- upref                    \x
       |  Expr `\´                       -- dnref                    x\
@@ -546,7 +546,7 @@ In particular the following cases must be prevented:
 
 ## Basics
 
-In *Ce*, a new type declaration supports variants (subtypes) with tuples:
+In *Ce*, a new type declaration supports variants (subcases) with tuples:
 
 ```
 type Character {
@@ -560,14 +560,14 @@ Such composite types are also known as algebraic data types because they are
 composed of sums (variants) and products (tuples).
 
 A new type declaration can also be made recursive if it uses itself in one of
-its subtypes:
+its subcases:
 
 ```
 type rec List {         -- a list is either empty ($List) or
     Item: (Int,List)    -- an item that holds a number and a sublist
 }
 
-var l: List = Item (1, Item (2,$List))   -- list `1 -> 2 -> null`
+var l: List = Item (1, Item (2,$List))   -- list `1 -> 2 -> empty`
 ```
 
 A variable of a recursive type holds a *strong reference* to its value, since
@@ -629,7 +629,7 @@ of rules:
     - Assigning the owner to another variable, which becomes the new owner (e.g. `new = old`).
     - Passing the owner to a function call argument, which becomes the new owner (e.g. `f(old)`).
     - Returning the owner from a function call to an assignee, which becomes the new owner (e.g. `new = f()`).
-4. When transferring ownership, the original owner is assigned its null subtype.
+4. When transferring ownership, the original owner is assigned its empty subcase.
 5. Ownership cannot be transferred to the current owner subtree.
 6. Ownership cannot be transferred with an active pointer in scope.
 7. A pointer cannot escape or survive outside the scope of its owner.
@@ -687,7 +687,7 @@ set p\ = l                  -- error: cannot transfer `l` to the end of itself
 ```
 
 It is possible to transfer only part of a recursive value.
-In this case, the removed part will be automatically reset to the null subtype:
+In this case, the removed part will be automatically reset to the empty subcase:
 
 ```
 var x: List = Item(1, Item(2, $List))   -- after: Item(1,$List)
