@@ -331,46 +331,43 @@ output std y\       -- recovers the value of `x`
 
 # 4. STATEMENTS
 
-## Type declaration
+## Type declarations
 
 A type declaration creates a new [user type](TODO).
 Each declaration inside the type defines a subcase of it:
 
 ```
 type Bool {
-    False: ()       -- subcase False holds unit value
-    True:  ()       -- subcase True  holds unit value
+    False: ()       -- subcase `False` holds unit value
+    True:  ()       -- subcase `True`  holds unit value
 }
 ```
 
-A recursive type uses a `rec` modifier and always contains the implicit base
-empty subcase with the prefix `$´:
+A recursive type requires a `rec` modifier:
 
 ```
 type rec Tree {
-    -- $Tree: ()            -- implicit empty subcase always present
-    Node: (Tree,(),Tree)    -- subcase Node holds left subtree, unit value, and right subtree
+    -- $Tree: ()        -- implicit empty subcase, always present
+    Node: (Tree,Tree)   -- subcase Node holds left/right subtrees
 }
 ```
 
-The prefix `$` yields the empty subcase of all recursive types, e.g., `$Tree`
-is the empty subcase of `Tree`.
-The empty subcase can be used in
-[constructors, discriminators, or predicates](TODO).
+A recursive type always includes an implicit empty subcase, which is its name
+with the dollar prefix `$´, e.g., `$Tree` is the empty subcase of `Tree`.
 
-## Variable declaration
+## Variable declarations
 
-A variable declaration intoduces a name of a given type and assigns a value to
-it:
+A variable declaration intoduces a name of the given type and assigns a value
+to it:
 
 ```
 var x : () = ()                  -- `x` of type `()` holds `()`
 var y : Bool = True              -- `y` of type `Bool` holds `True`
-var z : (Bool,()) = (False,())   -- `z` of given tuple type holds the given tuple
-var n : List = Cons(Cons($List)) -- `n` of recursive type `List` holds result of constructor
+var z : (Bool,()) = (False,())   -- `z` of tuple type holds tuple
+var n : List = Cons(Cons($List)) -- `n` of type `List` holds result of constructor
 ```
 
-## Assignment
+## Assignments
 
 An assignment changes the value of a variable, native identifier, tuple index,
 or discriminator:
@@ -382,7 +379,7 @@ set tup.1 = n
 set x.Student! = ()
 ```
 
-## Call, Input & Output
+## Calls, Input & Output
 
 The `call`, `input` & `output` statements invoke [functions](#TODO):
 
@@ -392,29 +389,29 @@ input std       -- input from stdin
 output std 10   -- output to stdout
 ```
 
-## Sequence
+## Sequences
 
 Statements execute one after the other and can be separated by semicolons:
 
 ```
-call f() ; call g()
+call f() ; call g()     -- executes f, g, and h in order
 call h()
 ```
 
-## Conditional
+## Conditionals
 
 A conditional tests a `Bool` value and executes one of its true or false
 branches depending on the test:
 
 ```
 if x {
-    call f()    -- if x is True
+    call f()    -- calls f if x is True
 } else {
-    call g()    -- if x is False
+    call g()    -- calls g if x is False
 }
 ```
 
-## Loop
+## Loops
 
 A `loop` executes a block of statements indefinitely until it reaches a `break`
 statement:
@@ -428,10 +425,10 @@ loop {
 }
 ```
 
-## Function, Argument and Return
+## Functions, Arguments and Returns
 
 A function declaration binds a block of statements to a name which can be
-[called](TODO) afterwards.
+[invoked](TODO) afterwards.
 The declaration also determines the [function type](TODO) with the argument and
 return types.
 The argument can be accessed through the identifier `arg`.
@@ -443,7 +440,7 @@ func f : () -> () {
 }
 ```
 
-## Block
+## Blocks
 
 A block delimits, between curly braces `{` and `}`, the scope and visibility of
 [variables](TODO):
@@ -456,7 +453,7 @@ A block delimits, between curly braces `{` and `}`, the scope and visibility of
 ... x ...               -- `x` is not visible here
 ```
 
-## Native
+## Native statements
 
 A native statement executes a [native token](TODO) in the host language:
 
@@ -478,7 +475,7 @@ native pre _{
 # 5. SYNTAX
 
 ```
-Stmt ::= `var´ VAR `:´ [`\´] Type       -- variable declaration     var x: () = ()
+Stmt ::= `var´ VAR `:´ Type             -- variable declaration     var x: () = ()
             `=´ (Expr | `?´)
       |  `type´ [`rec´] USER `{`        -- user type declaration    type rec List {
             { USER `:´ Type [`;´] }     --    subcases                 Cons: List
@@ -487,9 +484,9 @@ Stmt ::= `var´ VAR `:´ [`\´] Type       -- variable declaration     var x: ()
       |  (`call´ | `input´ |` output´)  -- call                     call f()
             (VAR|NATIVE) [Expr]         -- input & output           input std ; output std 10
       |  `if´ Expr `{´ Stmt `}´         -- conditional              if x { call f() } else { call g() }
+         [`else´ `{´ Stmt `}´]
       |  `loop´ `{´ Stmt `}´            -- loop                     loop { break }
       |  `break´                        -- break                    break
-         [`else´ `{´ Stmt `}´]
       |  `func´ VAR `:´ Type `{´        -- function                 func f : ()->() { return () }
             Stmt
          `}´
@@ -518,4 +515,5 @@ Type ::= `(´ `)´                        -- unit                     ()
       |  USER                           -- user type                Bool
       |  `(´ Type {`,´ Type} `)´        -- tuple                    ((),())
       |  Type `->´ Type                 -- function                 () -> ()
+      |  `\` Type                       -- function                 \Int
 ```
