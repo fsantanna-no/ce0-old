@@ -161,8 +161,8 @@ output types separated by an arrow `->`:
 
 ## Pointers
 
-A pointer type holds references and can be applied to any other type with the
-prefix backslash `\`:
+A pointer type can be applied to any other type with the prefix backslash `\`
+and holds a pointer to another value:
 
 ```
 \Int        -- pointer to Int
@@ -317,15 +317,15 @@ var b: Bool = x.Professor?    -- yields True
 
 ## Pointer uprefs & dnrefs
 
-A pointer holds a reference to a variable with a value.
-An *upref* (up reference) acquires a reference of a variable with the prefix
+A pointer points to a variable holding a value.
+An *upref* (up reference) acquires a pointer to a variable with the prefix
 backslash `\`.
-A *dnref* (down reference) recovers the value given a reference with the sufix
+A *dnref* (down reference) recovers the value given a pointer with the sufix
 backslash `\`:
 
 ```
 var x: Int = 10
-var y: \Int = \x    -- acquires a reference to `x`
+var y: \Int = \x    -- acquires a pointer to `x`
 output std y\       -- recovers the value of `x`
 ```
 

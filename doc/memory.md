@@ -30,39 +30,39 @@ Pools enable to the following properties for recursive types:
 
 # Memory management
 
-Values of recursive types, such as lists and trees, require dynamic memory
-allocation since their sizes are unbounded.
-They also grow and shrink during runtime since they typically represent complex
-data structures that evolve over time.
-Finally, they are manipulated by different parts of the program, even outside
-the scope in which they were originally instantiated.
-These three characteristics, (a) dynamic allocation, (b) variable size and (c)
-scope portability, need to be addressed somehow.
+Recursive data types, such as lists and trees, rely on dynamic memory
+allocation since they typically represent complex data structures that evolve
+over time.
+They are also manipulated by different parts of the program, even outside
+the scope in which they are fisrt instantiated.
+These two characteristics, dynamic allocation and scope portability, need to be
+managed by the language somehow.
 
-*Ce* approaches recursive types with algebraic data types with ownership
-semantics and scoped memory management.
-Allocation is bound to the scope of the assignee, which is the owner of the
-value.
-A value has exactly one owner at any given time, which implies that recursive
-values can only form trees of ownerships (but not graphs with cycles or even
-generic DAGs).
+*Ce* approaches recursive data types with support for algebraic data types with
+ownership semantics and scoped memory management.
+Allocation is bound to the scope of the assignee, i.e. a destination variable,
+which is the owner of the value.
+A value has exactly one owner at any given time.
 Deallocation occurs automatically when the scope of the owner terminates.
 Ownership can be transferred by reassigning the value to another assignee,
 which can live in another scope.
+Single ownership implies that recursive values can only form trees of
+ownerships, but not graphs with cycles or even generic DAGs.
 A value can also be shared with a pointer without transferring ownership, in
 which case generic graphs are possible.
 
 *Ce* ensures that deallocation occurs exactly once at the very moment when
 there are no more active pointers to the value.
-In particular the following cases must be prevented:
+In particular, *Ce* must prevent the following cases:
 
-- Memory leak: when a value cannot be referenced but is not deallocated and remains in memory.
-- Dangling reference: when a value is deallocated but can still be referenced (aka. *use-after-free*).
-- Double free: when a value is deallocated multiple times.
+- Memory leaks: when a value cannot be reached but is not deallocated and remains in memory.
+- Dangling references: when a value is deallocated but can still be reached (aka. *use-after-free*).
+- Double frees: when a value is deallocated multiple times.
 
 ## Basics
 
-In *Ce*, a new type declaration supports variants (subcases) with tuples:
+In *Ce*, a [new type](TODO) declaration supports variants (subcases) with
+tuples:
 
 ```
 type Character {
@@ -75,22 +75,26 @@ type Character {
 Such composite types are also known as algebraic data types because they are
 composed of sums (variants) and products (tuples).
 
-A new type declaration can also be made recursive if it uses itself in one of
-its subcases:
+A new type declaration with the `rec` keyword is recursive and can use itself
+in one of its subcases:
 
 ```
 type rec List {         -- a list is either empty ($List) or
     Item: (Int,List)    -- an item that holds a number and a sublist
 }
-
 var l: List = Item (1, Item (2,$List))   -- list `1 -> 2 -> empty`
 ```
 
-A variable of a recursive type holds a *strong reference* to its value, since
-constructors are always dynamically allocated in the heap:
+All recursive types have an implicit empty subcase, with its name prefixed with
+the dollar prefix `$`, e.g., `$List` is the empty subcase of `List`.
+
+A variable of a recursive type holds a *strong reference* to its value, but not
+the actual value, since constructors are always dynamically allocated in the
+heap:
 
 ```
 var x: List = Item(1, $List)
+    ^                ^
     |              __|__
    / \            /     \
   | x |--------> |   1   | <-- actual allocated memory with the linked list
@@ -115,7 +119,8 @@ In this case, both the owner and the pointer refer to the same allocated value:
 
 ```
 var x: List  = Item(1, $List)
-var y: \List = \x    |
+var y: \List = \x    ^
+    ^                |
     |              __|__
    / \   ref      /     \
   | x |--------> |   1   | <-- actual allocated memory with the linked list
@@ -130,24 +135,25 @@ var y: \List = \x    |
 ```
 
 We distinguish a strong reference from a pointer in the sense that the former
-owns the value and does not use [pointer operations](TODO) to manipulate it.
+owns the actual value and does not require [pointer operations](TODO) to
+manipulate it.
 
 ## Ownership and Borrowing
 
-The ownership and borrowing of dynamically allocated values must follow a set
-of rules:
+*Ce* imposes that the ownership and borrowing of recursive data types adhere to
+a set of rules as follows:
 
-1. Every allocated constructor has a single owner at any given time. Not zero, not two or more.
+1. Every allocated constructor has exactly a single owner at any given time. Not zero, not two or more.
     - The owner is a variable that lives in the stack and reaches the allocated value.
 2. When the owner goes out of scope, the allocated memory is automatically
    deallocated.
 3. Ownership can be transferred in three ways:
-    - Assigning the owner to another variable, which becomes the new owner (e.g. `new = old`).
+    - Assigning the current owner to another variable, which becomes the new owner (e.g. `set new = old`).
     - Passing the owner to a function call argument, which becomes the new owner (e.g. `f(old)`).
-    - Returning the owner from a function call to an assignee, which becomes the new owner (e.g. `new = f()`).
-4. When transferring ownership, the original owner is assigned its empty subcase.
-5. Ownership cannot be transferred to the current owner subtree.
-6. Ownership cannot be transferred with an active pointer in scope.
+    - Returning the owner from a function call to an assignee, which becomes the new owner (e.g. `set new = f()`).
+4. When transferring ownership, the original owner is automatically assigned its empty subcase.
+5. Ownership cannot be transferred to the current owner's subtree (e.g. `set x.1 = x`).
+6. Ownership cannot be transferred with an active pointer to it in scope.
 7. A pointer cannot escape or survive outside the scope of its owner.
 
 All rules are verified at compile time, i.e., there are no runtime checks or
@@ -155,15 +161,15 @@ extra overheads.
 
 ### Ownership transfer
 
-As stated in rule 4, an ownership transfer invalidates the original owner and
-rejects further accesses to it:
+As stated in rule 4, ownership transfer assigns an empty value to the original
+owner:
 
 ```
 {
     var x: List = Item(1, $List)    -- `x` is the original owner
     var y: List = x                 -- `y` is the new owner
-    ... x ...                       -- error: `x` cannot be referred again
-    ... y ...                       -- ok
+    ... x ...                       -- `x` now holds $List
+    ... y ...                       -- `y` holds `Item(1, $List)`
 }
 ```
 
@@ -185,9 +191,9 @@ allocation scope, which is typical of constructor functions:
 
 ```
 func build: () -> List {
-    var tmp: List = ...     -- `tmp` is the original owner
-    return tmp              -- `return` transfers ownership (we don't want to deallocate it now)
-}
+    var tmp: List = ...     -- `tmp` is the initial owner
+    return tmp              -- `return` transfers ownership to outside
+}                           --   (we don't want to deallocate it now)
 var l: List = build()       -- `l` is the new owner
 ```
 
@@ -226,12 +232,33 @@ a value to a narrower scope for temporary manipulation:
 
 ```
 var l: List = ...       -- `l` is the owner
-... length(\l) ...      -- `l` is borrowed on call and unborrowed on return
+... length(\l) ...      -- `l` is borrowed to the call
 ... l ...               -- `l` is still the owner
 
 func length: (\List -> Int) {
-    ... -- use pointer, which is destroyed on termination
+    ... -- use pointer to borrowed data
 }
+```
+
+Rule 6 states that if there is an active pointer to a value, then its ownership
+cannot be transferred:
+
+```
+var l: List = ...       -- owner
+var x: \List = \l       -- active pointer
+call g(l)               -- error: cannot transfer with active pointer
+... x ...               -- use-after-free
+```
+
+This rule prevents that a transfer eventually deallocates a value that is still
+reachable through an active pointer (i.e, *use-after-free*).
+This rule implies that a pointer *dnref* can never be transferred because the
+pointer must be pointing to some value, and hence is active:
+
+```
+var l: List = ...       -- owner
+var x: \List = \l       -- active pointer
+var y: List = x\        -- error: cannot transfer with active pointer
 ```
 
 Rule 7 states that a pointer cannot escape or survive outside the scope of its
@@ -255,27 +282,6 @@ var x: \List = ...          -- outer scope
 
 If surviving pointers were allowed, they would refer to deallocated values,
 resulting in a dangling reference (i.e, *use-after-free*).
-
-Rule 6 states that if there is an active pointer to a value, then its ownership
-cannot be transferred:
-
-```
-var l: List = ...       -- owner
-var x: \List = \l       -- active pointer
-call g(l)               -- error: cannot transfer with active pointer
-... x ...               -- use-after-free
-```
-
-This rule prevents that a transfer eventually deallocates a value that is still
-reachable through an active pointer (i.e, *use-after-free*).
-This rule implies that a pointer *dnref* can never be transferred because the
-pointer must be pointing to some value, and hence is active:
-
-```
-var l: List = ...       -- owner
-var x: \List = \l       -- active pointer
-var y: List = x\        -- error: cannot transfer with active pointer
-```
 
 <!--
 All dependencies of an assignment are tracked and all constructors are
