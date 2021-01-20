@@ -4,9 +4,9 @@ A simple language with algebraic data types, ownership semantics, and scoped
 memory management.
 
 - Install & Use
-- [Manual](manual.md)
-- [Memory management](memory.md)
-- [Comparison with Rust](rust.md)
+- [Manual](doc/manual.md)
+- [Memory management](doc/memory.md)
+- [Comparison with Rust](doc/rust.md)
 
 # Install
 

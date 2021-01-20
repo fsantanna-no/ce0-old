@@ -3,7 +3,7 @@
 A simple language with algebraic data types, ownership semantics, and scoped
 memory management.
 
-- [Install & Use](README.md)
+- [Install & Use](../README.md)
 - [Manual](manual.md)
 - Memory management
 - [Comparison with Rust](rust.md)

@@ -1,3 +1,5 @@
+- comparison with rust
+
 - as
     - call output Draw Text ((0,5), _("Hello!") as _(char*))
 - defer

@@ -3,7 +3,7 @@
 A simple language with algebraic data types, ownership semantics, and scoped
 memory management.
 
-- [Install & Use](README.md)
+- [Install & Use](../README.md)
 - Manual
     1. [Lexical rules](TODO)
     2. [Types](TODO)
