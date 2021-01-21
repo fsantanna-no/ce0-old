@@ -9,6 +9,52 @@ native _{
     }
 }
 
+native _{
+    typedef enum {
+        TK_ERR = 0,
+
+        TK_SINGLE = 256,   // all single-char tokens
+
+        TK_EOF,
+        TK_ARROW,
+        TK_UNIT,
+
+        TX_NATIVE,
+        TX_VAR,
+        TX_NULL,
+        TX_USER,
+        TX_NUM,
+
+        TK_RESERVED,    // all reserved keywords
+        //TK_ARG,
+        TK_BREAK,
+        TK_CALL,
+        //TK_CLONE,
+        TK_ELSE,
+        TK_FUNC,
+        TK_IF,
+        TK_INPUT,
+        TK_LOOP,
+        TK_NATIVE,
+        TK_OUTPUT,
+        TK_PRE,
+        TK_REC,
+        TK_RETURN,
+        TK_SET,
+        TK_TYPE,
+        TK_VAR
+    } TK;
+}
+
+native _{
+    typedef char Str_Buf[256];
+}
+
+type TK_Val {
+    Num: Int
+    Str: _Str_Buf
+}
+
 type Bool {
     False: ()
     True:  ()
@@ -19,8 +65,10 @@ func asbool: Int -> Bool {
 }
 
 var inp: _(FILE*) = ?
-var lin: Int = 1
-var col: Int = 1
+var lin: Int = ?
+var col: Int = ?
+var tk0: (Int,TK_Val,Int,Int) = ?   -- enu, val, lin, col
+var tk1: (Int,TK_Val,Int,Int) = ?   -- enu, val, lin, col
 
 func lx_blanks: () -> () {
     loop {
@@ -62,7 +110,52 @@ func lx_blanks: () -> () {
     }
 }
 
+func lx_token: () -> () {
+    var c: Int = _fgetc _inp
+
+    if asbool _{c=='{' || c=='}' || c==')'  || c==';' || c==':' || c=='=' ||
+                c==',' || c=='.' || c=='\\' || c=='!' || c=='?'}
+    {
+        set tk1.1 = c
+        return ()
+    }
+
+    if asbool _(c == EOF) {
+        set tk1.1 = _TK_EOF
+        return ()
+    }
+
+    if asbool _{c == '('} {
+        set c = _fgetc _inp
+        if asbool _{c == ')'} {
+            set tk1.2 = Str ?
+            native _{strcpy(tk1._2._Str, "()");}
+            set tk1.1 = _TK_UNIT
+        }
+        native _(ungetc(c, inp);)
+        set tk1.1 = _{'('}
+        return ()
+    }
+
+    if asbool _(c == '-') {
+        set c = _fgetc _inp
+        if asbool _(c == '>') {
+            set tk1.1 = _TK_ARROW
+            return ()
+        }
+    }
+
+    call _assert 0
+}
+
+func lexer: () -> () {
+    call lx_blanks ()
+    call lx_token  ()
+    call lx_blanks ()
+}
+
 func t_lexer: () -> () {
+    -- COMMENTS
     {
         set inp = _{stropen("r", 0, "--foobar")}
         {
@@ -84,6 +177,37 @@ func t_lexer: () -> () {
         call lx_blanks ()
         native _(assert(lin == 1);)
         native _(assert(col == 10);)
+        call _fclose inp
+    }
+    {
+        set inp = _{stropen("r", 0, "-- c1\n--c2\n\n")}
+        set lin = 1;
+        set col = 1;
+        call lx_blanks ()
+        native _(assert(lin == 4);)
+        native _(assert(col == 0);)
+        call _fclose inp
+    }
+
+    -- SYMBOLS
+    {
+        set inp = _{stropen("r", 0, "( -> ,")}
+        set lin = 1;
+        set col = 1;
+        call lexer () ; native _{assert(tk1._1 == '(');}
+        call lexer () ; native _{assert(tk1._1 == TK_ARROW);}
+        call lexer () ; native _{assert(tk1._1 == ',');}
+        call _fclose inp
+    }
+    {
+        set inp = _(stropen("r", 0, ": }{ :"))
+        set lin = 1;
+        set col = 1;
+        call lexer () ; native _(assert(tk1._1 == ':');)
+        call lexer () ; native _(assert(tk1._1 == '}');)
+        call lexer () ; native _(assert(tk1._1 == '{');)
+        call lexer () ; native _(assert(tk1._1 == ':');)
+        call _fclose inp
     }
 }
 
