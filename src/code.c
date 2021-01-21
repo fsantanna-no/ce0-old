@@ -549,8 +549,11 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
                     out("stdout_");
                     code_to_ce(env_expr_to_type(env, e->Call.arg));
                 } else if (!strcmp(e->Call.func->Var.tk.val.s,"clone")) {
-                    out("clone_");
-                    code_to_ce(env_expr_to_type(env, e->Call.arg));
+                    Type* tp = env_expr_to_type(env, e->Call.arg);
+                    if (env_type_ishasrec(env,tp,1)) {
+                        out("clone_");
+                        code_to_ce(tp);
+                    }
                 } else {
                     code_expr(env, e->Call.func, 1);
                 }
@@ -659,12 +662,14 @@ void code_user (Stmt* s) {
             );
         }
 
-        fprintf(ALL.out,
-            "auto %s%s clone_%s (%s%s v);\n",
-            sup, (isrec ? "*" : ""),
-            sup,
-            sup, (isrec ? "**" : (ishasrec ? "*" : ""))
-        );
+        if (ishasrec) {
+            fprintf(ALL.out,
+                "auto %s%s clone_%s (%s%s v);\n",
+                sup, (isrec ? "*" : ""),
+                sup,
+                sup, (isrec ? "**" : (ishasrec ? "*" : ""))
+            );
+        }
 
         fprintf(ALL.out,
             "auto void stdout_%s_ (%s%s v);\n", // auto: https://stackoverflow.com/a/7319417
@@ -731,7 +736,7 @@ void code_user (Stmt* s) {
     }
 
     // CLONE
-    {
+    if (ishasrec) {
         char* v = (isrec ? "(*v)" : "v");
         fprintf(ALL.out,
             "%s%s clone_%s (%s%s v) {\n",
@@ -758,28 +763,29 @@ void code_user (Stmt* s) {
                 int sub_ishasrec = env_type_ishasrec(s->env, sub->type, 0);
                 fprintf(ALL.out, "case %s:\n", sub_id);
                 if (ishasrec) {
+                    char clone[256];
+                    if (sub_ishasrec) {
+                        sprintf(clone, "clone_%s(&%s->_%s)", sub_tp, v, sub_id);
+                    } else {
+                        sprintf(clone, "{%s}", sub_id);
+                        //strcpy(clone, sub_id);
+                    }
+
                     if (isrec) {
                         fprintf (ALL.out,
                             "{\n"
                             "   %s* ret = malloc(sizeof(%s));\n"
                             "   assert(ret!=NULL && \"not enough memory\");\n"
-                            "   *ret = (%s) { %s, {._%s=clone_%s(%s%s->_%s)} };\n"
+                            "   *ret = (%s) { %s, {._%s=%s} };\n"
                             "   return ret;\n"
                             "}\n",
                             sup, sup,
-                            sup, sub_id, sub_id,
-                            sub_tp,
-                            (sub_ishasrec ? "&" : ""),
-                            v,
-                            sub_id
+                            sup, sub_id, sub_id, clone
                         );
                     } else {
                         fprintf (ALL.out,
-                            "return (%s) { %s, {._%s=clone_%s(&%s->_%s)} };\n",
-                            sup, sub_id, sub_id,
-                            sub_tp,
-                            v,
-                            sub_id
+                            "return (%s) { %s, {._%s=%s} };\n",
+                            sup, sub_id, sub_id, clone
                         );
                     }
                 } else {

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-//#define DEBUG
+#define DEBUG
 //#define VALGRIND
 
 #include "../all.h"
@@ -969,7 +969,6 @@ void t_code (void) {
             "\n"
             "struct Bool;\n"
             "typedef struct Bool Bool;\n"
-            "auto Bool clone_Bool (Bool v);\n"
             "auto void stdout_Bool_ (Bool v);\n"
             "\n"
             "typedef enum {\n"
@@ -983,10 +982,6 @@ void t_code (void) {
             "    };\n"
             "};\n"
             "\n"
-            "Bool clone_Bool (Bool v) {\n"
-            "return v;\n"
-            "assert(0);\n"
-            "}\n"
             "\n"
             "void stdout_Bool_ (Bool v) {\n"
             "    switch (v.sub) {\n"
