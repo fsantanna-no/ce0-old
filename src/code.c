@@ -1004,13 +1004,16 @@ void code_stmt (Stmt* s) {
         }
 
         case STMT_BLOCK:
+            out("{\n");
             code_stmt(s->Block);
+            out("}\n");
             break;
 
         case STMT_NATIVE:
             if (!s->Native.ispre) {
                 out(s->Native.tk.val.s);
             }
+            out("\n");
             break;
     }
 }
