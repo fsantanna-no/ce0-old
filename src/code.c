@@ -418,7 +418,7 @@ int code_expr_pre (Env* env, Expr* e) {
 
             Type* tp = env_sub_id_to_user_type(env, sub);
             assert(tp != NULL);
-            if (tp->sub != TYPE_UNIT) {
+            if (tp->sub!=TYPE_UNIT && e->Cons.arg->sub!=EXPR_UNK) {
                 fprintf(ALL.out, ", ._%s=", sub);
                 code_expr(env, e->Cons.arg, 0);
             }
@@ -500,6 +500,9 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
     }
 
     switch (e->sub) {
+        case EXPR_UNK:
+            assert(0);
+
         case EXPR_UNIT:
             break;
 
@@ -616,9 +619,6 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
             out(" ? (Bool){True} : (Bool){False})\n");
             break;
         }
-
-        default:
-            assert(0);
     }
 
     if (deref) {
