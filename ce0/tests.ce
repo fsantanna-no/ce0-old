@@ -325,13 +325,49 @@ func t_lexer: () -> () {
             assert(tk1._1 == TX_VAR);
             assert(!strcmp(tk1._2._Str,"c3"));
             assert(tk1._3 == 2);
-            //assert(tk1._4 == 4);
+            assert(tk1._4 == 4);
         }
         call lexer () ; native _{
             assert(tk1._1 == TX_VAR);
             assert(!strcmp(tk1._2._Str,"c4"));
             assert(tk1._3 == 4);
-            //assert(tk1._4 == 4);
+            assert(tk1._4 == 1);
+        }
+        call _fclose inp
+    }
+    {
+        set inp = _(stropen("r", 0, "c1 C1 Ca a C"))
+        set lin = 1;
+        set col = 1;
+        call lexer () ; native _{
+            assert(tk1._1 == TX_VAR);
+            assert(!strcmp(tk1._2._Str,"c1"));
+            assert(tk1._3 == 1);
+            assert(tk1._4 == 1);
+        }
+        call lexer () ; native _{
+            assert(tk1._1 == TX_USER);
+            assert(!strcmp(tk1._2._Str,"C1"));
+            assert(tk1._3 == 1);
+            assert(tk1._4 == 4);
+        }
+        call lexer () ; native _{
+            assert(tk1._1 == TX_USER);
+            assert(!strcmp(tk1._2._Str,"Ca"));
+            assert(tk1._3 == 1);
+            assert(tk1._4 == 7);
+        }
+        call lexer () ; native _{
+            assert(tk1._1 == TX_VAR);
+            assert(!strcmp(tk1._2._Str,"a"));
+            assert(tk1._3 == 1);
+            assert(tk1._4 == 10);
+        }
+        call lexer () ; native _{
+            assert(tk1._1 == TX_USER);
+            assert(!strcmp(tk1._2._Str,"C"));
+            assert(tk1._3 == 1);
+            assert(tk1._4 == 12);
         }
         call _fclose inp
     }
