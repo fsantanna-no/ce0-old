@@ -673,6 +673,10 @@ void code_user (Stmt* s) {
     }
     out("\n");
 
+    if (s->User.size == 0) {
+        return;
+    }
+
     // first generate tuples
     for (int i=0; i<s->User.size; i++) {
         visit_type(s->env, s->User.vec[i].type, ftp_tuples);

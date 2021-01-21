@@ -411,14 +411,23 @@ int parser_stmt (Stmt** ret) {
     // STMT_USER
     } else if (accept(TK_TYPE)) {       // type
         Tk tk = ALL.tk0;
+
+        int ispre = 0;
         int isrec = 0;
-        if (accept(TK_REC)) {           // rec
+        if (accept(TK_PRE)) {           // pre
+            ispre = 1;
+        } else if (accept(TK_REC)) {    // rec
             isrec = 1;
         }
         if (!accept_err(TX_USER)) {
             return 0;
         }
         Tk id = ALL.tk0;                // Bool
+
+        if (ispre) {
+            *s = (Stmt) { ALL.nn++, STMT_USER, NULL, {NULL,NULL}, tk, .User={1,id,0,NULL} };
+            return 1;
+        }
 
         if (!accept_err('{')) {
             return 0;

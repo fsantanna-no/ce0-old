@@ -1566,6 +1566,19 @@ void t_all (void) {
         "output std n_\n"
     ));
     assert(all(
+        "Aa1 (Bb1 (Aa1 ($)))\n",
+        "type pre Bb\n"
+        "type rec Aa {\n"
+        "   Aa1: Bb\n"
+        "}\n"
+        "type rec Bb {\n"
+        "   Bb1: Aa\n"
+        "}\n"
+        "var n: Aa = Aa1 Bb1 Aa1 $Bb\n"
+        "var n_: \\Aa = \\n\n"
+        "output std n_\n"
+    ));
+    assert(all(
         "XNat1 (Succ ($))\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
