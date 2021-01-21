@@ -139,7 +139,7 @@ func lx_blanks: () -> () {
         } else {
             if asbool _(c == '\n') {                -- ignore new lines
                 set lin = _(lin + 1)
-                set col = 0
+                set col = 1
             } else {
                 if asbool _(c == ' ') {             -- ignore new spaces
                     set col = _(col + 1)
@@ -227,7 +227,11 @@ native _{ printf(">>> %d\n", key); }
 
 func lexer: () -> () {
     call lx_blanks ()
+    set tk1.3 = lin
+    set tk1.4 = col
+    var bef: Int = call _ftell inp
     call lx_token  ()
+    set col = _(col + (ftell(inp) - bef))
     call lx_blanks ()
 }
 
@@ -262,7 +266,7 @@ func t_lexer: () -> () {
         set col = 1;
         call lx_blanks ()
         native _(assert(lin == 4);)
-        native _(assert(col == 0);)
+        native _(assert(col == 1);)
         call _fclose inp
     }
 
@@ -297,6 +301,38 @@ func t_lexer: () -> () {
         call lexer () ; native _(assert(tk1._1 == TK_ELSE);)
         call lexer () ; native _(assert(tk1._1 == TX_VAR);)
         call lexer () ; native _(assert(tk1._1 == TK_TYPE);)
+        call _fclose inp
+    }
+
+    -- IDENTIFIERS
+    {
+        set inp = _(stropen("r", 0, "c1\nc2 c3  \n    \nc4"))
+        set lin = 1;
+        set col = 1;
+        call lexer () ; native _{
+            assert(tk1._1 == TX_VAR);
+            assert(!strcmp(tk1._2._Str,"c1"));
+            assert(tk1._3 == 1);
+            assert(tk1._4 == 1);
+        }
+        call lexer () ; native _{
+            assert(tk1._1 == TX_VAR);
+            assert(!strcmp(tk1._2._Str,"c2"));
+            assert(tk1._3 == 2);
+            assert(tk1._4 == 1);
+        }
+        call lexer () ; native _{
+            assert(tk1._1 == TX_VAR);
+            assert(!strcmp(tk1._2._Str,"c3"));
+            assert(tk1._3 == 2);
+            //assert(tk1._4 == 4);
+        }
+        call lexer () ; native _{
+            assert(tk1._1 == TX_VAR);
+            assert(!strcmp(tk1._2._Str,"c4"));
+            assert(tk1._3 == 4);
+            //assert(tk1._4 == 4);
+        }
         call _fclose inp
     }
 }
