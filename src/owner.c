@@ -263,7 +263,7 @@ __ACCS__:
                                 if (bws_n >= 2) {
                                     if (e->Var.tx_done) {
                                         assert(txed_tk != NULL);
-                                        char err[1024];
+                                        char err[TK_BUF+256];
                                         sprintf(err, "invalid transfer of \"%s\" : active pointer in scope (ln %ld)",
                                                 e->Var.tk.val.s, txed_tk->lin);
                                         err_message(&e->Var.tk, err);

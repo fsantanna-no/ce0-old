@@ -69,7 +69,7 @@ const char* lexer_tk2err (TK enu) {
 }
 
 const char* lexer_tk2str (Tk* tk) {
-    static char str[512];
+    static char str[TK_BUF+256];
     switch (tk->enu) {
         case TK_EOF:
             sprintf(str, "end of file");
@@ -142,7 +142,7 @@ static TK lx_token (TK_val* val) {
                 val->s[i++] = '-';
                 while (isdigit(c)) {
                     val->s[i++] = c;
-                    assert(i < 256);
+                    assert(i < TK_BUF);
                     c = fgetc(ALL.inp);
                 }
                 val->s[i] = '\0';
@@ -182,7 +182,7 @@ static TK lx_token (TK_val* val) {
                     ALL.lin++;
                 }
                 c = fgetc(ALL.inp);
-                assert(i < 256);
+                assert(i < TK_BUF);
             }
             val->s[i] = '\0';
             if (!close) {
@@ -203,7 +203,7 @@ static TK lx_token (TK_val* val) {
                 while (isalnum(c)) {
                     if (isdigit(c)) {
                         val->s[i++] = c;
-                        assert(i < 256);
+                        assert(i < TK_BUF);
                     } else {
                         val->s[i] = '\0';
                         return TK_ERR;
@@ -228,7 +228,7 @@ static TK lx_token (TK_val* val) {
             int i = 0;
             while (isalnum(c) || c=='_') {
                 val->s[i++] = c;
-                assert(i < 256);
+                assert(i < TK_BUF);
                 c = fgetc(ALL.inp);
             }
             val->s[i] = '\0';

@@ -33,9 +33,11 @@ typedef enum {
     TK_VAR
 } TK;
 
+#define TK_BUF 1024
+
 typedef union {
     int  n;
-    char s[256];
+    char s[TK_BUF];
 } TK_val;
 
 struct Env;

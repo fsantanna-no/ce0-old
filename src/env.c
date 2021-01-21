@@ -599,7 +599,7 @@ int ftk (Env* env, Tk* tk, char* var_type) {
         case TX_VAR: {
             Stmt* decl = env_id_to_stmt(env, tk->val.s);
             if (decl == NULL) {
-                char err[512];
+                char err[TK_BUF+256];
                 sprintf(err, "undeclared %s \"%s\"", var_type, tk->val.s);
                 return err_message(tk, err);
             }
@@ -640,7 +640,7 @@ int check_decls_expr (Env* env, Expr* e) {
         case EXPR_CONS: {
             Stmt* user = env_sub_id_to_user_stmt(env, e->Cons.subtype.val.s);
             if (user == NULL) {
-                char err[512];
+                char err[TK_BUF+256];
                 sprintf(err, "undeclared subtype \"%s\"", e->Cons.subtype.val.s);
                 return err_message(&e->Cons.subtype, err);
             }
@@ -657,7 +657,7 @@ int check_decls_expr (Env* env, Expr* e) {
             } else {
                 Stmt* user = env_sub_id_to_user_stmt(env, subtype->val.s);
                 if (user == NULL) {
-                    char err[512];
+                    char err[TK_BUF+256];
                     sprintf(err, "undeclared subtype \"%s\"", subtype->val.s);
                     return err_message(subtype, err);
                 }
@@ -773,7 +773,7 @@ int check_types_expr (Env* env, Expr* e) {
                 } else if (!strcmp(e->Call.func->Var.tk.val.s,"std")) {
                     TODO("TODO [check_types]: std(...)\n");
                 } else if (!type_is_sup_sub(func->Func.inp, arg, 0)) {
-                    char err[512];
+                    char err[TK_BUF+256];
                     sprintf(err, "invalid call to \"%s\" : type mismatch", e->Call.func->Var.tk.val.s);
                     return err_message(&e->Call.func->Var.tk, err);
                 }
@@ -785,7 +785,7 @@ int check_types_expr (Env* env, Expr* e) {
             Sub* sub = env_find_sub(env, e->Cons.subtype.val.s);
             assert(sub != NULL);
             if (!type_is_sup_sub(sub->type, env_expr_to_type(env,e->Cons.arg), 0)) {
-                char err[512];
+                char err[TK_BUF+256];
                 sprintf(err, "invalid constructor \"%s\" : type mismatch", e->Cons.subtype.val.s);
                 return err_message(&e->Cons.subtype, err);
             }
@@ -809,7 +809,7 @@ int check_types_stmt (Stmt* s) {
 
         case STMT_VAR:
             if (!type_is_sup_sub(s->Var.type, env_expr_to_type(s->env,s->Var.init), 0)) {
-                char err[512];
+                char err[TK_BUF+256];
                 sprintf(err, "invalid assignment to \"%s\" : type mismatch", s->Var.tk.val.s);
                 return err_message(&s->Var.tk, err);
             }
@@ -817,7 +817,7 @@ int check_types_stmt (Stmt* s) {
 
         case STMT_SET:
             if (!type_is_sup_sub(env_expr_to_type(s->env,s->Set.dst), env_expr_to_type(s->env,s->Set.src), 1)) {
-                char err[512];
+                char err[TK_BUF+256];
                 assert(s->Set.dst->sub == EXPR_VAR);
                 sprintf(err, "invalid assignment to \"%s\" : type mismatch", s->Set.dst->Var.tk.val.s);
                 return err_message(&s->Set.dst->Var.tk, err);
@@ -892,7 +892,7 @@ int check_set_set_ptr_deepest (Stmt* s) {
             Stmt* src_decl = dst_decl->Var.ptr_deepest;
 
             if (dst_decl->env->depth < dst_decl->Var.ptr_deepest->env->depth) {
-                char err[1024];
+                char err[TK_BUF+256];
                 sprintf(err, "invalid assignment : cannot hold local pointer \"%s\" (ln %ld)",
                         src_decl->Var.tk.val.s, src_decl->Var.tk.lin);
                 err_message(&s->tk, err);
@@ -924,7 +924,7 @@ int check_ret_ptr_deepest (Stmt* s) {
 
 //printf("ret=%d vs src=%d\n", s->env->depth, src_decl->Var.ptr_deepest->env->depth);
     if (s->env->depth <= src_decl->Var.ptr_deepest->env->depth) {
-        char err[1024];
+        char err[TK_BUF+256];
         sprintf(err, "invalid return : cannot return local pointer \"%s\" (ln %ld)",
                 src->Var.tk.val.s, src_decl->tk.lin);
         err_message(&src->Var.tk, err);

@@ -808,7 +808,7 @@ void code_user (Stmt* s) {
         for (int i=0; i<s->User.size; i++) {
             Sub* sub = &s->User.vec[i];
 
-            char arg[1024] = "";
+            char arg[TK_BUF*2+256] = "";
             int yes = 0;
             int par = 0;
 
