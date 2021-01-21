@@ -1296,12 +1296,6 @@ void t_all (void) {
         "var tup: (Int,Int) = (x0,2)\n"
         "output std tup\n"
     ));
-#if 0
-    assert(all(
-        "((1,2),(3,4))\n",
-        "output std ((1,2),(3,4))\n"
-    ));
-#endif
 
     assert(all(
         "(1,2)\n",
@@ -1702,21 +1696,6 @@ void t_all (void) {
         "var b: \\Nat = \\c.Succ!\n"      // borrow de c
         "var e: Nat = c\n"              // erro
     ));
-#if 0
-    assert(all(
-        "(ln 7, col 14): invalid transfer of \"c\" : active pointer in scope (ln 6)",
-        "type rec Nat {\n"
-        "   Succ: Nat\n"
-        "}\n"
-        "var d: Nat = Succ $Nat\n"
-        "var c: Nat = Succ d\n"
-        "var b: \\Nat = ?\n"
-        "{\n"
-        "   set b = \\c.Succ!\n"      // borrow de c
-        "}\n"
-        "var e: Nat = c\n"              // erro
-    ));
-#endif
     assert(all(
         "Succ ($)\n",
         "type rec Nat {\n"
@@ -1996,6 +1975,17 @@ void t_all (void) {
         "}\n"
         "var x: List = Item (1, Item (2, $List))\n"
         "output std (\\x)\n"
+    ));
+    assert(all(
+        "10\n",
+        "type Bool {\n"
+        "    False: ()\n"
+        "    True:  ()\n"
+        "}\n"
+        "type rec Type {\n"
+        "    Type_Any: Bool\n"
+        "}\n"
+        "output std 10\n"
     ));
 
     // OWNERSHIP / BORROWING
@@ -2432,6 +2422,26 @@ void t_all (void) {
         "}\n"
         "output std n    -- shows 10\n"
     ));
+
+#if TODO-what
+    assert(all(
+        "((1,2),(3,4))\n",
+        "output std ((1,2),(3,4))\n"
+    ));
+    assert(all(
+        "(ln 7, col 14): invalid transfer of \"c\" : active pointer in scope (ln 6)",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "var d: Nat = Succ $Nat\n"
+        "var c: Nat = Succ d\n"
+        "var b: \\Nat = ?\n"
+        "{\n"
+        "   set b = \\c.Succ!\n"      // borrow de c
+        "}\n"
+        "var e: Nat = c\n"              // erro
+    ));
+#endif
 
 #if TODO-as
     assert(all(

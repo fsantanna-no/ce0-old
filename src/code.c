@@ -753,34 +753,37 @@ void code_user (Stmt* s) {
             fprintf(ALL.out, "switch (%s->sub) {\n", v);
             for (int i=0; i<s->User.size; i++) {
                 Sub* sub = &s->User.vec[i];
-                char* id = sub->tk.val.s;
-                fprintf(ALL.out, "case %s:\n", id);
+                char* sub_id = sub->tk.val.s;
+                char* sub_tp = to_ce(sub->type);
+                int sub_ishasrec = env_type_ishasrec(s->env, sub->type, 0);
+                fprintf(ALL.out, "case %s:\n", sub_id);
                 if (ishasrec) {
                     if (isrec) {
                         fprintf (ALL.out,
                             "{\n"
                             "   %s* ret = malloc(sizeof(%s));\n"
                             "   assert(ret!=NULL && \"not enough memory\");\n"
-                            "   *ret = (%s) { %s, {._%s=clone_%s(&%s->_%s)} };\n"
+                            "   *ret = (%s) { %s, {._%s=clone_%s(%s%s->_%s)} };\n"
                             "   return ret;\n"
                             "}\n",
                             sup, sup,
-                            sup, id, id,
-                            to_ce(sub->type),
+                            sup, sub_id, sub_id,
+                            sub_tp,
+                            (sub_ishasrec ? "&" : ""),
                             v,
-                            id
+                            sub_id
                         );
                     } else {
                         fprintf (ALL.out,
                             "return (%s) { %s, {._%s=clone_%s(&%s->_%s)} };\n",
-                            sup, id, id,
-                            to_ce(sub->type),
+                            sup, sub_id, sub_id,
+                            sub_tp,
                             v,
-                            id
+                            sub_id
                         );
                     }
                 } else {
-                    fprintf(ALL.out, "return %s;\n", id);
+                    fprintf(ALL.out, "return %s;\n", sub_id);
                 }
             }
             out("}\n");
