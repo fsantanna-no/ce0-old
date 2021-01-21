@@ -19,22 +19,27 @@ func asbool: Int -> Bool {
 }
 
 var inp: _(FILE*) = ?
+var lin: Int = 1
+var col: Int = 1
 
 func lx_blanks: () -> () {
     loop {
         var c: Int = _fgetc _inp
         if asbool _(c == '-') {
             set c = _fgetc _inp
-            if asbool _(c == '-') {
+            if asbool _(c == '-') {                 -- ignore comments
+                set col = _(col + 1)
+                set col = _(col + 1)
                 loop {
                     set c = _fgetc _inp
-                    if asbool _(c == EOF) {
+                    if asbool _(c == EOF) {         -- EOF stops comment
                         break
                     }
-                    if asbool _(c == '\n') {
+                    if asbool _(c == '\n') {        -- LN stops comment
                         native _(ungetc(c, inp);)
                         break
                     }
+                    set col = _(col + 1)
                 }
             } else {
                 native _(ungetc(c, inp);)
@@ -42,28 +47,44 @@ func lx_blanks: () -> () {
                 return ()
             }
         } else {
-            if asbool _(c=='\n' || c==' ') {
+            if asbool _(c == '\n') {                -- ignore new lines
+                set lin = _(lin + 1)
+                set col = 0
             } else {
-                native _(ungetc(c, inp);)
-                return ()
+                if asbool _(c == ' ') {             -- ignore new spaces
+                    set col = _(col + 1)
+                } else {
+                    native _(ungetc(c, inp);)
+                    return ()
+                }
             }
         }
     }
 }
 
 func t_lexer: () -> () {
-    set inp = _{stropen("r", 0, "--foobar")}
     {
-        var c: Int = call _fgetc inp
-        native _(assert(c == '-');)
-        native _(ungetc(c,inp);)
+        set inp = _{stropen("r", 0, "--foobar")}
+        {
+            var c: Int = call _fgetc inp
+            native _(assert(c == '-');)
+            native _(ungetc(c,inp);)
+        }
+        {
+            call lx_blanks ()
+            var c: Int = call _fgetc inp
+            native _(assert(c == EOF);)
+        }
+        call _fclose inp
     }
     {
+        set inp = _{stropen("r", 0, "-- foobar")}
+        set lin = 1;
+        set col = 1;
         call lx_blanks ()
-        var c: Int = call _fgetc inp
-        native _(assert(c == EOF);)
+        native _(assert(lin == 1);)
+        native _(assert(col == 10);)
     }
-    call _fclose inp
 }
 
 call t_lexer ()
