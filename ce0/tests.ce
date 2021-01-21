@@ -155,6 +155,7 @@ func lx_blanks: () -> () {
 func lx_token: () -> () {
     var c: Int = _fgetc _inp
 
+    -- SYMBOLS
     if asbool _{c=='{' || c=='}' || c==')'  || c==';' || c==':' || c=='=' ||
                 c==',' || c=='.' || c=='\\' || c=='!' || c=='?'}
     {
@@ -162,11 +163,13 @@ func lx_token: () -> () {
         return ()
     }
 
+    -- EOF
     if asbool _(c == EOF) {
         set tk1.1 = _TK_EOF
         return ()
     }
 
+    -- '(', TK_UNIT
     if asbool _{c == '('} {
         set c = _fgetc _inp
         if asbool _{c == ')'} {
@@ -179,6 +182,7 @@ func lx_token: () -> () {
         return ()
     }
 
+    -- TK_ARROW
     if asbool _(c == '-') {
         set c = _fgetc _inp
         if asbool _(c == '>') {
@@ -188,6 +192,7 @@ func lx_token: () -> () {
         call _assert 0
     }
 
+    -- TX_NATIVE
     if asbool _(c == '_') {
         set c = _fgetc _inp
         var open: Int = 0
@@ -237,8 +242,36 @@ func lx_token: () -> () {
         return ()
     }
 
+    set tk1.2 = Str ?
+
+    -- TX_NUM
+    if asbool _(isdigit(c)) {
+--native _{ puts("digit"); }
+        var i: Int = 0
+        loop {
+            if asbool _(!isalnum(c)) {
+                break
+            }
+            if asbool _(isdigit(c)) {
+                native _{ tk1._2._Str[i] = c; }
+                set i = _(i + 1)
+                call _assert _(i < TK_BUF)
+            } else {
+                native _{ tk1._2._Str[i] = '\0'; }
+                set tk1.1 = _TK_ERR
+                return ()
+            }
+            set c = _fgetc _inp
+        }
+        native _{ tk1._2._Str[i] = '\0'; }
+        set tk1.2 = Num _atoi tk1.2.Str!
+        native _(ungetc(c, inp);)
+        set tk1.1 = _TX_NUM
+        return ()
+    }
+
+    -- TX_VAR, TX_USER
     if asbool _(isalpha(c)) {
-        set tk1.2 = Str ?
         var i: Int = 0
         loop {
             if asbool _(!isalnum(c) && c!='_') {
@@ -250,7 +283,6 @@ func lx_token: () -> () {
             set c = _fgetc _inp
         }
         native _{ tk1._2._Str[i] = '\0'; }
---native _{ puts(tk1._2._Str); }
         native _(ungetc(c, inp);)
 
         var key: Int = call is_reserved(\tk1.2)
@@ -260,10 +292,13 @@ func lx_token: () -> () {
             return ()
         }
 
+        -- TX_VAR
         if asbool _(islower(tk1._2._Str[0])) {
             set tk1.1 = _TX_VAR
             return ()
         }
+
+        -- TX_USER
         if asbool _(isupper(tk1._2._Str[0])) {
             set tk1.1 = _TX_USER
             return ()
@@ -353,7 +388,7 @@ func t_lexer: () -> () {
         call _fclose inp
     }
 
-    -- IDENTIFIERS
+    -- TX_VAR / TX_USER
     {
         set inp = _(stropen("r", 0, "c1\nc2 c3  \n    \nc4"))
         set lin = 1;
@@ -420,6 +455,8 @@ func t_lexer: () -> () {
         }
         call _fclose inp
     }
+
+    -- TX_NATIVE
     {
         set inp = _(stropen("r", 0, "_char _Tp"))
         set lin = 1;
@@ -442,6 +479,33 @@ func t_lexer: () -> () {
             assert(tk1._1 == TX_NATIVE);
             assert(!strcmp(tk1._2._Str,"2+2"));
         }
+        call _fclose inp
+    }
+
+    -- TX_NUM
+    {
+        set inp = _(stropen("r", 0, ".1a"))
+        set lin = 1;
+        set col = 1;
+        call lexer () ; native _{
+            assert(tk1._1 == '.');
+        }
+        call lexer () ; native _{
+            assert(tk1._1 == TK_ERR);
+        }
+        call _fclose inp
+    }
+    {
+        set inp = _(stropen("r", 0, ".10"))
+        set lin = 1;
+        set col = 1;
+        call lexer () ; native _{
+            assert(tk1._1 == '.');
+        }
+        call lexer ()
+        call _assert _(tk1._1 == TX_NUM)
+        var n: Int = tk1.2.Num!
+        call _assert _(n == 10)
         call _fclose inp
     }
 }
