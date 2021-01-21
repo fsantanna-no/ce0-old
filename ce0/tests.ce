@@ -1,5 +1,15 @@
+type Bool {
+    False: ()
+    True:  ()
+}
+
+func asbool: Int -> Bool {
+    return _(arg ? (Bool){True} : (Bool){False})
+}
+
 native pre _{
     #include <string.h>
+    #include <ctype.h>
 }
 
 native _{
@@ -47,7 +57,32 @@ native _{
 }
 
 native _{
-    typedef char Str_Buf[256];
+    static char* reserved[] = {
+        //"arg",
+        "break",
+        "call",
+        //"clone",
+        "else",
+        "func",
+        "if",
+        "input",
+        //"Int",
+        "loop",
+        "native",
+        "output",
+        "pre",
+        "rec",
+        "return",
+        "set",
+        //"Std",
+        "type",
+        "var"
+    };
+}
+
+native _{
+    #define TK_BUF 1024
+    typedef char Str_Buf[TK_BUF];
 }
 
 type TK_Val {
@@ -55,13 +90,20 @@ type TK_Val {
     Str: _Str_Buf
 }
 
-type Bool {
-    False: ()
-    True:  ()
-}
-
-func asbool: Int -> Bool {
-    return _(arg ? (Bool){True} : (Bool){False})
+func is_reserved: \TK_Val -> Int {
+    var n: Int = _(sizeof(reserved) / sizeof(reserved[0]))
+    var i: Int = 0
+    loop {
+        var str: _(char*) = arg\.Str!
+        if asbool _(!strcmp(str, reserved[i])) {
+            return _(TK_RESERVED+1 + i)
+        }
+        set i = _(i + 1)
+        if asbool _(i == n) {
+            break
+        }
+    }
+    return 0;
 }
 
 var inp: _(FILE*) = ?
@@ -143,6 +185,41 @@ func lx_token: () -> () {
             set tk1.1 = _TK_ARROW
             return ()
         }
+        call _assert 0
+    }
+
+    if asbool _(isalpha(c)) {
+        set tk1.2 = Str ?
+        var i: Int = 0
+        loop {
+            if asbool _(!isalnum(c) && c!='_') {
+                break
+            }
+            native _{ tk1._2._Str[i] = c; }
+            set i = _(i + 1)
+            call _assert _(i < TK_BUF)
+            set c = _fgetc _inp
+        }
+        native _{ tk1._2._Str[i] = '\0'; }
+native _{ puts(tk1._2._Str); }
+        native _(ungetc(c, inp);)
+
+        var key: Int = call is_reserved(\tk1.2)
+native _{ printf(">>> %d\n", key); }
+        if asbool _(key != 0) {
+            set tk1.1 = key
+            return ()
+        }
+
+        if asbool _(islower(tk1._2._Str[0])) {
+            set tk1.1 = _TX_VAR
+            return ()
+        }
+        if asbool _(isupper(tk1._2._Str[0])) {
+            set tk1.1 = _TX_USER
+            return ()
+        }
+        call _assert 0
     }
 
     call _assert 0
@@ -207,6 +284,19 @@ func t_lexer: () -> () {
         call lexer () ; native _(assert(tk1._1 == '}');)
         call lexer () ; native _(assert(tk1._1 == '{');)
         call lexer () ; native _(assert(tk1._1 == ':');)
+        call _fclose inp
+    }
+
+    -- KEYWORDS
+    {
+        set inp = _(stropen("r", 0, "xvar var else varx type"))
+        set lin = 1;
+        set col = 1;
+        call lexer () ; native _(assert(tk1._1 == TX_VAR);)
+        call lexer () ; native _(assert(tk1._1 == TK_VAR);)
+        call lexer () ; native _(assert(tk1._1 == TK_ELSE);)
+        call lexer () ; native _(assert(tk1._1 == TX_VAR);)
+        call lexer () ; native _(assert(tk1._1 == TK_TYPE);)
         call _fclose inp
     }
 }
