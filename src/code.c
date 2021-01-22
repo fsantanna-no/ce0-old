@@ -767,8 +767,7 @@ void code_user (Stmt* s) {
                     if (sub_ishasrec) {
                         sprintf(clone, "clone_%s(&%s->_%s)", sub_tp, v, sub_id);
                     } else {
-                        sprintf(clone, "{%s}", sub_id);
-                        //strcpy(clone, sub_id);
+                        sprintf(clone, "%s->_%s", v, sub_id);
                     }
 
                     if (isrec) {
@@ -789,7 +788,7 @@ void code_user (Stmt* s) {
                         );
                     }
                 } else {
-                    fprintf(ALL.out, "return %s;\n", sub_id);
+                    fprintf(ALL.out, "return %s;\n", v);
                 }
             }
             out("}\n");
