@@ -772,10 +772,13 @@ void code_user (Stmt* s) {
                 fprintf(ALL.out, "case %s:\n", sub_id);
                 if (ishasrec) {
                     char clone[256];
-                    if (sub_ishasrec) {
-                        sprintf(clone, "clone_%s(&%s->_%s)", sub_tp, v, sub_id);
+                    if (sub->type->sub == TYPE_UNIT) {
+                        assert(!sub->type->isptr);  // TODO: refuse \() or \((),()), etc
+                        strcpy(clone, "");
+                    } else if (sub_ishasrec) {
+                        sprintf(clone, "._%s=clone_%s(&%s->_%s)", sub_id, sub_tp, v, sub_id);
                     } else {
-                        sprintf(clone, "%s->_%s", v, sub_id);
+                        sprintf(clone, "._%s=%s->_%s", sub_id, v, sub_id);
                     }
 
                     if (isrec) {
@@ -783,16 +786,16 @@ void code_user (Stmt* s) {
                             "{\n"
                             "   %s* ret = malloc(sizeof(%s));\n"
                             "   assert(ret!=NULL && \"not enough memory\");\n"
-                            "   *ret = (%s) { %s, {._%s=%s} };\n"
+                            "   *ret = (%s) { %s, {%s} };\n"
                             "   return ret;\n"
                             "}\n",
                             sup, sup,
-                            sup, sub_id, sub_id, clone
+                            sup, sub_id, clone
                         );
                     } else {
                         fprintf (ALL.out,
-                            "return (%s) { %s, {._%s=%s} };\n",
-                            sup, sub_id, sub_id, clone
+                            "return (%s) { %s, {%s} };\n",
+                            sup, sub_id, clone
                         );
                     }
                 } else {
