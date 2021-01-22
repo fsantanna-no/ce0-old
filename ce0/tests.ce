@@ -112,6 +112,8 @@ var col: Int = ?
 var tk0: (Int,TK_Val,Int,Int) = ?   -- enu, val, lin, col
 var tk1: (Int,TK_Val,Int,Int) = ?   -- enu, val, lin, col
 
+-------------------------------------------------------------------------------
+
 func lx_blanks: () -> () {
     loop {
         var c: Int = _fgetc _inp
@@ -176,6 +178,7 @@ func lx_token: () -> () {
             set tk1.2 = Str ?
             native _{strcpy(tk1._2._Str, "()");}
             set tk1.1 = _TK_UNIT
+            return ()
         }
         native _(ungetc(c, inp);)
         set tk1.1 = _{'('}
@@ -286,7 +289,6 @@ func lx_token: () -> () {
         native _(ungetc(c, inp);)
 
         var key: Int = call is_reserved(\tk1.2)
---native _{ printf(">>> %d\n", key); }
         if asbool _(key != 0) {
             set tk1.1 = key
             return ()
@@ -310,6 +312,7 @@ func lx_token: () -> () {
 }
 
 func lexer: () -> () {
+    set tk0 = tk1
     call lx_blanks ()
     set tk1.3 = lin
     set tk1.4 = col
@@ -318,6 +321,46 @@ func lexer: () -> () {
     set col = _(col + (ftell(inp) - bef))
     call lx_blanks ()
 }
+
+-------------------------------------------------------------------------------
+
+type pre Type
+
+type rec ListType {
+    ItemType: (Type, ListType)
+}
+
+type rec Type {                             -- CE1: subtype isrec=Bool
+    Type_Any:    Bool
+    Type_Unit:   Bool
+    Type_Native: (Bool, (Int,TK_Val,Int,Int))
+    Type_User:   (Bool, (Int,TK_Val,Int,Int))
+    Type_Tuple:  (Bool, ListType)
+    Type_Func:   (Bool, Type, Type)
+}
+
+func accept: _TK -> Bool {
+    if asbool _(tk1._1 == arg) {
+        call lexer ()
+        return True
+    } else {
+        return False
+    }
+}
+
+func parser_type: () -> (Bool,Type) {
+--native _{ printf(">>> %d\n", tk1._1); }
+    var isalias: Bool = call accept _('\\')
+
+    -- TYPE_UNIT
+    if accept _TK_UNIT {
+        return (True, Type_Unit isalias)
+    }
+
+    call _assert 0
+}
+
+-------------------------------------------------------------------------------
 
 func t_lexer: () -> () {
     -- COMMENTS
@@ -510,4 +553,20 @@ func t_lexer: () -> () {
     }
 }
 
-call t_lexer ()
+func t_parser_type: () -> () {
+    -- TYPE_UNIT
+    {
+        set inp = _(stropen("r", 0, "()"))
+        set lin = 1;
+        set col = 1;
+        call lexer ()
+        var ret: (Bool,Type) = call parser_type ()
+        var ok: Bool = ret.1
+        var tp: Bool = ret.2.Type_Unit?
+        call _assert _(ok.sub && tp.sub)
+        call _fclose inp
+    }
+}
+
+call t_lexer  ()
+call t_parser_type ()
