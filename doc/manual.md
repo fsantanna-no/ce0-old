@@ -39,7 +39,7 @@ The following keywords are reserved:
     loop        -- loop statement
     native      -- native statement
     output      -- output invocation
-    pre         -- native pre declaration
+    pre         -- native/type pre declaration
     rec         -- recursive type declaration
     return      -- function return
     set         -- assignment statement
@@ -355,6 +355,19 @@ type rec Tree {
 A recursive type always includes an implicit empty subcase, which is its name
 with the dollar prefix `$´, e.g., `$Tree` is the empty subcase of `Tree`.
 
+A mutually recursive type requires a `pre` declaration to signal its existence
+before its full declaration:
+
+```
+type pre Bb     -- let `Aa` know that `Bb` exists
+type rec Aa {
+   Aa1: Bb      -- `Aa` contains `Bb`
+}
+type rec Bb {
+   Bb1: Aa      -- `Bb` contains `Aa`
+}
+```
+
 ## Variable declarations
 
 A variable declaration intoduces a name of the given type and assigns a value
@@ -480,6 +493,7 @@ Stmt ::= `var´ VAR `:´ Type             -- variable declaration     var x: () 
       |  `type´ [`rec´] USER `{`        -- user type declaration    type rec List {
             { USER `:´ Type [`;´] }     --    subcases                 Cons: List
          `}´                                                        }
+      |  `type´ `pre´ USER              -- type pre declaration     type pre Expr
       |  `set´ Expr `=´ Expr            -- assignment               set x = 1
       |  (`call´ | `input´ |` output´)  -- call                     call f()
             (VAR|NATIVE) [Expr]         -- input & output           input std ; output std 10
