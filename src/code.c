@@ -141,18 +141,26 @@ void code_free_user (Env* env, Stmt* user) {
     );
 
     if (isrec) {
-        out("    if (*p == NULL) { return; }\n");
+        out("if (*p == NULL) { return; }\n");
     }
 
+    fprintf(ALL.out, "switch ((*p)%ssub) {\n", (isrec ? "->" : "."));
     for (int i=0; i<user->User.size; i++) {
         Sub sub = user->User.vec[i];
         if (env_type_ishasrec(env, sub.type, 0)) {
             fprintf (ALL.out,
-                "    %s_free(&(*p)%s_%s);\n",
+                "case %s:\n"
+                "   %s_free(&(*p)%s_%s);\n",
+                sub.tk.val.s,
                 to_ce(sub.type), (isrec ? "->" : "."), sub.tk.val.s
             );
         }
     }
+    out (
+        "   default:\n"
+        "       break;\n"
+        "}\n"
+    );
 
     if (isrec) {
         out("    free(*p);\n");
