@@ -249,7 +249,6 @@ func lx_token: () -> () {
 
     -- TX_NUM
     if asbool _(isdigit(c)) {
---native _{ puts("digit"); }
         var i: Int = 0
         loop {
             if asbool _(!isalnum(c)) {
@@ -355,6 +354,11 @@ func parser_type: () -> (Bool,Type) {
     -- TYPE_UNIT
     if accept _TK_UNIT {
         return (True, Type_Unit isalias)
+    }
+
+    -- TYPE_NATIVE
+    if accept _TX_NATIVE {
+        return (True, Type_Native (isalias, tk0))
     }
 
     call _assert 0
@@ -564,6 +568,20 @@ func t_parser_type: () -> () {
         var ok: Bool = ret.1
         var tp: Bool = ret.2.Type_Unit?
         call _assert _(ok.sub && tp.sub)
+        call _fclose inp
+    }
+    -- TYPE_NATIVE
+    {
+        set inp = _(stropen("r", 0, "_char"))
+        set lin = 1;
+        set col = 1;
+        call lexer ()
+        var ret: (Bool,Type) = call parser_type ()
+        var ok: Bool = ret.1
+        var tp: Bool = ret.2.Type_Native?
+        var id: _(char*) = ret.2.Type_Native!.2.2.Str!
+        call _assert _(ok.sub && tp.sub)
+        call _assert _(!strcmp(id,"char"))
         call _fclose inp
     }
 }

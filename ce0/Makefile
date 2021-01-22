@@ -1,4 +1,4 @@
 all:
-	ce -o tests tests.ce
+	ce -o tests -cc "-g" tests.ce
 c:
 	ce -c -o tests.c tests.ce
