@@ -1008,6 +1008,7 @@ void t_code (void) {
 }
 
 void t_all (void) {
+//goto __XXX__;
     // ERROR
     assert(all(
         "(ln 1, col 1): expected statement : have \"/\"",
@@ -1691,6 +1692,24 @@ void t_all (void) {
         "var b: \\Nat = \\c.Succ!\n"      // borrow de c
         "var e: Nat = c\n"              // erro
     ));
+//__XXX__:
+    assert(all(
+        "Succ ($)\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "var c: Nat = Succ $Nat\n"
+        "{\n"
+        "   var b: \\Nat = \\c.Succ!\n"
+        "   {\n"
+        "   }\n"
+        "}\n"
+        //"output std 10\n"
+        "var e: Nat = c\n"
+        "output std (\\e)\n"
+    ));
+//puts("-=-=-=-");
+//assert(0);
     assert(all(
         "Succ ($)\n",
         "type rec Nat {\n"

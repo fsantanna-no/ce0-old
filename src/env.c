@@ -818,9 +818,13 @@ int check_types_stmt (Stmt* s) {
         case STMT_SET:
             if (!type_is_sup_sub(env_expr_to_type(s->env,s->Set.dst), env_expr_to_type(s->env,s->Set.src), 1)) {
                 char err[TK_BUF+256];
-                assert(s->Set.dst->sub == EXPR_VAR);
-                sprintf(err, "invalid assignment to \"%s\" : type mismatch", s->Set.dst->Var.tk.val.s);
-                return err_message(&s->Set.dst->Var.tk, err);
+                if (s->Set.dst->sub == EXPR_VAR) {
+                    sprintf(err, "invalid assignment to \"%s\" : type mismatch", s->Set.dst->Var.tk.val.s);
+                    return err_message(&s->Set.dst->Var.tk, err);
+                } else {
+                    strcpy(err, "invalid assignment : type mismatch");
+                    return err_message(&s->tk, err);
+                }
             }
             return 1;
 

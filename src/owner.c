@@ -158,13 +158,16 @@ int check_txs (Stmt* S) {
         // push/pop stack
         if (s->sub == STMT_BLOCK) {         // enter block: push state
             stack[stack_n].stop  = s->seqs[0];
+//printf("[%d] +++ bws = %d (me=%d/%d/%p) (stop=%d/%d/%p)\n", stack_n, bws_n, s->tk.lin,s->sub,s, s->seqs[0]->tk.lin, s->seqs[0]->sub, s->seqs[0]);
+//dump_stmt(s->seqs[0]);
             stack[stack_n].bws_n = bws_n;
             assert(stack_n < 256);
             stack_n++;
         }
-        if (s == stack[stack_n-1].stop) {   // leave block: pop state
+        while (s == stack[stack_n-1].stop) {   // leave block: pop state
             stack_n--;
             bws_n = stack[stack_n].bws_n;
+//printf("[%d] --- bws = %d [%p]\n", stack_n, bws_n, s);
         }
 
         // Add y/z in bws:
