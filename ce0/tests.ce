@@ -3,6 +3,14 @@ type Bool {
     True:  ()
 }
 
+func not: Bool -> Bool {
+    if arg {
+        return False
+    } else {
+        return True
+    }
+}
+
 func asbool: Int -> Bool {
     return _(arg ? (Bool){True} : (Bool){False})
 }
@@ -325,8 +333,8 @@ func lexer: () -> () {
 
 type pre Type
 
-type rec ListType {
-    ItemType: (Type, ListType)
+type rec List_Type {
+    Item_Type: (Type, List_Type)
 }
 
 type rec Type {                             -- CE1: subtype isrec=Bool
@@ -334,8 +342,13 @@ type rec Type {                             -- CE1: subtype isrec=Bool
     Type_Unit:   Bool
     Type_Native: (Bool, (Int,TK_Val,Int,Int))
     Type_User:   (Bool, (Int,TK_Val,Int,Int))
-    Type_Tuple:  (Bool, ListType)
+    Type_Tuple:  (Bool, List_Type)
     Type_Func:   (Bool, Type, Type)
+}
+
+type Maybe_Type {
+    Type_None: ()
+    Type_Some: Type
 }
 
 func accept: _TK -> Bool {
@@ -347,18 +360,54 @@ func accept: _TK -> Bool {
     }
 }
 
-func parser_type: () -> (Bool,Type) {
+func parser_type: () -> Maybe_Type {
 --native _{ printf(">>> %d\n", tk1._1); }
     var isalias: Bool = call accept _('\\')
 
     -- TYPE_UNIT
     if accept _TK_UNIT {
-        return (True, Type_Unit isalias)
+        return Type_Some Type_Unit isalias
     }
 
     -- TYPE_NATIVE
     if accept _TX_NATIVE {
-        return (True, Type_Native (isalias, tk0))
+        return Type_Some Type_Native (isalias, tk0)
+    }
+
+    -- TYPE_PARENS / TYPE_TUPLE
+    if accept _{'('} {
+        var tmp: Maybe_Type = call parser_type ()
+        if tmp.Type_None? {
+            return Type_None
+        }
+
+        -- TYPE_PARENS
+        if accept _{')'} {
+            return tmp
+        }
+
+        -- TYPE_TUPLE
+        var lst: List_Type = Item_Type (tmp.Type_Some!, $List_Type)
+        {
+            var cur: \List_Type = \lst
+            loop {
+                if not accept _(',') {
+                    break
+                }
+                var tmp: Maybe_Type = call parser_type ()
+                if tmp.Type_None? {
+                    return Type_None
+                }
+                set cur\.Item_Type! = (tmp.Type_Some!, $List_Type)
+                set cur = \cur\.Item_Type!.2
+            }
+        }
+
+        if not accept _{')'} {
+            return Type_None
+        }
+
+        return Type_Some Type_Tuple (isalias,lst)
     }
 
     call _assert 0
@@ -564,9 +613,9 @@ func t_parser_type: () -> () {
         set lin = 1;
         set col = 1;
         call lexer ()
-        var ret: (Bool,Type) = call parser_type ()
-        var ok: Bool = ret.1
-        var tp: Bool = ret.2.Type_Unit?
+        var ret: Maybe_Type = call parser_type ()
+        var ok: Bool = ret.Type_Some?
+        var tp: Bool = ret.Type_Some!.Type_Unit?
         call _assert _(ok.sub && tp.sub)
         call _fclose inp
     }
@@ -576,12 +625,25 @@ func t_parser_type: () -> () {
         set lin = 1;
         set col = 1;
         call lexer ()
-        var ret: (Bool,Type) = call parser_type ()
-        var ok: Bool = ret.1
-        var tp: Bool = ret.2.Type_Native?
-        var id: _(char*) = ret.2.Type_Native!.2.2.Str!
+        var ret: Maybe_Type = call parser_type ()
+        var ok: Bool = ret.Type_Some?
+        var tp: Bool = ret.Type_Some!.Type_Native?
+        var id: _(char*) = ret.Type_Some!.Type_Native!.2.2.Str!
         call _assert _(ok.sub && tp.sub)
         call _assert _(!strcmp(id,"char"))
+        call _fclose inp
+    }
+    -- TYPE_TUPLE
+    {
+        set inp = _(stropen("r", 0, "((),_char)"))
+        set lin = 1;
+        set col = 1;
+        call lexer ()
+        var ret: Maybe_Type = call parser_type ()
+        var tup: (Bool,List_Type) = ret.Type_Some!.Type_Tuple!
+        var nat: _(char*) = tup.2.Item_Type!.1.Type_Native!.2.2.Str!
+        var ok: Bool = tup.2.Item_Type!.2.$List_Type?
+        call _assert _(ok.sub && !strcmp(nat,"char"))
         call _fclose inp
     }
 }
