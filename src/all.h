@@ -18,7 +18,7 @@ FILE* stropen  (const char* mode, size_t size, char* str);
 typedef struct {
     FILE  *out, *inp;
     char  err[256];
-    long  lin,col;
+    int   lin,col;
     Tk    tk0,tk1;
     Env*  env;
     int   nn;

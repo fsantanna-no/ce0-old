@@ -265,10 +265,10 @@ __ACCS__:
                                 // Rule 6
                                 if (bws_n >= 2) {
                                     if (e->Var.tx_done) {
-                                        assert(txed_tk != NULL);
+                                        int lin = (txed_tk == NULL) ? e->Var.tk.lin : txed_tk->lin;
                                         char err[TK_BUF+256];
-                                        sprintf(err, "invalid transfer of \"%s\" : active pointer in scope (ln %ld)",
-                                                e->Var.tk.val.s, txed_tk->lin);
+                                        sprintf(err, "invalid transfer of \"%s\" : active pointer in scope (ln %d)",
+                                                e->Var.tk.val.s, lin);
                                         err_message(&e->Var.tk, err);
                                         return VISIT_ERROR;
                                     }

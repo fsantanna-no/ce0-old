@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DEBUG
+//#define DEBUG
 //#define VALGRIND
 
 #include "../all.h"
@@ -1008,7 +1008,8 @@ void t_code (void) {
 }
 
 void t_all (void) {
-//goto __XXX__;
+goto __XXX__;
+__XXX__:
     // ERROR
     assert(all(
         "(ln 1, col 1): expected statement : have \"/\"",
@@ -1692,7 +1693,6 @@ void t_all (void) {
         "var b: \\Nat = \\c.Succ!\n"      // borrow de c
         "var e: Nat = c\n"              // erro
     ));
-//__XXX__:
     assert(all(
         "Succ ($)\n",
         "type rec Nat {\n"
@@ -2080,6 +2080,48 @@ void t_all (void) {
         "var b: List = a.Item!.Item!\n"
         "var c: List = a.Item!\n"
         "output std (\\c)\n"
+    ));
+    assert(all(
+        "Item (Item ($))\n",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "var l: List = Item $List\n"
+        "var t: \\List = \\l.Item!\n"
+        "set t\\ = Item $List\n"
+        "set t = \\t\\.Item!\n"
+        "output std (\\l)\n"
+    ));
+    assert(all(
+        "(ln 8, col 8): invalid transfer of \"l\" : active pointer in scope (ln 7)",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "func f: List -> () {}\n"
+        "var x: List = Item $List\n"
+        "var l: (List,\\List) = (x, _(null))\n"
+        "set l.2 = \\l.1.Item!\n"
+        "call f l.1\n"
+    ));
+    assert(all(
+        "(ln 6, col 24): invalid transfer of \"x\" : active pointer in scope (ln 6)",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "func f: List -> () {}\n"
+        "var x: List = Item $List\n"
+        "var l: (List,\\List) = (x, \\x)\n"
+        "call f l.1\n"
+    ));
+    assert(all(
+        "(ln 7, col 8): invalid transfer of \"l\" : active pointer in scope (ln 6)",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "func g: (List,\\List) -> () {}\n"
+        "var l: (List,\\List) = (Item $List, ?)\n"
+        "set l.2 = \\l.1.Item!\n"
+        "call g l\n"
     ));
     assert(all(
         "Succ ($)\n",
