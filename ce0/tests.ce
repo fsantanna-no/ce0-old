@@ -89,8 +89,10 @@ native _{
 }
 
 native _{
+    #define ERR_BUF 256
     #define TK_BUF 1024
     typedef char Str_Buf[TK_BUF];
+    typedef char Err_Buf[ERR_BUF];
 }
 
 type TK_Val {
@@ -119,8 +121,42 @@ var lin: Int = ?
 var col: Int = ?
 var tk0: (Int,TK_Val,Int,Int) = ?   -- enu, val, lin, col
 var tk1: (Int,TK_Val,Int,Int) = ?   -- enu, val, lin, col
+var err: _Err_Buf = ?
 
 -------------------------------------------------------------------------------
+
+func lexer_tk2str: (Int,TK_Val,Int,Int) -> _(const char*) {
+    native _{ static char str[TK_BUF+256]; }
+    if asbool _(arg._1 == TK_EOF) {
+        native _{ sprintf(str, "end of file"); }
+        return _str
+    }
+    if asbool _(arg._1 == TK_UNIT) {
+        native _{ sprintf(str, "`()´"); }
+        return _str
+    }
+    if asbool _(arg._1 == TX_NATIVE) {
+        native _{ sprintf(str, "\"_%s\"", arg._2._Str); }
+        return _str
+    }
+    if asbool _(arg._1 == TX_NUM) {
+        native _{ sprintf(str, "\"%d\"", arg._2._Num); }
+        return _str
+    }
+    if asbool _(arg._1==TX_VAR || arg._1==TX_USER || arg._1==TX_NULL || arg._1==TK_ERR) {
+        native _{ sprintf(str, "\"%s\"", arg._2._Str); }
+        return _str
+    }
+    if asbool _(arg._1>0 && arg._1<TK_SINGLE) {
+        native _{ sprintf(str, "`%c´", arg._1); }
+        return _str
+    }
+    if asbool _(arg._1 > TK_RESERVED) {
+        native _{ sprintf(str, "`%s´", reserved[arg._1-TK_RESERVED-1]); }
+        return _str
+    }
+    call _assert 0
+}
 
 func lx_blanks: () -> () {
     loop {
@@ -360,6 +396,11 @@ func accept: _TK -> Bool {
     }
 }
 
+func err_expected: _(const char*) -> () {
+    native _{ sprintf(err, "(ln %d, col %d): expected %s : have %s",
+        tk1._3, tk1._4, arg, lexer_tk2str(tk1)); }
+}
+
 func parser_type: () -> Maybe_Type {
 --native _{ printf(">>> %d\n", tk1._1); }
     var isalias: Bool = call accept _('\\')
@@ -410,7 +451,8 @@ func parser_type: () -> Maybe_Type {
         return Type_Some Type_Tuple (isalias,lst)
     }
 
-    call _assert 0
+    call err_expected _("type")
+    return Type_None
 }
 
 -------------------------------------------------------------------------------
@@ -607,6 +649,18 @@ func t_lexer: () -> () {
 }
 
 func t_parser_type: () -> () {
+    -- ERROR
+    {
+        set inp = _(stropen("r", 0, "xxx"))
+        set lin = 1;
+        set col = 1;
+        call lexer ()
+        var ret: Maybe_Type = call parser_type ()
+        var ok: Bool = ret.Type_None?
+        call _assert _(ok.sub)
+        call _assert _{!strcmp(err,"(ln 1, col 1): expected type : have \"xxx\"")}
+        call _fclose inp
+    }
     -- TYPE_UNIT
     {
         set inp = _(stropen("r", 0, "()"))
