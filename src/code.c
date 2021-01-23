@@ -459,6 +459,11 @@ int code_expr_pre (Env* env, Expr* e) {
                 code_expr(env, e->Disc.val, 0);
                 out(" == NULL && \"discriminator failed\");\n");
             } else {
+                if (env_type_isrec(env,env_expr_to_type(env,e->Disc.val),0)) {
+                    out("assert(");
+                    code_expr(env, e->Disc.val, 0);
+                    out(" != NULL && \"discriminator failed\");\n");
+                }
                 out("assert(");
                 code_expr(env, e->Disc.val, 1);
                 fprintf (ALL.out,

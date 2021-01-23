@@ -1724,8 +1724,6 @@ __XXX__:
         "var e: Nat = c\n"
         "output std (\\e)\n"
     ));
-//puts("-=-=-=-");
-//assert(0);
     assert(all(
         "Succ ($)\n",
         "type rec Nat {\n"
@@ -1947,6 +1945,17 @@ __XXX__:
         "var n: Nat = $Nat\n"
         "output std (\\n)\n"
         "var z: Nat = n\n"
+    ));
+    assert(all(
+        "",     // ERROR
+        "type Bool { False:() ; True:() }\n"
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "var n: Nat = $Nat\n"
+        "var n_: \\Nat = \\n\n"
+        "output std n_\\.$Nat?\n"
+        "output std n_\\.Succ!.$Nat?\n"
     ));
     assert(all(
         "Succ (Succ (Succ ($)))\n",
