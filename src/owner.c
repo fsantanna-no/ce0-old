@@ -164,7 +164,7 @@ int check_txs (Stmt* S) {
             assert(stack_n < 256);
             stack_n++;
         }
-        while (s == stack[stack_n-1].stop) {   // leave block: pop state
+        while (stack_n>0 && s==stack[stack_n-1].stop) {   // leave block: pop state
             stack_n--;
             bws_n = stack[stack_n].bws_n;
         }
@@ -217,6 +217,39 @@ int check_txs (Stmt* S) {
         // STMT_VAR, STMT_SET, STMT_RETURN transfer their source expressions.
         // EXPR_CALL, EXPR_CONS transfeir their argument (in any STMT_*).
 
+        int fe (Env* env, Expr* e) {
+            switch (e->sub) {
+                case EXPR_CALL:
+                    if (!set_txs(e->Call.arg,0)) return EXEC_ERROR;
+                    break;
+                case EXPR_CONS:
+                    if (!set_txs(e->Cons.arg,0)) return EXEC_ERROR;
+                    break;
+                case EXPR_VAR:
+                    if (!strcmp(S->Var.tk.val.s,e->Var.tk.val.s)) {
+                        // ensure that EXPR_VAR is really same as STMT_VAR
+                        Stmt* decl = env_id_to_stmt(env, e->Var.tk.val.s);
+                        assert(decl!=NULL && decl==S);
+
+                        // Rule 6
+                        if (bws_n >= 2) {
+                            if (e->Var.tx_done) {
+                                int lin = (txed_tk == NULL) ? e->Var.tk.lin : txed_tk->lin;
+                                char err[TK_BUF+256];
+                                sprintf(err, "invalid transfer of \"%s\" : active pointer in scope (ln %d)",
+                                        e->Var.tk.val.s, lin);
+                                err_message(&e->Var.tk, err);
+                                return VISIT_ERROR;
+                            }
+                        }
+                        txed_tk = &e->Var.tk;
+                    }
+                default:
+                    break;
+            }
+            return VISIT_CONTINUE;
+        }
+
         switch (s->sub) {
             case STMT_VAR:
                 add_bws(s->Var.init);
@@ -244,43 +277,18 @@ int check_txs (Stmt* S) {
                 if (!set_txs(s->Return,0)) return EXEC_ERROR;
                 goto __ACCS__;
 
+            case STMT_IF: {
+                int ret = visit_expr(0, s->env, s->If.tst, fe);
+                if (ret != EXEC_CONTINUE) {
+                    return ret;
+                }
+                break;
+            }
+
             case STMT_CALL:
-            case STMT_IF:
 __ACCS__:
             {
-                int fs (Env* env, Expr* e) {
-                    switch (e->sub) {
-                        case EXPR_CALL:
-                            if (!set_txs(e->Call.arg,0)) return EXEC_ERROR;
-                            break;
-                        case EXPR_CONS:
-                            if (!set_txs(e->Cons.arg,0)) return EXEC_ERROR;
-                            break;
-                        case EXPR_VAR:
-                            if (!strcmp(S->Var.tk.val.s,e->Var.tk.val.s)) {
-                                // ensure that EXPR_VAR is really same as STMT_VAR
-                                Stmt* decl = env_id_to_stmt(env, e->Var.tk.val.s);
-                                assert(decl!=NULL && decl==S);
-
-                                // Rule 6
-                                if (bws_n >= 2) {
-                                    if (e->Var.tx_done) {
-                                        int lin = (txed_tk == NULL) ? e->Var.tk.lin : txed_tk->lin;
-                                        char err[TK_BUF+256];
-                                        sprintf(err, "invalid transfer of \"%s\" : active pointer in scope (ln %d)",
-                                                e->Var.tk.val.s, lin);
-                                        err_message(&e->Var.tk, err);
-                                        return VISIT_ERROR;
-                                    }
-                                }
-                                txed_tk = &e->Var.tk;
-                            }
-                        default:
-                            break;
-                    }
-                    return VISIT_CONTINUE;
-                }
-                int ret = visit_stmt(0, s, NULL, fs, NULL);
+                int ret = visit_stmt(0, s, NULL, fe, NULL);
                 if (ret != EXEC_CONTINUE) {
                     return ret;
                 }

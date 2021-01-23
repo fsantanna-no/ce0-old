@@ -1252,6 +1252,22 @@ __XXX__:
         "var y: Bool = x.Event!.1\\.Any?\n"
         "output std y\n"
     ));
+    assert(all(
+        "()\n",
+        "type Bool { False:() ; True:() }\n"
+        "type rec Aa {\n"
+        "    Aa1: ()\n"
+        "}\n"
+        "type Xx {\n"
+        "    Xx1: ()\n"
+        "}\n"
+        "var ret: Aa = Aa1 ()\n"
+        "if True {\n"
+        "    var y: () = ()\n"
+        "    var x: Xx = Xx1 y\n"
+        "}\n"
+        "output std ()\n"
+    ));
 
     // ALIAS / POINTER
 
