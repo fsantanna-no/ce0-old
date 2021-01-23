@@ -77,7 +77,11 @@ int visit_stmt_ (int ord, Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
             return visit_stmt(ord,s->Loop,fs,fe,ft);
 
         case STMT_FUNC:
-            return visit_type(s->env,s->Func.type,ft) && visit_stmt(ord,s->Func.body,fs,fe,ft);
+            if (s->Func.body == NULL) {
+                return visit_type(s->env,s->Func.type,ft);
+            } else {
+                return visit_type(s->env,s->Func.type,ft) && visit_stmt(ord,s->Func.body,fs,fe,ft);
+            }
 
         case STMT_BLOCK:
             return visit_stmt(ord,s->Block, fs,fe,ft);

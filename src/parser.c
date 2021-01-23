@@ -541,6 +541,12 @@ int parser_stmt (Stmt** ret) {
     // STMT_FUNC
     } else if (accept(TK_FUNC)) {       // func
         Tk tk = ALL.tk0;
+
+        int ispre = 0;
+        if (accept(TK_PRE)) {           // pre
+            ispre = 1;
+        }
+
         if (!accept(TX_VAR)) {          // f
             return 0;
         }
@@ -551,6 +557,11 @@ int parser_stmt (Stmt** ret) {
         Type* tp;
         if (!parser_type(&tp)) {        // () -> ()
             return 0;
+        }
+
+        if (ispre) {
+            *s = (Stmt) { ALL.nn++, STMT_FUNC, NULL, {NULL,NULL}, tk, .Func={id,tp,NULL} };
+            return 1;
         }
 
         Stmt* blk2;

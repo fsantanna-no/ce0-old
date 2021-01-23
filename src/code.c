@@ -1020,14 +1020,20 @@ void code_stmt (Stmt* s) {
             }
 
             fprintf (ALL.out,
-                "%s %s (%s %s) {\n",
+                "auto %s %s (%s %s)",
                 (out_isunit ? "void" : tp_out),
                 s->Func.tk.val.s,
                 (inp_isunit ? "void" : tp_inp),
                 (inp_isunit ? "" : "_arg_")
             );
-            code_stmt(s->Func.body);
-            out("}\n");
+
+            if (s->Func.body == NULL) {
+                out(";\n");     // pre-declaration
+            } else {
+                out("{\n");
+                code_stmt(s->Func.body);
+                out("}\n");
+            }
             break;
         }
 

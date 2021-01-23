@@ -1520,6 +1520,26 @@ __XXX__:
         "call f (\\x)\n"
         "output std x\n"
     ));
+    assert(all(
+        "True\n",
+        "type Bool {\n"
+        "    False: ()\n"
+        "    True:  ()\n"
+        "}\n"
+        "func pre g: Bool -> Bool\n"
+        "func f: Bool -> Bool {\n"
+        "   return g arg\n"
+        "}\n"
+        "func g: Bool -> Bool {\n"
+        "    if arg {\n"
+        "        return False\n"
+        "    } else {\n"
+        "        return True\n"
+        "    }\n"
+        "}\n"
+        "var x: Bool = call f (False)\n"
+        "output std x\n"
+    ));
     // ENV
     assert(all(
         "(ln 1, col 1): expected statement : have \"_stdout_Unit\"",
