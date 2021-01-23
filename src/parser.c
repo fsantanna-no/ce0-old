@@ -5,18 +5,18 @@
 #include "all.h"
 
 int err (Tk* tk, const char* v) {
-    sprintf(ALL.err, "(ln %ld, col %ld): %s", tk->lin, tk->col, v);
+    sprintf(ALL.err, "(ln %d, col %d): %s", tk->lin, tk->col, v);
     return 0;
 }
 
 int err_expected (const char* v) {
-    sprintf(ALL.err, "(ln %ld, col %ld): expected %s : have %s",
+    sprintf(ALL.err, "(ln %d, col %d): expected %s : have %s",
         ALL.tk1.lin, ALL.tk1.col, v, lexer_tk2str(&ALL.tk1));
     return 0;
 }
 
 int err_unexpected (const char* v) {
-    sprintf(ALL.err, "(ln %ld, col %ld): unexpected %s : wanted %s",
+    sprintf(ALL.err, "(ln %d, col %d): unexpected %s : wanted %s",
         ALL.tk0.lin, ALL.tk0.col, lexer_tk2str(&ALL.tk0), v);
     return 0;
 }

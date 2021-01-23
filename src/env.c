@@ -897,7 +897,7 @@ int check_set_set_ptr_deepest (Stmt* s) {
 
             if (dst_decl->env->depth < dst_decl->Var.ptr_deepest->env->depth) {
                 char err[TK_BUF+256];
-                sprintf(err, "invalid assignment : cannot hold local pointer \"%s\" (ln %ld)",
+                sprintf(err, "invalid assignment : cannot hold local pointer \"%s\" (ln %d)",
                         src_decl->Var.tk.val.s, src_decl->Var.tk.lin);
                 err_message(&s->tk, err);
                 return VISIT_ERROR;
@@ -929,7 +929,7 @@ int check_ret_ptr_deepest (Stmt* s) {
 //printf("ret=%d vs src=%d\n", s->env->depth, src_decl->Var.ptr_deepest->env->depth);
     if (s->env->depth <= src_decl->Var.ptr_deepest->env->depth) {
         char err[TK_BUF+256];
-        sprintf(err, "invalid return : cannot return local pointer \"%s\" (ln %ld)",
+        sprintf(err, "invalid return : cannot return local pointer \"%s\" (ln %d)",
                 src->Var.tk.val.s, src_decl->tk.lin);
         err_message(&src->Var.tk, err);
         return VISIT_ERROR;

@@ -295,7 +295,7 @@ static void lx_blanks (void) {
 }
 
 int err_message (Tk* tk, const char* v) {
-    sprintf(ALL.err, "(ln %ld, col %ld): %s", tk->lin, tk->col, v);
+    sprintf(ALL.err, "(ln %d, col %d): %s", tk->lin, tk->col, v);
     return 0;
 }
 

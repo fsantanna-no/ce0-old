@@ -45,8 +45,8 @@ struct Env;
 typedef struct {
     TK enu;
     TK_val val;
-    long  lin;   // line at token
-    long  col;   // column at token
+    int lin;   // line at token
+    int col;   // column at token
 } Tk;
 
 int err_message (Tk* tk, const char* v);
