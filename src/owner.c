@@ -13,7 +13,15 @@ void env_txed_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
         return;
     }
 
+    if (e->sub==EXPR_VAR || e->sub==EXPR_DNREF || e->sub==EXPR_DISC || e->sub==EXPR_INDEX) {
+        Expr* var = expr_leftmost(e);
+        assert(var != NULL);
+        assert(var->sub == EXPR_VAR);
+        vars[(*vars_n)++] = e;
+    }
+
     switch (e->sub) {
+        case EXPR_DNREF:
         case EXPR_NULL:
             break;
         case EXPR_UNIT:
@@ -27,15 +35,7 @@ void env_txed_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
 
         case EXPR_VAR:
             e->Var.tx_setnull = 1;
-            vars[(*vars_n)++] = e;
             break;
-
-        case EXPR_DNREF: {
-            if (e->Dnref->sub == EXPR_VAR) {
-                vars[(*vars_n)++] = e;
-            }
-            break;
-        }
 
         case EXPR_TUPLE:
             for (int i=0; i<e->Tuple.size; i++) {
@@ -46,9 +46,11 @@ void env_txed_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
         case EXPR_DISC:
             e->Disc.tx_setnull = 1;
             break;
-        case EXPR_INDEX:
+
+        case EXPR_INDEX: {
             e->Index.tx_setnull = 1;
             break;
+        }
 
         case EXPR_CALL: // tx for args is checked elsewhere (here, only if return type is also ishasrec)
             // func may transfer its argument back
@@ -158,8 +160,6 @@ int check_txs (Stmt* S) {
         // push/pop stack
         if (s->sub == STMT_BLOCK) {         // enter block: push state
             stack[stack_n].stop  = s->seqs[0];
-//printf("[%d] +++ bws = %d (me=%d/%d/%p) (stop=%d/%d/%p)\n", stack_n, bws_n, s->tk.lin,s->sub,s, s->seqs[0]->tk.lin, s->seqs[0]->sub, s->seqs[0]);
-//dump_stmt(s->seqs[0]);
             stack[stack_n].bws_n = bws_n;
             assert(stack_n < 256);
             stack_n++;
@@ -167,7 +167,6 @@ int check_txs (Stmt* S) {
         while (s == stack[stack_n-1].stop) {   // leave block: pop state
             stack_n--;
             bws_n = stack[stack_n].bws_n;
-//printf("[%d] --- bws = %d [%p]\n", stack_n, bws_n, s);
         }
 
         // Add y/z in bws:
@@ -179,7 +178,7 @@ int check_txs (Stmt* S) {
             for (int i=0; i<n; i++) {
                 Stmt* dcl = env_id_to_stmt(s->env, vars[i]->Var.tk.val.s);
                 assert(dcl != NULL);
-                if (bws_has(dcl)) {
+                if (bws_has(dcl)) { // indirect alias
                     bws[bws_n++] = s;
                     break;
                 }
@@ -200,6 +199,7 @@ int check_txs (Stmt* S) {
                     sprintf(err, "invalid dnref : cannot transfer value");
                     return err_message(&e->Dnref->Var.tk, err);
                 } else {
+                    e = expr_leftmost(e);
                     assert(e->sub == EXPR_VAR);
                     if (!strcmp(e->Var.tk.val.s,S->Var.tk.val.s)) {
                         e->Var.tx_done = 1;

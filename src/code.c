@@ -901,7 +901,7 @@ void code_stmt (Stmt* s) {
             break;
 
         case STMT_CALL:
-            visit_expr(s->env, s->Call, code_expr_pre);
+            visit_expr(1, s->env, s->Call, code_expr_pre);
             code_expr(s->env, s->Call, 1);
             out(";\n");
             break;
@@ -916,7 +916,7 @@ void code_stmt (Stmt* s) {
 
         case STMT_VAR: {
             visit_type(s->env, s->Var.type, ftp_tuples);
-            visit_expr(s->env, s->Var.init, code_expr_pre);
+            visit_expr(1, s->env, s->Var.init, code_expr_pre);
 
             if (s->Var.type->sub == TYPE_UNIT) {
                 break;
@@ -940,8 +940,8 @@ void code_stmt (Stmt* s) {
         }
 
         case STMT_SET: {
-            visit_expr(s->env, s->Set.src, code_expr_pre);
-            visit_expr(s->env, s->Set.dst, code_expr_pre);
+            visit_expr(1, s->env, s->Set.src, code_expr_pre);
+            visit_expr(1, s->env, s->Set.dst, code_expr_pre);
 
             Type* dst = env_expr_to_type(s->env, s->Set.dst);
             assert(dst != NULL);
@@ -964,7 +964,7 @@ void code_stmt (Stmt* s) {
         }
 
         case STMT_RETURN: {
-            visit_expr(s->env, s->Return, code_expr_pre);
+            visit_expr(1, s->env, s->Return, code_expr_pre);
             out("return ");
             code_expr(s->env, s->Return, 0);
             out(";\n");
@@ -972,7 +972,7 @@ void code_stmt (Stmt* s) {
         }
 
         case STMT_IF: {
-            visit_expr(s->env, s->If.tst, code_expr_pre);
+            visit_expr(1, s->env, s->If.tst, code_expr_pre);
             out("if (");
             code_expr(s->env, s->If.tst, 1);
             out(".sub) {\n");

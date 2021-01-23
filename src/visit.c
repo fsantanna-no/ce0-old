@@ -49,15 +49,15 @@ int visit_stmt_ (int ord, Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
             return 1;
 
         case STMT_CALL:
-            return visit_expr(s->env, s->Call, fe);
+            return visit_expr(ord, s->env, s->Call, fe);
         case STMT_RETURN:
-            return visit_expr(s->env, s->Return, fe);
+            return visit_expr(ord, s->env, s->Return, fe);
 
         case STMT_VAR:
-            return visit_type(s->env,s->Var.type,ft) && visit_expr(s->env,s->Var.init,fe);
+            return visit_type(s->env,s->Var.type,ft) && visit_expr(ord,s->env,s->Var.init,fe);
 
         case STMT_SET:
-            return visit_expr(s->env,s->Set.dst,fe) && visit_expr(s->env,s->Set.src,fe);
+            return visit_expr(ord,s->env,s->Set.dst,fe) && visit_expr(ord,s->env,s->Set.src,fe);
 
         case STMT_USER:
             for (int i=0; i<s->User.size; i++) {
@@ -71,7 +71,7 @@ int visit_stmt_ (int ord, Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
             return visit_stmt(ord,s->Seq.s1,fs,fe,ft) && visit_stmt(ord,s->Seq.s2,fs,fe,ft);
 
         case STMT_IF:
-            return visit_expr(s->env,s->If.tst,fe) && visit_stmt(ord,s->If.true,fs,fe,ft) && visit_stmt(ord,s->If.false,fs,fe,ft);
+            return visit_expr(ord,s->env,s->If.tst,fe) && visit_stmt(ord,s->If.true,fs,fe,ft) && visit_stmt(ord,s->If.false,fs,fe,ft);
 
         case STMT_LOOP:
             return visit_stmt(ord,s->Loop,fs,fe,ft);
@@ -113,7 +113,7 @@ int visit_stmt (int ord, Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int visit_expr_ (Env* env, Expr* e, F_Expr fe) {
+int visit_expr_ (int ord, Env* env, Expr* e, F_Expr fe) {
     switch (e->sub) {
         case EXPR_UNIT:
         case EXPR_UNK:
@@ -124,45 +124,53 @@ int visit_expr_ (Env* env, Expr* e, F_Expr fe) {
             return 1;
         case EXPR_TUPLE:
             for (int i=0; i<e->Tuple.size; i++) {
-                if (!visit_expr(env, e->Tuple.vec[i], fe)) {
+                if (!visit_expr(ord, env, e->Tuple.vec[i], fe)) {
                     return 0;
                 }
             }
             return 1;
         case EXPR_INDEX:
-            return visit_expr(env, e->Index.val, fe);
+            return visit_expr(ord, env, e->Index.val, fe);
         case EXPR_CALL:
-            return visit_expr(env,e->Call.func,fe) && visit_expr(env,e->Call.arg,fe);
+            return visit_expr(ord,env,e->Call.func,fe) && visit_expr(ord,env,e->Call.arg,fe);
         case EXPR_UPREF:
-            return visit_expr(env, e->Upref, fe);
+            return visit_expr(ord, env, e->Upref, fe);
         case EXPR_DNREF:
-            return visit_expr(env, e->Dnref, fe);
+            return visit_expr(ord, env, e->Dnref, fe);
         case EXPR_CONS:
-            return visit_expr(env, e->Cons.arg, fe);
+            return visit_expr(ord, env, e->Cons.arg, fe);
         case EXPR_DISC:
-            return visit_expr(env, e->Disc.val, fe);
+            return visit_expr(ord, env, e->Disc.val, fe);
         case EXPR_PRED:
-            return visit_expr(env, e->Disc.val, fe);
+            return visit_expr(ord, env, e->Disc.val, fe);
     }
     assert(0 && "bug found");
 }
 
-int visit_expr (Env* env, Expr* e, F_Expr fe) {
-    int ret = visit_expr_(env, e, fe);
-    if (ret != VISIT_CONTINUE) {
-        return ret;
-    }
-    if (fe != NULL) {
-        switch (fe(env,e)) {
-            case VISIT_ERROR:
-                return 0;
-            case VISIT_CONTINUE:
-                break;
-            case VISIT_BREAK:
-                return 1;
+int visit_expr (int ord, Env* env, Expr* e, F_Expr fe) {
+    if (ord == 0) {
+        if (fe != NULL) {
+            switch (fe(env,e)) {
+                case VISIT_ERROR:
+                    return 0;
+                case VISIT_CONTINUE:
+                    break;
+                case VISIT_BREAK:
+                    return 1;
+            }
+        }
+        return visit_expr_(ord, env, e, fe);
+    } else {
+        int ret = visit_expr_(ord, env, e, fe);
+        if (ret != VISIT_CONTINUE) {
+            return ret;
+        }
+        if (fe!=NULL && fe(env,e)==VISIT_ERROR) {
+            return 0;
+        } else {
+            return 1;
         }
     }
-    return 1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

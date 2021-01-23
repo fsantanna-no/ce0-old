@@ -29,7 +29,7 @@ typedef int  (*F_Expr) (struct Env* env, Expr* e);
 typedef void (*F_Pre)  (void);
 
 int visit_type (struct Env* env, Type* tp, F_Type ft);
-int visit_expr (struct Env* env, Expr* e,  F_Expr fe);
+int visit_expr (int ord, struct Env* env, Expr* e,  F_Expr fe);
 int visit_stmt (int ord, Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft);
 
 int exec (Stmt* s, F_Pre pre, F_Stmt fs);   // 0=error, 1=success

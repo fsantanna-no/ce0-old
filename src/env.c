@@ -632,7 +632,7 @@ int check_decls_expr (Env* env, Expr* e) {
             if (!ftk(env, &e->Call.func->Var.tk, "function")) {
                 return 0;
             }
-            if (!visit_expr(env,e->Call.arg,check_decls_expr)) {
+            if (!visit_expr(1,env,e->Call.arg,check_decls_expr)) {
                 return 0;
             }
             return VISIT_BREAK;
