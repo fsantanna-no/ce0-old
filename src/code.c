@@ -150,7 +150,8 @@ void code_free_user (Env* env, Stmt* user) {
         if (env_type_ishasrec(env, sub.type, 0)) {
             fprintf (ALL.out,
                 "case %s:\n"
-                "   %s_free(&(*p)%s_%s);\n",
+                "   %s_free(&(*p)%s_%s);\n"
+                "   break;\n",
                 sub.tk.val.s,
                 to_ce(sub.type), (isrec ? "->" : "."), sub.tk.val.s
             );
