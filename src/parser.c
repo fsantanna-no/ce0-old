@@ -486,11 +486,8 @@ int parser_stmt (Stmt** ret) {
         if (!parser_expr(&e,1)) {
             return 0;
         }
+        assert(e->sub == EXPR_CALL);
         *s = (Stmt) { ALL.nn++, STMT_CALL, NULL, {NULL,NULL}, tk, .Call=e };
-        if (e->sub != EXPR_CALL) {
-            ALL.tk1 = ALL.tk0;  // workaround to fail before 1st expression
-            return err_expected("call expression");
-        }
 
     // STMT_IF
     } else if (accept(TK_IF)) {         // if
@@ -503,13 +500,11 @@ int parser_stmt (Stmt** ret) {
 
         Stmt *t,*f;
 
-        err_expected("{");
         if (!parser_block(&t)) {         // true()
             return 0;
         }
 
         if (accept(TK_ELSE)) {
-            err_expected("{");
             if (!parser_block(&f)) {     // false()
                 return 0;
             }
@@ -565,7 +560,6 @@ int parser_stmt (Stmt** ret) {
         }
 
         Stmt* blk2;
-        err_expected("{");
         if (!parser_block(&blk2)) {
             return 0;
         }

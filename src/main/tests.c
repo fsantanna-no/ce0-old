@@ -499,7 +499,7 @@ void t_parser_stmt (void) {
         assert(s->Var.type->sub == TYPE_NATIVE);
         fclose(ALL.inp);
     }
-    // STMT_TYPE
+    // STMT_USER
     {
         all_init(NULL, stropen("r", 0, "type Bool"));
         Stmt* s;
@@ -2523,6 +2523,15 @@ __XXX__:
         "}\n"
         "output std n    -- shows 10\n"
     ));
+
+#if TODO-deep_ptr
+    assert(all(
+        "10\n",
+        "var x: Int = 10\n"
+        "func f: () -> \\Int { return \\x }\n"
+        "output std (f ()) \\\n"
+    ));
+#endif
 
 #if TODO-what
     assert(all(
