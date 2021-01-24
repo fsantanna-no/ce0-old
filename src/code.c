@@ -49,6 +49,9 @@ void to_ce_ (char* out, Type* tp) {
             for (int i=0; i<tp->Tuple.size; i++) {
                 strcat(out, "__");
                 to_ce_(out, tp->Tuple.vec[i]);
+                if (tp->Tuple.vec[i]->isptr) {
+                    strcat(out,"_ptr");
+                }
             }
             break;
         case TYPE_FUNC:
@@ -70,7 +73,6 @@ void code_to_ce (Type* tp) {
 ///////////////////////////////////////////////////////////////////////////////
 
 void to_c_ (char* out, Env* env, Type* tp) {
-    int isrec = 0;
     switch (tp->sub) {
         case TYPE_ANY:
         case TYPE_UNIT:
@@ -82,18 +84,14 @@ void to_c_ (char* out, Env* env, Type* tp) {
             break;
         case TYPE_USER: {
             Stmt* s = env_id_to_stmt(env, tp->User.val.s);
-            isrec = (s!=NULL && s->User.isrec);
+            int isrec = (s!=NULL && s->User.isrec);
             if (isrec) strcat(out, "struct ");
             strcat(out, tp->User.val.s);
             if (isrec) strcat(out, "*");
             break;
         }
         case TYPE_TUPLE:
-            strcat(out, "TUPLE");
-            for (int i=0; i<tp->Tuple.size; i++) {
-                strcat(out, "__");
-                to_ce_(out, tp->Tuple.vec[i]);
-            }
+            to_ce_(out, tp);
             break;
         case TYPE_FUNC:
             assert(0 && "TODO");
@@ -295,7 +293,7 @@ int ftp_tuples (Env* env, Type* tp_) {
             // do not generate anything
         } else {
             out(to_c(env,tp.Tuple.vec[i]));
-            fprintf(ALL.out, " _%d;\n", i+1);
+            fprintf(ALL.out, " _%d; /* xxx */\n", i+1);
         }
     }
     out("} ");
