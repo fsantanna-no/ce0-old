@@ -293,7 +293,7 @@ int ftp_tuples (Env* env, Type* tp_) {
             // do not generate anything
         } else {
             out(to_c(env,tp.Tuple.vec[i]));
-            fprintf(ALL.out, " _%d; /* xxx */\n", i+1);
+            fprintf(ALL.out, " _%d;\n", i+1);
         }
     }
     out("} ");
