@@ -2318,7 +2318,7 @@ __XXX__:
         "output std (\\l1)\n"
     ));
     assert(all(
-        "(ln 8, col 5): invalid assignment : cannot hold local pointer \"l2\" (ln 7)",
+        "(ln 8, col 5): invalid assignment : cannot hold pointer \"l2\" (ln 7) in outer scope",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
@@ -2341,7 +2341,7 @@ __XXX__:
         "output std (x\\)\n"
     ));
     assert(all(
-        "(ln 4, col 5): invalid assignment : cannot hold local pointer \"z\" (ln 3)",
+        "(ln 4, col 5): invalid assignment : cannot hold pointer \"z\" (ln 3) in outer scope",
         "var x: \\Int = ?\n"
         "{\n"
         "    var z: Int = 10\n"
@@ -2350,7 +2350,7 @@ __XXX__:
         "output std (x\\)\n"
     ));
     assert(all(
-        "(ln 4, col 5): invalid assignment : cannot hold local pointer \"y\" (ln 3)",
+        "(ln 4, col 5): invalid assignment : cannot hold pointer \"y\" (ln 3) in outer scope",
         "var x: (Int,\\Int) = (10,?)\n"
         "{\n"
         "    var y: Int = 10\n"
@@ -2368,7 +2368,7 @@ __XXX__:
         "output std x.2\\\n"
     ));
     assert(all(
-        "(ln 4, col 5): invalid assignment : cannot hold local pointer \"y\" (ln 3)",
+        "(ln 4, col 5): invalid assignment : cannot hold pointer \"y\" (ln 3) in outer scope",
         "var x: (Int,\\Int) = (10,?)\n"
         "{\n"
         "    var y: Int = 10\n"
@@ -2377,7 +2377,7 @@ __XXX__:
         "output std x.2\\\n"
     ));
     assert(all(
-        "(ln 4, col 5): invalid assignment : cannot hold local pointer \"y\" (ln 3)",
+        "(ln 4, col 5): invalid assignment : cannot hold pointer \"y\" (ln 3) in outer scope",
         "var x: (Int,\\Int) = (10,?)\n"
         "{\n"
         "    var y: (Int,\\Int) = (10,?)\n"
@@ -2386,7 +2386,7 @@ __XXX__:
         "output std x.2\\\n"
     ));
     assert(all(
-        "(ln 4, col 5): invalid assignment : cannot hold local pointer \"y\" (ln 3)",
+        "(ln 4, col 5): invalid assignment : cannot hold pointer \"y\" (ln 3) in outer scope",
         "var x: (Int,\\Int) = (10,?)\n"
         "{\n"
         "    var y: (Int,Int) = (10,10)\n"
@@ -2395,7 +2395,7 @@ __XXX__:
         "output std x.2\\\n"
     ));
     assert(all(
-        "(ln 7, col 5): invalid assignment : cannot hold local pointer \"y\" (ln 6)",
+        "(ln 7, col 5): invalid assignment : cannot hold pointer \"y\" (ln 6) in outer scope",
         "type Xx {\n"
         "    Xx1: (Int,\\Int)\n"
         "}\n"
@@ -2408,7 +2408,7 @@ __XXX__:
 //puts("-=-=-=-");
 //assert(0);
     assert(all(
-        "(ln 7, col 5): invalid assignment : cannot hold local pointer \"y\" (ln 6)",
+        "(ln 7, col 5): invalid assignment : cannot hold pointer \"y\" (ln 6) in outer scope",
         "type Xx {\n"
         "    Xx1: (Int,\\Int)\n"
         "}\n"
@@ -2419,7 +2419,7 @@ __XXX__:
         "}\n"
     ));
     assert(all(
-        "(ln 7, col 5): invalid assignment : cannot hold local pointer \"y\" (ln 6)",
+        "(ln 7, col 5): invalid assignment : cannot hold pointer \"y\" (ln 6) in outer scope",
         "type Xx {\n"
         "    Xx1: (Int,\\Int)\n"
         "}\n"
@@ -2430,7 +2430,7 @@ __XXX__:
         "}\n"
     ));
     assert(all(
-        "(ln 5, col 5): invalid assignment : cannot hold local pointer \"z\" (ln 4)",
+        "(ln 5, col 5): invalid assignment : cannot hold pointer \"z\" (ln 4) in outer scope",
         "var x: \\Int = ?\n"
         "func f: \\Int -> \\Int { return arg }\n"
         "{\n"

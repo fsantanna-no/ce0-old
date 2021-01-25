@@ -897,7 +897,7 @@ int check_set_set_ptr_deepest (Stmt* s) {
 
             if (dst_decl->env->depth < dst_decl->Var.ptr_deepest->env->depth) {
                 char err[TK_BUF+256];
-                sprintf(err, "invalid assignment : cannot hold local pointer \"%s\" (ln %d)",
+                sprintf(err, "invalid assignment : cannot hold pointer \"%s\" (ln %d) in outer scope",
                         src_decl->Var.tk.val.s, src_decl->Var.tk.lin);
                 err_message(&s->tk, err);
                 return VISIT_ERROR;
