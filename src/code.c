@@ -1075,6 +1075,5 @@ void code (Stmt* s) {
         "\n"
     );
     code_stmt(s);
-    fprintf(ALL.out, "\n");
-    out("}\n");
+    out("\n}\n");
 }

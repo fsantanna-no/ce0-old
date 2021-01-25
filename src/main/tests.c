@@ -921,6 +921,30 @@ void t_code (void) {
             stropen("w", sizeof(out), out),
             stropen("r", 0, "var a : () = () ; call _stdo a")
         );
+        Stmt s = { STMT_NONE };
+        code(&s);
+        fclose(ALL.out);
+        char* xp =
+            "#include <assert.h>\n"
+            "#include <stdio.h>\n"
+            "#include <stdlib.h>\n"
+            "typedef int Int;\n"
+            "#define stdout_Unit_() printf(\"()\")\n"
+            "#define stdout_Unit()  (stdout_Unit_(), puts(\"\"))\n"
+            "#define stdout_Int_(x) printf(\"%d\",x)\n"
+            "#define stdout_Int(x)  (stdout_Int_(x), puts(\"\"))\n"
+            "int main (void) {\n"
+            "\n"
+            "\n"
+            "}\n";
+        assert(!strcmp(out,xp));
+    }
+    {
+        char out[8192] = "";
+        all_init (
+            stropen("w", sizeof(out), out),
+            stropen("r", 0, "var a : () = () ; call _stdo a")
+        );
         Stmt* s;
         assert(parser_stmts(TK_EOF,&s));
         assert(s->sub == STMT_SEQ);
