@@ -1509,6 +1509,18 @@ __XXX__:
         "call f (\\x)\n"
         "output std x\n"
     ));
+
+    // arg.1 > arg.2
+    assert(all(
+        "(ln 3, col 4): invalid assignment : cannot hold pointer \"arg\" (ln 2) in outer scope",
+        "type Tp { Tp1: \\Int }\n"
+        "func f : (\\Tp,\\Int) -> () {\n"
+        "   set arg.1\\.Tp1! = arg.2\n"
+        "   return ()\n"
+        "}\n"
+        "output std 1\n"
+    ));
+
     assert(all(
         "True\n",
         "type Bool {\n"

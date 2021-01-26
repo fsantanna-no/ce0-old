@@ -58,6 +58,32 @@ Expr* expr_leftmost (Expr* e) {
     }
 }
 
+Expr* expr_leftmost_n (Expr* e, int* n) {
+    Expr* ret;
+    switch (e->sub) {
+        case EXPR_UPREF:
+            ret = expr_leftmost_n(e->Upref, n);
+            break;
+        case EXPR_DNREF:
+            ret = expr_leftmost_n(e->Dnref, n);
+            break;
+        case EXPR_INDEX:
+            ret = expr_leftmost_n(e->Index.val, n);
+            break;
+        case EXPR_DISC:
+            ret = expr_leftmost_n(e->Disc.val, n);
+            break;
+        default:
+            ret = e;
+            break;
+    }
+    if (*n == 0) {
+        return ret;
+    }
+    (*n)--;
+    return e;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 int parser_type (Type** ret) {
