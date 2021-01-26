@@ -893,12 +893,12 @@ int check_set_set_ptr_deepest (Stmt* s) {
 //dump_expr(idx); printf(" [%d] <<<\n", idx->sub);
                 if (idx->sub==EXPR_INDEX && !strcmp(dst->Var.tk.val.s,"arg")) {
 //puts("111");
-                    if (s->Set.dst->sub == EXPR_INDEX) {
+                    if (idx->sub == EXPR_INDEX) {
                         float depth = dst->Var.ptr_deepest_depth + 0.1*idx->Index.index.val.n;
-//printf(">>> %f\n", depth);
                         if (depth > dst_depth) {
                             dst_depth = depth;
                         }
+//printf(">DST> %f\n", dst_depth);
                     }
                 }
 
@@ -910,7 +910,7 @@ int check_set_set_ptr_deepest (Stmt* s) {
                         Stmt* dcl = env_expr_leftmost_decl(s->env, s->Set.src);
                         if (!strcmp(dcl->Var.tk.val.s, "arg")) {
                             float depth = dcl->Var.ptr_deepest_depth + 0.1*idx->Index.index.val.n;
-//printf(">>> %f\n", depth);
+//printf(">SRC> %f\n", depth);
                             if (depth > dst->Var.ptr_deepest_depth) {
                                 dst->Var.ptr_deepest_var   = &dcl->Var.tk;
                                 dst->Var.ptr_deepest_depth = depth;
@@ -935,7 +935,7 @@ int check_set_set_ptr_deepest (Stmt* s) {
 
             Tk* src_var = dst->Var.ptr_deepest_var;
 
-            if (dst->env->depth < dst->Var.ptr_deepest_depth) {
+            if (dst_depth < dst->Var.ptr_deepest_depth) {
                 char err[TK_BUF+256];
                 sprintf(err, "invalid assignment : cannot hold pointer \"%s\" (ln %d) in outer scope",
                         src_var->val.s, src_var->lin);

@@ -1520,6 +1520,19 @@ __XXX__:
         "}\n"
         "output std 1\n"
     ));
+    assert(all(
+        "10\n",
+        "type Tp { Tp1: \\Int }\n"
+        "func f : (\\Int,\\Tp) -> () {\n"
+        "   set arg.2\\.Tp1! = arg.1\n"
+        "   return ()\n"
+        "}\n"
+        "var i: Int = 10\n"
+        "var j: Int = 0\n"
+        "var tp: Tp = Tp1 \\j\n"
+        "call f (\\i,\\tp)\n"
+        "output std tp.Tp1!\\\n"
+    ));
 
     assert(all(
         "True\n",
