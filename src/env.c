@@ -853,8 +853,7 @@ int check_types_stmt (Stmt* s) {
 int check_set_set_ptr_deepest (Stmt* s) {
     switch (s->sub) {
         case STMT_VAR: {
-            s->Var.ptr_deepest_var   = &s->Var.tk;
-            s->Var.ptr_deepest_depth = (s->env == NULL) ? 0 : s->env->depth;
+            s->Var.ptr_deepest = s;
 
             int n=0; Expr* vars[256];
             env_held_vars(s->env, s->Var.init, &n, vars);
@@ -862,9 +861,8 @@ int check_set_set_ptr_deepest (Stmt* s) {
                 Stmt* dcl = env_id_to_stmt(s->env, vars[i]->tk.val.s);
                 assert(dcl != NULL);
                 assert(dcl->sub == STMT_VAR);
-                if (dcl->env->depth > s->Var.ptr_deepest_depth) {
-                    s->Var.ptr_deepest_var   = &dcl->Var.tk;
-                    s->Var.ptr_deepest_depth = dcl->env->depth;
+                if (dcl->env->depth > s->Var.ptr_deepest->env->depth) {
+                    s->Var.ptr_deepest = dcl;
                 }
             }
             break;
@@ -877,7 +875,7 @@ int check_set_set_ptr_deepest (Stmt* s) {
 
             Stmt* dst = env_expr_leftmost_decl(s->env, s->Set.dst);
             assert(dst->sub == STMT_VAR);
-            int dst_depth = dst->Var.ptr_deepest_depth;
+            int dst_depth = dst->Var.ptr_deepest->env->depth;
 
 #if 0
             // prevent ...
@@ -924,17 +922,16 @@ assert(0);
                 env_held_vars(s->env, s->Set.src, &n, vars);
                 for (int i=0; i<n; i++) {
                     Stmt* src = env_id_to_stmt(s->env, vars[i]->tk.val.s);
-                    assert(src!=NULL && src->sub==STMT_VAR && src->Var.ptr_deepest_var!=NULL);
-                    if (src->Var.ptr_deepest_depth > dst->Var.ptr_deepest_depth) {
-                        dst->Var.ptr_deepest_var   = &src->Var.tk;
-                        dst->Var.ptr_deepest_depth = src->env->depth;
+                    assert(src!=NULL && src->sub==STMT_VAR && src->Var.ptr_deepest!=NULL);
+                    if (src->Var.ptr_deepest->env->depth > dst->Var.ptr_deepest->env->depth) {
+                        dst->Var.ptr_deepest = src;
                     }
                 }
             }
 
-            Tk* src_var = dst->Var.ptr_deepest_var;
+            Tk* src_var = &dst->Var.ptr_deepest->Var.tk;
 
-            if (dst_depth < dst->Var.ptr_deepest_depth) {
+            if (dst_depth < dst->Var.ptr_deepest->env->depth) {
                 char err[TK_BUF+256];
                 sprintf(err, "invalid assignment : cannot hold pointer \"%s\" (ln %d) in outer scope",
                         src_var->val.s, src_var->lin);
@@ -963,10 +960,10 @@ int check_ret_ptr_deepest (Stmt* s) {
 
     Expr* src      = expr_leftmost(s->Return);
     Stmt* src_decl = env_expr_leftmost_decl(s->env, s->Return);
-    assert(src_decl->Var.ptr_deepest_var != NULL);
+    assert(src_decl->Var.ptr_deepest != NULL);
 
 //printf("ret=%d vs src=%d\n", s->env->depth, src_decl->Var.ptr_deepest->env->depth);
-    if (s->env->depth <= src_decl->Var.ptr_deepest_depth) {
+    if (s->env->depth <= src_decl->Var.ptr_deepest->env->depth) {
         char err[TK_BUF+256];
         sprintf(err, "invalid return : cannot return local pointer \"%s\" (ln %d)",
                 src->tk.val.s, src_decl->tk.lin);
@@ -990,11 +987,11 @@ int check_tuple_ptr_deepest (Env* env, Expr* e) {
     for (int i=0; i<n; i++) {
         Stmt* var = env_expr_leftmost_decl(env, vars[i]);
         assert(var!=NULL && var->sub==STMT_VAR);
-        if (depth!=-1 && depth!=var->Var.ptr_deepest_depth) {
+        if (depth!=-1 && depth!=var->Var.ptr_deepest->env->depth) {
             err_message(&e->tk, "invalid tuple : pointers with different scopes");
             return VISIT_ERROR;
         }
-        depth = var->Var.ptr_deepest_depth;
+        depth = var->Var.ptr_deepest->env->depth;
     }
     return VISIT_CONTINUE;
 }

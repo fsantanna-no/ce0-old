@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DEBUG
+//#define DEBUG
 //#define VALGRIND
 
 #include "../all.h"
@@ -913,7 +913,6 @@ void t_code (void) {
         Expr e = { ALL.nn++, EXPR_INDEX, {TX_NUM,{2},0,0}, .Index={&val,0} };
         code_expr(&env, &e, 0);
         fclose(ALL.out);
-puts(out);
         assert(!strcmp(out,"x._2"));
     }
     {
