@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-//#define DEBUG
+#define DEBUG
 //#define VALGRIND
 
 #include "../all.h"
@@ -1554,19 +1554,21 @@ __XXX__:
         "}\n"
     ));
     assert(all(
-        "(ln 10, col 11): invalid tuple : pointers with different scopes",
-        "type Tp { Tp1: \\Int }\n"
-        "func f : (\\Int,\\Tp) -> () {\n"
-        "   set arg.2\\.Tp1! = arg.1\n"
-        "   return ()\n"
+        "(ln 12, col 12): invalid tuple : pointers with different scopes",
+        "type Tp {\n"
+        "    Tp1: \\Int\n"
         "}\n"
-        "var j: Int = 0\n"
-        "var tp: Tp = Tp1 \\j\n"
+        "func f : (\\Int,\\Tp) -> () {  -- 2nd argument (possibly pointing to wider scope)\n"
+        "    set arg.2\\.Tp1! = arg.1   -- holds 1st argument (possibly pointing to narrower scope)\n"
+        "    return ()                  -- this leads to a dangling reference\n"
+        "}\n"
+        "var i: Int = 10\n"
+        "var tp: Tp = Tp1 \\i           -- wider scope\n"
         "{\n"
-        "   var i: Int = 10\n"
-        "   call f (\\i,\\tp)\n"    // i > tp
+        "    var j: Int = 0             -- narrower scope\n"
+        "    call f (\\j,\\tp)          -- ERROR: passing pointers with different scopes\n"
         "}\n"
-        "output std tp.Tp1!\\\n"
+        "output std tp.Tp1!\\           -- use of dangling reference\n"
     ));
 
     assert(all(
