@@ -77,7 +77,7 @@ void dump_expr (Expr* e) {
             dump_expr(e->Call.arg);
             break;
         case EXPR_CONS:
-            printf("cons\n");
+            printf("cons");
             break;
         case EXPR_DISC:
             dump_expr(e->Disc.val);

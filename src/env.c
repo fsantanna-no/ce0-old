@@ -981,29 +981,25 @@ int check_ret_ptr_deepest (Stmt* s) {
     return VISIT_CONTINUE;
 }
 
-int check_call_ptr_deepest (Env* env, Expr* e) {
-    if (e->sub != EXPR_CALL) {
+int check_tuple_ptr_deepest (Env* env, Expr* e) {
+    if (e->sub != EXPR_TUPLE) {
         return VISIT_CONTINUE;
     }
 
-    // EXPR_CALL
+    // EXPR_TUPLE
 
+    int n=0; Expr* vars[256];
+    env_held_vars(env, e, &n, vars);
     int depth = -1;
-    if (e->Call.arg->sub == EXPR_TUPLE) {
-        for (int i=0; i<e->Call.arg->Tuple.size; i++) {
-            Expr* val = e->Call.arg->Tuple.vec[i];
-            Type* tp = env_expr_to_type(env,val);
-            if (!env_type_ishasptr(env,tp)) {
-                Stmt* var = env_expr_leftmost_decl(env, val);
-                assert(var!=NULL && var->sub==STMT_VAR);
-                if (depth > var->Var.ptr_deepest_depth) {
+    for (int i=0; i<n; i++) {
+        Stmt* var = env_expr_leftmost_decl(env, vars[i]);
+        assert(var!=NULL && var->sub==STMT_VAR);
+        if (depth!=-1 && depth!=var->Var.ptr_deepest_depth) {
 // TODO: ALL.tk0
-                    err_message(&ALL.tk0, "invalid call : pointer argument is more outer than its previous");
-                    return VISIT_ERROR;
-                }
-                depth = var->Var.ptr_deepest_depth;
-            }
+            err_message(&ALL.tk0, "invalid tuple : pointers with different scopes");
+            return VISIT_ERROR;
         }
+        depth = var->Var.ptr_deepest_depth;
     }
     return VISIT_CONTINUE;
 }
@@ -1022,7 +1018,7 @@ int env (Stmt* s) {
     if (!visit_stmt(0,s,check_set_set_ptr_deepest,NULL,NULL)) {
         return 0;
     }
-    if (!visit_stmt(0,s,check_ret_ptr_deepest,check_call_ptr_deepest,NULL)) {
+    if (!visit_stmt(0,s,check_ret_ptr_deepest,check_tuple_ptr_deepest,NULL)) {
         return 0;
     }
     return 1;
