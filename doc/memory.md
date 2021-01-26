@@ -283,6 +283,36 @@ var x: \List = ...          -- outer scope
 If surviving pointers were allowed, they would refer to deallocated values,
 resulting in a dangling reference (i.e, *use-after-free*).
 
+For the same reason, *Ce* disallows tuples or function arguments to hold
+pointers to different scopes:
+
+```
+type Tp {
+    Tp1: \Int
+}
+func f : (\Int,\Tp) -> () { -- 2nd argument (possibly pointing to wider scope)
+    set arg.2\.Tp1! = arg.1 -- holds 1st argument (possibly pointing to narrower scope)
+    return ()               -- this leads to a dangling reference
+}
+var i: Int = 10
+var tp: Tp = Tp1 \i         -- wider scope
+{
+    var j: Int = 0          -- narrower scope
+    call f (\j,\tp)         -- ERROR: passing pointers with different scopes
+}
+output std tp.Tp1!\         -- use of dangling reference
+```
+
+The call to `f` passes a tuple with two pointers, each pointing to a variable
+in a different scope.
+We might try to take the pointer with the wider scope and hold inside it the
+pointer with narrower scope, as illustrated in the body of `f`.
+In this case, the pointer with narrower scope will become dangling when its
+scope terminates, but will still be reachable from the pointer to the wider
+scope, as illustrated in the `output` call.
+*Ce* refuses this program when we try to create the tuple with the two
+pointers.
+
 <!--
 All dependencies of an assignment are tracked and all constructors are
 allocated in the same pool.
