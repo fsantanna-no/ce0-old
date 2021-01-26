@@ -176,27 +176,27 @@ int parser_expr_ (Expr** ret)
 
 // EXPR_UNIT
     if (accept(TK_UNIT)) {
-        *e = (Expr) { ALL.nn++, EXPR_UNIT, .Unit=ALL.tk0 };
+        *e = (Expr) { ALL.nn++, EXPR_UNIT, ALL.tk0 };
 
 // EXPR_UNK
     } else if (accept('?')) {
-        *e = (Expr) { ALL.nn++, EXPR_UNK, .Unk=ALL.tk0 };
+        *e = (Expr) { ALL.nn++, EXPR_UNK, ALL.tk0 };
 
 // EXPR_NULL
     } else if (accept(TX_NULL)) {   // $Nat
-        *e = (Expr) { ALL.nn++, EXPR_NULL, .Null=ALL.tk0 };
+        *e = (Expr) { ALL.nn++, EXPR_NULL, ALL.tk0 };
 
 // EXPR_INT
     } else if (accept(TX_NUM)) {    // 10
-        *e = (Expr) { ALL.nn++, EXPR_INT, .Int=ALL.tk0 };
+        *e = (Expr) { ALL.nn++, EXPR_INT, ALL.tk0 };
 
 // EXPR_NATIVE
     } else if (accept(TX_NATIVE)) {
-        *e = (Expr) { ALL.nn++, EXPR_NATIVE, .Native=ALL.tk0 };
+        *e = (Expr) { ALL.nn++, EXPR_NATIVE, ALL.tk0 };
 
 // EXPR_VAR
     } else if (accept(TX_VAR)) {
-        *e = (Expr) { ALL.nn++, EXPR_VAR, .Var={ALL.tk0,0,0} };
+        *e = (Expr) { ALL.nn++, EXPR_VAR, ALL.tk0, .Var={0,0} };
 
 // EXPR_UPREF
     } else if (accept('\\')) {
@@ -206,13 +206,14 @@ int parser_expr_ (Expr** ret)
             return 0;
         }
         if (val->sub==EXPR_VAR || val->sub==EXPR_INDEX || val->sub==EXPR_DISC) {
-            *e = (Expr) { ALL.nn++, EXPR_UPREF, .Upref=val };
+            *e = (Expr) { ALL.nn++, EXPR_UPREF, tk, .Upref=val };
         } else {
             return err(&tk, "unexpected operand to `\\´");
         }
 
 // EXPR_PARENS / EXPR_TUPLE
     } else if (accept('(')) {
+        Tk tk0 = ALL.tk0;
         if (!parser_expr(ret,0)) {
             return 0;
         }
@@ -248,7 +249,7 @@ int parser_expr_ (Expr** ret)
             return 0;
         }
 
-        *e = (Expr) { ALL.nn++, EXPR_TUPLE, .Tuple={n,vec} };
+        *e = (Expr) { ALL.nn++, EXPR_TUPLE, tk0, .Tuple={n,vec} };
         *ret = e;
 
 // EXPR_CONS
@@ -259,10 +260,10 @@ int parser_expr_ (Expr** ret)
         if (!parser_expr(&arg,0)) {   // ()
             arg = malloc(sizeof(Expr));
             assert(arg != NULL);
-            *arg = (Expr) { ALL.nn++, EXPR_UNIT, .Unit={TK_UNIT,{},0,ALL.nn++} };
+            *arg = (Expr) { ALL.nn++, EXPR_UNIT, {TK_UNIT,{},0,ALL.nn++} };
         }
 
-        *e = (Expr) { ALL.nn++, EXPR_CONS, .Cons={sub,arg} };
+        *e = (Expr) { ALL.nn++, EXPR_CONS, sub, .Cons=arg };
 
     } else {
         return err_expected("expression");
@@ -290,8 +291,8 @@ int parser_expr (Expr** ret, int canpre) {
             char tmp[256];
             strcpy(tmp, pre.val.s);
             strcat(tmp, "_");
-            strcat(tmp, cur->Var.tk.val.s);
-            strcpy(cur->Var.tk.val.s, tmp);
+            strcat(tmp, cur->tk.val.s);
+            strcpy(cur->tk.val.s, tmp);
         }
     }
 
@@ -306,16 +307,16 @@ int parser_expr (Expr** ret, int canpre) {
         if (accept('.')) {
 // EXPR_INDEX
             if (accept(TX_NUM)) {
-                *new = (Expr) { ALL.nn++, EXPR_INDEX, .Index={cur,ALL.tk0} };
+                *new = (Expr) { ALL.nn++, EXPR_INDEX, ALL.tk0, .Index={cur,0} };
 
 // EXPR_DISC / EXPR_PRED
             } else if (accept(TX_USER) || accept(TX_NULL)) {
                 Tk tk = ALL.tk0;
 
                 if (accept('?')) {
-                    *new = (Expr) { ALL.nn++, EXPR_PRED, .Pred={cur,tk} };
+                    *new = (Expr) { ALL.nn++, EXPR_PRED, tk, .Pred={cur} };
                 } else if (accept('!')) {
-                    *new = (Expr) { ALL.nn++, EXPR_DISC, .Disc={cur,tk} };
+                    *new = (Expr) { ALL.nn++, EXPR_DISC, tk, .Disc={cur,0} };
                 } else {
                     return err_expected("`?´ or `!´");
                 }
@@ -330,19 +331,19 @@ int parser_expr (Expr** ret, int canpre) {
                 cur->sub==EXPR_UPREF  || cur->sub==EXPR_DNREF ||
                 cur->sub==EXPR_INDEX  || cur->sub==EXPR_CALL  ||
                 cur->sub==EXPR_DISC) {
-                *new = (Expr) { ALL.nn++, EXPR_DNREF, .Dnref=cur };
+                *new = (Expr) { ALL.nn++, EXPR_DNREF, ALL.tk0, .Dnref=cur };
             } else {
                 return err(&ALL.tk0, "unexpected operand to `\\´");
             }
 
 // EXPR_CALL
         } else if (isvarnat && parser_expr(&arg,0)) {
-            *new = (Expr) { ALL.nn++, EXPR_CALL, .Call={cur,arg} };
+            *new = (Expr) { ALL.nn++, EXPR_CALL, arg->tk, .Call={cur,arg} };
         } else if (isvarnat && ispre) {
             arg = malloc(sizeof(Expr));
             assert(arg != NULL);
-            *arg = (Expr) { ALL.nn++, EXPR_UNIT, .Unit={TK_UNIT,{},0,ALL.nn++} };
-            *new = (Expr) { ALL.nn++, EXPR_CALL, .Call={cur,arg} };
+            *arg = (Expr) { ALL.nn++, EXPR_UNIT, {TK_UNIT,{},0,ALL.nn++} };
+            *new = (Expr) { ALL.nn++, EXPR_CALL, arg->tk, .Call={cur,arg} };
             break;
 
         } else {
@@ -600,7 +601,7 @@ int parser_stmt (Stmt** ret) {
 
         *blk1 = (Stmt) { ALL.nn++, STMT_BLOCK, NULL, {NULL,NULL}, tk, .Block=seq1 };
         *seq1 = (Stmt) { ALL.nn++, STMT_SEQ,   NULL, {NULL,NULL}, tk, .Seq={arg,blk2} };
-        *expr = (Expr) { ALL.nn++, EXPR_NATIVE, {.Native={TX_NATIVE,{.s="_arg_"},id.lin,id.col}} };
+        *expr = (Expr) { ALL.nn++, EXPR_NATIVE, {TX_NATIVE,{.s="_arg_"},id.lin,id.col} };
         *arg  = (Stmt) { ALL.nn++, STMT_VAR,   NULL, {NULL,NULL}, tk,
             .Var = {
                 { TX_VAR, {.s="arg"}, id.lin, id.col },

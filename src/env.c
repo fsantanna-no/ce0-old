@@ -101,18 +101,18 @@ Type* env_expr_to_type (Env* env, Expr* e) {
         case EXPR_NATIVE: {
             Type* tp = malloc(sizeof(Type));
             assert(tp != NULL);
-            *tp = (Type) { TYPE_NATIVE, 0, .Native=e->Native };
+            *tp = (Type) { TYPE_NATIVE, 0, .Native=e->tk };
             return tp;
         }
 
         case EXPR_VAR: {
-            Stmt* s = env_id_to_stmt(env, e->Var.tk.val.s);
+            Stmt* s = env_id_to_stmt(env, e->tk.val.s);
             assert(s != NULL);
             return (s->sub == STMT_VAR) ? s->Var.type : s->Func.type;
         }
 
         case EXPR_NULL: {
-            Stmt* user = env_id_to_stmt(env, e->Null.val.s);
+            Stmt* user = env_id_to_stmt(env, e->tk.val.s);
             assert(user != NULL);
             Type* tp = malloc(sizeof(Type));
             assert(tp != NULL);
@@ -164,7 +164,7 @@ Type* env_expr_to_type (Env* env, Expr* e) {
             Type* tp = env_expr_to_type(env, e->Call.func);
             if (tp->sub == TYPE_FUNC) {
                 assert(e->Call.func->sub == EXPR_VAR);
-                if (!strcmp(e->Call.func->Var.tk.val.s,"clone")) {     // returns type of arg
+                if (!strcmp(e->Call.func->tk.val.s,"clone")) {     // returns type of arg
                     Type* ret = malloc(sizeof(Type));
                     assert(ret != NULL);
                     *ret = *env_expr_to_type(env, e->Call.arg);
@@ -180,17 +180,17 @@ Type* env_expr_to_type (Env* env, Expr* e) {
                 *tp = (Type) { TYPE_NATIVE, 0, .Native={TX_NATIVE,{.s={"TODO"}},0,0} };
                 switch (e->Call.arg->sub) {
                     case EXPR_UNIT:
-                        sprintf(tp->Native.val.s, "%s()", e->Call.func->Native.val.s);
+                        sprintf(tp->Native.val.s, "%s()", e->Call.func->tk.val.s);
                         break;
                     case EXPR_VAR:
                     case EXPR_NATIVE:
-                        sprintf(tp->Native.val.s, "%s(%s)", e->Call.func->Native.val.s, e->Call.arg->Var.tk.val.s);
+                        sprintf(tp->Native.val.s, "%s(%s)", e->Call.func->tk.val.s, e->Call.arg->tk.val.s);
                         break;
                     case EXPR_NULL:
-                        sprintf(tp->Native.val.s, "%s(NULL)", e->Call.func->Native.val.s);
+                        sprintf(tp->Native.val.s, "%s(NULL)", e->Call.func->tk.val.s);
                         break;
                     case EXPR_INT:
-                        sprintf(tp->Native.val.s, "%s(0)", e->Call.func->Native.val.s);
+                        sprintf(tp->Native.val.s, "%s(0)", e->Call.func->tk.val.s);
                         break;
                     case EXPR_CALL:
                         // _f _g 1
@@ -210,11 +210,11 @@ Type* env_expr_to_type (Env* env, Expr* e) {
                 return tp;
             }
             assert(tp->sub == TYPE_TUPLE);
-            return tp->Tuple.vec[e->Index.index.val.n-1];
+            return tp->Tuple.vec[e->tk.val.n-1];
         }
 
         case EXPR_CONS: {
-            Stmt* user = env_sub_id_to_user_stmt(env, e->Cons.subtype.val.s);
+            Stmt* user = env_sub_id_to_user_stmt(env, e->tk.val.s);
             assert(user != NULL);
             Type* tp = malloc(sizeof(Type));
             assert(tp != NULL);
@@ -228,11 +228,11 @@ Type* env_expr_to_type (Env* env, Expr* e) {
         case EXPR_DISC: {   // x.True
             Type* val = env_expr_to_type(env, e->Disc.val);
             assert(val->sub == TYPE_USER);
-            if (e->Disc.subtype.enu == TX_NULL) {
-                assert(!strcmp(e->Disc.subtype.val.s, val->User.val.s));
+            if (e->tk.enu == TX_NULL) {
+                assert(!strcmp(e->tk.val.s, val->User.val.s));
                 return &Type_Unit;
             }
-            Type* tp = env_sub_id_to_user_type(env, e->Disc.subtype.val.s);
+            Type* tp = env_sub_id_to_user_type(env, e->tk.val.s);
             //assert(!tp->isptr && "bug found : `&´ inside subtype");
             if (!val->isptr) {
                 return tp;
@@ -380,7 +380,7 @@ Stmt* env_expr_leftmost_decl (Env* env, Expr* e) {
     Expr* left = expr_leftmost(e);
     assert(left != NULL);
     assert(left->sub == EXPR_VAR);
-    Stmt* left_decl = env_id_to_stmt(env, left->Var.tk.val.s);
+    Stmt* left_decl = env_id_to_stmt(env, left->tk.val.s);
     assert(left_decl != NULL);
     assert(left_decl->sub == STMT_VAR);
     return left_decl;
@@ -402,7 +402,7 @@ void env_held_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
             break;
 
         case EXPR_VAR: {
-            Stmt* s = env_id_to_stmt(env, e->Var.tk.val.s);
+            Stmt* s = env_id_to_stmt(env, e->tk.val.s);
             assert(s != NULL);
             if (s->Var.type->isptr) {
                 vars[(*vars_n)++] = e;
@@ -447,7 +447,7 @@ void env_held_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
             break;
 
         case EXPR_CONS: {
-            env_held_vars(env, e->Cons.arg, vars_n, vars);
+            env_held_vars(env, e->Cons, vars_n, vars);
             break;
         }
 
@@ -621,15 +621,15 @@ int check_decls_type (Env* env, Type* tp) {
 int check_decls_expr (Env* env, Expr* e) {
     switch (e->sub) {
         case EXPR_NULL:
-            return ftk(env, &e->Null, "type");
+            return ftk(env, &e->tk, "type");
         case EXPR_VAR:
-            return ftk(env, &e->Var.tk, "variable");
+            return ftk(env, &e->tk, "variable");
 
         case EXPR_CALL:
             if (e->Call.func->sub != EXPR_VAR) {
                 return VISIT_CONTINUE;
             }
-            if (!ftk(env, &e->Call.func->Var.tk, "function")) {
+            if (!ftk(env, &e->Call.func->tk, "function")) {
                 return 0;
             }
             if (!visit_expr(1,env,e->Call.arg,check_decls_expr)) {
@@ -638,28 +638,27 @@ int check_decls_expr (Env* env, Expr* e) {
             return VISIT_BREAK;
 
         case EXPR_CONS: {
-            Stmt* user = env_sub_id_to_user_stmt(env, e->Cons.subtype.val.s);
+            Stmt* user = env_sub_id_to_user_stmt(env, e->tk.val.s);
             if (user == NULL) {
                 char err[TK_BUF+256];
-                sprintf(err, "undeclared subtype \"%s\"", e->Cons.subtype.val.s);
-                return err_message(&e->Cons.subtype, err);
+                sprintf(err, "undeclared subtype \"%s\"", e->tk.val.s);
+                return err_message(&e->tk, err);
             }
             return VISIT_CONTINUE;
         }
 
         case EXPR_DISC:
         case EXPR_PRED: {
-            Tk* subtype = (e->sub == EXPR_DISC ? &e->Disc.subtype : &e->Pred.subtype);
-            if (subtype->enu == TX_NULL) {
-                if (!ftk(env, subtype, "type")) {
+            if (e->tk.enu == TX_NULL) {
+                if (!ftk(env, &e->tk, "type")) {
                     return 0;
                 }
             } else {
-                Stmt* user = env_sub_id_to_user_stmt(env, subtype->val.s);
+                Stmt* user = env_sub_id_to_user_stmt(env, e->tk.val.s);
                 if (user == NULL) {
                     char err[TK_BUF+256];
-                    sprintf(err, "undeclared subtype \"%s\"", subtype->val.s);
-                    return err_message(subtype, err);
+                    sprintf(err, "undeclared subtype \"%s\"", e->tk.val.s);
+                    return err_message(&e->tk, err);
                 }
             }
             return VISIT_CONTINUE;
@@ -723,10 +722,7 @@ int check_types_expr (Env* env, Expr* e) {
         case EXPR_DNREF: {
             Type* tp = env_expr_to_type(env, e->Dnref);
             if (!tp->isptr) {
-// TODO: ALL.tk0
-                return err_message(&ALL.tk0, "invalid `\\´ : expected pointer type");
-
-                //return err_message(e->tk, "invalid `\\´ : expected pointer type");
+                return err_message(&e->tk, "invalid `\\´ : expected pointer type");
             }
             break;
         }
@@ -734,10 +730,10 @@ int check_types_expr (Env* env, Expr* e) {
         case EXPR_INDEX: {
             Type* tp = env_expr_to_type(env, e->Index.val);
             if (tp->sub!=TYPE_TUPLE || tp->isptr) {
-                return err_message(&e->Index.index, "invalid `.´ : expected tuple type");
+                return err_message(&e->tk, "invalid `.´ : expected tuple type");
             }
-            if (0>e->Index.index.val.n || e->Index.index.val.n>tp->Tuple.size) {
-                return err_message(&e->Index.index, "invalid `.´ : index is out of range");
+            if (0>e->tk.val.n || e->tk.val.n>tp->Tuple.size) {
+                return err_message(&e->tk, "invalid `.´ : index is out of range");
             }
             break;
         }
@@ -745,7 +741,7 @@ int check_types_expr (Env* env, Expr* e) {
         case EXPR_DISC: {
             Type* tp = env_expr_to_type(env, e->Disc.val);
             if (tp->sub!=TYPE_USER || tp->isptr) {
-                return err_message(&e->Index.index, "invalid `.´ : expected user type");
+                return err_message(&e->tk, "invalid `.´ : expected user type");
             }
 // TODO: check if user type has subtype
             break;
@@ -754,7 +750,7 @@ int check_types_expr (Env* env, Expr* e) {
         case EXPR_PRED: {
             Type* tp = env_expr_to_type(env, e->Pred.val);
             if (tp->sub!=TYPE_USER || tp->isptr) {
-                return err_message(&e->Index.index, "invalid `.´ : expected user type");
+                return err_message(&e->tk, "invalid `.´ : expected user type");
             }
 // TODO: check if user type has subtype
             break;
@@ -768,26 +764,26 @@ int check_types_expr (Env* env, Expr* e) {
                 TODO("TODO [check_types]: _f(...)\n");
             } else {
                 assert(e->Call.func->sub == EXPR_VAR);
-                if (!strcmp(e->Call.func->Var.tk.val.s,"clone")) {
+                if (!strcmp(e->Call.func->tk.val.s,"clone")) {
                     TODO("TODO [check_types]: clone(...)\n");
-                } else if (!strcmp(e->Call.func->Var.tk.val.s,"std")) {
+                } else if (!strcmp(e->Call.func->tk.val.s,"std")) {
                     TODO("TODO [check_types]: std(...)\n");
                 } else if (!type_is_sup_sub(func->Func.inp, arg, 0)) {
                     char err[TK_BUF+256];
-                    sprintf(err, "invalid call to \"%s\" : type mismatch", e->Call.func->Var.tk.val.s);
-                    return err_message(&e->Call.func->Var.tk, err);
+                    sprintf(err, "invalid call to \"%s\" : type mismatch", e->Call.func->tk.val.s);
+                    return err_message(&e->Call.func->tk, err);
                 }
             }
             break;
         }
 
         case EXPR_CONS: {
-            Sub* sub = env_find_sub(env, e->Cons.subtype.val.s);
+            Sub* sub = env_find_sub(env, e->tk.val.s);
             assert(sub != NULL);
-            if (!type_is_sup_sub(sub->type, env_expr_to_type(env,e->Cons.arg), 0)) {
+            if (!type_is_sup_sub(sub->type, env_expr_to_type(env,e->Cons), 0)) {
                 char err[TK_BUF+256];
-                sprintf(err, "invalid constructor \"%s\" : type mismatch", e->Cons.subtype.val.s);
-                return err_message(&e->Cons.subtype, err);
+                sprintf(err, "invalid constructor \"%s\" : type mismatch", e->tk.val.s);
+                return err_message(&e->tk, err);
             }
         }
     }
@@ -819,8 +815,8 @@ int check_types_stmt (Stmt* s) {
             if (!type_is_sup_sub(env_expr_to_type(s->env,s->Set.dst), env_expr_to_type(s->env,s->Set.src), 1)) {
                 char err[TK_BUF+256];
                 if (s->Set.dst->sub == EXPR_VAR) {
-                    sprintf(err, "invalid assignment to \"%s\" : type mismatch", s->Set.dst->Var.tk.val.s);
-                    return err_message(&s->Set.dst->Var.tk, err);
+                    sprintf(err, "invalid assignment to \"%s\" : type mismatch", s->Set.dst->tk.val.s);
+                    return err_message(&s->Set.dst->tk, err);
                 } else {
                     strcpy(err, "invalid assignment : type mismatch");
                     return err_message(&s->tk, err);
@@ -863,7 +859,7 @@ int check_set_set_ptr_deepest (Stmt* s) {
             int n=0; Expr* vars[256];
             env_held_vars(s->env, s->Var.init, &n, vars);
             for (int i=0; i<n; i++) {
-                Stmt* dcl = env_id_to_stmt(s->env, vars[i]->Var.tk.val.s);
+                Stmt* dcl = env_id_to_stmt(s->env, vars[i]->tk.val.s);
                 assert(dcl != NULL);
                 assert(dcl->sub == STMT_VAR);
                 if (dcl->env->depth > s->Var.ptr_deepest_depth) {
@@ -927,7 +923,7 @@ assert(0);
                 int n=0; Expr* vars[256];
                 env_held_vars(s->env, s->Set.src, &n, vars);
                 for (int i=0; i<n; i++) {
-                    Stmt* src = env_id_to_stmt(s->env, vars[i]->Var.tk.val.s);
+                    Stmt* src = env_id_to_stmt(s->env, vars[i]->tk.val.s);
                     assert(src!=NULL && src->sub==STMT_VAR && src->Var.ptr_deepest_var!=NULL);
                     if (src->Var.ptr_deepest_depth > dst->Var.ptr_deepest_depth) {
                         dst->Var.ptr_deepest_var   = &src->Var.tk;
@@ -973,8 +969,8 @@ int check_ret_ptr_deepest (Stmt* s) {
     if (s->env->depth <= src_decl->Var.ptr_deepest_depth) {
         char err[TK_BUF+256];
         sprintf(err, "invalid return : cannot return local pointer \"%s\" (ln %d)",
-                src->Var.tk.val.s, src_decl->tk.lin);
-        err_message(&src->Var.tk, err);
+                src->tk.val.s, src_decl->tk.lin);
+        err_message(&src->tk, err);
         return VISIT_ERROR;
     }
     //assert(0); // never tested outer scope before: just remove this assert and go on...
@@ -995,8 +991,7 @@ int check_tuple_ptr_deepest (Env* env, Expr* e) {
         Stmt* var = env_expr_leftmost_decl(env, vars[i]);
         assert(var!=NULL && var->sub==STMT_VAR);
         if (depth!=-1 && depth!=var->Var.ptr_deepest_depth) {
-// TODO: ALL.tk0
-            err_message(&ALL.tk0, "invalid tuple : pointers with different scopes");
+            err_message(&e->tk, "invalid tuple : pointers with different scopes");
             return VISIT_ERROR;
         }
         depth = var->Var.ptr_deepest_depth;

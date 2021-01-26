@@ -142,7 +142,7 @@ int visit_expr_ (int ord, Env* env, Expr* e, F_Expr fe) {
         case EXPR_DNREF:
             return visit_expr(ord, env, e->Dnref, fe);
         case EXPR_CONS:
-            return visit_expr(ord, env, e->Cons.arg, fe);
+            return visit_expr(ord, env, e->Cons, fe);
         case EXPR_DISC:
             return visit_expr(ord, env, e->Disc.val, fe);
         case EXPR_PRED:

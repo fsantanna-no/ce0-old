@@ -385,7 +385,7 @@ int code_expr_pre (Env* env, Expr* e) {
         case EXPR_VAR: {
             // this prevents "double free"
             if (e->Var.tx_setnull) {
-                char* id = e->Var.tk.val.s;
+                char* id = e->tk.val.s;
                 fprintf(ALL.out, "typeof(%s) _tmp_%d = %s;\n", id, e->N, id);
                 fprintf(ALL.out, "%s_null(&%s);\n", to_ce(TP), id);
             }
@@ -393,11 +393,11 @@ int code_expr_pre (Env* env, Expr* e) {
         }
 
         case EXPR_CONS: {
-            Stmt* user = env_sub_id_to_user_stmt(env, e->Cons.subtype.val.s);
+            Stmt* user = env_sub_id_to_user_stmt(env, e->tk.val.s);
             assert(user != NULL);
 
             char* sup = user->User.tk.val.s;
-            char* sub = e->Cons.subtype.val.s;
+            char* sub = e->tk.val.s;
 
             fprintf (ALL.out,
                 "%s%s _tmp_%d = ",
@@ -425,9 +425,9 @@ int code_expr_pre (Env* env, Expr* e) {
 
             Type* tp = env_sub_id_to_user_type(env, sub);
             assert(tp != NULL);
-            if (tp->sub!=TYPE_UNIT && e->Cons.arg->sub!=EXPR_UNK) {
+            if (tp->sub!=TYPE_UNIT && e->Cons->sub!=EXPR_UNK) {
                 fprintf(ALL.out, ", ._%s=", sub);
-                code_expr(env, e->Cons.arg, 0);
+                code_expr(env, e->Cons, 0);
             }
 
             out(" });\n");
@@ -453,7 +453,7 @@ int code_expr_pre (Env* env, Expr* e) {
             break;
 
         case EXPR_DISC: { // TODO: f(x).Succ
-            if (e->Disc.subtype.enu == TX_NULL) {
+            if (e->tk.enu == TX_NULL) {
                 out("assert(");
                 code_expr(env, e->Disc.val, 0);
                 out(" == NULL && \"discriminator failed\");\n");
@@ -467,7 +467,7 @@ int code_expr_pre (Env* env, Expr* e) {
                 code_expr(env, e->Disc.val, 1);
                 fprintf (ALL.out,
                     ".sub == %s && \"discriminator failed\");\n",
-                     e->Disc.subtype.val.s
+                     e->tk.val.s
                  );
             }
 
@@ -519,7 +519,7 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
             break;
 
         case EXPR_INT:
-            fprintf(ALL.out, "%d", e->Int.val.n);
+            fprintf(ALL.out, "%d", e->tk.val.n);
             break;
 
         case EXPR_NULL:
@@ -527,7 +527,7 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
             break;
 
         case EXPR_NATIVE:
-            out(e->Native.val.s);
+            out(e->tk.val.s);
             break;
 
         case EXPR_UPREF: {
@@ -557,10 +557,10 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
             } else {
                 assert(e->Call.func->sub == EXPR_VAR);
 
-                if (!strcmp(e->Call.func->Var.tk.val.s,"output_std")) {
+                if (!strcmp(e->Call.func->tk.val.s,"output_std")) {
                     out("stdout_");
                     code_to_ce(env_expr_to_type(env, e->Call.arg));
-                } else if (!strcmp(e->Call.func->Var.tk.val.s,"clone")) {
+                } else if (!strcmp(e->Call.func->tk.val.s,"clone")) {
                     Type* tp = env_expr_to_type(env, e->Call.arg);
                     if (env_type_ishasrec(env,tp,1)) {
                         out("clone_");
@@ -599,7 +599,7 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
                 fprintf(ALL.out, "_tmp_%d", e->N);
             } else {
                 code_expr(env, e->Index.val, 1);
-                fprintf(ALL.out, "._%d", e->Index.index.val.n);
+                fprintf(ALL.out, "._%d", e->tk.val.n);
             }
             break;
         }
@@ -608,7 +608,7 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
             if (e->Var.tx_setnull) {
                 fprintf(ALL.out, "_tmp_%d", e->N);
             } else {
-                out(e->Var.tk.val.s);
+                out(e->tk.val.s);
             }
             break;
 
@@ -617,19 +617,19 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
                 fprintf(ALL.out, "_tmp_%d", e->N);
             } else {
                 code_expr(env, e->Disc.val, 1);
-                fprintf(ALL.out, "._%s", e->Disc.subtype.val.s);
+                fprintf(ALL.out, "._%s", e->tk.val.s);
             }
             break;
 
         case EXPR_PRED: {
-            if (e->Pred.subtype.enu == TX_NULL) {
+            if (e->tk.enu == TX_NULL) {
                 out("((&");
                 code_expr(env, e->Pred.val, 1);
                 out(" == NULL)");
             } else {
                 out("((");
                 code_expr(env, e->Pred.val, 1);
-                fprintf(ALL.out, ".sub == %s)", e->Pred.subtype.val.s);
+                fprintf(ALL.out, ".sub == %s)", e->tk.val.s);
             }
             out(" ? (Bool){True} : (Bool){False})\n");
             break;

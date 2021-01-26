@@ -64,16 +64,12 @@ extern int _N_;
 typedef struct Expr {
     int N;
     EXPR sub;
+    Tk tk; // EXPR_UNIT // EXPR_UNK // EXPR_NATIVE // EXPR_NULL // EXPR_INT
     union {
-        Tk Unit;        // EXPR_UNIT
-        Tk Unk;         // EXPR_UNK
-        Tk Native;      // EXPR_NATIVE
-        Tk Null;        // EXPR_NULL
-        Tk Int;         // EXPR_INT
         struct Expr* Upref;  // EXPR_UPREF
         struct Expr* Dnref;  // EXPR_DNREF
+        struct Expr* Cons;   // EXPR_CONS
         struct {        // EXPR_VAR
-            Tk tk;
             int tx_setnull;   // set to null on tx to avoid double free
             int tx_done;  // evaluate var ownership accesses
         } Var;
@@ -83,25 +79,18 @@ typedef struct Expr {
         } Tuple;
         struct {        // EXPR_INDEX
             struct Expr* val;           // x
-            Tk index;                   // .3
             int tx_setnull;   // set to null on tx to avoid double free
         } Index;
         struct {        // EXPR_CALL
             struct Expr* func;          // f
             struct Expr* arg;           // (x,y)
         } Call;
-        struct {        // EXPR_CONS
-            Tk subtype;                 // .True
-            struct Expr* arg;
-        } Cons;
         struct {        // EXPR_DISC
             struct Expr* val;           // x
-            Tk subtype;                 // .True!
             int tx_setnull;   // set to null on tx to avoid double free
         } Disc;
         struct {        // EXPR_PRED
             struct Expr* val;           // x
-            Tk subtype;                 // .True?
         } Pred;
     };
 } Expr;

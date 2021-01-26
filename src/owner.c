@@ -59,7 +59,7 @@ void env_txed_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
             break;
 
         case EXPR_CONS: {
-            env_txed_vars(env, e->Cons.arg, vars_n, vars);
+            env_txed_vars(env, e->Cons, vars_n, vars);
             break;
         }
 
@@ -176,7 +176,7 @@ int check_txs (Stmt* S) {
             int n=0; Expr* vars[256];
             env_held_vars(s->env, e, &n, vars);
             for (int i=0; i<n; i++) {
-                Stmt* dcl = env_id_to_stmt(s->env, vars[i]->Var.tk.val.s);
+                Stmt* dcl = env_id_to_stmt(s->env, vars[i]->tk.val.s);
                 assert(dcl != NULL);
                 if (bws_has(dcl)) { // indirect alias
                     bws[bws_n++] = s;
@@ -197,16 +197,16 @@ int check_txs (Stmt* S) {
                     assert(e->Dnref->sub == EXPR_VAR);
                     char err[1024];
                     sprintf(err, "invalid dnref : cannot transfer value");
-                    return err_message(&e->Dnref->Var.tk, err);
+                    return err_message(&e->Dnref->tk, err);
                 } else {
                     e = expr_leftmost(e);
                     assert(e->sub == EXPR_VAR);
-                    if (!strcmp(e->Var.tk.val.s,S->Var.tk.val.s)) {
+                    if (!strcmp(e->tk.val.s,S->Var.tk.val.s)) {
                         e->Var.tx_done = 1;
                         if (iscycle) {
                             char err[1024];
                             sprintf(err, "invalid assignment : cannot transfer ownsership to itself");
-                            return err_message(&e->Var.tk, err);
+                            return err_message(&e->tk, err);
                         }
                     }
                 }
@@ -223,26 +223,26 @@ int check_txs (Stmt* S) {
                     if (!set_txs(e->Call.arg,0)) return EXEC_ERROR;
                     break;
                 case EXPR_CONS:
-                    if (!set_txs(e->Cons.arg,0)) return EXEC_ERROR;
+                    if (!set_txs(e->Cons,0)) return EXEC_ERROR;
                     break;
                 case EXPR_VAR:
-                    if (!strcmp(S->Var.tk.val.s,e->Var.tk.val.s)) {
+                    if (!strcmp(S->Var.tk.val.s,e->tk.val.s)) {
                         // ensure that EXPR_VAR is really same as STMT_VAR
-                        Stmt* decl = env_id_to_stmt(env, e->Var.tk.val.s);
+                        Stmt* decl = env_id_to_stmt(env, e->tk.val.s);
                         assert(decl!=NULL && decl==S);
 
                         // Rule 6
                         if (bws_n >= 2) {
                             if (e->Var.tx_done) {
-                                int lin = (txed_tk == NULL) ? e->Var.tk.lin : txed_tk->lin;
+                                int lin = (txed_tk == NULL) ? e->tk.lin : txed_tk->lin;
                                 char err[TK_BUF+256];
                                 sprintf(err, "invalid transfer of \"%s\" : active pointer in scope (ln %d)",
-                                        e->Var.tk.val.s, lin);
-                                err_message(&e->Var.tk, err);
+                                        e->tk.val.s, lin);
+                                err_message(&e->tk, err);
                                 return VISIT_ERROR;
                             }
                         }
-                        txed_tk = &e->Var.tk;
+                        txed_tk = &e->tk;
                     }
                 default:
                     break;
@@ -261,7 +261,7 @@ int check_txs (Stmt* S) {
                     Expr* dst = expr_leftmost(s->Set.dst);
                     assert(dst->sub == EXPR_VAR);
                     for (int i=0; i<bws_n; i++) {
-                        if (!strcmp(dst->Var.tk.val.s,bws[i]->Var.tk.val.s)) {
+                        if (!strcmp(dst->tk.val.s,bws[i]->Var.tk.val.s)) {
                             iscycle = 1;
                             break;
                         }

@@ -298,7 +298,7 @@ void t_parser_expr (void) {
         all_init(NULL, stropen("r", 0, "x"));
         Expr* e;
         assert(parser_expr(&e,0));
-        assert(e->sub == EXPR_VAR); assert(!strcmp(e->Var.tk.val.s,"x"));
+        assert(e->sub == EXPR_VAR); assert(!strcmp(e->tk.val.s,"x"));
         fclose(ALL.inp);
     }
     // EXPR_NATIVE
@@ -306,7 +306,7 @@ void t_parser_expr (void) {
         all_init(NULL, stropen("r", 0, "_x"));
         Expr* e;
         assert(parser_expr(&e,0));
-        assert(e->sub == EXPR_NATIVE); assert(!strcmp(e->Var.tk.val.s,"x"));
+        assert(e->sub == EXPR_NATIVE); assert(!strcmp(e->tk.val.s,"x"));
         fclose(ALL.inp);
     }
     // EXPR_TUPLE
@@ -337,7 +337,7 @@ void t_parser_expr (void) {
         assert(parser_expr(&e,0));
         assert(e->sub == EXPR_TUPLE);
         assert(e->Tuple.size == 3);
-        assert(e->Tuple.vec[1]->sub == EXPR_VAR && !strcmp(e->Tuple.vec[1]->Var.tk.val.s,"x"));
+        assert(e->Tuple.vec[1]->sub == EXPR_VAR && !strcmp(e->Tuple.vec[1]->tk.val.s,"x"));
         assert(e->Tuple.vec[2]->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
@@ -348,7 +348,7 @@ void t_parser_expr (void) {
         assert(parser_expr(&e,0));
         assert(e->sub == EXPR_CALL);
         assert(e->Call.func->sub == EXPR_VAR);
-        assert(!strcmp(e->Call.func->Var.tk.val.s, "xxx"));
+        assert(!strcmp(e->Call.func->tk.val.s, "xxx"));
         assert(e->Call.arg->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
@@ -358,7 +358,7 @@ void t_parser_expr (void) {
         assert(parser_expr(&e,1));
         assert(e->sub == EXPR_CALL);
         assert(e->Call.func->sub == EXPR_VAR);
-        assert(!strcmp(e->Call.func->Var.tk.val.s, "xxx"));
+        assert(!strcmp(e->Call.func->tk.val.s, "xxx"));
         assert(e->Call.arg->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
@@ -368,7 +368,7 @@ void t_parser_expr (void) {
         assert(parser_expr(&e,0));
         assert(e->sub == EXPR_CALL);
         assert(e->Call.func->sub == EXPR_VAR);
-        assert(!strcmp(e->Call.func->Var.tk.val.s, "f"));
+        assert(!strcmp(e->Call.func->tk.val.s, "f"));
         assert(e->Call.arg->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
@@ -378,8 +378,8 @@ void t_parser_expr (void) {
         Expr* e;
         assert(parser_expr(&e,0));
         assert(e->sub == EXPR_CONS);
-        assert(!strcmp(e->Cons.subtype.val.s,"True"));
-        assert(e->Cons.arg->sub == EXPR_UNIT);
+        assert(!strcmp(e->tk.val.s,"True"));
+        assert(e->Cons->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
     {
@@ -387,8 +387,8 @@ void t_parser_expr (void) {
         Expr* e;
         assert(parser_expr(&e,0));
         assert(e->sub == EXPR_CONS);
-        assert(!strcmp(e->Cons.subtype.val.s,"Zz1"));
-        assert(e->Cons.arg->sub == EXPR_TUPLE);
+        assert(!strcmp(e->tk.val.s,"Zz1"));
+        assert(e->Cons->sub == EXPR_TUPLE);
         fclose(ALL.inp);
     }
     // EXPR_INDEX
@@ -398,7 +398,7 @@ void t_parser_expr (void) {
         assert(parser_expr(&e,0));
         assert(e->sub == EXPR_INDEX);
         assert(e->Index.val->sub == EXPR_VAR);
-        assert(e->Index.index.val.n == 1);
+        assert(e->tk.val.n == 1);
         fclose(ALL.inp);
     }
     {
@@ -635,7 +635,7 @@ void t_env (void) {
         int n=0; Expr* vars[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
         assert(n == 1);
-        assert(!strcmp(vars[0]->Var.tk.val.s, "x"));
+        assert(!strcmp(vars[0]->tk.val.s, "x"));
     }
     {
         Stmt* s;
@@ -650,7 +650,7 @@ void t_env (void) {
         int n=0; Expr* vars[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
         assert(n == 2);
-        assert(!strcmp(vars[1]->Var.tk.val.s, "z"));
+        assert(!strcmp(vars[1]->tk.val.s, "z"));
     }
     {
         Stmt* s;
@@ -664,7 +664,7 @@ void t_env (void) {
         int n=0; Expr* vars[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
         assert(n == 2);
-        assert(!strcmp(vars[1]->Var.tk.val.s, "y"));
+        assert(!strcmp(vars[1]->tk.val.s, "y"));
     }
     {
         Stmt* s;
@@ -679,7 +679,7 @@ void t_env (void) {
         int n=0; Expr* vars[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
         assert(n == 1);
-        assert(!strcmp(vars[0]->Var.tk.val.s, "t"));
+        assert(!strcmp(vars[0]->tk.val.s, "t"));
     }
     {
         Stmt* s;
@@ -694,7 +694,7 @@ void t_env (void) {
         int n=0; Expr* vars[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
         assert(n == 1);
-        assert(!strcmp(vars[0]->Var.tk.val.s, "t"));
+        assert(!strcmp(vars[0]->tk.val.s, "t"));
     }
     {
         Stmt* s;
@@ -708,7 +708,7 @@ void t_env (void) {
         int n=0; Expr* vars[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
         assert(n == 1);
-        assert(!strcmp(vars[0]->Var.tk.val.s, "x"));
+        assert(!strcmp(vars[0]->tk.val.s, "x"));
     }
     {
         Stmt* s;
@@ -724,7 +724,7 @@ void t_env (void) {
         int n=0; Expr* vars[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
         assert(n == 1);
-        assert(!strcmp(vars[0]->Var.tk.val.s, "x"));
+        assert(!strcmp(vars[0]->tk.val.s, "x"));
     }
     {
         Stmt* s;
@@ -741,7 +741,7 @@ void t_env (void) {
         int n=0; Expr* vars[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
         assert(n == 1);
-        assert(!strcmp(vars[0]->Var.tk.val.s, "x"));
+        assert(!strcmp(vars[0]->tk.val.s, "x"));
     }
     {
         Stmt* s;
@@ -758,7 +758,7 @@ void t_env (void) {
         int n=0; Expr* vars[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
         assert(n == 1);
-        assert(!strcmp(vars[0]->Var.tk.val.s, "m"));
+        assert(!strcmp(vars[0]->tk.val.s, "m"));
     }
 
     // ENV_TXED_VARS
@@ -795,7 +795,7 @@ void t_env (void) {
         int n=0; Expr* vars[256];
         env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
         assert(n == 1);
-        assert(!strcmp(vars[0]->Var.tk.val.s, "x"));
+        assert(!strcmp(vars[0]->tk.val.s, "x"));
     }
     {
         Stmt* s;
@@ -825,7 +825,7 @@ void t_env (void) {
         int n=0; Expr* vars[256];
         env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
         assert(n == 2);
-        assert(!strcmp(vars[0]->Var.tk.val.s, "x"));
+        assert(!strcmp(vars[0]->tk.val.s, "x"));
         assert(vars[1]->sub==EXPR_DNREF);
     }
     {
@@ -843,7 +843,7 @@ void t_env (void) {
         //dump_stmt(s->Seq.s2->Seq.s2);
         env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
         assert(n == 2);
-        assert(!strcmp(vars[0]->Var.tk.val.s, "x"));
+        assert(!strcmp(vars[0]->tk.val.s, "x"));
         assert(vars[1]->sub==EXPR_DNREF);
     }
 }
@@ -853,7 +853,7 @@ void t_code (void) {
     {
         char out[256] = "";
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr e = { ALL.nn++, EXPR_UNIT, .Unit={TK_UNIT,{},0,0} };
+        Expr e = { ALL.nn++, EXPR_UNIT, {TK_UNIT,{},0,0} };
         code_expr(NULL, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,""));
@@ -865,7 +865,7 @@ void t_code (void) {
         Type tp = { TYPE_UNIT, 0 };
         Stmt var = { ALL.nn++, STMT_VAR, .Var={{TX_VAR,{.s="xxx"},0,0},&tp,NULL} };
         Env env = { &var, NULL };
-        Expr e = { ALL.nn++, EXPR_VAR, .Var={{TX_VAR,{.s="xxx"},0,0},0,0} };
+        Expr e = { ALL.nn++, EXPR_VAR, {TX_VAR,{.s="xxx"},0,0},.Var={0,0} };
         code_expr(&env, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,""));
@@ -876,7 +876,7 @@ void t_code (void) {
         Type tp = { TYPE_NATIVE, 0 };
         Stmt var = { ALL.nn++, STMT_VAR, .Var={{TX_VAR,{.s="xxx"},0,0},&tp,NULL} };
         Env env = { &var, NULL };
-        Expr e = { ALL.nn++, EXPR_VAR, .Var={{TX_VAR,{.s="xxx"},0,0},0,0} };
+        Expr e = { ALL.nn++, EXPR_VAR, {TX_VAR,{.s="xxx"},0,0},.Var={0,0} };
         code_expr(&env, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,"xxx"));
@@ -885,8 +885,8 @@ void t_code (void) {
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr e = { ALL.nn++, EXPR_NATIVE, .Native={TX_NATIVE,{},0,0} };
-            strcpy(e.Native.val.s, "printf");
+        Expr e = { ALL.nn++, EXPR_NATIVE, {TX_NATIVE,{},0,0} };
+            strcpy(e.tk.val.s, "printf");
         code_expr(NULL, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,"printf"));
@@ -895,7 +895,7 @@ void t_code (void) {
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr unit = { ALL.nn++, EXPR_UNIT, .Unit={TK_UNIT,{},0,0} };
+        Expr unit = { ALL.nn++, EXPR_UNIT, {TK_UNIT,{},0,0} };
         Expr* es[2] = {&unit, &unit};
         Expr e = { ALL.nn++, EXPR_TUPLE, .Tuple={2,es} };
         code_expr(NULL, &e, 0);
@@ -909,10 +909,11 @@ void t_code (void) {
         Stmt var = { ALL.nn++, STMT_VAR, .Var={{TX_VAR,{.s="x"},0,0},&tp,NULL} };
         Env env = { &var, NULL };
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr val = { ALL.nn++, EXPR_VAR, .Var={{TX_VAR,{.s="x"},0,0},0,0} };
-        Expr e = { ALL.nn++, EXPR_INDEX, .Index={&val,{TX_NUM,{2},0,0}} };
+        Expr val = { ALL.nn++, EXPR_VAR, {TX_VAR,{.s="x"},0,0}, .Var={0,0} };
+        Expr e = { ALL.nn++, EXPR_INDEX, {TX_NUM,{2},0,0}, .Index={&val,0} };
         code_expr(&env, &e, 0);
         fclose(ALL.out);
+puts(out);
         assert(!strcmp(out,"x._2"));
     }
     {
@@ -1522,7 +1523,7 @@ __XXX__:
         "output std 1\n"
     ));
     assert(all(
-        "(ln 13, col 1): invalid tuple : pointers with different scopes",
+        "(ln 6, col 24): invalid tuple : pointers with different scopes",
         //"(ln 3, col 4): invalid assignment : cannot hold pointer \"arg\" (ln 2) in outer scope",
         "type Tp { Tp1: \\Int }\n"
         "var i: Int = 10\n"
@@ -1538,7 +1539,7 @@ __XXX__:
         "output std tp.Tp1!\\\n"
     ));
     assert(all(
-        "(ln 13, col 1): invalid tuple : pointers with different scopes",
+        "(ln 10, col 11): invalid tuple : pointers with different scopes",
         //"10\n",
         "type Tp { Tp1: \\Int }\n"
         "func f : (\\Int,\\Tp) -> () {\n"
@@ -1554,7 +1555,7 @@ __XXX__:
         "}\n"
     ));
     assert(all(
-        "(ln 13, col 1): invalid tuple : pointers with different scopes",
+        "(ln 10, col 11): invalid tuple : pointers with different scopes",
         "type Tp { Tp1: \\Int }\n"
         "func f : (\\Int,\\Tp) -> () {\n"
         "   set arg.2\\.Tp1! = arg.1\n"

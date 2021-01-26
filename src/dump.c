@@ -45,16 +45,16 @@ void dump_expr (Expr* e) {
             printf("?");
             break;
         case EXPR_NATIVE:
-            printf("%s", e->Native.val.s);
+            printf("%s", e->tk.val.s);
             break;
         case EXPR_NULL:
             printf("$");
             break;
         case EXPR_INT:
-            printf("%d", e->Int.val.n);
+            printf("%d", e->tk.val.n);
             break;
         case EXPR_VAR:
-            printf("%s", e->Var.tk.val.s);
+            printf("%s", e->tk.val.s);
             break;
         case EXPR_UPREF:
             putchar('\\');
@@ -69,7 +69,7 @@ void dump_expr (Expr* e) {
             break;
         case EXPR_INDEX:
             dump_expr(e->Index.val);
-            printf(".%d", e->Index.index.val.n);
+            printf(".%d", e->tk.val.n);
             break;
         case EXPR_CALL:
             dump_expr(e->Call.func);
@@ -81,11 +81,11 @@ void dump_expr (Expr* e) {
             break;
         case EXPR_DISC:
             dump_expr(e->Disc.val);
-            printf(".%s!", e->Disc.subtype.val.s);
+            printf(".%s!", e->tk.val.s);
             break;
         case EXPR_PRED:
             dump_expr(e->Pred.val);
-            printf(".%s?", e->Pred.subtype.val.s);
+            printf(".%s?", e->tk.val.s);
             break;
     }
 }
