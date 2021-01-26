@@ -978,6 +978,33 @@ int check_ret_ptr_deepest (Stmt* s) {
     return VISIT_CONTINUE;
 }
 
+int check_call_ptr_deepest (Env* env, Expr* e) {
+    if (e->sub != EXPR_CALL) {
+        return VISIT_CONTINUE;
+    }
+
+    // EXPR_CALL
+
+    int depth = -1;
+    if (e->Call.arg->sub == EXPR_TUPLE) {
+        for (int i=0; i<e->Call.arg->Tuple.size; i++) {
+            Expr* val = e->Call.arg->Tuple.vec[i];
+            Type* tp = env_expr_to_type(env,val);
+            if (!env_type_ishasptr(env,tp)) {
+                Stmt* var = env_expr_leftmost_decl(env, val);
+                assert(var!=NULL && var->sub==STMT_VAR);
+                if (depth > var->Var.ptr_deepest_depth) {
+// TODO: ALL.tk0
+                    err_message(&ALL.tk0, "invalid call : pointer argument is more outer than its previous");
+                    return VISIT_ERROR;
+                }
+                depth = var->Var.ptr_deepest_depth;
+            }
+        }
+    }
+    return VISIT_CONTINUE;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 int env (Stmt* s) {
@@ -992,7 +1019,7 @@ int env (Stmt* s) {
     if (!visit_stmt(0,s,check_set_set_ptr_deepest,NULL,NULL)) {
         return 0;
     }
-    if (!visit_stmt(0,s,check_ret_ptr_deepest,NULL,NULL)) {
+    if (!visit_stmt(0,s,check_ret_ptr_deepest,check_call_ptr_deepest,NULL)) {
         return 0;
     }
     return 1;

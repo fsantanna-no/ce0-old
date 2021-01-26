@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-//#define DEBUG
+#define DEBUG
 //#define VALGRIND
 
 #include "../all.h"
@@ -1033,7 +1033,6 @@ void t_code (void) {
 
 void t_all (void) {
 goto __XXX__;
-__XXX__:
     // ERROR
     assert(all(
         "(ln 1, col 1): expected statement : have \"/\"",
@@ -1520,6 +1519,23 @@ __XXX__:
         "}\n"
         "output std 1\n"
     ));
+__XXX__:
+    assert(all(
+        "(ln 3, col 4): invalid assignment : cannot hold pointer \"arg\" (ln 2) in outer scope",
+        "type Tp { Tp1: \\Int }\n"
+        "var i: Int = 10\n"
+        "var tp: Tp = Tp1 \\i\n"
+        "{\n"
+        "   var j: Int = 100\n"
+        "   var v: (\\Tp,\\Int) = (\\tp,\\j)\n"
+        "   set v.1\\.Tp1! = v.2\n"
+        "}\n"
+        "{\n"
+        "   var k: Int = 0\n"
+        "}\n"
+        "output std tp.Tp1!\\\n"
+    ));
+assert(0);
     assert(all(
         "10\n",
         "type Tp { Tp1: \\Int }\n"
@@ -1529,10 +1545,28 @@ __XXX__:
         "}\n"
         "var i: Int = 10\n"
         "var j: Int = 0\n"
+        "{\n"
+        "   var tp: Tp = Tp1 \\j\n"
+        "   call f (\\i,\\tp)\n"
+        "   output std tp.Tp1!\\\n"
+        "}\n"
+    ));
+    assert(all(
+        "ERROR!!!\n",
+        "type Tp { Tp1: \\Int }\n"
+        "func f : (\\Int,\\Tp) -> () {\n"
+        "   set arg.2\\.Tp1! = arg.1\n"
+        "   return ()\n"
+        "}\n"
+        "var j: Int = 0\n"
         "var tp: Tp = Tp1 \\j\n"
-        "call f (\\i,\\tp)\n"
+        "{\n"
+        "   var i: Int = 10\n"
+        "   call f (\\i,\\tp)\n"    // i > tp
+        "}\n"
         "output std tp.Tp1!\\\n"
     ));
+assert(0);
 
     assert(all(
         "True\n",
