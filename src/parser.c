@@ -406,7 +406,7 @@ int parser_stmt (Stmt** ret) {
             return 0;
         }
 
-        *s = (Stmt) { ALL.nn++, STMT_VAR, NULL, {NULL,NULL}, tk, .Var={id,tp,e,NULL} };
+        *s = (Stmt) { ALL.nn++, STMT_VAR, NULL, {NULL,NULL}, tk, .Var={id,tp,e,NULL,-1} };
 
     // STMT_USER
     } else if (accept(TK_TYPE)) {       // type
@@ -578,7 +578,7 @@ int parser_stmt (Stmt** ret) {
                 { TX_VAR, {.s="arg"}, id.lin, id.col },
                 tp->Func.inp,
                 expr,
-                s       // ptr_deepest of "arg" is the scope of its enclosing function
+                NULL,-1 // ptr_deepest of "arg" is the scope of its enclosing function
             }
         };
 
@@ -662,7 +662,6 @@ int parser (Stmt** ret) {
     static Type Type_Unit  = { TYPE_UNIT, 0 };
     static Type tp_any     = { TYPE_ANY,  0 };
     static Type tp_alias   = { TYPE_ANY,  1 };
-    static Stmt none       = { 0, STMT_NONE };
 
     *ret = NULL;
 
@@ -678,7 +677,7 @@ int parser (Stmt** ret) {
         static Type tp_stdo  = { TYPE_FUNC, .Func={&tp_alias,&Type_Unit} };
         static Stmt stdo = (Stmt) {   // std ()
             0, STMT_FUNC, NULL, {NULL,NULL},
-            .Func = { {TX_VAR,{.s="output_std"},0,__COUNTER__}, &tp_stdo, &none }
+            .Func = { {TX_VAR,{.s="output_std"},0,__COUNTER__}, &tp_stdo, NULL }
         };
         *ret = enseq(*ret, &stdo);
     }
@@ -686,7 +685,7 @@ int parser (Stmt** ret) {
         static Type tp_clone = { TYPE_FUNC, .Func={&tp_alias,&tp_any} };
         static Stmt clone = (Stmt) {   // clone ()
             0, STMT_FUNC, NULL, {NULL,NULL},
-            .Func = { {TX_VAR,{.s="clone"},0,__COUNTER__}, &tp_clone, &none }
+            .Func = { {TX_VAR,{.s="clone"},0,__COUNTER__}, &tp_clone, NULL }
         };
         *ret = enseq(*ret, &clone);
     }

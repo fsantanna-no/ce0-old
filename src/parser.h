@@ -129,7 +129,10 @@ typedef struct Stmt {
             Tk    tk;                    // ns
             Type* type;                  // : Nat
             Expr* init;                  // = n
-            struct Stmt* ptr_deepest; // TODO: int
+
+            // deepest symbol that I point to
+            Tk* ptr_deepest_var;
+            int ptr_deepest_depth;  // need to track depth in separate b/c of arg.1/2/3
         } Var;
         struct {            // STMT_USER
             int  isrec;                 // rec

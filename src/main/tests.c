@@ -1509,6 +1509,8 @@ __XXX__:
         "call f (\\x)\n"
         "output std x\n"
     ));
+#if TODO-ARG
+puts("-=-=-=-");
     assert(all(
         "True\n",
         "type Bool {\n"
@@ -1523,6 +1525,8 @@ __XXX__:
         "call f (\\x)\n"
         "output std x\n"
     ));
+assert(0);
+#endif
     assert(all(
         "True\n",
         "type Bool {\n"
@@ -2213,6 +2217,8 @@ __XXX__:
         "var z_: \\Nat = \\z\n"
         "output std z_\n"
     ));
+#if TODO-ARG
+puts("-=-=-=-");
     assert(all(
         "Succ ($)\n",
         "type Bool {\n"
@@ -2235,6 +2241,8 @@ __XXX__:
         "var z_: \\Nat = \\z\n"
         "output std z_\n"
     ));
+assert(0);
+#endif
 
     // CLONE
     assert(all(
@@ -2405,8 +2413,6 @@ __XXX__:
         "    set x = Xx1(10,\\y)\n"
         "}\n"
     ));
-//puts("-=-=-=-");
-//assert(0);
     assert(all(
         "(ln 7, col 5): invalid assignment : cannot hold pointer \"y\" (ln 6) in outer scope",
         "type Xx {\n"
@@ -2480,8 +2486,6 @@ __XXX__:
         "var l: List = Item $List\n"
         "set l.Item! = l\n"
     ));
-//puts("-=-=-=-=-");
-//assert(0);
     assert(all(
         "(ln 6, col 10): invalid assignment : cannot transfer ownsership to itself",
         "type rec List {\n"
