@@ -1521,9 +1521,9 @@ __XXX__:
         "}\n"
         "output std 1\n"
     ));
-#if 0
     assert(all(
-        "(ln 3, col 4): invalid assignment : cannot hold pointer \"arg\" (ln 2) in outer scope",
+        "(ln 13, col 1): invalid tuple : pointers with different scopes",
+        //"(ln 3, col 4): invalid assignment : cannot hold pointer \"arg\" (ln 2) in outer scope",
         "type Tp { Tp1: \\Int }\n"
         "var i: Int = 10\n"
         "var tp: Tp = Tp1 \\i\n"
@@ -1537,9 +1537,9 @@ __XXX__:
         "}\n"
         "output std tp.Tp1!\\\n"
     ));
-assert(0);
     assert(all(
-        "10\n",
+        "(ln 13, col 1): invalid tuple : pointers with different scopes",
+        //"10\n",
         "type Tp { Tp1: \\Int }\n"
         "func f : (\\Int,\\Tp) -> () {\n"
         "   set arg.2\\.Tp1! = arg.1\n"
@@ -1554,7 +1554,7 @@ assert(0);
         "}\n"
     ));
     assert(all(
-        "ERROR!!!\n",
+        "(ln 13, col 1): invalid tuple : pointers with different scopes",
         "type Tp { Tp1: \\Int }\n"
         "func f : (\\Int,\\Tp) -> () {\n"
         "   set arg.2\\.Tp1! = arg.1\n"
@@ -1568,8 +1568,6 @@ assert(0);
         "}\n"
         "output std tp.Tp1!\\\n"
     ));
-assert(0);
-#endif
 
     assert(all(
         "True\n",
