@@ -882,15 +882,22 @@ int check_set_set_ptr_deepest (Stmt* s) {
             Stmt* dst_decl = env_expr_leftmost_decl(s->env, s->Set.dst);
             assert(dst_decl->sub == STMT_VAR);
 
-// prevent
-{
-    Expr* xxx = expr_leftmost(s->Set.src);
-    if (xxx!=NULL && xxx->sub==EXPR_VAR) {
-        Stmt* src_decl = env_expr_leftmost_decl(s->env, s->Set.src);
-        assert(strcmp(dst_decl->Var.tk.val.s, "arg"));
-        assert(strcmp(src_decl->Var.tk.val.s, "arg"));
-    }
-}
+            // prevent
+            {
+                Expr* src = expr_leftmost(s->Set.src);
+                if (src!=NULL && src->sub==EXPR_VAR) {
+                    Stmt* dcl = env_expr_leftmost_decl(s->env, s->Set.src);
+                    if (!strcmp(dcl->Var.tk.val.s, "arg")) {
+                        if (src->sub == EXPR_INDEX) {
+                            float depth = dcl->Var.ptr_deepest_depth + 0.1*src->Index.index.val.n;
+                            if (depth > dst_decl->Var.ptr_deepest_depth) {
+                                dst_decl->Var.ptr_deepest_var   = &dcl->Var.tk;
+                                dst_decl->Var.ptr_deepest_depth = depth;
+                            }
+                        }
+                    }
+                }
+            }
 
             {
                 int n=0; Expr* vars[256];
@@ -898,7 +905,7 @@ int check_set_set_ptr_deepest (Stmt* s) {
                 for (int i=0; i<n; i++) {
                     Stmt* src = env_id_to_stmt(s->env, vars[i]->Var.tk.val.s);
                     assert(src!=NULL && src->sub==STMT_VAR && src->Var.ptr_deepest_var!=NULL);
-                    if (src->env->depth > dst_decl->Var.ptr_deepest_depth) {
+                    if (src->Var.ptr_deepest_depth > dst_decl->Var.ptr_deepest_depth) {
                         dst_decl->Var.ptr_deepest_var   = &src->Var.tk;
                         dst_decl->Var.ptr_deepest_depth = src->env->depth;
                     }

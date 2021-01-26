@@ -1509,8 +1509,6 @@ __XXX__:
         "call f (\\x)\n"
         "output std x\n"
     ));
-#if TODO-ARG
-puts("-=-=-=-");
     assert(all(
         "True\n",
         "type Bool {\n"
@@ -1525,8 +1523,6 @@ puts("-=-=-=-");
         "call f (\\x)\n"
         "output std x\n"
     ));
-assert(0);
-#endif
     assert(all(
         "True\n",
         "type Bool {\n"
@@ -2217,8 +2213,6 @@ assert(0);
         "var z_: \\Nat = \\z\n"
         "output std z_\n"
     ));
-#if TODO-ARG
-puts("-=-=-=-");
     assert(all(
         "Succ ($)\n",
         "type Bool {\n"
@@ -2241,8 +2235,6 @@ puts("-=-=-=-");
         "var z_: \\Nat = \\z\n"
         "output std z_\n"
     ));
-assert(0);
-#endif
 
     // CLONE
     assert(all(
