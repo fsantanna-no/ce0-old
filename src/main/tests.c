@@ -1033,6 +1033,7 @@ void t_code (void) {
 
 void t_all (void) {
 goto __XXX__;
+__XXX__:
     // ERROR
     assert(all(
         "(ln 1, col 1): expected statement : have \"/\"",
@@ -1510,6 +1511,7 @@ goto __XXX__;
     ));
 
     // arg.1 > arg.2
+#if 0
     assert(all(
         "(ln 3, col 4): invalid assignment : cannot hold pointer \"arg\" (ln 2) in outer scope",
         "type Tp { Tp1: \\Int }\n"
@@ -1519,7 +1521,6 @@ goto __XXX__;
         "}\n"
         "output std 1\n"
     ));
-__XXX__:
     assert(all(
         "(ln 3, col 4): invalid assignment : cannot hold pointer \"arg\" (ln 2) in outer scope",
         "type Tp { Tp1: \\Int }\n"
@@ -1567,6 +1568,7 @@ assert(0);
         "output std tp.Tp1!\\\n"
     ));
 assert(0);
+#endif
 
     assert(all(
         "True\n",
