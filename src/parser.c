@@ -58,6 +58,7 @@ Expr* expr_leftmost (Expr* e) {
     }
 }
 
+#if 0
 Expr* expr_leftmost_n (Expr* e, int* n) {
     Expr* ret;
     switch (e->sub) {
@@ -83,6 +84,7 @@ Expr* expr_leftmost_n (Expr* e, int* n) {
     (*n)--;
     return e;
 }
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 

@@ -881,10 +881,11 @@ int check_set_set_ptr_deepest (Stmt* s) {
 
             Stmt* dst = env_expr_leftmost_decl(s->env, s->Set.dst);
             assert(dst->sub == STMT_VAR);
+            int dst_depth = dst->Var.ptr_deepest_depth;
 
+#if 0
             // prevent ...
 // preciso do expr_leftmost - 1
-            float dst_depth = dst->Var.ptr_deepest_depth;
             {
                 int n = 2;
 //puts(">>>>>>>>>>");
@@ -896,6 +897,7 @@ int check_set_set_ptr_deepest (Stmt* s) {
                     if (idx->sub == EXPR_INDEX) {
                         float depth = dst->Var.ptr_deepest_depth + 0.1*idx->Index.index.val.n;
                         if (depth > dst_depth) {
+assert(0);
                             dst_depth = depth;
                         }
 //printf(">DST> %f\n", dst_depth);
@@ -919,6 +921,7 @@ int check_set_set_ptr_deepest (Stmt* s) {
                     }
                 }
             }
+#endif
 
             {
                 int n=0; Expr* vars[256];
