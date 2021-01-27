@@ -217,19 +217,19 @@ int exec_stmt (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe) {
                 case STMT_BLOCK:
                     break;
                 case STMT_CALL:
-                    ret = fe(s->env, s->Call);
+                    ret = visit_expr(0, s->env, s->Call, fe);
                     break;
                 case STMT_RETURN:
-                    ret = fe(s->env, s->Return);
+                    ret = visit_expr(0, s->env, s->Return, fe);
                     break;
                 case STMT_VAR:
-                    ret = fe(s->env, s->Var.init);
+                    ret = visit_expr(0, s->env, s->Var.init, fe);
                     break;
                 case STMT_SET:
-                    ret = fe(s->env,s->Set.dst) && fe(s->env,s->Set.src);
+                    ret = visit_expr(0,s->env,s->Set.dst,fe) && visit_expr(0,s->env,s->Set.src,fe);
                     break;
                 case STMT_IF:
-                    ret = fe(s->env, s->If.tst);
+                    ret = visit_expr(0, s->env, s->If.tst, fe);
                     break;
             }
             if (ret != EXEC_CONTINUE) {
