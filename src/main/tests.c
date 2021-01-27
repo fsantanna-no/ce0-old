@@ -1033,7 +1033,6 @@ void t_code (void) {
 
 void t_all (void) {
 goto __XXX__;
-__XXX__:
     // ERROR
     assert(all(
         "(ln 1, col 1): expected statement : have \"/\"",
@@ -1510,7 +1509,7 @@ __XXX__:
         "output std x\n"
     ));
 
-#if TODO-TRACK-POINTERS
+__XXX__:
     // arg.1 > arg.2
     assert(all(
         //"(ln 3, col 4): invalid assignment : cannot hold pointer \"arg\" (ln 2) in outer scope",
@@ -1538,6 +1537,8 @@ __XXX__:
         "}\n"
         "output std tp.Tp1!\\\n"
     ));
+assert(0);
+#if TODO-TRACK-POINTERS
     assert(all(
         "(ln 10, col 11): invalid tuple : pointers with different scopes",
         //"10\n",
@@ -1590,6 +1591,18 @@ __XXX__:
         "{\n"
         "   var px2: \\Int = px\n"
         "   var p: \\Int = px2\n"
+        "   set px = p\n"
+        "   output std p\\\n"
+        "}\n"
+    ));
+    assert(all(
+        "(ln 7, col 4): invalid assignment : cannot hold pointer \"p\" (ln 6) in outer scope",
+        "var x: Int = 10\n"
+        "var px: \\Int = \\x\n"
+        "{\n"
+        "   var y: Int = 100\n"
+        "   var py: \\Int = \\y\n"
+        "   var p: \\Int = py\n"
         "   set px = p\n"
         "   output std p\\\n"
         "}\n"
