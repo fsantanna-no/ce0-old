@@ -922,7 +922,7 @@ int check_ptrs_stmt (Stmt* s) {
 
         case STMT_RETURN: {
             Type* tp = env_expr_to_type(s->env, s->Return);
-            if (!tp->isptr) {
+            if (!env_type_ishasptr(s->env,tp)) {
                 return EXEC_CONTINUE;
             }
 
@@ -994,7 +994,7 @@ int env (Stmt* s) {
     if (!visit_stmt(1,s,check_types_stmt,check_types_expr,NULL)) {
         return 0;
     }
-    if (!exec(s,NULL,check_ptrs_stmt)) { //,check_ptrs_expr)) {
+    if (!exec(s,NULL,check_ptrs_stmt,check_ptrs_expr)) {
         return 0;
     }
     return 1;
