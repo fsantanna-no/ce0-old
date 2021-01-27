@@ -293,3 +293,19 @@ int exec (Stmt* s, F_Pre pre, F_Stmt fs) {      // 0=error, 1=success
     }
     assert(0);
 }
+
+int exec_also_funcs (Stmt* s, F_Pre pre, F_Stmt fs) {
+    if (!exec(s, pre, fs)) {
+        return 0;
+    }
+
+    int f (Stmt* s) {
+        if (s->sub == STMT_FUNC) {
+            if (!exec(s, pre, fs)) {
+                return VISIT_ERROR;
+            }
+        }
+        return VISIT_CONTINUE;
+    }
+    return visit_stmt(0, s, f, NULL, NULL);
+}
