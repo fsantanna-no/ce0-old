@@ -875,7 +875,13 @@ int check_ptrs_stmt (Stmt* s) {
                 assert(dcl != NULL);
                 assert(dcl->sub == STMT_VAR);
                 if (s->Var.ptr_deepest==NULL || dcl->Var.ptr_deepest->env->depth>s->Var.ptr_deepest->env->depth) {
-                    s->Var.ptr_deepest = dcl->Var.ptr_deepest;
+                    if (s->Var.type->isptr && !dcl->Var.type->isptr) {
+                        // acquired w/ =\x: points exactly to x which is in the deepest possible scope
+                        s->Var.ptr_deepest = dcl;
+                    } else {
+                        // acquired w/ =x: points to something that x points, take that scope, not the scope of x
+                        s->Var.ptr_deepest = dcl->Var.ptr_deepest;
+                    }
                 }
             }
 
@@ -957,7 +963,8 @@ int check_ptrs_expr (Env* env, Expr* e) {
     int n=0; Expr* vars[256];
     env_held_vars(env, e, &n, vars);
     int depth = -1;
-//puts("-=-=-=-=-");
+puts("-=-=-=-=-");
+dump_expr(e); puts(" $$$");
     for (int i=0; i<n; i++) {
         Stmt* var = env_expr_leftmost_decl(env, vars[i]);
         assert(var!=NULL && var->sub==STMT_VAR);
@@ -968,17 +975,17 @@ int check_ptrs_expr (Env* env, Expr* e) {
                 vars[(*vars_n)++] = e;
             }
 #endif
-//dump_expr(vars[i]);
-//printf("  >>> %d  --  %s\n", depth, var->tk.val.s);
+dump_expr(vars[i]);
+printf("  >>> %d  --  %s\n", depth, var->tk.val.s);
         if (depth!=-1 && depth!=var->Var.ptr_deepest->env->depth) {
-//dump_expr(vars[i]);
-//printf("  <<< %d  --  %s\n", var->Var.ptr_deepest->env->depth, var->tk.val.s);
+dump_expr(vars[i]);
+printf("  <<< %d  --  %s\n", var->Var.ptr_deepest->env->depth, var->tk.val.s);
             err_message(&e->tk, "invalid tuple : pointers with different scopes");
             return EXEC_ERROR;
         }
         depth = var->Var.ptr_deepest->env->depth;
-//dump_expr(vars[i]);
-//printf("  <<< %d  --  %s\n", depth, var->tk.val.s);
+dump_expr(vars[i]);
+printf("  <<< %d  --  %s\n", depth, var->tk.val.s);
     }
     return EXEC_CONTINUE;
 }
