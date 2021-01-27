@@ -874,8 +874,8 @@ int check_ptrs_stmt (Stmt* s) {
                 Stmt* dcl = env_id_to_stmt(s->env, vars[i]->tk.val.s);
                 assert(dcl != NULL);
                 assert(dcl->sub == STMT_VAR);
-                if (s->Var.ptr_deepest==NULL || dcl->env->depth>s->Var.ptr_deepest->env->depth) {
-                    s->Var.ptr_deepest = dcl;
+                if (s->Var.ptr_deepest==NULL || dcl->Var.ptr_deepest->env->depth>s->Var.ptr_deepest->env->depth) {
+                    s->Var.ptr_deepest = dcl->Var.ptr_deepest;
                 }
             }
 
