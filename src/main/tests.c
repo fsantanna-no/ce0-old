@@ -1571,6 +1571,28 @@ __XXX__:
         "output std tp.Tp1!\\           -- use of dangling reference\n"
     ));
 
+#if TODO-TRACK-POINTERS
+    assert(all(
+        "10\n",
+        "var x: Int = 10\n"
+        "var px: \\Int = \\x\n"
+        "{\n"
+        "   var p: \\Int = px\n"
+        "   set px = p\n"
+        "   output std p\\\n"
+        "}\n"
+    ));
+    assert(all(
+        "OK",
+        "func f: (\\Int,\\Int) -> () {\n"
+        "    var e: \\Int = arg.2\n"
+        "    call f (arg.1, e)\n"
+        "    return ()\n"
+        "}\n"
+    ));
+assert(0);
+#endif
+
     assert(all(
         "True\n",
         "type Bool {\n"

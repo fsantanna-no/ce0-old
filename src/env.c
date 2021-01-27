@@ -853,7 +853,9 @@ int check_types_stmt (Stmt* s) {
 int check_set_set_ptr_deepest (Stmt* s) {
     switch (s->sub) {
         case STMT_VAR: {
-            s->Var.ptr_deepest = s;
+            //if (!s->Var.type->isptr) {
+                s->Var.ptr_deepest = s;
+            //}
 
             int n=0; Expr* vars[256];
             env_held_vars(s->env, s->Var.init, &n, vars);
@@ -861,7 +863,7 @@ int check_set_set_ptr_deepest (Stmt* s) {
                 Stmt* dcl = env_id_to_stmt(s->env, vars[i]->tk.val.s);
                 assert(dcl != NULL);
                 assert(dcl->sub == STMT_VAR);
-                if (dcl->env->depth > s->Var.ptr_deepest->env->depth) {
+                if (s->Var.ptr_deepest!=NULL && dcl->env->depth>s->Var.ptr_deepest->env->depth) {
                     s->Var.ptr_deepest = dcl;
                 }
             }
@@ -984,14 +986,28 @@ int check_tuple_ptr_deepest (Env* env, Expr* e) {
     int n=0; Expr* vars[256];
     env_held_vars(env, e, &n, vars);
     int depth = -1;
+//puts("-=-=-=-=-");
     for (int i=0; i<n; i++) {
         Stmt* var = env_expr_leftmost_decl(env, vars[i]);
         assert(var!=NULL && var->sub==STMT_VAR);
+#if 0
+            Stmt* dcl = env_id_to_stmt(env, e->tk.val.s);
+            assert(dcl != NULL);
+            if (dcl->Var.type->isptr) {
+                vars[(*vars_n)++] = e;
+            }
+#endif
+//dump_expr(vars[i]);
+//printf("  >>> %d  --  %s\n", depth, var->tk.val.s);
         if (depth!=-1 && depth!=var->Var.ptr_deepest->env->depth) {
+//dump_expr(vars[i]);
+//printf("  <<< %d  --  %s\n", var->Var.ptr_deepest->env->depth, var->tk.val.s);
             err_message(&e->tk, "invalid tuple : pointers with different scopes");
             return VISIT_ERROR;
         }
         depth = var->Var.ptr_deepest->env->depth;
+//dump_expr(vars[i]);
+//printf("  <<< %d  --  %s\n", depth, var->tk.val.s);
     }
     return VISIT_CONTINUE;
 }
