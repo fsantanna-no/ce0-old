@@ -879,46 +879,6 @@ int check_set_set_ptr_deepest (Stmt* s) {
             assert(dst->sub == STMT_VAR);
             int dst_depth = dst->Var.ptr_deepest->env->depth;
 
-#if 0
-            // prevent ...
-// preciso do expr_leftmost - 1
-            {
-                int n = 2;
-//puts(">>>>>>>>>>");
-                Expr* idx = expr_leftmost_n(s->Set.dst,&n);
-//puts("<<<<<<<<<<");
-//dump_expr(idx); printf(" [%d] <<<\n", idx->sub);
-                if (idx->sub==EXPR_INDEX && !strcmp(dst->Var.tk.val.s,"arg")) {
-//puts("111");
-                    if (idx->sub == EXPR_INDEX) {
-                        float depth = dst->Var.ptr_deepest_depth + 0.1*idx->Index.index.val.n;
-                        if (depth > dst_depth) {
-assert(0);
-                            dst_depth = depth;
-                        }
-//printf(">DST> %f\n", dst_depth);
-                    }
-                }
-
-                {
-                    int n = 2;
-                    Expr* src = expr_leftmost(s->Set.src);
-                    Expr* idx = expr_leftmost_n(s->Set.src,&n);
-                    if (src!=NULL && src->sub==EXPR_VAR && idx->sub==EXPR_INDEX) {
-                        Stmt* dcl = env_expr_leftmost_decl(s->env, s->Set.src);
-                        if (!strcmp(dcl->Var.tk.val.s, "arg")) {
-                            float depth = dcl->Var.ptr_deepest_depth + 0.1*idx->Index.index.val.n;
-//printf(">SRC> %f\n", depth);
-                            if (depth > dst->Var.ptr_deepest_depth) {
-                                dst->Var.ptr_deepest_var   = &dcl->Var.tk;
-                                dst->Var.ptr_deepest_depth = depth;
-                            }
-                        }
-                    }
-                }
-            }
-#endif
-
             {
                 int n=0; Expr* vars[256];
                 env_held_vars(s->env, s->Set.src, &n, vars);
