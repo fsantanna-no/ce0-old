@@ -190,7 +190,7 @@ void exec_init (Exec_State* est) {
 
 // 0=error, 1=success, EXEC_HALT=aborted
 
-int exec_stmt (Exec_State* est, Stmt* s, F_Stmt fs) {
+int exec_stmt (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe) {
     while (s != NULL) {
         if (fs != NULL) {
             switch (fs(s)) {
@@ -202,6 +202,38 @@ int exec_stmt (Exec_State* est, Stmt* s, F_Stmt fs) {
                     return EXEC_CONTINUE;
                 case EXEC_HALT:             // no error stop all
                     return EXEC_HALT;
+            }
+        }
+        if (fe != NULL) {
+            int ret = EXEC_CONTINUE;
+            switch (s->sub) {
+                case STMT_NONE:
+                case STMT_NATIVE:
+                case STMT_BREAK:
+                case STMT_USER:
+                case STMT_SEQ:
+                case STMT_LOOP:
+                case STMT_FUNC:
+                case STMT_BLOCK:
+                    break;
+                case STMT_CALL:
+                    ret = fe(s->env, s->Call);
+                    break;
+                case STMT_RETURN:
+                    ret = fe(s->env, s->Return);
+                    break;
+                case STMT_VAR:
+                    ret = fe(s->env, s->Var.init);
+                    break;
+                case STMT_SET:
+                    ret = fe(s->env,s->Set.dst) && fe(s->env,s->Set.src);
+                    break;
+                case STMT_IF:
+                    ret = fe(s->env, s->If.tst);
+                    break;
+            }
+            if (ret != EXEC_CONTINUE) {
+                return ret;
             }
         }
 
@@ -252,9 +284,9 @@ int exec_stmt (Exec_State* est, Stmt* s, F_Stmt fs) {
 
 // 1=more, 0=exhausted  //  fret fs: 0=error, 1=success
 
-int exec1 (Exec_State* est, Stmt* s, F_Stmt fs, int* fret) {
+int exec1 (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe, int* fret) {
     est->cur = 0;
-    *fret = exec_stmt(est, s, fs);
+    *fret = exec_stmt(est, s, fs, fe);
 
     switch (*fret) {
         case 0:         return 0;
@@ -275,7 +307,7 @@ int exec1 (Exec_State* est, Stmt* s, F_Stmt fs, int* fret) {
     return 0;
 }
 
-int exec (Stmt* s, F_Pre pre, F_Stmt fs) {      // 0=error, 1=success
+int exec (Stmt* s, F_Pre pre, F_Stmt fs, F_Expr fe) {      // 0=error, 1=success
     Exec_State est;
     exec_init(&est);
     while (1) {
@@ -283,7 +315,7 @@ int exec (Stmt* s, F_Pre pre, F_Stmt fs) {      // 0=error, 1=success
             pre();
         }
         int ret2;
-        int ret1 = exec1(&est, s, fs, &ret2);
+        int ret1 = exec1(&est, s, fs, fe, &ret2);
         if (ret2 == 0) {            // user returned error
             return 0;               // so it's an error
         }
@@ -294,6 +326,7 @@ int exec (Stmt* s, F_Pre pre, F_Stmt fs) {      // 0=error, 1=success
     assert(0);
 }
 
+#if 0
 int exec_also_funcs (Stmt* s, F_Pre pre, F_Stmt fs) {
     if (!exec(s, pre, fs)) {
         return 0;
@@ -309,3 +342,4 @@ int exec_also_funcs (Stmt* s, F_Pre pre, F_Stmt fs) {
     }
     return visit_stmt(0, s, f, NULL, NULL);
 }
+#endif

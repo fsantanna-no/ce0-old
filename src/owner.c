@@ -151,7 +151,7 @@ int check_txs (Stmt* S) {
     }
 
     auto int fs (Stmt* s);
-    return exec(S->seqs[1], pre, fs);
+    return exec(S->seqs[1], pre, fs, NULL);
 
     // y = \x ...                // check all accesses to it
 
