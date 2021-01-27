@@ -108,6 +108,12 @@ int check_txs (Stmt* S) {
 
     // var x: Nat = ...         // starting from each declaration
 
+    // Tracks if x has been transferred:
+    //      var y: Nat = x
+    //  - once trasferred, never fallback
+    //  - reject further accesses
+    int istxd = 0;
+
     // Tracks borrows of x (who I am borrowed to):
     //      var y: \Nat = \x
     //      var z: (Int,\Nat) = (1,\y)  -- x is borrowed by both y and z
@@ -131,6 +137,7 @@ int check_txs (Stmt* S) {
     int stack_n = 0;
 
     void pre (void) {
+        istxd = 0;
         bws_n = 1;
         bws[0] = S;
         txed_tk = NULL;
@@ -231,8 +238,17 @@ int check_txs (Stmt* S) {
                         Stmt* decl = env_id_to_stmt(env, e->tk.val.s);
                         assert(decl!=NULL && decl==S);
 
+                        if (istxd) { // Rule 4 (growable)
+                            // if already moved, it doesn't matter, any access is invalid
+                            assert(txed_tk != NULL);
+                            char err[TK_BUF+256];
+                            sprintf(err, "invalid access to \"%s\" : ownership was transferred (ln %d)",
+                                    e->tk.val.s, txed_tk->lin);
+                            err_message(&e->tk, err);
+                            return VISIT_ERROR;
+
                         // Rule 6
-                        if (bws_n >= 2) {
+                        } else if (bws_n >= 2) {
                             if (e->Var.tx_done) {
                                 int lin = (txed_tk == NULL) ? e->tk.lin : txed_tk->lin;
                                 char err[TK_BUF+256];
@@ -243,6 +259,9 @@ int check_txs (Stmt* S) {
                             }
                         }
                         txed_tk = &e->tk;
+                        if (e->Var.tx_done) {
+                            istxd = 1;
+                        }
                     }
                 default:
                     break;

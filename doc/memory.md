@@ -151,7 +151,10 @@ a set of rules as follows:
     - Assigning the current owner to another variable, which becomes the new owner (e.g. `set new = old`).
     - Passing the owner to a function call argument, which becomes the new owner (e.g. `f(old)`).
     - Returning the owner from a function call to an assignee, which becomes the new owner (e.g. `set new = f()`).
-4. When transferring ownership, the original owner is automatically assigned its empty subcase.
+4. (`growable`) The original owner is invalidated after transferring its ownership.
+<!--
+4. (`movable`) When transferring ownership, the original owner is automatically assigned its empty subcase.
+-->
 5. Ownership cannot be transferred to the current owner's subtree (e.g. `set x.1 = x`).
 6. Ownership cannot be transferred with an active pointer to it in scope.
 7. A pointer cannot escape or survive outside the scope of its owner.
@@ -161,6 +164,21 @@ extra overheads.
 
 ### Ownership transfer
 
+(`growable`)
+As stated in rule 4, an ownership transfer invalidates the original owner and
+rejects further accesses to it:
+
+```
+{
+    var x: List = Item(1, $List)    -- `x` is the original owner
+    var y: List = x                 -- `y` is the new owner
+    ... x ...                       -- error: `x` cannot be referred again
+    ... y ...                       -- ok
+}
+```
+
+<!--
+(`movable`)
 As stated in rule 4, ownership transfer assigns an empty value to the original
 owner:
 
@@ -172,6 +190,7 @@ owner:
     ... y ...                       -- `y` holds `Item(1, $List)`
 }
 ```
+-->
 
 Ownership transfer ensures that rule 1 is preserved.
 If ownership could be shared, deallocation in rule 2 would be ambiguous or
@@ -208,6 +227,8 @@ var p: \List = \l.Item!     -- `p` points to the end of `l`
 set p\ = l                  -- error: cannot transfer `l` to the end of itself
 ```
 
+<!--
+(`movable`)
 It is possible to transfer only part of a recursive value.
 In this case, the removed part will be automatically reset to the empty subcase:
 
@@ -215,9 +236,10 @@ In this case, the removed part will be automatically reset to the empty subcase:
 var x: List = Item(1, Item(2, $List))   -- after: Item(1,$List)
 var y: List = x.Item!                   -- after: Item(2,$List)
 ```
+-->
 
 Finally, it is also possible to make a "void transfer" through a `set`
-statement.
+statement. <!--(`movable` can also make it for subparts)-->
 In this case, the value with lost ownership will be deallocated immediately:
 
 ```

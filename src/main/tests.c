@@ -1760,8 +1760,8 @@ __XXX__:
         "output std b\n"
     ));
     assert(all(
-        //"(ln 6, col 14): invalid access to \"c\" : ownership was transferred (ln 5)",
-        "$\n",
+        "(ln 6, col 14): invalid access to \"c\" : ownership was transferred (ln 5)",
+        //"$\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -1771,8 +1771,8 @@ __XXX__:
         "output std (\\c)\n"
     ));
     assert(all(
-        //"(ln 7, col 16): invalid access to \"a\" : ownership was transferred (ln 6)",
-        "$\n",
+        "(ln 7, col 16): invalid access to \"a\" : ownership was transferred (ln 6)",
+        //"$\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -1783,7 +1783,8 @@ __XXX__:
         "output std d\n"
     ));
     assert(all(
-        "$\n",
+        //"$\n",
+        "(ln 7, col 16): invalid access to \"a\" : ownership was transferred (ln 6)",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -1794,7 +1795,9 @@ __XXX__:
         "output std d\n"                 // ok: $Nat
     ));
     assert(all(
-        "Succ ($)\n",
+        //"Succ ($)\n",
+// TODO-NO-MOVE
+        "(ln 8, col 16): invalid access to \"a\" : ownership was transferred (ln 7)",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -1831,7 +1834,9 @@ __XXX__:
         "output std (\\e)\n"
     ));
     assert(all(
-        "Succ ($)\n",
+        //"Succ ($)\n",
+        "(ln 7, col 16): invalid access to \"c\" : ownership was transferred (ln 6)",
+// TODO-NO-MOVE
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -1842,7 +1847,9 @@ __XXX__:
         "output std e\n"
     ));
     assert(all(
-        "XNat1 ($)\n",
+        //"XNat1 ($)\n",
+        "(ln 11, col 17): invalid access to \"i\" : ownership was transferred (ln 10)",
+// TODO-NO-MOVE
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -2135,8 +2142,8 @@ __XXX__:
 
     // OWNERSHIP / BORROWING
     assert(all(
-        //"(ln 6, col 14): invalid access to \"i\" : ownership was transferred (ln 5)",
-        "$\n",
+        "(ln 6, col 14): invalid access to \"i\" : ownership was transferred (ln 5)",
+        //"$\n",
         "type rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
@@ -2177,8 +2184,8 @@ __XXX__:
         "output std y_\n"
     ));
     assert(all(
-        //"(ln 8, col 14): invalid access to \"x\" : ownership was transferred (ln 6)",
-        "$\n",
+        "(ln 8, col 14): invalid access to \"x\" : ownership was transferred (ln 6)",
+        //"$\n",
         "type rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
@@ -2203,7 +2210,9 @@ __XXX__:
         "}\n"
     ));
     assert(all(
-        "Item ($)\n",
+        //"Item ($)\n",
+// TODO-NO-MOVE
+        "(ln 6, col 15): invalid access to \"a\" : ownership was transferred (ln 5)",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
@@ -2354,8 +2363,8 @@ __XXX__:
         "output std (\\l2)\n"
     ));
     assert(all(
-        //"(ln 10, col 16): invalid access to \"l1\" : ownership was transferred (ln 9)",
-        "$\n",
+        "(ln 10, col 18): invalid access to \"l1\" : ownership was transferred (ln 9)",
+        //"$\n",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
@@ -2369,8 +2378,8 @@ __XXX__:
         "output std x.Xx1!\n"
     ));
     assert(all(
-        //"(ln 7, col 14): invalid access to \"l1\" : ownership was transferred (ln 6)",
-        "$\n",
+        "(ln 7, col 14): invalid access to \"l1\" : ownership was transferred (ln 6)",
+        //"$\n",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
