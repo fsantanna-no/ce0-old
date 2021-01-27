@@ -1510,6 +1510,7 @@ __XXX__:
         "output std x\n"
     ));
 
+#if TODO-TRACK-POINTERS
     // arg.1 > arg.2
     assert(all(
         //"(ln 3, col 4): invalid assignment : cannot hold pointer \"arg\" (ln 2) in outer scope",
@@ -1570,8 +1571,8 @@ __XXX__:
         "}\n"
         "output std tp.Tp1!\\           -- use of dangling reference\n"
     ));
+#endif
 
-#if TODO-TRACK-POINTERS
     assert(all(
         "10\n",
         "var x: Int = 10\n"
@@ -1583,15 +1584,25 @@ __XXX__:
         "}\n"
     ));
     assert(all(
-        "OK",
+        "10\n",
+        "var x: Int = 10\n"
+        "var px: \\Int = \\x\n"
+        "{\n"
+        "   var px2: \\Int = px\n"
+        "   var p: \\Int = px2\n"
+        "   set px = p\n"
+        "   output std p\\\n"
+        "}\n"
+    ));
+    assert(all(
+        "10\n",
         "func f: (\\Int,\\Int) -> () {\n"
         "    var e: \\Int = arg.2\n"
         "    call f (arg.1, e)\n"
         "    return ()\n"
         "}\n"
+        "output std 10\n"
     ));
-assert(0);
-#endif
 
     assert(all(
         "True\n",
