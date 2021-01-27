@@ -850,12 +850,14 @@ int check_types_stmt (Stmt* s) {
 // return \SRC
 //  - check if scope of DST<=S
 
-int check_set_set_ptr_deepest (Stmt* s) {
+int check_ptrs_stmt (Stmt* s) {
     switch (s->sub) {
         case STMT_VAR: {
-            //if (!s->Var.type->isptr) {
+            if (env_type_ishasptr(s->env,s->Var.type) && strcmp(s->Var.tk.val.s,"arg")) {
+                s->Var.ptr_deepest = NULL;
+            } else {
                 s->Var.ptr_deepest = s;
-            //}
+            }
 
             int n=0; Expr* vars[256];
             env_held_vars(s->env, s->Var.init, &n, vars);
@@ -863,12 +865,13 @@ int check_set_set_ptr_deepest (Stmt* s) {
                 Stmt* dcl = env_id_to_stmt(s->env, vars[i]->tk.val.s);
                 assert(dcl != NULL);
                 assert(dcl->sub == STMT_VAR);
-                if (s->Var.ptr_deepest!=NULL && dcl->env->depth>s->Var.ptr_deepest->env->depth) {
+                if (s->Var.ptr_deepest==NULL || dcl->env->depth>s->Var.ptr_deepest->env->depth) {
                     s->Var.ptr_deepest = dcl;
                 }
             }
             break;
         }
+
         case STMT_SET: {
             Type* tp = env_expr_to_type(s->env, s->Set.dst);
             if (!env_type_ishasptr(s->env,tp)) {
@@ -898,47 +901,41 @@ int check_set_set_ptr_deepest (Stmt* s) {
                 sprintf(err, "invalid assignment : cannot hold pointer \"%s\" (ln %d) in outer scope",
                         src_var->val.s, src_var->lin);
                 err_message(&s->tk, err);
-                return VISIT_ERROR;
+                return EXEC_ERROR;
             }
             break;
         }
+
+        case STMT_RETURN: {
+            Type* tp = env_expr_to_type(s->env, s->Return);
+            if (!tp->isptr) {
+                return EXEC_CONTINUE;
+            }
+
+            Expr* src      = expr_leftmost(s->Return);
+            Stmt* src_decl = env_expr_leftmost_decl(s->env, s->Return);
+            assert(src_decl->Var.ptr_deepest != NULL);
+
+        //printf("ret=%d vs src=%d\n", s->env->depth, src_decl->Var.ptr_deepest->env->depth);
+            if (s->env->depth <= src_decl->Var.ptr_deepest->env->depth) {
+                char err[TK_BUF+256];
+                sprintf(err, "invalid return : cannot return local pointer \"%s\" (ln %d)",
+                        src->tk.val.s, src_decl->tk.lin);
+                err_message(&src->tk, err);
+                return EXEC_ERROR;
+            }
+            break;
+        }
+
         default:
             break;
     }
-    return VISIT_CONTINUE;
+    return EXEC_CONTINUE;
 }
 
-int check_ret_ptr_deepest (Stmt* s) {
-    if (s->sub != STMT_RETURN) {
-        return VISIT_CONTINUE;
-    }
-
-    // STMT_RETURN
-
-    Type* tp = env_expr_to_type(s->env, s->Return);
-    if (!tp->isptr) {
-        return VISIT_CONTINUE;
-    }
-
-    Expr* src      = expr_leftmost(s->Return);
-    Stmt* src_decl = env_expr_leftmost_decl(s->env, s->Return);
-    assert(src_decl->Var.ptr_deepest != NULL);
-
-//printf("ret=%d vs src=%d\n", s->env->depth, src_decl->Var.ptr_deepest->env->depth);
-    if (s->env->depth <= src_decl->Var.ptr_deepest->env->depth) {
-        char err[TK_BUF+256];
-        sprintf(err, "invalid return : cannot return local pointer \"%s\" (ln %d)",
-                src->tk.val.s, src_decl->tk.lin);
-        err_message(&src->tk, err);
-        return VISIT_ERROR;
-    }
-    //assert(0); // never tested outer scope before: just remove this assert and go on...
-    return VISIT_CONTINUE;
-}
-
-int check_tuple_ptr_deepest (Env* env, Expr* e) {
+int check_ptrs_expr (Env* env, Expr* e) {
     if (e->sub != EXPR_TUPLE) {
-        return VISIT_CONTINUE;
+        return EXEC_CONTINUE;
     }
 
     // EXPR_TUPLE
@@ -963,13 +960,13 @@ int check_tuple_ptr_deepest (Env* env, Expr* e) {
 //dump_expr(vars[i]);
 //printf("  <<< %d  --  %s\n", var->Var.ptr_deepest->env->depth, var->tk.val.s);
             err_message(&e->tk, "invalid tuple : pointers with different scopes");
-            return VISIT_ERROR;
+            return EXEC_ERROR;
         }
         depth = var->Var.ptr_deepest->env->depth;
 //dump_expr(vars[i]);
 //printf("  <<< %d  --  %s\n", depth, var->tk.val.s);
     }
-    return VISIT_CONTINUE;
+    return EXEC_CONTINUE;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -983,10 +980,7 @@ int env (Stmt* s) {
     if (!visit_stmt(1,s,check_types_stmt,check_types_expr,NULL)) {
         return 0;
     }
-    if (!visit_stmt(0,s,check_set_set_ptr_deepest,NULL,NULL)) {
-        return 0;
-    }
-    if (!visit_stmt(0,s,check_ret_ptr_deepest,check_tuple_ptr_deepest,NULL)) {
+    if (!exec_also_funcs(s,NULL,check_ptrs_stmt)) { //,check_ptrs_expr)) {
         return 0;
     }
     return 1;
