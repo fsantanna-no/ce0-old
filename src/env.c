@@ -488,6 +488,13 @@ int set_seqs (Stmt* s) {
                     case STMT_LOOP:
                         aux(cur->Loop, nxt);
                         break;
+                    case STMT_FUNC:
+                        if (cur->Func.body == NULL) {
+                            cur->seqs[1] = nxt;
+                        } else {
+                            aux(cur->Func.body, nxt);
+                        }
+                        break;
                     default:
                         cur->seqs[1] = nxt;
                         break;
@@ -502,7 +509,9 @@ int set_seqs (Stmt* s) {
             break;
 
         case STMT_FUNC:
-            s->seqs[1] = s->Func.body;
+            if (s->Func.body != NULL) {
+                s->seqs[1] = s->Func.body;
+            }
             break;
 
         default:
@@ -869,6 +878,11 @@ int check_ptrs_stmt (Stmt* s) {
                     s->Var.ptr_deepest = dcl;
                 }
             }
+
+            // var x: \Int = ?
+            if (s->Var.ptr_deepest == NULL) {
+                s->Var.ptr_deepest = s; // assumes ? has the same scope of x
+            }
             break;
         }
 
@@ -980,7 +994,7 @@ int env (Stmt* s) {
     if (!visit_stmt(1,s,check_types_stmt,check_types_expr,NULL)) {
         return 0;
     }
-    if (!exec_also_funcs(s,NULL,check_ptrs_stmt)) { //,check_ptrs_expr)) {
+    if (!exec(s,NULL,check_ptrs_stmt)) { //,check_ptrs_expr)) {
         return 0;
     }
     return 1;
