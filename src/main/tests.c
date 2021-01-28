@@ -2286,15 +2286,20 @@ __XXX__:
         "output std (\\l)\n"
     ));
     assert(all(
-        "(ln 8, col 13): invalid transfer of \"l\" : active pointer in scope (ln 7)",
+        //"(ln 8, col 13): invalid transfer of \"l\" : active pointer in scope (ln 7)",
+        "()\n",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
+        //"native _{ typedef void* PTR; }\n"
+        //"func asptr: _PTR -> _PTR { return arg }\n"
         "func f: List -> () {}\n"
         "var x: List = Item $List\n"
-        "var l: (List,\\List) = move (move x, _(null))\n"
+        "var ptr: \\List = _(NULL)\n"
+        "var l: (List,\\List) = (move x, ptr)\n"
         "set l.2 = \\l.1.Item!\n"
         "call f move l.1\n"
+        "output std ()\n"
     ));
     assert(all(
         "(ln 6, col 34): invalid transfer of \"x\" : active pointer in scope (ln 6)",
@@ -2307,14 +2312,17 @@ __XXX__:
         "call f move l.1\n"
     ));
     assert(all(
-        "(ln 7, col 13): invalid transfer of \"l\" : active pointer in scope (ln 6)",
+        //"(ln 7, col 13): invalid transfer of \"l\" : active pointer in scope (ln 6)",
+        "()\n",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
         "func g: (List,\\List) -> () {}\n"
-        "var l: (List,\\List) = move (Item $List, ?)\n"
+        "var ptr: \\List = _(NULL)\n"
+        "var l: (List,\\List) = (Item $List, ptr)\n"
         "set l.2 = \\l.1.Item!\n"
         "call g move l\n"
+        "output std ()\n"
     ));
     assert(all(
         "Succ ($)\n",
