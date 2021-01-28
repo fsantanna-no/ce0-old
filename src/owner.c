@@ -218,7 +218,11 @@ int check_txs (Stmt* S) {
                     return err_message(&e->tk, err);
                 }
 
-                if (e->sub == EXPR_DNREF) {
+                if (e->sub == EXPR_DISC) {
+                    char err[1024];
+                    sprintf(err, "invalid ownership transfer : mode `growable´ only allows root transfers");
+                    return err_message(&e->tk, err);
+                } else if (e->sub == EXPR_DNREF) {
                     assert(e->Dnref->sub == EXPR_VAR);
                     char err[1024];
                     sprintf(err, "invalid dnref : cannot transfer value");
