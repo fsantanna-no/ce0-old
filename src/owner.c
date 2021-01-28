@@ -218,7 +218,7 @@ int check_txs (Stmt* S) {
                     return err_message(&e->tk, err);
                 }
 
-                if (e->sub == EXPR_DISC) {
+                if (e->sub == EXPR_DISC) {  // TODO: only in `growable´ mode
                     char err[1024];
                     sprintf(err, "invalid ownership transfer : mode `growable´ only allows root transfers");
                     return err_message(&e->tk, err);
@@ -278,6 +278,7 @@ int check_txs (Stmt* S) {
                                 char err[TK_BUF+256];
                                 sprintf(err, "invalid transfer of \"%s\" : active pointer in scope (ln %d)",
                                         e->tk.val.s, lin);
+// ignorar os bws em si mesmo no modo growable
                                 err_message(&e->tk, err);
                                 return VISIT_ERROR;
                             }
@@ -310,7 +311,9 @@ int check_txs (Stmt* S) {
                         }
                     }
                 }
-                add_bws(s->Set.src);
+                if (!iscycle) {     // TODO: only in `growable´ mode
+                    add_bws(s->Set.src);
+                }
                 if (!set_txs(s->Set.src,iscycle)) return EXEC_ERROR;
 
                 goto __ACCS__;
