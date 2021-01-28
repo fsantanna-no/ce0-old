@@ -620,8 +620,8 @@ void t_env (void) {
         assert(all_init(NULL, stropen("r", 0, "var x: Int = 10")));
         assert(parser(&s));
         assert(env(s));
-        int n=0; Expr* vars[256];
-        env_held_vars(s->Seq.s2->env, s->Seq.s2->Var.init, &n, vars);
+        int n=0; Expr* vars[256]; int uprefs[256];
+        env_held_vars(s->Seq.s2->env, s->Seq.s2->Var.init, &n, vars, uprefs);
         assert(n == 0);
     }
     {
@@ -632,8 +632,8 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(env(s));
-        int n=0; Expr* vars[256];
-        env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
+        int n=0; Expr* vars[256]; int uprefs[256];
+        env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
         assert(n == 1);
         assert(!strcmp(vars[0]->tk.val.s, "x"));
     }
@@ -647,8 +647,8 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(env(s));
-        int n=0; Expr* vars[256];
-        env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
+        int n=0; Expr* vars[256]; int uprefs[256];
+        env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
         assert(n == 2);
         assert(!strcmp(vars[1]->tk.val.s, "z"));
     }
@@ -661,8 +661,8 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(env(s));
-        int n=0; Expr* vars[256];
-        env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
+        int n=0; Expr* vars[256]; int uprefs[256];
+        env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
         assert(n == 2);
         assert(!strcmp(vars[1]->tk.val.s, "y"));
     }
@@ -676,8 +676,8 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(env(s));
-        int n=0; Expr* vars[256];
-        env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
+        int n=0; Expr* vars[256]; int uprefs[256];
+        env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
         assert(n == 1);
         assert(!strcmp(vars[0]->tk.val.s, "t"));
     }
@@ -691,8 +691,8 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(env(s));
-        int n=0; Expr* vars[256];
-        env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
+        int n=0; Expr* vars[256]; int uprefs[256];
+        env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
         assert(n == 1);
         assert(!strcmp(vars[0]->tk.val.s, "t"));
     }
@@ -705,8 +705,8 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(env(s));
-        int n=0; Expr* vars[256];
-        env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
+        int n=0; Expr* vars[256]; int uprefs[256];
+        env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
         assert(n == 1);
         assert(!strcmp(vars[0]->tk.val.s, "x"));
     }
@@ -721,8 +721,8 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(env(s));
-        int n=0; Expr* vars[256];
-        env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
+        int n=0; Expr* vars[256]; int uprefs[256];
+        env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
         assert(n == 1);
         assert(!strcmp(vars[0]->tk.val.s, "x"));
     }
@@ -738,8 +738,8 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(env(s));
-        int n=0; Expr* vars[256];
-        env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
+        int n=0; Expr* vars[256]; int uprefs[256];
+        env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
         assert(n == 1);
         assert(!strcmp(vars[0]->tk.val.s, "x"));
     }
@@ -755,8 +755,8 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(env(s));
-        int n=0; Expr* vars[256];
-        env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
+        int n=0; Expr* vars[256]; int uprefs[256];
+        env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
         assert(n == 1);
         assert(!strcmp(vars[0]->tk.val.s, "m"));
     }
@@ -1033,6 +1033,7 @@ void t_code (void) {
 
 void t_all (void) {
 goto __XXX__;
+__XXX__:
     // ERROR
     assert(all(
         "(ln 1, col 1): expected statement : have \"/\"",
@@ -1509,7 +1510,6 @@ goto __XXX__;
         "output std x\n"
     ));
 
-__XXX__:
     // arg.1 > arg.2
     assert(all(
         //"(ln 3, col 4): invalid assignment : cannot hold pointer \"arg\" (ln 2) in outer scope",
@@ -1537,8 +1537,6 @@ __XXX__:
         "}\n"
         "output std tp.Tp1!\\\n"
     ));
-assert(0);
-#if TODO-TRACK-POINTERS
     assert(all(
         "(ln 10, col 11): invalid tuple : pointers with different scopes",
         //"10\n",
@@ -1572,7 +1570,6 @@ assert(0);
         "}\n"
         "output std tp.Tp1!\\           -- use of dangling reference\n"
     ));
-#endif
 
     assert(all(
         "10\n",
@@ -1596,7 +1593,7 @@ assert(0);
         "}\n"
     ));
     assert(all(
-        "(ln 7, col 4): invalid assignment : cannot hold pointer \"p\" (ln 6) in outer scope",
+        "(ln 7, col 4): invalid assignment : cannot hold pointer \"y\" (ln 4) in outer scope",
         "var x: Int = 10\n"
         "var px: \\Int = \\x\n"
         "{\n"

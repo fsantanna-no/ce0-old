@@ -388,9 +388,9 @@ Stmt* env_expr_leftmost_decl (Env* env, Expr* e) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void env_held_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
+void env_held_vars (Env* env, Expr* e, int* N, Expr** vars, int* uprefs) {
     Type* TP = env_expr_to_type(env, e);
-    assert((*vars_n) < 255);
+    assert((*N) < 255);
 
     switch (e->sub) {
         case EXPR_UNIT:
@@ -405,7 +405,9 @@ void env_held_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
             Stmt* s = env_id_to_stmt(env, e->tk.val.s);
             assert(s != NULL);
             if (s->Var.type->isptr) {
-                vars[(*vars_n)++] = e;
+                vars[*N] = e;
+                uprefs[*N] = 0;
+                (*N)++;
             }
             break;
         }
@@ -414,7 +416,9 @@ void env_held_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
             Expr* var = expr_leftmost(e);
             assert(var != NULL);
             assert(var->sub == EXPR_VAR);
-            vars[(*vars_n)++] = var;
+            vars[*N] = var;
+            uprefs[*N] = 1;
+            (*N)++;
             break;
         }
 
@@ -425,7 +429,7 @@ void env_held_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
 
         case EXPR_TUPLE:
             for (int i=0; i<e->Tuple.size; i++) {
-                env_held_vars(env, e->Tuple.vec[i], vars_n, vars);
+                env_held_vars(env, e->Tuple.vec[i], N, vars, uprefs);
             }
             break;
 
@@ -435,19 +439,21 @@ void env_held_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
                 Expr* var = expr_leftmost(e);
                 assert(var != NULL);
                 assert(var->sub == EXPR_VAR);
-                vars[(*vars_n)++] = var;
+                vars[*N] = var;
+                uprefs[*N] = 0;
+                (*N)++;
             }
             break;
 
         case EXPR_CALL:
             // arg is held if call returns ishasptr
             if (env_type_ishasptr(env,TP)) {
-                env_held_vars(env, e->Call.arg, vars_n, vars);
+                env_held_vars(env, e->Call.arg, N, vars, uprefs);
             }
             break;
 
         case EXPR_CONS: {
-            env_held_vars(env, e->Cons, vars_n, vars);
+            env_held_vars(env, e->Cons, N, vars, uprefs);
             break;
         }
 
@@ -859,8 +865,8 @@ int check_types_stmt (Stmt* s) {
 // return \SRC
 //  - check if scope of DST<=S
 
-void ptr_or_pln (Stmt* dst, Stmt* src) {
-    if (dst->Var.type->isptr && !src->Var.type->isptr) {
+void ptr_or_pln (Stmt* dst, Stmt* src, int isup) {
+    if (isup) {
         // acquired w/ =\x: points exactly to x which is in the deepest possible scope
         //assert(dst->Var.ptr_deepest==NULL || src->Var.ptr_deepest->env->depth>dst->Var.ptr_deepest->env->depth);
         dst->Var.ptr_deepest = src;
@@ -881,12 +887,12 @@ int check_ptrs_stmt (Stmt* s) {
                 s->Var.ptr_deepest = s;
             }
 
-            int n=0; Expr* vars[256];
-            env_held_vars(s->env, s->Var.init, &n, vars);
+            int n=0; Expr* vars[256]; int uprefs[256];
+            env_held_vars(s->env, s->Var.init, &n, vars, uprefs);
             for (int i=0; i<n; i++) {
                 Stmt* src = env_id_to_stmt(s->env, vars[i]->tk.val.s);
                 assert(src!=NULL && src->sub==STMT_VAR);
-                ptr_or_pln(s, src);
+                ptr_or_pln(s, src, uprefs[i]);
             }
 
             // var x: \Int = ?
@@ -907,12 +913,12 @@ int check_ptrs_stmt (Stmt* s) {
             int dst_depth = dst->Var.ptr_deepest->env->depth;
 
             {
-                int n=0; Expr* vars[256];
-                env_held_vars(s->env, s->Set.src, &n, vars);
+                int n=0; Expr* vars[256]; int uprefs[256];
+                env_held_vars(s->env, s->Set.src, &n, vars, uprefs);
                 for (int i=0; i<n; i++) {
                     Stmt* src = env_id_to_stmt(s->env, vars[i]->tk.val.s);
                     assert(src!=NULL && src->sub==STMT_VAR && src->Var.ptr_deepest!=NULL);
-                    ptr_or_pln(dst, src);
+                    ptr_or_pln(dst, src, uprefs[i]);
                 }
             }
 
@@ -962,8 +968,8 @@ int check_ptrs_expr (Env* env, Expr* e) {
 
     // EXPR_TUPLE
 
-    int n=0; Expr* vars[256];
-    env_held_vars(env, e, &n, vars);
+    int n=0; Expr* vars[256]; int uprefs[256];
+    env_held_vars(env, e, &n, vars, uprefs);
     int depth = -1;
 puts("-=-=-=-=-");
 dump_expr(e); puts(" $$$");
@@ -978,14 +984,15 @@ dump_expr(e); puts(" $$$");
             }
 #endif
 dump_expr(vars[i]);
+        int tmp = (uprefs[i] ? var->env->depth : var->Var.ptr_deepest->env->depth);
 printf("  >>> %d  --  %s\n", depth, var->tk.val.s);
-        if (depth!=-1 && depth!=var->Var.ptr_deepest->env->depth) {
+        if (depth!=-1 && depth!=tmp) {
 dump_expr(vars[i]);
-printf("  <<< %d  --  %s\n", var->Var.ptr_deepest->env->depth, var->tk.val.s);
+printf("  <<< %d  --  %s\n", tmp, var->tk.val.s);
             err_message(&e->tk, "invalid tuple : pointers with different scopes");
             return EXEC_ERROR;
         }
-        depth = var->Var.ptr_deepest->env->depth;
+        depth = tmp;
 dump_expr(vars[i]);
 printf("  <<< %d  --  %s\n", depth, var->tk.val.s);
     }

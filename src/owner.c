@@ -180,8 +180,8 @@ int check_txs (Stmt* S) {
         //  var y = ... \x ...
         //  set z = ... y ...
         void add_bws (Expr* e) {
-            int n=0; Expr* vars[256];
-            env_held_vars(s->env, e, &n, vars);
+            int n=0; Expr* vars[256]; int uprefs[256];
+            env_held_vars(s->env, e, &n, vars, uprefs);
             for (int i=0; i<n; i++) {
                 Stmt* dcl = env_id_to_stmt(s->env, vars[i]->tk.val.s);
                 assert(dcl != NULL);
