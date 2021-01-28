@@ -859,6 +859,19 @@ int check_types_stmt (Stmt* s) {
 // return \SRC
 //  - check if scope of DST<=S
 
+void ptr_or_pln (Stmt* dst, Stmt* src) {
+    if (dst->Var.type->isptr && !src->Var.type->isptr) {
+        // acquired w/ =\x: points exactly to x which is in the deepest possible scope
+        //assert(dst->Var.ptr_deepest==NULL || src->Var.ptr_deepest->env->depth>dst->Var.ptr_deepest->env->depth);
+        dst->Var.ptr_deepest = src;
+    } else {
+        // acquired w/ =x: points to something that x points, take that scope, not the scope of x
+        if (dst->Var.ptr_deepest==NULL || src->Var.ptr_deepest->env->depth>dst->Var.ptr_deepest->env->depth) {
+            dst->Var.ptr_deepest = src->Var.ptr_deepest;
+        }
+    }
+}
+
 int check_ptrs_stmt (Stmt* s) {
     switch (s->sub) {
         case STMT_VAR: {
@@ -871,18 +884,9 @@ int check_ptrs_stmt (Stmt* s) {
             int n=0; Expr* vars[256];
             env_held_vars(s->env, s->Var.init, &n, vars);
             for (int i=0; i<n; i++) {
-                Stmt* dcl = env_id_to_stmt(s->env, vars[i]->tk.val.s);
-                assert(dcl != NULL);
-                assert(dcl->sub == STMT_VAR);
-                if (s->Var.ptr_deepest==NULL || dcl->Var.ptr_deepest->env->depth>s->Var.ptr_deepest->env->depth) {
-                    if (s->Var.type->isptr && !dcl->Var.type->isptr) {
-                        // acquired w/ =\x: points exactly to x which is in the deepest possible scope
-                        s->Var.ptr_deepest = dcl;
-                    } else {
-                        // acquired w/ =x: points to something that x points, take that scope, not the scope of x
-                        s->Var.ptr_deepest = dcl->Var.ptr_deepest;
-                    }
-                }
+                Stmt* src = env_id_to_stmt(s->env, vars[i]->tk.val.s);
+                assert(src!=NULL && src->sub==STMT_VAR);
+                ptr_or_pln(s, src);
             }
 
             // var x: \Int = ?
@@ -908,9 +912,7 @@ int check_ptrs_stmt (Stmt* s) {
                 for (int i=0; i<n; i++) {
                     Stmt* src = env_id_to_stmt(s->env, vars[i]->tk.val.s);
                     assert(src!=NULL && src->sub==STMT_VAR && src->Var.ptr_deepest!=NULL);
-                    if (src->Var.ptr_deepest->env->depth > dst->Var.ptr_deepest->env->depth) {
-                        dst->Var.ptr_deepest = src;
-                    }
+                    ptr_or_pln(dst, src);
                 }
             }
 
