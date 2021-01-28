@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-//#define DEBUG
+#define DEBUG
 //#define VALGRIND
 
 #include "../all.h"
@@ -1738,6 +1738,10 @@ __XXX__:
         "output std n_\n"
     ));
     assert(all(
+        "(ln 1, col 19): unexpected `move´ call : no ownership transfer",
+        "var n: Int = move 1\n"
+    ));
+    assert(all(
         "XNat1 (Succ ($))\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
@@ -1934,7 +1938,7 @@ __XXX__:
         "   Succ: Nat\n"
         "}\n"
         "var a: (Nat,Nat) = ($Nat,$Nat)\n"
-        "var b: (Nat,(Nat,Nat)) = move ($Nat,move a)\n"
+        "var b: (Nat,(Nat,Nat)) = ($Nat,move a)\n"
         "var c: Nat = move b.1\n"
         "var c_: \\Nat = \\c\n"
         "output std c_\n"
@@ -2159,7 +2163,7 @@ __XXX__:
         "    if arg.$Nat? {\n"
         "        return $Nat\n"
         "    } else {\n"
-        "        return Succ move len move arg.Succ!\n"
+        "        return Succ len move arg.Succ!\n"
         "    }\n"
         "}\n"
         "var x: Nat = Succ Succ Succ $Nat\n"
@@ -2325,8 +2329,8 @@ __XXX__:
         "var x: Nat = Succ $Nat\n"
         "var y: Nat = $Nat\n"
         "var y_: \\Nat = \\y\n"
-        "var a: (Nat,\\Nat) = move (move x,y_)\n"
-        "var z: Nat = move add move a\n"
+        "var a: (Nat,\\Nat) = (move x,y_)\n"
+        "var z: Nat = add move a\n"
         "var z_: \\Nat = \\z\n"
         "output std z_\n"
     ));
@@ -2347,7 +2351,7 @@ __XXX__:
         "        return move x\n"
         "}\n"
         "var x: Nat = Succ $Nat\n"
-        "var a: XNat = move XNat1 move x\n"
+        "var a: XNat = XNat1 move x\n"
         "var z: Nat = add move a\n"
         "var z_: \\Nat = \\z\n"
         "output std z_\n"

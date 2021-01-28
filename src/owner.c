@@ -4,6 +4,9 @@
 
 #include "all.h"
 
+static int MOVES[1024];
+static int MOVES_N = 0;
+
 ///////////////////////////////////////////////////////////////////////////////
 
 void env_txed_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
@@ -206,6 +209,8 @@ int check_txs (Stmt* S) {
                 Expr* e = vars[i];
                 int ismove = (e->sub==EXPR_CALL && e->Call.func->sub==EXPR_VAR && !strcmp(e->Call.func->tk.val.s,"move"));
                 if (ismove) {
+                    assert(MOVES_N < 1024);
+                    MOVES[MOVES_N++] = e->N;
                     e = e->Call.arg;
                 } else {
                     char err[1024];
@@ -338,7 +343,28 @@ __ACCS__:
 ///////////////////////////////////////////////////////////////////////////////
 
 int owner (Stmt* s) {
+    MOVES_N = 0;
     if (!visit_stmt(0,s,check_txs,NULL,NULL)) {
+        return 0;
+    }
+
+    int check_moves (Env* env, Expr* e) {
+        if (e->sub == EXPR_CALL && e->Call.func->sub == EXPR_VAR) {
+            if (!strcmp(e->Call.func->tk.val.s,"move")) {
+                for (int i=0; i<MOVES_N; i++) {
+                    if (MOVES[i] == e->N) {
+                        return VISIT_CONTINUE;
+                    }
+                }
+                char err[1024];
+                sprintf(err, "unexpected `move´ call : no ownership transfer");
+                return err_message(&e->tk, err);
+            }
+        }
+        return VISIT_CONTINUE;
+    }
+
+    if (!visit_stmt(0,s,NULL,check_moves,NULL)) {
         return 0;
     }
     return 1;
