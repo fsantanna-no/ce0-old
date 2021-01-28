@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 
+// check visually 3 errors
+
 //#define DEBUG
 //#define VALGRIND
 
@@ -1444,13 +1446,16 @@ __XXX__:
         "type Bool { False: () ; True: () }\n"
         "var b : Bool = True()\n"
         "var u : () = b.False!\n"
+        "output std ()\n"
     ));
     // FUNC
     assert(all(
         //"(ln 2, col 6): invalid call to \"f\" : missing return assignment",
-        "",
+        //"",     // ERROR
+        "()\n",
         "func f : () -> _int { return _1 }\n"
         "call f ()\n"
+        "output std ()\n"
     ));
     assert(all(
         "1\n",
@@ -2299,6 +2304,16 @@ __XXX__:
         "var l: (List,\\List) = (move x, ptr)\n"
         "set l.2 = \\l.1.Item!\n"
         "call f move l.1\n"
+        "output std ()\n"
+    ));
+    assert(all(
+        "",     // ERROR
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "var x: List = Item $List\n"
+        "var ptr: \\List = \\x\n"
+        "set ptr\\ = Item $List\n"
         "output std ()\n"
     ));
     assert(all(

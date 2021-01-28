@@ -956,11 +956,19 @@ void code_stmt (Stmt* s) {
                 break;
             }
 
-            // TODO: if "dst" is ishasrec, need to free it
+            // if "dst" is ishasrec, need to free it
             if (env_type_ishasrec(s->env,dst,0)) {
                 fprintf(ALL.out, "%s_free(&", to_ce(dst));
                 code_expr(s->env, s->Set.dst, 0);
                 out(");\n");
+            }
+
+            // if "dst" is dnref, current value must be NULL
+            //      x\ = Item ...
+            if (env_type_isrec(s->env,dst,0) && s->Set.dst->sub==EXPR_DNREF) {
+                out("assert((");
+                code_expr(s->env, s->Set.dst, 0);
+                out(") == NULL);\n");
             }
 
             code_expr(s->env, s->Set.dst, 0);
