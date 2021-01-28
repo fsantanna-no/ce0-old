@@ -1578,6 +1578,22 @@ __XXX__:
         "}\n"
         "output std tp.Tp1!\\           -- use of dangling reference\n"
     ));
+    assert(all(
+        "$\n",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "var lst: List = Item $List\n"
+        "{\n"
+        "    var cur: \\List = \\lst\n"
+        "    set cur = \\cur\\.Item!\n"
+        "    output std cur\n"
+        "}\n"
+    ));
+    assert(all(
+        "(ln 1, col 1): invalid return : no enclosing function",
+        "return ()\n"
+    ));
 
     assert(all(
         "10\n",

@@ -36,7 +36,9 @@ Stmt* env_id_to_stmt (Env* env, const char* id) {
 
 Stmt* env_stmt_to_func (Stmt* s) {
     Stmt* arg = env_id_to_stmt(s->env, "arg");
-    assert(arg != NULL);
+    if (arg == NULL) {
+        return NULL;
+    }
     Env* env = arg->env;
     while (env != NULL) {
         if (env->stmt->sub == STMT_FUNC) {
@@ -848,7 +850,9 @@ int check_types_stmt (Stmt* s) {
 
         case STMT_RETURN: {
             Stmt* func = env_stmt_to_func(s);
-            assert(func != NULL);
+            if (func == NULL) {
+                return err_message(&s->tk, "invalid return : no enclosing function");
+            }
             assert(func->Func.type->sub == TYPE_FUNC);
             if (!type_is_sup_sub(func->Func.type->Func.out, env_expr_to_type(s->env,s->Return), 0)) {
                 return err_message(&s->tk, "invalid return : type mismatch");
@@ -917,9 +921,11 @@ int check_ptrs_stmt (Stmt* s) {
                 int n=0; Expr* vars[256]; int uprefs[256];
                 env_held_vars(s->env, s->Set.src, &n, vars, uprefs);
                 for (int i=0; i<n; i++) {
+                    Type* tp_ = env_expr_to_type(s->env, vars[i]);
+                        // set cur = \cur\... (cur is a pointer, so not upref)
                     Stmt* src = env_id_to_stmt(s->env, vars[i]->tk.val.s);
                     assert(src!=NULL && src->sub==STMT_VAR && src->Var.ptr_deepest!=NULL);
-                    ptr_or_pln(dst, src, uprefs[i]);
+                    ptr_or_pln(dst, src, !tp_->isptr && uprefs[i]);
                 }
             }
 
