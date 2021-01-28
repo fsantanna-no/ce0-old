@@ -13,11 +13,16 @@ void env_txed_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
         return;
     }
 
+    Expr* e_ = e;
+    if (e->sub==EXPR_CALL && e->Call.func->sub==EXPR_VAR && !strcmp(e->Call.func->tk.val.s,"move")) {
+        e = e->Call.arg;
+    }
+
     if (e->sub==EXPR_VAR || e->sub==EXPR_DNREF || e->sub==EXPR_DISC || e->sub==EXPR_INDEX) {
         Expr* var = expr_leftmost(e);
         assert(var != NULL);
         assert(var->sub == EXPR_VAR);
-        vars[(*vars_n)++] = e;
+        vars[(*vars_n)++] = e_;
     }
 
     switch (e->sub) {
@@ -194,12 +199,20 @@ int check_txs (Stmt* S) {
 
         // Set Var.tx_done
         //  var y = x
-        int set_txs (Expr* e, int iscycle) {
-            // var y = x
+        int set_txs (Expr* E, int iscycle) {
             int n=0; Expr* vars[256];
-            env_txed_vars(s->env, e, &n, vars);
+            env_txed_vars(s->env, E, &n, vars);
             for (int i=0; i<n; i++) {
                 Expr* e = vars[i];
+                int ismove = (e->sub==EXPR_CALL && e->Call.func->sub==EXPR_VAR && !strcmp(e->Call.func->tk.val.s,"move"));
+                if (ismove) {
+                    e = e->Call.arg;
+                } else {
+                    char err[1024];
+                    sprintf(err, "invalid ownership transfer : expected `move´ before expression");
+                    return err_message(&e->tk, err);
+                }
+
                 if (e->sub == EXPR_DNREF) {
                     assert(e->Dnref->sub == EXPR_VAR);
                     char err[1024];
@@ -227,6 +240,8 @@ int check_txs (Stmt* S) {
         int fe (Env* env, Expr* e) {
             switch (e->sub) {
                 case EXPR_CALL:
+                    assert(e->Call.func->sub == EXPR_VAR);
+                    if (!strcmp(e->Call.func->tk.val.s,"move")) break;
                     if (!set_txs(e->Call.arg,0)) return EXEC_ERROR;
                     break;
                 case EXPR_CONS:

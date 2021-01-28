@@ -566,6 +566,9 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
                         out("clone_");
                         code_to_ce(tp);
                     }
+                } else if (!strcmp(e->Call.func->tk.val.s,"move")) {
+                    code_expr(env, e->Call.arg, 0);
+                    break;
                 } else {
                     code_expr(env, e->Call.func, 1);
                 }
@@ -999,7 +1002,8 @@ void code_stmt (Stmt* s) {
         case STMT_FUNC: {
             assert(s->Func.type->sub == TYPE_FUNC);
 
-            if (!strcmp(s->Func.tk.val.s,"clone")) break;
+            if (!strcmp(s->Func.tk.val.s,"clone"))      break;
+            if (!strcmp(s->Func.tk.val.s,"move"))       break;
             if (!strcmp(s->Func.tk.val.s,"output_std")) break;
 
             visit_type(s->env, s->Func.type, ftp_tuples);
@@ -1071,6 +1075,7 @@ void code (Stmt* s) {
         "#define stdout_Unit()  (stdout_Unit_(), puts(\"\"))\n"
         "#define stdout_Int_(x) printf(\"%d\",x)\n"
         "#define stdout_Int(x)  (stdout_Int_(x), puts(\"\"))\n"
+        "void* move (void* x) { return x; }\n"
         "int main (void) {\n"
         "\n"
     );

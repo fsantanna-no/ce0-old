@@ -933,6 +933,7 @@ void t_code (void) {
             "#define stdout_Unit()  (stdout_Unit_(), puts(\"\"))\n"
             "#define stdout_Int_(x) printf(\"%d\",x)\n"
             "#define stdout_Int(x)  (stdout_Int_(x), puts(\"\"))\n"
+            "void* move (void* x) { return x; }\n"
             "int main (void) {\n"
             "\n"
             "\n"
@@ -962,6 +963,7 @@ void t_code (void) {
             "#define stdout_Unit()  (stdout_Unit_(), puts(\"\"))\n"
             "#define stdout_Int_(x) printf(\"%d\",x)\n"
             "#define stdout_Int(x)  (stdout_Int_(x), puts(\"\"))\n"
+            "void* move (void* x) { return x; }\n"
             "int main (void) {\n"
             "\n"
             "stdo();\n"
@@ -989,6 +991,7 @@ void t_code (void) {
             "#define stdout_Unit()  (stdout_Unit_(), puts(\"\"))\n"
             "#define stdout_Int_(x) printf(\"%d\",x)\n"
             "#define stdout_Int(x)  (stdout_Int_(x), puts(\"\"))\n"
+            "void* move (void* x) { return x; }\n"
             "int main (void) {\n"
             "\n"
             "struct Bool;\n"
@@ -1743,7 +1746,7 @@ __XXX__:
         "   XNat1: Nat\n"
         "}\n"
         "var n: Nat = Succ $Nat\n"
-        "var x: XNat = XNat1 n\n"
+        "var x: XNat = XNat1 move n\n"
         "var x_: \\XNat = \\x\n"
         "output std x_\n"
     ));
@@ -1777,7 +1780,7 @@ __XXX__:
         "   Succ: Nat\n"
         "}\n"
         "var d: Nat = Succ $Nat\n"
-        "var c: Nat = Succ d\n"
+        "var c: Nat = Succ move d\n"
         "var b: \\Nat = \\c.Succ!\n"
         "output std b\n"
     ));
@@ -1789,7 +1792,7 @@ __XXX__:
         "var d: Nat = Succ $Nat\n"
         "var c: Nat = $Nat\n"
         "var b: \\Nat = \\c\n"
-        "var a: (Nat,\\Nat) = (d,b)\n"       // precisa desalocar o d
+        "var a: (Nat,\\Nat) = (move d,b)\n" // precisa desalocar o d
         "var a_: \\(Nat,\\Nat) = \\a\n"
         "output std a_\n"
     ));
@@ -1809,7 +1812,7 @@ __XXX__:
         "   Succ: Nat\n"
         "}\n"
         "var c: Nat = Succ $Nat\n"
-        "var a: (Nat,Nat) = ($Nat,c)\n" // precisa transferir o c
+        "var a: (Nat,Nat) = ($Nat, move c)\n" // precisa transferir o c
         //"var d: Nat = c\n"               // erro
         "output std (\\c)\n"
     ));
@@ -1820,8 +1823,8 @@ __XXX__:
         "   Succ: Nat\n"
         "}\n"
         "var c: Nat = Succ $Nat\n"
-        "var a: (Nat,Nat) = ($Nat,c)\n"
-        "var b: (Nat,Nat) = a\n"        // tx a
+        "var a: (Nat,Nat) = ($Nat,move c)\n"
+        "var b: (Nat,Nat) = move a\n"        // tx a
         "var d: \\Nat = \\a.2\n"          // no: a is txed
         "output std d\n"
     ));
@@ -1832,8 +1835,8 @@ __XXX__:
         "   Succ: Nat\n"
         "}\n"
         "var c: Nat = Succ $Nat\n"
-        "var a: (Nat,Nat) = ($Nat,c)\n"
-        "var b: Nat = a.2\n"            // zera a.2 (a se mantem sem tx)
+        "var a: (Nat,Nat) = ($Nat,move c)\n"
+        "var b: Nat = move a.2\n"            // zera a.2 (a se mantem sem tx)
         "var d: \\Nat = \\a.2\n"
         "output std d\n"                 // ok: $Nat
     ));
@@ -1846,20 +1849,20 @@ __XXX__:
         "}\n"
         "var c: Nat = Succ $Nat\n"
         "var e: Nat = Succ $Nat\n"
-        "var a: (Nat,Nat) = (e,c)\n"
-        "var b: Nat = a.2\n"
+        "var a: (Nat,Nat) = move (move e,move c)\n"
+        "var b: Nat = move a.2\n"
         "var d: \\Nat = \\a.1\n"
         "output std d\n"             // ok: e
     ));
     assert(all(
-        "(ln 7, col 14): invalid transfer of \"c\" : active pointer in scope (ln 6)",
+        "(ln 7, col 19): invalid transfer of \"c\" : active pointer in scope (ln 6)",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var d: Nat = Succ $Nat\n"
-        "var c: Nat = Succ d\n"
+        "var c: Nat = Succ move d\n"
         "var b: \\Nat = \\c.Succ!\n"      // borrow de c
-        "var e: Nat = c\n"              // erro
+        "var e: Nat = move c\n"              // erro
     ));
     assert(all(
         "Succ ($)\n",
@@ -1873,7 +1876,7 @@ __XXX__:
         "   }\n"
         "}\n"
         //"output std 10\n"
-        "var e: Nat = c\n"
+        "var e: Nat = move c\n"
         "output std (\\e)\n"
     ));
     assert(all(
@@ -1884,8 +1887,8 @@ __XXX__:
         "   Succ: Nat\n"
         "}\n"
         "var d: Nat = Succ $Nat\n"
-        "var c: Nat = Succ d\n"
-        "var b: Nat = c.Succ!\n"
+        "var c: Nat = Succ move d\n"
+        "var b: Nat = move c.Succ!\n"
         "var e: \\Nat = \\c\n"
         "output std e\n"
     ));
@@ -1900,9 +1903,9 @@ __XXX__:
         "   XNat1: Nat\n"
         "}\n"
         "var d: Nat = Succ $Nat\n"
-        "var c: Nat = Succ d\n"
-        "var i: XNat = XNat1 c\n"
-        "var j: Nat = i.XNat1!\n"
+        "var c: Nat = Succ move d\n"
+        "var i: XNat = XNat1 move c\n"
+        "var j: Nat = move i.XNat1!\n"
         "var k: \\XNat = \\i\n"
         "output std k\n"
     ));
@@ -1918,10 +1921,10 @@ __XXX__:
         "   YNat1: XNat\n"
         "}\n"
         "var d: Nat = Succ $Nat\n"
-        "var c: Nat = Succ d\n"
-        "var i: XNat = XNat1 c\n"
-        "var j: YNat = YNat1 i\n"
-        "var k: XNat = j.YNat1!\n"
+        "var c: Nat = Succ move d\n"
+        "var i: XNat = XNat1 move c\n"
+        "var j: YNat = YNat1 move i\n"
+        "var k: XNat = move j.YNat1!\n"
         "var k_: \\XNat = \\k\n"
         "output std k_\n"
     ));
@@ -1931,8 +1934,8 @@ __XXX__:
         "   Succ: Nat\n"
         "}\n"
         "var a: (Nat,Nat) = ($Nat,$Nat)\n"
-        "var b: (Nat,(Nat,Nat)) = ($Nat,a)\n"
-        "var c: Nat = b.1\n"
+        "var b: (Nat,(Nat,Nat)) = move ($Nat,move a)\n"
+        "var c: Nat = move b.1\n"
         "var c_: \\Nat = \\c\n"
         "output std c_\n"
     ));
@@ -1975,7 +1978,7 @@ __XXX__:
         "   Succ: Nat\n"
         "}\n"
         "var a: Nat = Succ $Nat\n"
-        "var n: Nat = Succ a\n"
+        "var n: Nat = Succ move a\n"
         "var n_: \\Nat = \\n\n"
         "output std n_\n"
     ));
@@ -1985,7 +1988,7 @@ __XXX__:
         "   Succ: Nat\n"
         "}\n"
         "var a: Nat = Succ $Nat\n"
-        "var n: Nat = Succ a\n"
+        "var n: Nat = Succ move a\n"
         "var n_: \\Nat = \\n\n"
         "output std n_\n"
     ));
@@ -2014,7 +2017,7 @@ __XXX__:
         "}\n"
         "func f: () -> Nat {\n"
         "    var x: Nat = $Nat\n"
-        "    return x\n"
+        "    return move x\n"
         "}\n"
         "var v: Nat = f()\n"
         "var v_: \\Nat = \\v\n"
@@ -2027,8 +2030,8 @@ __XXX__:
         "}\n"
         "func f: () -> Nat {\n"
         "    var a: Nat = Succ $Nat\n"
-        "    var b: Nat = Succ a\n"
-        "    return b\n"
+        "    var b: Nat = Succ move a\n"
+        "    return move b\n"
         "}\n"
         "var y: Nat = f()\n"
         "var y_: \\Nat = \\y\n"
@@ -2041,8 +2044,8 @@ __XXX__:
         "}\n"
         "func f: () -> Nat {\n"
         "    var a: Nat = Succ $Nat\n"
-        "    var b: Nat = Succ a\n"
-        "    return b\n"
+        "    var b: Nat = Succ move a\n"
+        "    return move b\n"
         "}\n"
         "var y: Nat = f()\n"
         "var y_: \\Nat = \\y\n"
@@ -2055,8 +2058,8 @@ __XXX__:
         "}\n"
         "func f: () -> Nat {\n"
         "    var a: Nat = Succ $Nat\n"
-        "    var b: Nat = Succ a\n"
-        "    return b\n"
+        "    var b: Nat = Succ move a\n"
+        "    return move b\n"
         "}\n"
         "var y: Nat = f()\n"
         "var y_: \\Nat = \\y\n"
@@ -2069,8 +2072,8 @@ __XXX__:
         "}\n"
         "func f: () -> Nat {\n"
         "    var a: Nat = Succ $Nat\n"
-        "    var b: Nat = Succ a\n"
-        "    return b\n"
+        "    var b: Nat = Succ move a\n"
+        "    return move b\n"
         "}\n"
         "var y: Nat = f()\n"
         "var y_: \\Nat = \\y\n"
@@ -2089,7 +2092,7 @@ __XXX__:
         "    return $Nat\n"
         "}\n"
         "var a: Nat = Succ $Nat\n"
-        "var y: Nat = len a\n"
+        "var y: Nat = len move a\n"
         "var y_: \\Nat = \\y\n"
         "output std y_\n"
     ));
@@ -2100,7 +2103,7 @@ __XXX__:
         "}\n"
         "var n: Nat = $Nat\n"
         "output std (\\n)\n"
-        "var z: Nat = n\n"
+        "var z: Nat = move n\n"
     ));
     assert(all(
         "",     // ERROR
@@ -2127,7 +2130,7 @@ __XXX__:
         "        return $Nat\n"
         "    } else {\n"
         "        var n: Nat = len (\\arg\\.Succ!)\n"
-        "        return Succ n\n"
+        "        return Succ move n\n"
         "    }\n"
         "}\n"
         "var x: Nat = Succ Succ Succ $Nat\n"
@@ -2140,7 +2143,7 @@ __XXX__:
         "    Succ: Nat\n"
         "}\n"
         "var x: Nat = Succ Succ Succ $Nat\n"
-        "var y: Nat = x.Succ!\n"
+        "var y: Nat = move x.Succ!\n"
         "output std (\\y)\n"
     ));
     assert(all(
@@ -2156,11 +2159,11 @@ __XXX__:
         "    if arg.$Nat? {\n"
         "        return $Nat\n"
         "    } else {\n"
-        "        return Succ len arg.Succ!\n"
+        "        return Succ move len move arg.Succ!\n"
         "    }\n"
         "}\n"
         "var x: Nat = Succ Succ Succ $Nat\n"
-        "var y: Nat = len x\n"
+        "var y: Nat = len move x\n"
         "output std (\\y)\n"
     ));
     assert(all(
@@ -2185,14 +2188,14 @@ __XXX__:
 
     // OWNERSHIP / BORROWING
     assert(all(
-        "(ln 6, col 14): invalid access to \"i\" : ownership was transferred (ln 5)",
+        "(ln 6, col 19): invalid access to \"i\" : ownership was transferred (ln 5)",
         //"$\n",
         "type rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
         "var i: Nat = Succ $Nat\n"
-        "var j: Nat = i  -- tx\n"
-        "var k: Nat = i  -- erro\n"
+        "var j: Nat = move i  -- tx\n"
+        "var k: Nat = move i  -- erro\n"
         "output std (\\i)\n"
     ));
     assert(all(
@@ -2205,13 +2208,13 @@ __XXX__:
         "output std z\n"
     ));
     assert(all(
-        "(ln 6, col 14): invalid transfer of \"x\" : active pointer in scope (ln 5)",
+        "(ln 6, col 19): invalid transfer of \"x\" : active pointer in scope (ln 5)",
         "type rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
         "var x: Nat = $Nat   -- owner\n"
         "var z: \\Nat = \\x    -- borrow\n"
-        "var y: Nat = x      -- error: transfer while borrow is active\n"
+        "var y: Nat = move x      -- error: transfer while borrow is active\n"
     ));
     assert(all(
         "Succ ($)\n",
@@ -2222,21 +2225,21 @@ __XXX__:
         "{\n"
         "    var z: \\Nat = \\x -- borrow\n"
         "}\n"
-        "var y: Nat = x       -- ok: borrow is inactive\n"
+        "var y: Nat = move x       -- ok: borrow is inactive\n"
         "var y_: \\Nat = \\y\n"
         "output std y_\n"
     ));
     assert(all(
-        "(ln 8, col 14): invalid access to \"x\" : ownership was transferred (ln 6)",
+        "(ln 8, col 19): invalid access to \"x\" : ownership was transferred (ln 6)",
         //"$\n",
         "type rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
         "var x: Nat = Succ $Nat     -- owner\n"
         "{\n"
-        "    var z: Nat = x         -- tx: new owner\n"
+        "    var z: Nat = move x         -- tx: new owner\n"
         "}\n"
-        "var y: Nat = x             -- no: x->z\n"
+        "var y: Nat = move x             -- no: x->z\n"
         "var y_: \\Nat = \\y\n"
         "output std y_\n"
     ));
@@ -2255,13 +2258,13 @@ __XXX__:
     assert(all(
         //"Item ($)\n",
 // TODO-NO-MOVE
-        "(ln 6, col 15): invalid access to \"a\" : ownership was transferred (ln 5)",
+        "(ln 6, col 20): invalid access to \"a\" : ownership was transferred (ln 5)",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
         "var a: List = Item Item $List\n"
-        "var b: List = a.Item!.Item!\n"
-        "var c: List = a.Item!\n"
+        "var b: List = move a.Item!.Item!\n"
+        "var c: List = move a.Item!\n"
         "output std (\\c)\n"
     ));
     assert(all(
@@ -2276,35 +2279,35 @@ __XXX__:
         "output std (\\l)\n"
     ));
     assert(all(
-        "(ln 8, col 8): invalid transfer of \"l\" : active pointer in scope (ln 7)",
+        "(ln 8, col 13): invalid transfer of \"l\" : active pointer in scope (ln 7)",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
         "func f: List -> () {}\n"
         "var x: List = Item $List\n"
-        "var l: (List,\\List) = (x, _(null))\n"
+        "var l: (List,\\List) = move (move x, _(null))\n"
         "set l.2 = \\l.1.Item!\n"
-        "call f l.1\n"
+        "call f move l.1\n"
     ));
     assert(all(
-        "(ln 6, col 24): invalid transfer of \"x\" : active pointer in scope (ln 6)",
+        "(ln 6, col 34): invalid transfer of \"x\" : active pointer in scope (ln 6)",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
         "func f: List -> () {}\n"
         "var x: List = Item $List\n"
-        "var l: (List,\\List) = (x, \\x)\n"
-        "call f l.1\n"
+        "var l: (List,\\List) = move (move x, \\x)\n"
+        "call f move l.1\n"
     ));
     assert(all(
-        "(ln 7, col 8): invalid transfer of \"l\" : active pointer in scope (ln 6)",
+        "(ln 7, col 13): invalid transfer of \"l\" : active pointer in scope (ln 6)",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
         "func g: (List,\\List) -> () {}\n"
-        "var l: (List,\\List) = (Item $List, ?)\n"
+        "var l: (List,\\List) = move (Item $List, ?)\n"
         "set l.2 = \\l.1.Item!\n"
-        "call g l\n"
+        "call g move l\n"
     ));
     assert(all(
         "Succ ($)\n",
@@ -2316,14 +2319,14 @@ __XXX__:
         "    Succ: Nat\n"
         "}\n"
         "func add: (Nat,\\Nat) -> Nat {\n"
-        "        var x: Nat = arg.1\n"
-        "        return x\n"
+        "        var x: Nat = move arg.1\n"
+        "        return move x\n"
         "}\n"
         "var x: Nat = Succ $Nat\n"
         "var y: Nat = $Nat\n"
         "var y_: \\Nat = \\y\n"
-        "var a: (Nat,\\Nat) = (x,y_)\n"
-        "var z: Nat = add a\n"
+        "var a: (Nat,\\Nat) = move (move x,y_)\n"
+        "var z: Nat = move add move a\n"
         "var z_: \\Nat = \\z\n"
         "output std z_\n"
     ));
@@ -2340,12 +2343,12 @@ __XXX__:
         "    XNat1: Nat\n"
         "}\n"
         "func add: XNat -> Nat {\n"
-        "        var x: Nat = arg.XNat1!\n"
-        "        return x\n"
+        "        var x: Nat = move arg.XNat1!\n"
+        "        return move x\n"
         "}\n"
         "var x: Nat = Succ $Nat\n"
-        "var a: XNat = XNat1 x\n"
-        "var z: Nat = add a\n"
+        "var a: XNat = move XNat1 move x\n"
+        "var z: Nat = add move a\n"
         "var z_: \\Nat = \\z\n"
         "output std z_\n"
     ));
@@ -2402,7 +2405,7 @@ __XXX__:
         "}\n"
         "var l1: List = Item Item $List\n"
         "var l2: List = Item $List\n"
-        "set l2 = l1\n"
+        "set l2 = move l1\n"
         "output std (\\l2)\n"
     ));
     assert(all(
@@ -2416,7 +2419,7 @@ __XXX__:
         "}\n"
         "var l1: List = $List\n"
         "var l2: List = $List\n"
-        "set l2 = l1\n"
+        "set l2 = move l1\n"
         "var x: Xx = Xx1 \\l1\n"
         "output std x.Xx1!\n"
     ));
@@ -2428,7 +2431,7 @@ __XXX__:
         "}\n"
         "var l1: List = $List\n"
         "var l2: List = $List\n"
-        "set l2 = l1\n"
+        "set l2 = move l1\n"
         "output std (\\l1)\n"
     ));
     assert(all(
@@ -2564,12 +2567,12 @@ __XXX__:
         "output std x.2\n"
     ));
     assert(all(
-        "(ln 5, col 14): invalid dnref : cannot transfer value",
+        "(ln 5, col 19): invalid dnref : cannot transfer value",
         "type rec Nat { Succ: Nat }\n"
         "var x: Nat = $Nat\n"
         "var y: \\Nat = \\x\n"
         "var z: \\Nat = y\n"
-        "var p: Nat = z\\\n"
+        "var p: Nat = move z\\\n"
     ));
 
     // CYCLE
@@ -2581,35 +2584,35 @@ __XXX__:
         "var l: List = Item $List\n"
         "var m: List = Item $List\n"
         "var p: \\List = \\l.Item!\n"
-        "set p\\ = m\n"
+        "set p\\ = move m\n"
         "output std (\\l)\n"
     ));
     assert(all(
-        "(ln 5, col 15): invalid assignment : cannot transfer ownsership to itself",
+        "(ln 5, col 20): invalid assignment : cannot transfer ownsership to itself",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
         "var l: List = Item $List\n"
-        "set l.Item! = l\n"
+        "set l.Item! = move l\n"
     ));
     assert(all(
-        "(ln 6, col 10): invalid assignment : cannot transfer ownsership to itself",
+        "(ln 6, col 15): invalid assignment : cannot transfer ownsership to itself",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
         "var l: List = Item $List\n"
         "var m: \\List = \\l.Item!\n"
-        "set m\\ = l\n"
+        "set m\\ = move l\n"
     ));
     assert(all(
-        "(ln 7, col 12): invalid assignment : cannot transfer ownsership to itself",
+        "(ln 7, col 17): invalid assignment : cannot transfer ownsership to itself",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
-        "func f: List->List { return arg }\n"
+        "func f: List->List { return move arg }\n"
         "var l: List = Item $List\n"
         "var m: \\List = \\l.Item!\n"
-        "set m\\ = f l\n"
+        "set m\\ = f move l\n"
     ));
     assert(all(
         "1\n2\n",
@@ -2619,13 +2622,13 @@ __XXX__:
         "}\n"
     ));
     assert(all(
-        "(ln 6, col 34): invalid dnref : cannot transfer value",
+        "(ln 6, col 39): invalid dnref : cannot transfer value",
         "type rec List {\n"
         "    Item: ((Int,Int),List)\n"
         "}\n"
         "var l: List = Item ((10,0),$List)\n"
         "var m: \\List = \\l.Item!.2\n"
-        "{ set m\\.Item!.2 = Item ((10,10),m\\) ; output std 10 }\n"
+        "{ set m\\.Item!.2 = Item ((10,10),move m\\) ; output std 10 }\n"
     ));
 
     // LOOP

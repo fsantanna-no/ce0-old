@@ -688,13 +688,13 @@ int parser_stmts (TK opt, Stmt** ret) {
 }
 
 int parser (Stmt** ret) {
-    static Type Type_Unit  = { TYPE_UNIT, 0 };
-    static Type tp_any     = { TYPE_ANY,  0 };
-    static Type tp_alias   = { TYPE_ANY,  1 };
+    static Type Type_Unit = { TYPE_UNIT, 0 };
+    static Type tp_any    = { TYPE_ANY,  0 };
+    static Type tp_alias  = { TYPE_ANY,  1 };
 
     *ret = NULL;
 
-    // Int, std, clone
+    // Int, std, clone, move
     {
         static Stmt Int = (Stmt) {   // Int
             0, STMT_USER, NULL, {NULL,NULL},
@@ -717,6 +717,14 @@ int parser (Stmt** ret) {
             .Func = { {TX_VAR,{.s="clone"},0,__COUNTER__}, &tp_clone, NULL }
         };
         *ret = enseq(*ret, &clone);
+    }
+    {
+        static Type tp_move = { TYPE_FUNC, .Func={&tp_any,&tp_any} };
+        static Stmt move = (Stmt) {   // move ()
+            0, STMT_FUNC, NULL, {NULL,NULL},
+            .Func = { {TX_VAR,{.s="move"},0,__COUNTER__}, &tp_move, NULL }
+        };
+        *ret = enseq(*ret, &move);
     }
 
     Stmt* tmp;

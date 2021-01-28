@@ -160,11 +160,12 @@ Type* env_expr_to_type (Env* env, Expr* e) {
         }
 
         case EXPR_CALL: {
-            // special cases: clone(), any _f()
+            // special cases: clone(), move(), any _f()
             Type* tp = env_expr_to_type(env, e->Call.func);
             if (tp->sub == TYPE_FUNC) {
                 assert(e->Call.func->sub == EXPR_VAR);
-                if (!strcmp(e->Call.func->tk.val.s,"clone")) {     // returns type of arg
+                if (!strcmp(e->Call.func->tk.val.s,"clone") ||
+                    !strcmp(e->Call.func->tk.val.s,"move")) {   // returns type of arg
                     Type* ret = malloc(sizeof(Type));
                     assert(ret != NULL);
                     *ret = *env_expr_to_type(env, e->Call.arg);
@@ -174,7 +175,7 @@ Type* env_expr_to_type (Env* env, Expr* e) {
                     return tp->Func.out;
                 }
             } else {
-                assert(e->Call.func->sub == EXPR_NATIVE);           // returns typeof _f(x)
+                assert(e->Call.func->sub == EXPR_NATIVE);       // returns typeof _f(x)
                 Type* tp = malloc(sizeof(Type));
                 assert(tp != NULL);
                 *tp = (Type) { TYPE_NATIVE, 0, .Native={TX_NATIVE,{.s={"TODO"}},0,0} };
