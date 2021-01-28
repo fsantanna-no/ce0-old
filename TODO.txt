@@ -1,11 +1,41 @@
-- comparison with rust
+- runtime verifc para grow
+    - exemplo com ponteiro na arvore, ex., lista + tail
+    - ver situacoes em que check nao é necessário
 
+- lifetimes pela ordem dos parametros:
+    - func env: (\Env,\Stmt) -> ()
+        - posso guardar em \Stmt algo de \Env
+            - sei que sao growable e sei que \Env >= \Stmt
+
+- qd nao for isrec, chamar clone automaticamente
+    - caso do percorrimento do env
+
+- aloca e nao desaloca pois exige tmp que chama fc alocadora 2x:
+    - return (env_id_to_type (arg.1,id)).Some_Type!
+
+- None_Sub is not part of Maybe_Type
+    var tp: Maybe_Type = call parser_type ()
+    if tp.None_Sub? {
+- C error: few operators to parser_stmts (it receives TK_enu)
+    var s: Maybe_Stmt = call parser_stmts ()
+
+- TODO-deep-ptr
+
+- comparison with rust
+- vector index, modules, asptr/asnat, elseif
+    - traverse/visit/iterate/walk urgente
+    - set x = y, where y=b, b=10
+    - set x = y, if y>10
+    - return () in unit funcs
+    - collections:
+        - <hash>
+        - {linked}
+        - [vector]
 - as
     - call output Draw Text ((0,5), _("Hello!") as _(char*))
 - defer
 - unificar op2
 - preciso mesmo de Stmt.tk ??
-- return () in unit funcs
 - cpp
 - traverse / vector / string
 - posso passar uma REF onde espero um plain
@@ -26,13 +56,35 @@
     3. Rust nao consegue mover partes de estruturas recursivas
         - var z: (Nat,Nat) = ...
         - var x: Nat = z.1          -- z.1=$
+        - isso por conta do set auto nil
+    x. keyword move
     4. Ce terá pools (pool xs[]:Nat ; var x:Nat in xs = ...)
         4.1 Limita escopo da memória
             - o sistema de ownership não respeita escopo mínimo, sempre posso retornar.
             - confusão com entendimento da memória em determinado momento
             - ter um ponteiro único nao ajuda necessariamente a entender
         4.2 Permite bounded pool
-    5. Rust nao consegue modificar uma lista!
+    X. Conseguiria guardar ponteiros na raiz da struct que quando houver qq free,
+       eu percorro a raiz e elimino o ptr
+    5. Growable. Só posso escrever em subarvores vazias, nunca substituir um no e remover
+       a sua subarvore. Isso iria delasalocar nós com ponteiros pendentes.
+       A verificação é em runtime, feito na atribuicao. Só pode ser assim pois
+       ponteiros que já foram extremidades deixam de ser assim que há uma attr
+        - agora vou poder ter ponteiros guardados na propria árvore ou até mesmo
+          fora em escopos menores ou iguais
+    - tipos de recs:
+        - immutable
+            - nao precisa de clone (pode share os nós sem move)
+        - mutable
+            - growable
+                - pode guardar ponteiros
+            - movable
+                - pode mover sub arvores
+                  (transfer ownership of subtree)
+    - empty value:
+        - movable: o teste do grow é deito em cima do valor empty
+        - mutable: o valor original após o move vira o empty
+
 - closures explicitas precisa de new+ref para tuplas
 
 - POOLS
