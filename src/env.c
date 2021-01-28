@@ -971,30 +971,15 @@ int check_ptrs_expr (Env* env, Expr* e) {
     int n=0; Expr* vars[256]; int uprefs[256];
     env_held_vars(env, e, &n, vars, uprefs);
     int depth = -1;
-puts("-=-=-=-=-");
-dump_expr(e); puts(" $$$");
     for (int i=0; i<n; i++) {
         Stmt* var = env_expr_leftmost_decl(env, vars[i]);
         assert(var!=NULL && var->sub==STMT_VAR);
-#if 0
-            Stmt* dcl = env_id_to_stmt(env, e->tk.val.s);
-            assert(dcl != NULL);
-            if (dcl->Var.type->isptr) {
-                vars[(*vars_n)++] = e;
-            }
-#endif
-dump_expr(vars[i]);
         int tmp = (uprefs[i] ? var->env->depth : var->Var.ptr_deepest->env->depth);
-printf("  >>> %d  --  %s\n", depth, var->tk.val.s);
         if (depth!=-1 && depth!=tmp) {
-dump_expr(vars[i]);
-printf("  <<< %d  --  %s\n", tmp, var->tk.val.s);
             err_message(&e->tk, "invalid tuple : pointers with different scopes");
             return EXEC_ERROR;
         }
         depth = tmp;
-dump_expr(vars[i]);
-printf("  <<< %d  --  %s\n", depth, var->tk.val.s);
     }
     return EXEC_CONTINUE;
 }
