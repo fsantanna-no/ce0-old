@@ -883,6 +883,18 @@ void ptr_or_pln (Stmt* dst, Stmt* src, int isup) {
     }
 }
 
+void set_ptr_deepest (Env* env, Stmt* dst, Expr* src) {
+    int n=0; Expr* vars[256]; int uprefs[256];
+    env_held_vars(env, src, &n, vars, uprefs);
+    for (int i=0; i<n; i++) {
+        Type* stp = env_expr_to_type(env, vars[i]);
+            // set cur = \cur\... (cur is a pointer, so not upref)
+        Stmt* ssrc = env_id_to_stmt(env, vars[i]->tk.val.s);
+        assert(ssrc!=NULL && ssrc->sub==STMT_VAR);
+        ptr_or_pln(dst, ssrc, !stp->isptr && uprefs[i]);
+    }
+}
+
 int check_ptrs_stmt (Stmt* s) {
     switch (s->sub) {
         case STMT_VAR: {
@@ -892,13 +904,7 @@ int check_ptrs_stmt (Stmt* s) {
                 s->Var.ptr_deepest = s;
             }
 
-            int n=0; Expr* vars[256]; int uprefs[256];
-            env_held_vars(s->env, s->Var.init, &n, vars, uprefs);
-            for (int i=0; i<n; i++) {
-                Stmt* src = env_id_to_stmt(s->env, vars[i]->tk.val.s);
-                assert(src!=NULL && src->sub==STMT_VAR);
-                ptr_or_pln(s, src, uprefs[i]);
-            }
+            set_ptr_deepest(s->env, s, s->Var.init);
 
             // var x: \Int = ?
             if (s->Var.ptr_deepest == NULL) {
@@ -917,17 +923,7 @@ int check_ptrs_stmt (Stmt* s) {
             assert(dst->sub == STMT_VAR);
             int dst_depth = dst->Var.ptr_deepest->env->depth;
 
-            {
-                int n=0; Expr* vars[256]; int uprefs[256];
-                env_held_vars(s->env, s->Set.src, &n, vars, uprefs);
-                for (int i=0; i<n; i++) {
-                    Type* tp_ = env_expr_to_type(s->env, vars[i]);
-                        // set cur = \cur\... (cur is a pointer, so not upref)
-                    Stmt* src = env_id_to_stmt(s->env, vars[i]->tk.val.s);
-                    assert(src!=NULL && src->sub==STMT_VAR && src->Var.ptr_deepest!=NULL);
-                    ptr_or_pln(dst, src, !tp_->isptr && uprefs[i]);
-                }
-            }
+            set_ptr_deepest(s->env, dst, s->Set.src);
 
             Tk* src_var = &dst->Var.ptr_deepest->Var.tk;
 
