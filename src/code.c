@@ -846,10 +846,17 @@ void code_user (Stmt* s) {
             int yes = 0;
             int par = 0;
 
-            char* op2 = "";
-            if (sub->type->isptr && !env_type_ishasrec(s->env,sub->type,0)) {
-                op2 = "*";
+            char* op2 = ""; {
+                //int ishasrec = env_type_ishasrec(s->env, sub->type, 1);
+                int ishasrec = env_type_ishasrec(s->env, sub->type, 0);
+                int isrec    = env_type_isrec(s->env, sub->type, 0);
+                if (ishasrec && !isrec) {
+                    op2 = "&";
+                } else if (!ishasrec && sub->type->isptr) {
+                    op2 = "*";
+                }
             }
+
 
             switch (sub->type->sub) {
                 case TYPE_UNIT:

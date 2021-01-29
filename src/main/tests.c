@@ -1606,6 +1606,7 @@ __XXX__:
         "    return Item $List\n"
         "}\n"
     ));
+#if TODO-HASREC
     assert(all(
         "LT_Type ($,@)\n",
         "type rec List {\n"
@@ -1626,7 +1627,6 @@ __XXX__:
         "var l: List_Tail = call new_list_tail ()\n"
         "output std (\\l)\n"
     ));
-#if TODO-HASREC
     assert(all(
         "LT_Type ($,@)\n",
         "type rec List {\n"
