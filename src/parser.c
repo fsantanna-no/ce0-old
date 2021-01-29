@@ -618,7 +618,9 @@ int parser_stmt (Stmt** ret) {
         Tk tk = ALL.tk0;
         Expr* e;
         if (!parser_expr(&e,0)) {
-            return 0;
+            e = malloc(sizeof(Expr));
+            assert(e != NULL);
+            *e = (Expr) { ALL.nn++, EXPR_UNIT, {TK_UNIT,{},0,ALL.nn++} };
         }
         *s = (Stmt) { ALL.nn++, STMT_RETURN, NULL, {NULL,NULL}, tk, .Return=e };
 

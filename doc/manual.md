@@ -504,7 +504,7 @@ Stmt ::= `var´ VAR `:´ Type             -- variable declaration     var x: () 
       |  `func´ VAR `:´ Type `{´        -- function                 func f : ()->() { return () }
             Stmt
          `}´
-      |  `return´ Expr                  -- function return          return ()
+      |  `return´ [Expr]                -- function return          return ()
       |  { Stmt [`;´] }                 -- sequence                 call f() ; call g()
       |  `{´ Stmt `}´                   -- block                    { call f() ; call g() }
       |  `native´ [`pre´] `{´ ... `}´   -- native                   native { printf("hi"); }

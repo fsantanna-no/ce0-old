@@ -4,7 +4,7 @@
 
 // check visually 3 errors
 
-//#define DEBUG
+#define DEBUG
 //#define VALGRIND
 
 #include "../all.h"
@@ -599,7 +599,7 @@ void t_parser_stmt (void) {
     }
     // STMT_FUNC
     {
-        all_init(NULL, stropen("r", 0, "func f : () -> () { return () }"));
+        all_init(NULL, stropen("r", 0, "func f : () -> () { return }"));
         Stmt* s;
         assert(parser_stmt(&s));
         assert(s->sub == STMT_FUNC);
@@ -1039,6 +1039,35 @@ void t_code (void) {
 void t_all (void) {
 goto __XXX__;
 __XXX__:
+#if 0
+puts("-=-=-=-=-");
+    assert(all(
+        "",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "func new: () -> List {\n"
+        "    return Item $List\n"
+        "}\n"
+    ));
+    assert(all(
+        "",
+        "type rec List {\n"
+        "    Item: (Int, List)\n"
+        "}\n"
+        "\n"
+        "type List_Tail {\n"
+        "    LT_Type: (List, \\List)\n"
+        "}\n"
+        "\n"
+        "func new_list_tail_type: () -> List_Tail {\n"
+        "    var l: List = $List\n"
+        "    return LT_Type (l, \\l)\n"
+        "}\n"
+    ));
+assert(0);
+#endif
+
     // ERROR
     assert(all(
         "(ln 1, col 1): expected statement : have \"/\"",
@@ -1476,7 +1505,7 @@ __XXX__:
     ));
     assert(all(
         "(ln 2, col 6): invalid call to \"f\" : type mismatch",
-        "func f : ((),()) -> () { return () }\n"
+        "func f : ((),()) -> () { return }\n"
         "call f()\n"
     ));
     assert(all(
@@ -1511,7 +1540,7 @@ __XXX__:
         "2\n",
         "func f : \\Int -> () {\n"
         "   set arg\\ = _(*arg+1)\n"
-        "   return ()\n"
+        "   return \n"
         "}\n"
         "var x: Int = 1\n"
         "call f (\\x)\n"
@@ -1525,7 +1554,7 @@ __XXX__:
         "type Tp { Tp1: \\Int }\n"
         "func f : (\\Tp,\\Int) -> () {\n"
         "   set arg.1\\.Tp1! = arg.2\n"
-        "   return ()\n"
+        "   return \n"
         "}\n"
         "output std 1\n"
     ));
@@ -1551,7 +1580,7 @@ __XXX__:
         "type Tp { Tp1: \\Int }\n"
         "func f : (\\Int,\\Tp) -> () {\n"
         "   set arg.2\\.Tp1! = arg.1\n"
-        "   return ()\n"
+        "   return \n"
         "}\n"
         "var i: Int = 10\n"
         "var j: Int = 0\n"
@@ -1568,7 +1597,7 @@ __XXX__:
         "}\n"
         "func f : (\\Int,\\Tp) -> () {  -- 2nd argument (possibly pointing to wider scope)\n"
         "    set arg.2\\.Tp1! = arg.1   -- holds 1st argument (possibly pointing to narrower scope)\n"
-        "    return ()                  -- this leads to a dangling reference\n"
+        "    return                     -- this leads to a dangling reference\n"
         "}\n"
         "var i: Int = 10\n"
         "var tp: Tp = Tp1 \\i           -- wider scope\n"
@@ -1592,7 +1621,7 @@ __XXX__:
     ));
     assert(all(
         "(ln 1, col 1): invalid return : no enclosing function",
-        "return ()\n"
+        "return \n"
     ));
 
     assert(all(
@@ -1646,7 +1675,7 @@ __XXX__:
         "}\n"
         "func f : \\Bool -> () {\n"
         "   set arg = arg\n"
-        "   return ()\n"
+        "   return \n"
         "}\n"
         "var x: Bool = True\n"
         "call f (\\x)\n"
