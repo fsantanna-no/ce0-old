@@ -668,7 +668,7 @@ int parser_stmt (Stmt** ret) {
 
         *var = (Expr) { ALL.nn++, EXPR_VAR, {TX_VAR,{.s="_ret_"},tk.lin,tk.col}, .Var={0,0} };
         *set = (Stmt) { ALL.nn++, STMT_SET, NULL, {NULL,NULL}, tk, .Set={var,e} };
-        *xxx = (Stmt) { ALL.nn++, STMT_RETURN, NULL, {NULL,NULL}, tk };
+        *xxx = (Stmt) { ALL.nn++, STMT_RETURN, NULL, {NULL,NULL}, tk, .Return=e };
 
         free(s);
         *ret = enseq(set,xxx);

@@ -931,17 +931,21 @@ void code_stmt (Stmt* s) {
 
             fprintf(ALL.out, "%s %s", to_c(s->env,s->Var.type), s->Var.tk.val.s);
 
-            if (env_type_ishasrec(s->env,s->Var.type,0)) {
-                fprintf (ALL.out,
-                    " __attribute__ ((__cleanup__(%s_free)))",
-                    to_ce(s->Var.type)
-                );
+            // ignore cleanup for _ret_
+            if (strcmp(s->Var.tk.val.s,"_ret_")) {
+                if (env_type_ishasrec(s->env,s->Var.type,0)) {
+                    fprintf (ALL.out,
+                        " __attribute__ ((__cleanup__(%s_free)))",
+                        to_ce(s->Var.type)
+                    );
+                }
+
+                if (s->Var.init->sub != EXPR_UNK) {
+                    out(" = ");
+                    code_expr(s->env, s->Var.init, 0);
+                }
             }
 
-            if (s->Var.init->sub != EXPR_UNK) {
-                out(" = ");
-                code_expr(s->env, s->Var.init, 0);
-            }
             out(";\n");
             break;
         }
@@ -958,9 +962,12 @@ void code_stmt (Stmt* s) {
 
             // if "dst" is ishasrec, need to free it
             if (env_type_ishasrec(s->env,dst,0)) {
-                fprintf(ALL.out, "%s_free(&", to_ce(dst));
-                code_expr(s->env, s->Set.dst, 0);
-                out(");\n");
+                // ignore cleanup for _ret_
+                if (s->Set.dst->sub!=EXPR_VAR || strcmp(s->Set.dst->tk.val.s,"_ret_")) {
+                    fprintf(ALL.out, "%s_free(&", to_ce(dst));
+                    code_expr(s->env, s->Set.dst, 0);
+                    out(");\n");
+                }
             }
 
             // if "dst" is dnref, current value must be NULL
@@ -979,7 +986,11 @@ void code_stmt (Stmt* s) {
         }
 
         case STMT_RETURN:
-            out("return _ret_;\n");
+            if (env_expr_to_type(s->env,s->Return)->sub == TYPE_UNIT) {
+                out("return;\n");
+            } else {
+                out("return _ret_;\n");
+            }
             break;
 
         case STMT_IF: {

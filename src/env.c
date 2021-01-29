@@ -617,9 +617,13 @@ int ftk (Env* env, Tk* tk, char* var_type) {
         case TX_VAR: {
             Stmt* decl = env_id_to_stmt(env, tk->val.s);
             if (decl == NULL) {
-                char err[TK_BUF+256];
-                sprintf(err, "undeclared %s \"%s\"", var_type, tk->val.s);
-                return err_message(tk, err);
+                if (!strcmp(tk->val.s,"_ret_")) {
+                    return err_message(tk, "invalid return : no enclosing function");
+                } else {
+                    char err[TK_BUF+256];
+                    sprintf(err, "undeclared %s \"%s\"", var_type, tk->val.s);
+                    return err_message(tk, err);
+                }
             }
             return 1;
         }
@@ -819,6 +823,7 @@ int check_types_stmt (Stmt* s) {
         case STMT_BLOCK:
         case STMT_NATIVE:
         case STMT_CALL:
+        case STMT_RETURN:   // (STMT_SET of _ret_)
             return 1;
 
         case STMT_VAR:
@@ -851,14 +856,6 @@ int check_types_stmt (Stmt* s) {
                 return err_message(&s->tk, "invalid condition : type mismatch");
             }
             return 1;
-
-        case STMT_RETURN: {
-            Stmt* func = env_stmt_to_func(s);
-            if (func == NULL) {
-                return err_message(&s->tk, "invalid return : no enclosing function");
-            }
-            return 1;
-        }
     }
     assert(0);
 }
@@ -924,8 +921,13 @@ int check_ptrs_stmt (Stmt* s) {
             // my blk depth vs assign depth
             if (dst->env->depth < dst->Var.ptr_deepest->env->depth) {
                 char err[TK_BUF+256];
-                sprintf(err, "invalid assignment : cannot hold pointer \"%s\" (ln %d) in outer scope",
-                        src_var->val.s, src_var->lin);
+                if (s->Set.dst->sub==EXPR_VAR && !strcmp(s->Set.dst->tk.val.s,"_ret_")) {
+                    sprintf(err, "invalid return : cannot return local pointer \"%s\" (ln %d)",
+                            src_var->val.s, src_var->lin);
+                } else {
+                    sprintf(err, "invalid assignment : cannot hold pointer \"%s\" (ln %d) in outer scope",
+                            src_var->val.s, src_var->lin);
+                }
                 err_message(&s->tk, err);
                 return EXEC_ERROR;
             }
