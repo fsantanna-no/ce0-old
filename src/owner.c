@@ -319,10 +319,6 @@ int check_txs (Stmt* S) {
                 goto __ACCS__;
             }
 
-            case STMT_RETURN:
-                if (!set_txs(s->Return,0)) return EXEC_ERROR;
-                goto __ACCS__;
-
             case STMT_IF: {
                 int ret = visit_expr(0, s->env, s->If.tst, fe);
                 if (ret != EXEC_CONTINUE) {

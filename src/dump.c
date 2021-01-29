@@ -167,9 +167,7 @@ void dump_stmt (Stmt* s) {
             break;
         case STMT_RETURN:
             dump_spc();
-            printf("return ");
-            dump_expr(s->Return);
-            puts("");
+            puts("return");
             break;
         case STMT_NATIVE:
             dump_spc();

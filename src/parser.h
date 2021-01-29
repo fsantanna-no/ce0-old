@@ -110,7 +110,6 @@ typedef struct Stmt {
     Tk tk;
     union {
         Expr* Call;         // STMT_CALL
-        Expr* Return;       // STMT_RETURN
         struct Stmt* Loop;  // STMT_LOOP
         //void  Break;      // STMT_BREAK
         struct Stmt* Block; // STMT_BLOCK

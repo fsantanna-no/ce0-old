@@ -46,12 +46,11 @@ int visit_stmt_ (int ord, Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft) {
         case STMT_NONE:
         case STMT_NATIVE:
         case STMT_BREAK:
+        case STMT_RETURN:
             return 1;
 
         case STMT_CALL:
             return visit_expr(ord, s->env, s->Call, fe);
-        case STMT_RETURN:
-            return visit_expr(ord, s->env, s->Return, fe);
 
         case STMT_VAR:
             return visit_type(s->env,s->Var.type,ft) && visit_expr(ord,s->env,s->Var.init,fe);
@@ -215,12 +214,10 @@ int exec_stmt (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe) {
                 case STMT_LOOP:
                 case STMT_FUNC:
                 case STMT_BLOCK:
+                case STMT_RETURN:
                     break;
                 case STMT_CALL:
                     ret = visit_expr(0, s->env, s->Call, fe);
-                    break;
-                case STMT_RETURN:
-                    ret = visit_expr(0, s->env, s->Return, fe);
                     break;
                 case STMT_VAR:
                     ret = visit_expr(0, s->env, s->Var.init, fe);

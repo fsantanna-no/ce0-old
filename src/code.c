@@ -978,13 +978,9 @@ void code_stmt (Stmt* s) {
             break;
         }
 
-        case STMT_RETURN: {
-            visit_expr(1, s->env, s->Return, code_expr_pre);
-            out("return ");
-            code_expr(s->env, s->Return, 0);
-            out(";\n");
+        case STMT_RETURN:
+            out("return _ret_;\n");
             break;
-        }
 
         case STMT_IF: {
             visit_expr(1, s->env, s->If.tst, code_expr_pre);

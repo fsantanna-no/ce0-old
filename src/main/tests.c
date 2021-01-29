@@ -607,10 +607,11 @@ void t_parser_stmt (void) {
         assert(!strcmp(s->Func.tk.val.s, "f"));
         assert(s->Func.body->sub == STMT_BLOCK);
         assert(s->Func.body->Block->sub == STMT_SEQ);
-        assert(s->Func.body->Block->Seq.s1->sub == STMT_VAR);
+        assert(s->Func.body->Block->Seq.s1->sub == STMT_SEQ);
         assert(s->Func.body->Block->Seq.s2->sub == STMT_BLOCK);
-        assert(s->Func.body->Block->Seq.s2->Block->sub == STMT_RETURN);
-        assert(s->Func.body->Block->Seq.s2->Block->Return->sub == EXPR_UNIT);
+        assert(s->Func.body->Block->Seq.s2->Block->Seq.s1->sub == STMT_SET);
+        assert(s->Func.body->Block->Seq.s2->Block->Seq.s2->sub == STMT_RETURN);
+        assert(s->Func.body->Block->Seq.s2->Block->Seq.s1->Set.src->sub == EXPR_UNIT);
         fclose(ALL.inp);
     }
 }

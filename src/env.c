@@ -833,8 +833,12 @@ int check_types_stmt (Stmt* s) {
             if (!type_is_sup_sub(env_expr_to_type(s->env,s->Set.dst), env_expr_to_type(s->env,s->Set.src), 1)) {
                 char err[TK_BUF+256];
                 if (s->Set.dst->sub == EXPR_VAR) {
-                    sprintf(err, "invalid assignment to \"%s\" : type mismatch", s->Set.dst->tk.val.s);
-                    return err_message(&s->Set.dst->tk, err);
+                    if (!strcmp(s->Set.dst->tk.val.s,"_ret_")) {
+                        return err_message(&s->tk, "invalid return : type mismatch");
+                    } else {
+                        sprintf(err, "invalid assignment to \"%s\" : type mismatch", s->Set.dst->tk.val.s);
+                        return err_message(&s->Set.dst->tk, err);
+                    }
                 } else {
                     strcpy(err, "invalid assignment : type mismatch");
                     return err_message(&s->tk, err);
@@ -852,10 +856,6 @@ int check_types_stmt (Stmt* s) {
             Stmt* func = env_stmt_to_func(s);
             if (func == NULL) {
                 return err_message(&s->tk, "invalid return : no enclosing function");
-            }
-            assert(func->Func.type->sub == TYPE_FUNC);
-            if (!type_is_sup_sub(func->Func.type->Func.out, env_expr_to_type(s->env,s->Return), 0)) {
-                return err_message(&s->tk, "invalid return : type mismatch");
             }
             return 1;
         }
@@ -932,6 +932,7 @@ int check_ptrs_stmt (Stmt* s) {
             break;
         }
 
+#if 0
         case STMT_RETURN: {
             Type* tp = env_expr_to_type(s->env, s->Return);
             if (!env_type_ishasptr(s->env,tp)) {
@@ -954,6 +955,7 @@ int check_ptrs_stmt (Stmt* s) {
             }
             break;
         }
+#endif
 
         default:
             break;

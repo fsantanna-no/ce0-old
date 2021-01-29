@@ -365,6 +365,25 @@ int parser_expr (Expr** ret, int canpre) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Stmt* enseq (Stmt* s1, Stmt* s2) {
+    if (s1 == NULL) {
+        return s2;
+    } else if (s2 == NULL) {
+        return s1;
+    } else if (s1->sub == STMT_NONE) {
+        free(s1);
+        return s2;
+    } else if (s2->sub == STMT_NONE) {
+        free(s2);
+        return s1;
+    } else {
+        Stmt* ret = malloc(sizeof(Stmt));
+        assert(ret != NULL);
+        *ret = (Stmt) { ALL.nn++, STMT_SEQ,   NULL, {NULL,NULL}, ALL.tk0, .Seq={s1,s2} };
+        return ret;
+    }
+}
+
 int parser_stmt_sub (Sub* ret) {
     if (!accept_err(TX_USER)) {
         return 0;
@@ -593,23 +612,42 @@ int parser_stmt (Stmt** ret) {
             return 0;
         }
 
-        Stmt* blk1 = malloc(sizeof(Stmt));
-        Stmt* seq1 = malloc(sizeof(Stmt));
-        Stmt* arg  = malloc(sizeof(Stmt));
-        Expr* expr = malloc(sizeof(Expr));
-        assert(blk1!=NULL && seq1!=NULL && arg!=NULL && expr!=NULL);
+        Expr* _arg_ = malloc(sizeof(Expr));
+        Stmt* arg   = malloc(sizeof(Stmt));
+        Expr* unk   = malloc(sizeof(Expr));
+        Stmt* ret   = malloc(sizeof(Stmt));
+        assert(arg!=NULL && ret!=NULL && _arg_!=NULL);
 
-        *blk1 = (Stmt) { ALL.nn++, STMT_BLOCK, NULL, {NULL,NULL}, tk, .Block=seq1 };
-        *seq1 = (Stmt) { ALL.nn++, STMT_SEQ,   NULL, {NULL,NULL}, tk, .Seq={arg,blk2} };
-        *expr = (Expr) { ALL.nn++, EXPR_NATIVE, {TX_NATIVE,{.s="_arg_"},id.lin,id.col} };
-        *arg  = (Stmt) { ALL.nn++, STMT_VAR,   NULL, {NULL,NULL}, tk,
+        *_arg_ = (Expr) { ALL.nn++, EXPR_NATIVE, {TX_NATIVE,{.s="_arg_"},id.lin,id.col} };
+        *arg = (Stmt) { ALL.nn++, STMT_VAR,   NULL, {NULL,NULL}, tk,
             .Var = {
                 { TX_VAR, {.s="arg"}, id.lin, id.col },
                 tp->Func.inp,
-                expr,
+                _arg_,
                 NULL
             }
         };
+
+        *unk = (Expr) { ALL.nn++, EXPR_UNK, tk };
+        *ret = (Stmt) { ALL.nn++, STMT_VAR,   NULL, {NULL,NULL}, tk,
+            .Var = {
+                { TX_VAR, {.s="_ret_"}, id.lin, id.col },
+                tp->Func.out,
+                unk,
+                NULL
+            }
+        };
+
+        Stmt* seq1 = enseq(arg,ret);
+        Stmt* seq2 = enseq(seq1,blk2);
+
+        Stmt* blk1 = malloc(sizeof(Stmt));
+        assert(blk1 != NULL);
+        *blk1 = (Stmt) { ALL.nn++, STMT_BLOCK, NULL, {NULL,NULL}, tk, .Block=seq2 };
+
+        // blk1
+        //  arg, ret
+        //  blk2
 
         *s = (Stmt) { ALL.nn++, STMT_FUNC, NULL, {NULL,NULL}, tk, .Func={id,tp,blk1} };
 
@@ -622,7 +660,18 @@ int parser_stmt (Stmt** ret) {
             assert(e != NULL);
             *e = (Expr) { ALL.nn++, EXPR_UNIT, {TK_UNIT,{},0,ALL.nn++} };
         }
-        *s = (Stmt) { ALL.nn++, STMT_RETURN, NULL, {NULL,NULL}, tk, .Return=e };
+
+        Expr* var = malloc(sizeof(Expr));
+        Stmt* set = malloc(sizeof(Stmt));
+        Stmt* xxx = malloc(sizeof(Stmt));
+        assert(var!=NULL && set!=NULL && xxx!=NULL);
+
+        *var = (Expr) { ALL.nn++, EXPR_VAR, {TX_VAR,{.s="_ret_"},tk.lin,tk.col}, .Var={0,0} };
+        *set = (Stmt) { ALL.nn++, STMT_SET, NULL, {NULL,NULL}, tk, .Set={var,e} };
+        *xxx = (Stmt) { ALL.nn++, STMT_RETURN, NULL, {NULL,NULL}, tk };
+
+        free(s);
+        *ret = enseq(set,xxx);
 
     // STMT_BLOCK
     } else if (check('{')) {
@@ -642,25 +691,6 @@ int parser_stmt (Stmt** ret) {
     }
 
     return 1;
-}
-
-Stmt* enseq (Stmt* s1, Stmt* s2) {
-    if (s1 == NULL) {
-        return s2;
-    } else if (s2 == NULL) {
-        return s1;
-    } else if (s1->sub == STMT_NONE) {
-        free(s1);
-        return s2;
-    } else if (s2->sub == STMT_NONE) {
-        free(s2);
-        return s1;
-    } else {
-        Stmt* ret = malloc(sizeof(Stmt));
-        assert(ret != NULL);
-        *ret = (Stmt) { ALL.nn++, STMT_SEQ,   NULL, {NULL,NULL}, ALL.tk0, .Seq={s1,s2} };
-        return ret;
-    }
 }
 
 int parser_stmts (TK opt, Stmt** ret) {
