@@ -917,13 +917,12 @@ int check_ptrs_stmt (Stmt* s) {
 
             Stmt* dst = env_expr_leftmost_decl(s->env, s->Set.dst);
             assert(dst->sub == STMT_VAR);
-            int dst_depth = dst->Var.ptr_deepest->env->depth;
 
             set_dst_ptr_deepest(dst, s->env, s->Set.src);
-
             Tk* src_var = &dst->Var.ptr_deepest->Var.tk;
 
-            if (dst_depth < dst->Var.ptr_deepest->env->depth) {
+            // my blk depth vs assign depth
+            if (dst->env->depth < dst->Var.ptr_deepest->env->depth) {
                 char err[TK_BUF+256];
                 sprintf(err, "invalid assignment : cannot hold pointer \"%s\" (ln %d) in outer scope",
                         src_var->val.s, src_var->lin);
