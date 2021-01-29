@@ -1039,6 +1039,7 @@ void t_code (void) {
 
 void t_all (void) {
 goto __XXX__;
+__XXX__:
     // ERROR
     assert(all(
         "(ln 1, col 1): expected statement : have \"/\"",
@@ -1625,7 +1626,7 @@ goto __XXX__;
         "var l: List_Tail = call new_list_tail ()\n"
         "output std (\\l)\n"
     ));
-__XXX__:
+#if TODO-HASREC
     assert(all(
         "LT_Type ($,@)\n",
         "type rec List {\n"
@@ -1659,7 +1660,7 @@ __XXX__:
         //"call append_list_tail(\\l, 20)\n"
         "--output std (\\l)\n"
     ));
-assert(0);
+#endif
 
     assert(all(
         "10\n",

@@ -243,7 +243,7 @@ Type* env_expr_to_type (Env* env, Expr* e) {
                 // only keep & if sub hasalloc:
                 //  &x -> x.True
                 return tp;
-            } else if (env_type_ishasrec(env,tp,0)) {
+            } else {
                 //  &x -> &x.Cons
                 Type* ret = malloc(sizeof(Type));
                 assert(ret != NULL);
