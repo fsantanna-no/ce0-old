@@ -1039,7 +1039,6 @@ void t_code (void) {
 
 void t_all (void) {
 goto __XXX__;
-__XXX__:
     // ERROR
     assert(all(
         "(ln 1, col 1): expected statement : have \"/\"",
@@ -1626,7 +1625,41 @@ __XXX__:
         "var l: List_Tail = call new_list_tail ()\n"
         "output std (\\l)\n"
     ));
-
+__XXX__:
+    assert(all(
+        "LT_Type ($,@)\n",
+        "type rec List {\n"
+        "    Item: (Int, List)\n"
+        "}\n"
+        "\n"
+        "type List_Tail {\n"
+        "    LT_Type: (List, \\List)\n"
+        "}\n"
+        "\n"
+        "func new_list_tail: () -> List_Tail {\n"
+        "    var l: List = $List\n"
+        "    var null: \\List = _NULL\n"
+        "    var ret: List_Tail = LT_Type (move l, null)\n"
+        "    set ret.LT_Type!.2 = \\ret.LT_Type!.1\n"
+        "    output std 111\n"
+        "    output std (ret.LT_Type!.2)\n"
+        "    return move ret\n"
+        "}\n"
+        "func append_list_tail: (\\List_Tail,Int) -> () {\n"
+        "   --output std (\\arg.1\\.LT_Type!.1)\n"
+        "   --output std (arg.1\\.LT_Type!.2)\n"
+        "   set arg.1\\.LT_Type!.2\\ = Item (arg.2, $List)\n"
+        "   --output std (\\arg.1\\.LT_Type!.1)\n"
+        //"   set arg.1\\.LT_Type!.2 = \\arg.1\\.LT_Type!.2\\.Item!.2\n"
+        "}\n"
+        "var l: List_Tail = call new_list_tail ()\n"
+        "output std 222\n"
+        "output std (l.LT_Type!.2)\n"
+        "call append_list_tail(\\l, 10)\n"
+        //"call append_list_tail(\\l, 20)\n"
+        "--output std (\\l)\n"
+    ));
+assert(0);
 
     assert(all(
         "10\n",
