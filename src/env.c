@@ -870,20 +870,7 @@ int check_types_stmt (Stmt* s) {
 // return \SRC
 //  - check if scope of DST<=S
 
-void ptr_or_pln (Stmt* dst, Stmt* src, int isup) {
-    if (isup) {
-        // acquired w/ =\x: points exactly to x which is in the deepest possible scope
-        //assert(dst->Var.ptr_deepest==NULL || src->Var.ptr_deepest->env->depth>dst->Var.ptr_deepest->env->depth);
-        dst->Var.ptr_deepest = src;
-    } else {
-        // acquired w/ =x: points to something that x points, take that scope, not the scope of x
-        if (dst->Var.ptr_deepest==NULL || src->Var.ptr_deepest->env->depth>dst->Var.ptr_deepest->env->depth) {
-            dst->Var.ptr_deepest = src->Var.ptr_deepest;
-        }
-    }
-}
-
-void set_ptr_deepest (Env* env, Stmt* dst, Expr* src) {
+void set_dst_ptr_deepest (Stmt* dst, Env* env, Expr* src) {
     int n=0; Expr* vars[256]; int uprefs[256];
     env_held_vars(env, src, &n, vars, uprefs);
     for (int i=0; i<n; i++) {
@@ -891,7 +878,16 @@ void set_ptr_deepest (Env* env, Stmt* dst, Expr* src) {
             // set cur = \cur\... (cur is a pointer, so not upref)
         Stmt* ssrc = env_id_to_stmt(env, vars[i]->tk.val.s);
         assert(ssrc!=NULL && ssrc->sub==STMT_VAR);
-        ptr_or_pln(dst, ssrc, !stp->isptr && uprefs[i]);
+        if (!stp->isptr && uprefs[i]) {
+            // acquired w/ =\x: points exactly to x which is in the deepest possible scope
+            //assert(dst->Var.ptr_deepest==NULL || src->Var.ptr_deepest->env->depth>dst->Var.ptr_deepest->env->depth);
+            dst->Var.ptr_deepest = ssrc;
+        } else {
+            // acquired w/ =x: points to something that x points, take that scope, not the scope of x
+            if (dst->Var.ptr_deepest==NULL || ssrc->Var.ptr_deepest->env->depth>dst->Var.ptr_deepest->env->depth) {
+                dst->Var.ptr_deepest = ssrc->Var.ptr_deepest;
+            }
+        }
     }
 }
 
@@ -904,7 +900,7 @@ int check_ptrs_stmt (Stmt* s) {
                 s->Var.ptr_deepest = s;
             }
 
-            set_ptr_deepest(s->env, s, s->Var.init);
+            set_dst_ptr_deepest(s, s->env, s->Var.init);
 
             // var x: \Int = ?
             if (s->Var.ptr_deepest == NULL) {
@@ -923,7 +919,7 @@ int check_ptrs_stmt (Stmt* s) {
             assert(dst->sub == STMT_VAR);
             int dst_depth = dst->Var.ptr_deepest->env->depth;
 
-            set_ptr_deepest(s->env, dst, s->Set.src);
+            set_dst_ptr_deepest(dst, s->env, s->Set.src);
 
             Tk* src_var = &dst->Var.ptr_deepest->Var.tk;
 
@@ -946,6 +942,8 @@ int check_ptrs_stmt (Stmt* s) {
             Expr* src      = expr_leftmost(s->Return);
             Stmt* src_decl = env_expr_leftmost_decl(s->env, s->Return);
             assert(src_decl->Var.ptr_deepest != NULL);
+
+            //set_dst_ptr_deepest(s, s->env, s->Return);
 
         //printf("ret=%d vs src=%d\n", s->env->depth, src_decl->Var.ptr_deepest->env->depth);
             if (s->env->depth <= src_decl->Var.ptr_deepest->env->depth) {
