@@ -271,10 +271,12 @@ Stmt* env_type_to_user_stmt (Env* env, Type* tp) {
 }
 
 int env_type_hasrec (Env* env, Type* tp, int okalias) {
+    assert(!okalias);
     auto int aux (Env* env, Type* tp, int okalias);
     return (!env_type_isrec(env,tp,0) && aux(env,tp,okalias));
 
     int aux (Env* env, Type* tp, int okalias) {
+        assert(!okalias);
         if (!okalias && tp->isptr) {
             return 0;
         }
@@ -311,6 +313,7 @@ int env_type_hasrec (Env* env, Type* tp, int okalias) {
 }
 
 int env_type_isrec (Env* env, Type* tp, int okalias) {
+    assert(!okalias);
     if (!okalias && tp->isptr) {
         return 0;
     }
@@ -331,6 +334,7 @@ int env_type_isrec (Env* env, Type* tp, int okalias) {
 }
 
 int env_type_ishasrec (Env* env, Type* tp, int okalias) {
+    assert(!okalias);
     return env_type_isrec(env,tp,okalias) || env_type_hasrec(env,tp,okalias);
 }
 
