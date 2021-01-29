@@ -338,7 +338,9 @@ int ftp_tuples (Env* env, Type* tp_) {
                 }
             }
 
-            if (sub->sub == TYPE_NATIVE) {
+            if (sub->isptr) {
+                fprintf(ALL.out, "    putchar('@');\n");
+            } else if (sub->sub == TYPE_NATIVE) {
                 fprintf(ALL.out, "    putchar('?');\n");
             } else if (sub->sub == TYPE_UNIT) {
                 fprintf(ALL.out, "    stdout_Unit_();\n");

@@ -1040,35 +1040,6 @@ void t_code (void) {
 void t_all (void) {
 goto __XXX__;
 __XXX__:
-#if 0
-puts("-=-=-=-=-");
-    assert(all(
-        "",
-        "type rec List {\n"
-        "    Item: List\n"
-        "}\n"
-        "func new: () -> List {\n"
-        "    return Item $List\n"
-        "}\n"
-    ));
-    assert(all(
-        "",
-        "type rec List {\n"
-        "    Item: (Int, List)\n"
-        "}\n"
-        "\n"
-        "type List_Tail {\n"
-        "    LT_Type: (List, \\List)\n"
-        "}\n"
-        "\n"
-        "func new_list_tail_type: () -> List_Tail {\n"
-        "    var l: List = $List\n"
-        "    return LT_Type (l, \\l)\n"
-        "}\n"
-    ));
-assert(0);
-#endif
-
     // ERROR
     assert(all(
         "(ln 1, col 1): expected statement : have \"/\"",
@@ -1625,6 +1596,38 @@ assert(0);
         "return \n"
     ));
 
+    // list / tail
+    assert(all(
+        "",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "func new: () -> List {\n"
+        "    return Item $List\n"
+        "}\n"
+    ));
+    assert(all(
+        "LT_Type ($,@)\n",
+        "type rec List {\n"
+        "    Item: (Int, List)\n"
+        "}\n"
+        "\n"
+        "type List_Tail {\n"
+        "    LT_Type: (List, \\List)\n"
+        "}\n"
+        "\n"
+        "func new_list_tail: () -> List_Tail {\n"
+        "    var l: List = $List\n"
+        "    var null: \\List = _NULL\n"
+        "    var ret: List_Tail = LT_Type (move l, null)\n"
+        "    set ret.LT_Type!.2 = \\ret.LT_Type!.1\n"
+        "    return move ret\n"
+        "}\n"
+        "var l: List_Tail = call new_list_tail ()\n"
+        "output std (\\l)\n"
+    ));
+
+
     assert(all(
         "10\n",
         "var x: Int = 10\n"
@@ -1840,7 +1843,7 @@ assert(0);
         "output std b\n"
     ));
     assert(all(
-        "(Succ ($),$)\n",
+        "(Succ ($),@)\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -2346,7 +2349,7 @@ assert(0);
         //"func asptr: _PTR -> _PTR { return arg }\n"
         "func f: List -> () {}\n"
         "var x: List = Item $List\n"
-        "var ptr: \\List = _(NULL)\n"
+        "var ptr: \\List = _NULL\n"
         "var l: (List,\\List) = (move x, ptr)\n"
         "set l.2 = \\l.1.Item!\n"
         "call f move l.1\n"
