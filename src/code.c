@@ -72,21 +72,8 @@ void code_to_ce (Type* tp) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int env_user_ishasrec (Env* env, Stmt* user) {
-    assert(user->sub == STMT_USER);
-    if (user->User.isrec) {
-        return 1;
-    }
-    for (int i=0; i<user->User.size; i++) {
-        Sub sub = user->User.vec[i];
-        if (env_type_ishasrec(env, sub.type, 0)) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
 void to_c_ (char* out, Env* env, Type* tp) {
+    int ishasrec = env_type_ishasrec(env, tp, 1);
     switch (tp->sub) {
         case TYPE_ANY:
         case TYPE_UNIT:
@@ -96,16 +83,14 @@ void to_c_ (char* out, Env* env, Type* tp) {
             strcat(out, tp->Native.val.s);
             //strcat(out, ")");
             break;
-        case TYPE_USER: {
-            Stmt* user = env_id_to_stmt(env, tp->User.val.s);
-            int ishasrec = env_user_ishasrec(env, user);
+        case TYPE_USER:
             if (ishasrec) strcat(out, "struct ");
             strcat(out, tp->User.val.s);
             if (ishasrec) strcat(out, "*");
             break;
-        }
         case TYPE_TUPLE:
             to_ce_(out, tp);
+            if (ishasrec) strcat(out, "*");
             break;
         case TYPE_FUNC:
             assert(0 && "TODO");
@@ -124,6 +109,20 @@ char* to_c (Env* env, Type* tp) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+int env_user_ishasrec (Env* env, Stmt* user) {
+    assert(user->sub == STMT_USER);
+    if (user->User.isrec) {
+        return 1;
+    }
+    for (int i=0; i<user->User.size; i++) {
+        Sub sub = user->User.vec[i];
+        if (env_type_ishasrec(env, sub.type, 0)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void code_free_user (Env* env, Stmt* user) {
     assert(user->sub == STMT_USER);
     assert(env_user_ishasrec(env,user));
@@ -132,6 +131,7 @@ void code_free_user (Env* env, Stmt* user) {
 
     const char* sup = user->User.tk.val.s;
     int ishasrec = env_user_ishasrec(env, user);
+assert(ishasrec);
 
     fprintf (ALL.out,
         "void %s_free (struct %s%s* p) {\n",
@@ -174,14 +174,14 @@ void code_free_tuple (Env* env, Type* tp) {
 
     char* tp_ = to_ce(tp);
     fprintf (ALL.out,
-        "void %s_free (%s* p) {\n",
+        "void %s_free (%s** p) {\n",
         tp_, tp_
     );
     for (int i=0; i<tp->Tuple.size; i++) {
         Type* sub = tp->Tuple.vec[i];
         if (env_type_ishasrec(env,sub,0)) {
             fprintf (ALL.out,
-                "    %s_free(&p->_%d);\n",
+                "    %s_free(&(*p)->_%d);\n",
                 to_ce(sub), i+1
             );
         }
@@ -191,6 +191,7 @@ void code_free_tuple (Env* env, Type* tp) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+#if 0
 void code_null_user (Env* env, Stmt* user) {
     assert(user->sub == STMT_USER);
     assert(env_user_ishasrec(env,user));
@@ -240,6 +241,7 @@ void code_null_tuple (Env* env, Type* tp) {
     }
     out("}\n");
 }
+#endif
 
 void code_clone_tuple (Env* env, Type* tp) {
     assert(tp->sub == TYPE_TUPLE);
@@ -247,24 +249,32 @@ void code_clone_tuple (Env* env, Type* tp) {
 
     char* tp_ = to_ce(tp);
     fprintf (ALL.out,
-        "%s clone_%s (%s* p) {\n"
-        "   return (%s) {",
-        tp_, tp_, tp_, tp_
+        "%s* clone_%s (%s* v) {\n"
+        "   %s* ret = malloc(sizeof(%s));\n"
+        "   assert(ret!=NULL && \"not enough memory\");\n"
+        "   *ret = (%s) { ",
+        tp_, tp_, tp_,
+        tp_, tp_,
+        tp_
     );
     for (int i=0; i<tp->Tuple.size; i++) {
         Type* sub = tp->Tuple.vec[i];
         if (env_type_ishasrec(env,sub,0)) {
             fprintf (ALL.out,
-                "%s clone_%s(&p->_%d)\n",
+                "%s clone_%s(&v->_%d)",
                 (i != 0 ? "," : ""),
                 to_ce(sub),
                 i+1
             );
         } else {
-            fprintf(ALL.out, "%s p->_%d\n", (i != 0 ? "," : ""), i+1);
+            fprintf(ALL.out, "%s v->_%d\n", (i != 0 ? "," : ""), i+1);
         }
     }
-    out("   };\n}\n");
+    out (
+        " };\n"
+        "   return ret;\n"
+        "}\n"
+    );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -306,13 +316,12 @@ int ftp_tuples (Env* env, Type* tp_) {
     // FREE, NULL
     if (ishasrec) {
         code_free_tuple(env, &tp);
-        code_null_tuple(env, &tp);
+        //code_null_tuple(env, &tp);
         code_clone_tuple(env, &tp);
     }
 
     // STDO
     {
-        int hasrec1 = env_type_hasrec(env, &tp, 0);
         fprintf (ALL.out,
             "#ifndef __stdout_%s__\n"
             "#define __stdout_%s__\n",
@@ -321,11 +330,11 @@ int ftp_tuples (Env* env, Type* tp_) {
         fprintf(ALL.out,
             "void stdout_%s_ (%s%s v) {\n"
             "    printf(\"(\");\n",
-            tp_ce, tp_c, (hasrec1 ? "*" : "")
+            tp_ce, tp_c, (ishasrec ? "*" : "")
         );
         for (int i=0; i<tp.Tuple.size; i++) {
             if (i > 0) {
-                fprintf(ALL.out, "    printf(\",\");\n");
+                fprintf(ALL.out, "printf(\",\");\n");
             }
             Type* sub = tp.Tuple.vec[i];
 
@@ -341,14 +350,14 @@ int ftp_tuples (Env* env, Type* tp_) {
             }
 
             if (sub->isptr) {
-                fprintf(ALL.out, "    putchar('@');\n");
+                fprintf(ALL.out, "putchar('@');\n");
             } else if (sub->sub == TYPE_NATIVE) {
-                fprintf(ALL.out, "    putchar('?');\n");
+                fprintf(ALL.out, "putchar('?');\n");
             } else if (sub->sub == TYPE_UNIT) {
-                fprintf(ALL.out, "    stdout_Unit_();\n");
+                fprintf(ALL.out, "stdout_Unit_();\n");
             } else {
-                fprintf(ALL.out, "    stdout_%s_(%sv%s_%d);\n",
-                    to_ce(sub), op2, (hasrec1 ? "->" : "."), i+1);
+                fprintf(ALL.out, "stdout_%s_(%s%s_%d);\n",
+                    to_ce(sub), op2, (ishasrec ? "(*v)->" : "v."), i+1);
             }
         }
         fprintf(ALL.out,
@@ -358,7 +367,7 @@ int ftp_tuples (Env* env, Type* tp_) {
             "    stdout_%s_(v);\n"
             "    puts(\"\");\n"
             "}\n",
-            tp_ce, tp_c, (hasrec1 ? "*" : ""),
+            tp_ce, tp_c, (ishasrec ? "*" : ""),
             tp_ce
         );
         out("#endif\n");
@@ -381,7 +390,6 @@ int code_expr_pre (Env* env, Expr* e) {
         case EXPR_INT:
         case EXPR_UPREF:
         case EXPR_DNREF:
-        case EXPR_TUPLE:
         case EXPR_CALL:
         case EXPR_PRED:
             break;
@@ -391,8 +399,53 @@ int code_expr_pre (Env* env, Expr* e) {
             if (e->Var.tx_setnull) {
                 char* id = e->tk.val.s;
                 fprintf(ALL.out, "typeof(%s) _tmp_%d = %s;\n", id, e->N, id);
-                fprintf(ALL.out, "%s_null(&%s);\n", to_ce(TP), id);
+                fprintf(ALL.out, "%s = NULL;\n", id);
             }
+            break;
+        }
+
+        case EXPR_TUPLE: {
+            visit_type(env, TP, ftp_tuples);
+            int ishasrec = env_type_ishasrec(env, TP, 0);
+
+            static char tpc[256];
+            tpc[0] = '\0';
+            to_c_(tpc, env, TP);
+
+            out(tpc);
+            fprintf (ALL.out,
+                " _tmp_%d = ",
+                e->N
+            );
+
+            if (ishasrec) {
+                // Nat* _1 = (Nat*) malloc(sizeof(Nat));
+                tpc[strlen(tpc)-1] = '\0';  // remove leading `*´
+                fprintf (ALL.out,
+                    "(%s*) malloc(sizeof(%s));\n"
+                    "assert(_tmp_%d!=NULL && \"not enough memory\");\n"
+                    "*_tmp_%d = ",
+                    tpc, tpc, e->N, e->N
+                );
+            } else {
+                // plain cons: nothing else to do
+            }
+
+            out("((");
+            out(tpc);
+            out(") { ");
+            int comma = 0;
+            for (int i=0; i<e->Tuple.size; i++) {
+                Type* tp = env_expr_to_type(env, e->Tuple.vec[i]);
+                if (tp->sub != TYPE_UNIT) {
+                    if (comma) {
+                        out(",");
+                    }
+                    comma = 1;
+                }
+                code_expr(env, e->Tuple.vec[i], 0);
+            }
+            out(" });\n");
             break;
         }
 
@@ -449,10 +502,8 @@ int code_expr_pre (Env* env, Expr* e) {
                 code_expr(env, e, 0);
                 out(";\n");
 
-                out(to_ce(TP));
-                out("_null(&");
                 code_expr(env, e, 0);
-                out(");\n");
+                out(" = NULL;\n");
                 e->Index.tx_setnull = 1;
             }
             break;
@@ -485,10 +536,8 @@ int code_expr_pre (Env* env, Expr* e) {
                 code_expr(env, e, 0);
                 out(";\n");
 
-                out(to_ce(TP));
-                out("_null(&");
                 code_expr(env, e, 0);
-                out(");\n");
+                out(" = NULL;\n");
                 e->Disc.tx_setnull = 1;
             }
             break;
@@ -512,9 +561,8 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
 
     switch (e->sub) {
         case EXPR_UNK:
-            assert(0);
-
         case EXPR_UNIT:
+            assert(0);
             break;
 
         case EXPR_INT:
@@ -552,6 +600,7 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
             break;
         }
 
+        case EXPR_TUPLE:
         case EXPR_CONS:
             fprintf(ALL.out, "_tmp_%d", e->N);
             break;
@@ -585,24 +634,6 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
                 code_expr(env, e->Call.arg, 0);
                 out(")");
             }
-            break;
-
-        case EXPR_TUPLE:
-            out("((");
-            out(to_c(env, TP));
-            out(") { ");
-            int comma = 0;
-            for (int i=0; i<e->Tuple.size; i++) {
-                Type* tp = env_expr_to_type(env, e->Tuple.vec[i]);
-                if (tp->sub != TYPE_UNIT) {
-                    if (comma) {
-                        out(",");
-                    }
-                    comma = 1;
-                }
-                code_expr(env, e->Tuple.vec[i], 0);
-            }
-            out(" })");
             break;
 
         case EXPR_INDEX: {
@@ -675,9 +706,9 @@ void code_user (Stmt* s) {
 
         if (ishasrec) {
             fprintf (ALL.out,
-                "auto void %s_free (struct %s** p);\n"
-                "auto void %s_null (struct %s** p);\n",
-                sup, sup,
+                "auto void %s_free (struct %s** p);\n",
+                //"auto void %s_null (struct %s** p);\n",
+                //sup, sup,
                 sup, sup
             );
             fprintf(ALL.out,
@@ -747,7 +778,7 @@ void code_user (Stmt* s) {
     // FREE, CLONE
     if (ishasrec) {
         code_free_user(s->env, s);
-        code_null_user(s->env, s);
+        //code_null_user(s->env, s);
 
         fprintf(ALL.out,
             "%s* clone_%s (%s** v) {\n",
