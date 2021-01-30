@@ -1013,7 +1013,6 @@ void t_code (void) {
             "    };\n"
             "};\n"
             "\n"
-            "\n"
             "void stdout_Bool_ (Bool v) {\n"
             "    switch (v.sub) {\n"
             "        case False:\n"
@@ -1032,6 +1031,7 @@ void t_code (void) {
             "    stdout_Bool_(v);\n"
             "    puts(\"\");\n"
             "}\n"
+            "\n"
             "\n"
             "}\n";
         assert(!strcmp(out,ret));
