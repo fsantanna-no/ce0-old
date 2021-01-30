@@ -1,10 +1,9 @@
-- transformar ishasrec na mesma coisa, o ishas tb vai pra heap
-    - isso é necessário por causa da cópia de uma struct que contem um PTR
-      para a raiz da struct. se essa raiz estiver na pilha, entao um move p/
-      fora vai gerar um dangling pointer
-- runtime verifc para grow
-    - exemplo com ponteiro na arvore, ex., lista + tail
-    - ver situacoes em que check nao é necessário
+- TODO-NO-MOVE
+- growable
+    - rejeitar move de nao raiz
+    - runtime verification
+        - exemplo com ponteiro na arvore, ex., lista + tail
+        - ver situacoes em que check nao é necessário
 
 - lifetimes pela ordem dos parametros:
     - func env: (\Env,\Stmt) -> ()

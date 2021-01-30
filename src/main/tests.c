@@ -1914,7 +1914,8 @@ __XXX__:
     ));
     assert(all(
         //"$\n",
-        "(ln 7, col 16): invalid access to \"a\" : ownership was transferred (ln 6)",
+        //"(ln 7, col 16): invalid access to \"a\" : ownership was transferred (ln 6)",
+        "(ln 6, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -1926,8 +1927,8 @@ __XXX__:
     ));
     assert(all(
         //"Succ ($)\n",
-// TODO-NO-MOVE
-        "(ln 8, col 16): invalid access to \"a\" : ownership was transferred (ln 7)",
+        //"(ln 8, col 16): invalid access to \"a\" : ownership was transferred (ln 7)",
+        "(ln 7, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -2013,9 +2014,9 @@ __XXX__:
         "var k_: \\XNat = \\k\n"
         "output std k_\n"
     ));
-// TODO-NO-MOVE
     assert(all(
-        "$\n",
+        //"$\n",
+        "(ln 5, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -2033,7 +2034,8 @@ __XXX__:
         "output std (\\c)\n"
     ));
     assert(all(
-        "$\n",
+        //"$\n",
+        "(ln 6, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -2386,7 +2388,8 @@ __XXX__:
     ));
     assert(all(
         //"(ln 8, col 13): invalid transfer of \"l\" : active pointer in scope (ln 7)",
-        "()\n",
+        //"()\n",
+        "(ln 9, col 15): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
@@ -2434,7 +2437,8 @@ __XXX__:
         "output std ()\n"
     ));
     assert(all(
-        "Succ ($)\n",
+        //"Succ ($)\n",
+        "(ln 9, col 31): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type Bool {\n"
         "    False: ()\n"
         "    True:  ()\n"

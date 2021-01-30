@@ -218,7 +218,7 @@ int check_txs (Stmt* S) {
                     return err_message(&e->tk, err);
                 }
 
-                if (e->sub == EXPR_DISC) {  // TODO: only in `growable´ mode
+                if (e->sub==EXPR_DISC || e->sub==EXPR_INDEX) {  // TODO: only in `growable´ mode
                     char err[1024];
                     sprintf(err, "invalid ownership transfer : mode `growable´ only allows root transfers");
                     return err_message(&e->tk, err);
