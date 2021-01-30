@@ -903,7 +903,8 @@ void t_code (void) {
         Expr e = { ALL.nn++, EXPR_TUPLE, .Tuple={2,es} };
         code_expr(NULL, &e, 0);
         fclose(ALL.out);
-        assert(!strcmp(out,"((TUPLE__Unit__Unit) {  })"));
+        //assert(!strcmp(out,"((TUPLE__Unit__Unit) {  })"));
+        assert(!strcmp(out,"_tmp_1"));
     }
     // EXPR_INDEX
     {
@@ -2020,6 +2021,25 @@ __XXX__:
         "var k: XNat = move j.YNat1!\n"
         "var k_: \\XNat = \\k\n"
         "output std k_\n"
+    ));
+// TODO-NO-MOVE
+    assert(all(
+        "$\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "var a: (Nat,Nat) = ($Nat,$Nat)\n"
+        "var c: Nat = move a.1\n"   // can I move a.1 from root a???
+        "output std (\\c)\n"
+    ));
+    assert(all(
+        "($,$)\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "var a: (Nat,Nat) = ($Nat,$Nat)\n"
+        "var c: (Nat,Nat) = move a\n"
+        "output std (\\c)\n"
     ));
     assert(all(
         "$\n",

@@ -174,7 +174,8 @@ void code_free_tuple (Env* env, Type* tp) {
 
     char* tp_ = to_ce(tp);
     fprintf (ALL.out,
-        "void %s_free (%s** p) {\n",
+        "void %s_free (%s** p) {\n"
+        "   if (*p == NULL) { return; }\n",
         tp_, tp_
     );
     for (int i=0; i<tp->Tuple.size; i++) {
@@ -249,7 +250,7 @@ void code_clone_tuple (Env* env, Type* tp) {
 
     char* tp_ = to_ce(tp);
     fprintf (ALL.out,
-        "%s* clone_%s (%s* v) {\n"
+        "%s* clone_%s (%s** v) {\n"
         "   %s* ret = malloc(sizeof(%s));\n"
         "   assert(ret!=NULL && \"not enough memory\");\n"
         "   *ret = (%s) { ",
@@ -261,13 +262,13 @@ void code_clone_tuple (Env* env, Type* tp) {
         Type* sub = tp->Tuple.vec[i];
         if (env_type_ishasrec(env,sub,0)) {
             fprintf (ALL.out,
-                "%s clone_%s(&v->_%d)",
+                "%s clone_%s(&(*v)->_%d)",
                 (i != 0 ? "," : ""),
                 to_ce(sub),
                 i+1
             );
         } else {
-            fprintf(ALL.out, "%s v->_%d\n", (i != 0 ? "," : ""), i+1);
+            fprintf(ALL.out, "%s (*v)->_%d\n", (i != 0 ? "," : ""), i+1);
         }
     }
     out (
