@@ -130,42 +130,33 @@ void code_free_user (Env* env, Stmt* user) {
     // Nat_free
 
     const char* sup = user->User.tk.val.s;
-    int ishasrec = env_user_ishasrec(env, user);
-assert(ishasrec);
 
     fprintf (ALL.out,
-        "void %s_free (struct %s%s* p) {\n",
-        sup, sup, (ishasrec ? "*" : "")
+        "void %s_free (struct %s** p) {\n"
+        "   if (*p == NULL) { return; }\n",
+        sup, sup
     );
 
-    if (ishasrec) {
-        out("if (*p == NULL) { return; }\n");
-    }
-
-    fprintf(ALL.out, "switch ((*p)%ssub) {\n", (ishasrec ? "->" : "."));
+    out("switch ((*p)->sub) {\n");
     for (int i=0; i<user->User.size; i++) {
         Sub sub = user->User.vec[i];
         if (env_type_ishasrec(env, sub.type, 0)) {
             fprintf (ALL.out,
                 "case %s:\n"
-                "   %s_free(&(*p)%s_%s);\n"
+                "   %s_free(&(*p)->_%s);\n"
                 "   break;\n",
                 sub.tk.val.s,
-                to_ce(sub.type), (ishasrec ? "->" : "."), sub.tk.val.s
+                to_ce(sub.type), sub.tk.val.s
             );
         }
     }
     out (
-        "   default:\n"
-        "       break;\n"
+        "       default:\n"
+        "           break;\n"
+        "   }\n"
+        "   free(*p);\n"
         "}\n"
     );
-
-    if (ishasrec) {
-        out("    free(*p);\n");
-    }
-
-    out("}\n");
 }
 
 void code_free_tuple (Env* env, Type* tp) {
@@ -191,58 +182,6 @@ void code_free_tuple (Env* env, Type* tp) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-
-#if 0
-void code_null_user (Env* env, Stmt* user) {
-    assert(user->sub == STMT_USER);
-    assert(env_user_ishasrec(env,user));
-
-    const char* sup = user->User.tk.val.s;
-    int ishasrec = env_user_ishasrec(env, user);
-
-    fprintf (ALL.out,
-        "void %s_null (struct %s%s* p) {\n",
-        sup, sup, (ishasrec ? "*" : "")
-    );
-
-    if (ishasrec) {
-        out("*p = NULL;\n");
-    } else {
-        for (int i=0; i<user->User.size; i++) {
-            Sub sub = user->User.vec[i];
-            if (env_type_ishasrec(env,sub.type,0)) {
-                fprintf (ALL.out,
-                    "    %s_null(&(*p)%s_%s);\n",
-                    to_ce(sub.type), (ishasrec ? "->" : "."), sub.tk.val.s
-                );
-            }
-        }
-    }
-
-    out("}\n");
-}
-
-void code_null_tuple (Env* env, Type* tp) {
-    assert(tp->sub == TYPE_TUPLE);
-    assert(env_type_ishasrec(env,tp,0));
-
-    char* tp_ = to_ce(tp);
-    fprintf (ALL.out,
-        "void %s_null (%s* p) {\n",
-        tp_, tp_
-    );
-    for (int i=0; i<tp->Tuple.size; i++) {
-        Type* sub = tp->Tuple.vec[i];
-        if (env_type_ishasrec(env,sub,0)) {
-            fprintf (ALL.out,
-                "    %s_null(&p->_%d);\n",
-                to_ce(sub), i+1
-            );
-        }
-    }
-    out("}\n");
-}
-#endif
 
 void code_clone_tuple (Env* env, Type* tp) {
     assert(tp->sub == TYPE_TUPLE);
@@ -579,24 +518,15 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
             break;
 
         case EXPR_UPREF: {
-            //int isrec = env_type_isrec(env, env_expr_to_type(env,e->Upref), 0);
-            //if (!isrec)
             out("(&(");
             code_expr(env, e->Upref, 0);
-            //if (!isrec)
             out("))");
             break;
         }
 
         case EXPR_DNREF: {
-            //Type tp = *env_expr_to_type(env,e->Dnref);
-            //assert(tp.isptr);
-            //tp.isptr = 0;
-            //int isrec = env_type_isrec(env, &tp, 0);
-            //if (!isrec)
             out("(*(");
             code_expr(env, e->Dnref, 0);
-            //if (!isrec)
             out("))");
             break;
         }
@@ -785,63 +715,42 @@ void code_user (Stmt* s) {
             "%s* clone_%s (%s** v) {\n",
             sup, sup, sup
         );
-        if (!ishasrec) {
-assert(0); // TODO: remove & unindent all
-            out("return v;\n");
-        } else {
-            //if (isrec) {
-                out (
-                    "if ((*v) == NULL) {\n"
-                    "   return NULL;\n"
-                    "}\n"
-                );
-            //}
-            out("switch ((*v)->sub) {\n");
-            for (int i=0; i<s->User.size; i++) {
-                Sub* sub = &s->User.vec[i];
-                char* sub_id = sub->tk.val.s;
-                char* sub_tp = to_ce(sub->type);
-                int sub_ishasrec = env_type_ishasrec(s->env, sub->type, 0);
-                //int sub_isrec = env_type_isrec(s->env, sub->type, 0);
-                fprintf(ALL.out, "case %s:\n", sub_id);
-                if (ishasrec) {
-                    char clone[256];
-                    if (sub->type->sub == TYPE_UNIT) {
-                        assert(!sub->type->isptr);  // TODO: refuse \() or \((),()), etc
-                        strcpy(clone, "");
-                    } else if (sub_ishasrec) {
-                        sprintf(clone, "._%s=clone_%s(&(*v)->_%s)", sub_id, sub_tp, sub_id);
-                    } else {
-                        sprintf(clone, "._%s=(*v)->_%s", sub_id, sub_id);
-                    }
+        out (
+            "if ((*v) == NULL) {\n"
+            "   return NULL;\n"
+            "}\n"
+            "switch ((*v)->sub) {\n"
+        );
+        for (int i=0; i<s->User.size; i++) {
+            Sub* sub = &s->User.vec[i];
+            char* sub_id = sub->tk.val.s;
+            char* sub_tp = to_ce(sub->type);
+            int sub_ishasrec = env_type_ishasrec(s->env, sub->type, 0);
+            //int sub_isrec = env_type_isrec(s->env, sub->type, 0);
+            fprintf(ALL.out, "case %s:\n", sub_id);
 
-                    //if (isrec) {
-                        fprintf (ALL.out,
-                            "{\n"
-                            "   %s* ret = malloc(sizeof(%s));\n"
-                            "   assert(ret!=NULL && \"not enough memory\");\n"
-                            "   *ret = (%s) { %s, {%s} };\n"
-                            "   return ret;\n"
-                            "}\n",
-                            sup, sup,
-                            sup, sub_id, clone
-                        );
-                    //} else
-#if 0
-                    {
-                        fprintf (ALL.out,
-                            "return (%s) { %s, {%s} };\n",
-                            sup, sub_id, clone
-                        );
-                    }
-#endif
-                } else {
-assert(0); // TODO: remove & unindent all
-                    out("return v;\n");
-                }
+            char clone[256];
+            if (sub->type->sub == TYPE_UNIT) {
+                assert(!sub->type->isptr);  // TODO: refuse \() or \((),()), etc
+                strcpy(clone, "");
+            } else if (sub_ishasrec) {
+                sprintf(clone, "._%s=clone_%s(&(*v)->_%s)", sub_id, sub_tp, sub_id);
+            } else {
+                sprintf(clone, "._%s=(*v)->_%s", sub_id, sub_id);
             }
-            out("}\n");
+
+            fprintf (ALL.out,
+                "{\n"
+                "   %s* ret = malloc(sizeof(%s));\n"
+                "   assert(ret!=NULL && \"not enough memory\");\n"
+                "   *ret = (%s) { %s, {%s} };\n"
+                "   return ret;\n"
+                "}\n",
+                sup, sup,
+                sup, sub_id, clone
+            );
         }
+        out("}\n");
         out("assert(0);\n");
         out("}\n");
     }
