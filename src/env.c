@@ -270,47 +270,7 @@ Stmt* env_type_to_user_stmt (Env* env, Type* tp) {
     }
 }
 
-int env_type_hasrec (Env* env, Type* tp) {
-    auto int aux (Env* env, Type* tp);
-    return (!env_type_isrec(env,tp) && aux(env,tp));
-
-    int aux (Env* env, Type* tp) {
-        if (tp->isptr) {
-            return 0;
-        }
-        switch (tp->sub) {
-            case TYPE_ANY:
-            case TYPE_UNIT:
-            case TYPE_NATIVE:
-            case TYPE_FUNC:
-                return 0;
-            case TYPE_TUPLE:
-                for (int i=0; i<tp->Tuple.size; i++) {
-                    if (aux(env, tp->Tuple.vec[i])) {
-                        return 1;
-                    }
-                }
-                return 0;
-            case TYPE_USER: {
-                Stmt* user = env_id_to_stmt(env, tp->User.val.s);
-                assert(user!=NULL && user->sub==STMT_USER);
-                if (user->User.isrec) {
-                    return 1;
-                }
-                for (int i=0; i<user->User.size; i++) {
-                    if (aux(env,user->User.vec[i].type)) {
-                        return 1;
-                    }
-                }
-                return 0;
-            }
-        }
-        assert(0);
-    }
-
-}
-
-int env_type_isrec (Env* env, Type* tp) {
+int env_type_ishasrec (Env* env, Type* tp) {
     if (tp->isptr) {
         return 0;
     }
@@ -319,19 +279,29 @@ int env_type_isrec (Env* env, Type* tp) {
         case TYPE_UNIT:
         case TYPE_NATIVE:
         case TYPE_FUNC:
+            return 0;
         case TYPE_TUPLE:
+            for (int i=0; i<tp->Tuple.size; i++) {
+                if (env_type_ishasrec(env, tp->Tuple.vec[i])) {
+                    return 1;
+                }
+            }
             return 0;
         case TYPE_USER: {
             Stmt* user = env_id_to_stmt(env, tp->User.val.s);
             assert(user!=NULL && user->sub==STMT_USER);
-            return user->User.isrec;
+            if (user->User.isrec) {
+                return 1;
+            }
+            for (int i=0; i<user->User.size; i++) {
+                if (env_type_ishasrec(env,user->User.vec[i].type)) {
+                    return 1;
+                }
+            }
+            return 0;
         }
     }
     assert(0);
-}
-
-int env_type_ishasrec (Env* env, Type* tp) {
-    return env_type_isrec(env,tp) || env_type_hasrec(env,tp);
 }
 
 int env_type_ishasptr (Env* env, Type* tp) {

@@ -405,7 +405,7 @@ int code_expr_pre (Env* env, Expr* e) {
                 code_expr(env, e->Disc.val, 0);
                 out(" == NULL && \"discriminator failed\");\n");
             } else {
-                if (env_type_isrec(env,env_expr_to_type(env,e->Disc.val))) {
+                if (env_type_ishasrec(env,env_expr_to_type(env,e->Disc.val))) {
                     out("assert(");
                     code_expr(env, e->Disc.val, 0);
                     out(" != NULL && \"discriminator failed\");\n");
@@ -643,7 +643,7 @@ void code_stmt (Stmt* s) {
 
             // if "dst" is dnref, current value must be NULL
             //      x\ = Item ...
-            if (env_type_isrec(s->env,dst) && s->Set.dst->sub==EXPR_DNREF) {
+            if (env_type_ishasrec(s->env,dst) && s->Set.dst->sub==EXPR_DNREF) {
                 out("assert((");
                 code_expr(s->env, s->Set.dst, 0);
                 out(") == NULL);\n");
