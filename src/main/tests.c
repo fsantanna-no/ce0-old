@@ -1920,7 +1920,21 @@ __XXX__:
     assert(all(
         //"$\n",
         //"(ln 7, col 16): invalid access to \"a\" : ownership was transferred (ln 6)",
-        "(ln 6, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
+        "(ln 7, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
+        "type rec Nat {\n"
+        "   Succ: (Nat,\\Nat)\n"
+        "}\n"
+        "var x: \\Nat = _NULL\n"
+        "var c: Nat = Succ ($Nat,x)\n"
+        "var a: (Nat,Nat) = ($Nat,move c)\n"
+        "var b: Nat = move a.2\n"            // zera a.2 (a se mantem sem tx)
+        "var d: \\Nat = \\a.2\n"
+        "output std d\n"                 // ok: $Nat
+    ));
+    assert(all(
+        //"$\n",
+        "(ln 7, col 16): invalid access to \"a\" : ownership was transferred (ln 6)",
+        //"(ln 6, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -1932,8 +1946,8 @@ __XXX__:
     ));
     assert(all(
         //"Succ ($)\n",
-        //"(ln 8, col 16): invalid access to \"a\" : ownership was transferred (ln 7)",
-        "(ln 7, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
+        "(ln 8, col 16): invalid access to \"a\" : ownership was transferred (ln 7)",
+        //"(ln 7, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -1971,8 +1985,8 @@ __XXX__:
     ));
     assert(all(
         //"Succ ($)\n",
-        //"(ln 7, col 16): invalid access to \"c\" : ownership was transferred (ln 6)",
-        "(ln 6, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
+        "(ln 7, col 16): invalid access to \"c\" : ownership was transferred (ln 6)",
+        //"(ln 6, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -1984,8 +1998,8 @@ __XXX__:
     ));
     assert(all(
         //"XNat1 ($)\n",
-        //"(ln 11, col 17): invalid access to \"i\" : ownership was transferred (ln 10)",
-        "(ln 10, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
+        "(ln 11, col 17): invalid access to \"i\" : ownership was transferred (ln 10)",
+        //"(ln 10, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -2000,8 +2014,8 @@ __XXX__:
         "output std k\n"
     ));
     assert(all(
-        //"XNat1 (Succ (Succ ($)))\n",
-        "(ln 14, col 22): invalid ownership transfer : mode `growable´ only allows root transfers",
+        "XNat1 (Succ (Succ ($)))\n",
+        //"(ln 14, col 22): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -2020,8 +2034,8 @@ __XXX__:
         "output std k_\n"
     ));
     assert(all(
-        //"$\n",
-        "(ln 5, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
+        "$\n",
+        //"(ln 5, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -2039,8 +2053,8 @@ __XXX__:
         "output std (\\c)\n"
     ));
     assert(all(
-        //"$\n",
-        "(ln 6, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
+        "$\n",
+        //"(ln 6, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -2249,8 +2263,8 @@ __XXX__:
         "output std (\\y)\n"
     ));
     assert(all(
-        //"Succ (Succ ($))\n",
-        "(ln 5, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
+        "Succ (Succ ($))\n",
+        //"(ln 5, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
@@ -2259,8 +2273,8 @@ __XXX__:
         "output std (\\y)\n"
     ));
     assert(all(
-        //"Succ (Succ (Succ ($)))\n",
-        "(ln 12, col 34): invalid ownership transfer : mode `growable´ only allows root transfers",
+        "Succ (Succ (Succ ($)))\n",
+        //"(ln 12, col 34): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type Bool {\n"
         "    False: ()\n"
         "    True:  ()\n"
@@ -2370,8 +2384,8 @@ __XXX__:
     ));
     assert(all(
         //"Item ($)\n",
-        //"(ln 6, col 20): invalid access to \"a\" : ownership was transferred (ln 5)",
-        "(ln 5, col 28): invalid ownership transfer : mode `growable´ only allows root transfers",
+        "(ln 6, col 20): invalid access to \"a\" : ownership was transferred (ln 5)",
+        //"(ln 5, col 28): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
@@ -2393,8 +2407,8 @@ __XXX__:
     ));
     assert(all(
         //"(ln 8, col 13): invalid transfer of \"l\" : active pointer in scope (ln 7)",
-        //"()\n",
-        "(ln 9, col 15): invalid ownership transfer : mode `growable´ only allows root transfers",
+        "()\n",
+        //"(ln 9, col 15): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
@@ -2442,8 +2456,8 @@ __XXX__:
         "output std ()\n"
     ));
     assert(all(
-        //"Succ ($)\n",
-        "(ln 9, col 31): invalid ownership transfer : mode `growable´ only allows root transfers",
+        "Succ ($)\n",
+        //"(ln 9, col 31): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type Bool {\n"
         "    False: ()\n"
         "    True:  ()\n"
@@ -2464,8 +2478,8 @@ __XXX__:
         "output std z_\n"
     ));
     assert(all(
-        //"Succ ($)\n",
-        "(ln 12, col 31): invalid ownership transfer : mode `growable´ only allows root transfers",
+        "Succ ($)\n",
+        //"(ln 12, col 31): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type Bool {\n"
         "    False: ()\n"
         "    True:  ()\n"

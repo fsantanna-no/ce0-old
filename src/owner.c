@@ -207,6 +207,8 @@ int check_txs (Stmt* S) {
             env_txed_vars(s->env, E, &n, vars);
             for (int i=0; i<n; i++) {
                 Expr* e = vars[i];
+                Type* tp = env_expr_to_type(s->env, e);
+                int ishasptr = env_type_ishasptr(s->env, tp);
                 int ismove = (e->sub==EXPR_CALL && e->Call.func->sub==EXPR_VAR && !strcmp(e->Call.func->tk.val.s,"move"));
                 if (ismove) {
                     assert(MOVES_N < 1024);
@@ -218,7 +220,7 @@ int check_txs (Stmt* S) {
                     return err_message(&e->tk, err);
                 }
 
-                if (e->sub==EXPR_DISC || e->sub==EXPR_INDEX) {  // TODO: only in `growable´ mode
+                if (ishasptr && (e->sub==EXPR_DISC || e->sub==EXPR_INDEX)) {  // TODO: only in `growable´ mode
                     char err[1024];
                     sprintf(err, "invalid ownership transfer : mode `growable´ only allows root transfers");
                     return err_message(&e->tk, err);

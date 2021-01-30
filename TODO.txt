@@ -1,14 +1,17 @@
-- TODO-NO-MOVE
-- growable
-    - rejeitar move de nao raiz
-    - runtime verification
-        - exemplo com ponteiro na arvore, ex., lista + tail
-        - ver situacoes em que check nao é necessário
-
+- se nao tem ponteiro, entao nao é growable
 - lifetimes pela ordem dos parametros:
+    - // TODO-TUPLE-HOLD
+    - call out to_c (arg.1, \tp)
     - func env: (\Env,\Stmt) -> ()
         - posso guardar em \Stmt algo de \Env
             - sei que sao growable e sei que \Env >= \Stmt
+
+- append de tests.ce
+- \ -> share
+- growable
+    - runtime verification
+        - exemplo com ponteiro na arvore, ex., lista + tail
+        - ver situacoes em que check nao é necessário
 
 - qd nao for isrec, chamar clone automaticamente
     - caso do percorrimento do env
