@@ -12,7 +12,7 @@ static int MOVES_N = 0;
 void env_txed_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
     assert((*vars_n) < 255);
     Type* TP = env_expr_to_type(env, e);
-    if (!env_type_ishasrec(env,TP,0)) {
+    if (!env_type_ishasrec(env,TP)) {
         return;
     }
 
@@ -108,7 +108,7 @@ int check_txs (Stmt* S) {
         return 1;               // not var declaration
     }
 
-    if (!env_type_ishasrec(S->env, S->Var.type,0)) {
+    if (!env_type_ishasrec(S->env, S->Var.type)) {
         return 1;               // not recursive type
     }
 

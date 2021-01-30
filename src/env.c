@@ -239,7 +239,7 @@ Type* env_expr_to_type (Env* env, Expr* e) {
             //assert(!tp->isptr && "bug found : `&´ inside subtype");
             if (!val->isptr) {
                 return tp;
-            } else if (!env_type_ishasrec(env,tp,0)) {
+            } else if (!env_type_ishasrec(env,tp)) {
                 // only keep & if sub hasalloc:
                 //  &x -> x.True
                 return tp;
@@ -270,14 +270,12 @@ Stmt* env_type_to_user_stmt (Env* env, Type* tp) {
     }
 }
 
-int env_type_hasrec (Env* env, Type* tp, int okalias) {
-    assert(!okalias);
-    auto int aux (Env* env, Type* tp, int okalias);
-    return (!env_type_isrec(env,tp,0) && aux(env,tp,okalias));
+int env_type_hasrec (Env* env, Type* tp) {
+    auto int aux (Env* env, Type* tp);
+    return (!env_type_isrec(env,tp) && aux(env,tp));
 
-    int aux (Env* env, Type* tp, int okalias) {
-        assert(!okalias);
-        if (!okalias && tp->isptr) {
+    int aux (Env* env, Type* tp) {
+        if (tp->isptr) {
             return 0;
         }
         switch (tp->sub) {
@@ -288,7 +286,7 @@ int env_type_hasrec (Env* env, Type* tp, int okalias) {
                 return 0;
             case TYPE_TUPLE:
                 for (int i=0; i<tp->Tuple.size; i++) {
-                    if (aux(env, tp->Tuple.vec[i], 0)) {
+                    if (aux(env, tp->Tuple.vec[i])) {
                         return 1;
                     }
                 }
@@ -300,7 +298,7 @@ int env_type_hasrec (Env* env, Type* tp, int okalias) {
                     return 1;
                 }
                 for (int i=0; i<user->User.size; i++) {
-                    if (aux(env,user->User.vec[i].type, 0)) {
+                    if (aux(env,user->User.vec[i].type)) {
                         return 1;
                     }
                 }
@@ -312,9 +310,8 @@ int env_type_hasrec (Env* env, Type* tp, int okalias) {
 
 }
 
-int env_type_isrec (Env* env, Type* tp, int okalias) {
-    assert(!okalias);
-    if (!okalias && tp->isptr) {
+int env_type_isrec (Env* env, Type* tp) {
+    if (tp->isptr) {
         return 0;
     }
     switch (tp->sub) {
@@ -333,9 +330,8 @@ int env_type_isrec (Env* env, Type* tp, int okalias) {
     assert(0);
 }
 
-int env_type_ishasrec (Env* env, Type* tp, int okalias) {
-    assert(!okalias);
-    return env_type_isrec(env,tp,okalias) || env_type_hasrec(env,tp,okalias);
+int env_type_ishasrec (Env* env, Type* tp) {
+    return env_type_isrec(env,tp) || env_type_hasrec(env,tp);
 }
 
 int env_type_ishasptr (Env* env, Type* tp) {

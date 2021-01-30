@@ -73,7 +73,8 @@ void code_to_ce (Type* tp) {
 ///////////////////////////////////////////////////////////////////////////////
 
 void to_c_ (char* out, Env* env, Type* tp) {
-    int ishasrec = env_type_ishasrec(env, tp, 1);
+    Type tp_ = type_noptr(tp);
+    int ishasrec = env_type_ishasrec(env, &tp_);
     switch (tp->sub) {
         case TYPE_ANY:
         case TYPE_UNIT:
@@ -116,7 +117,7 @@ int env_user_ishasrec (Env* env, Stmt* user) {
     }
     for (int i=0; i<user->User.size; i++) {
         Sub sub = user->User.vec[i];
-        if (env_type_ishasrec(env, sub.type, 0)) {
+        if (env_type_ishasrec(env, sub.type)) {
             return 1;
         }
     }
@@ -132,9 +133,8 @@ int code_tuple (Env* env, Type* tp_) {
         return VISIT_CONTINUE;
     }
 
-    Type tp = *tp_;
-    tp.isptr = 0;
-    int ishasrec = env_type_ishasrec(env, &tp, 0);
+    Type tp = type_noptr(tp_);
+    int ishasrec = env_type_ishasrec(env, &tp);
 
     char tp_c [256];
     char tp_ce[256];
@@ -297,7 +297,7 @@ int code_expr_pre (Env* env, Expr* e) {
 
         case EXPR_TUPLE: {
             visit_type(env, TP, code_tuple);
-            int ishasrec = env_type_ishasrec(env, TP, 0);
+            int ishasrec = env_type_ishasrec(env, TP);
 
             static char tpc[256];
             tpc[0] = '\0';
@@ -405,7 +405,7 @@ int code_expr_pre (Env* env, Expr* e) {
                 code_expr(env, e->Disc.val, 0);
                 out(" == NULL && \"discriminator failed\");\n");
             } else {
-                if (env_type_isrec(env,env_expr_to_type(env,e->Disc.val),0)) {
+                if (env_type_isrec(env,env_expr_to_type(env,e->Disc.val))) {
                     out("assert(");
                     code_expr(env, e->Disc.val, 0);
                     out(" != NULL && \"discriminator failed\");\n");
@@ -444,7 +444,7 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
         return;     // no code to generate
     }
 
-    int ishasrec = env_type_ishasrec(env,TP,0);
+    int ishasrec = env_type_ishasrec(env,TP);
     int deref = (deref_ishasrec && ishasrec);
     if (deref) {
         out("(*(");
@@ -501,9 +501,10 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
                     code_to_ce(env_expr_to_type(env, e->Call.arg));
                 } else if (!strcmp(e->Call.func->tk.val.s,"clone")) {
                     Type* tp = env_expr_to_type(env, e->Call.arg);
-                    if (env_type_ishasrec(env,tp,1)) {
+                    Type tp_ = type_noptr(tp);
+                    if (env_type_ishasrec(env,&tp_)) {
                         out("clone_");
-                        code_to_ce(tp);
+                        code_to_ce(&tp_);
                     }
                 } else if (!strcmp(e->Call.func->tk.val.s,"move")) {
                     code_expr(env, e->Call.arg, 0);
@@ -603,7 +604,7 @@ void code_stmt (Stmt* s) {
 
             // ignore cleanup for _ret_
             if (strcmp(s->Var.tk.val.s,"_ret_")) {
-                if (env_type_ishasrec(s->env,s->Var.type,0)) {
+                if (env_type_ishasrec(s->env,s->Var.type)) {
                     fprintf (ALL.out,
                         " __attribute__ ((__cleanup__(%s_free)))",
                         to_ce(s->Var.type)
@@ -631,7 +632,7 @@ void code_stmt (Stmt* s) {
             }
 
             // if "dst" is ishasrec, need to free it
-            if (env_type_ishasrec(s->env,dst,0)) {
+            if (env_type_ishasrec(s->env,dst)) {
                 // ignore cleanup for _ret_
                 if (s->Set.dst->sub!=EXPR_VAR || strcmp(s->Set.dst->tk.val.s,"_ret_")) {
                     fprintf(ALL.out, "%s_free(&", to_ce(dst));
@@ -642,7 +643,7 @@ void code_stmt (Stmt* s) {
 
             // if "dst" is dnref, current value must be NULL
             //      x\ = Item ...
-            if (env_type_isrec(s->env,dst,0) && s->Set.dst->sub==EXPR_DNREF) {
+            if (env_type_isrec(s->env,dst) && s->Set.dst->sub==EXPR_DNREF) {
                 out("assert((");
                 code_expr(s->env, s->Set.dst, 0);
                 out(") == NULL);\n");

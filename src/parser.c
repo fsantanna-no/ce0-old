@@ -43,6 +43,12 @@ int check (TK enu) {
     return (ALL.tk1.enu == enu);
 }
 
+Type type_noptr (Type* tp) {
+    Type ret = *tp;
+    ret.isptr = 0;
+    return ret;
+}
+
 Expr* expr_leftmost (Expr* e) {
     switch (e->sub) {
         case EXPR_UPREF:

@@ -153,6 +153,8 @@ typedef struct Stmt {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Type type_noptr (Type* tp);
+
 Expr* expr_leftmost   (Expr* e);
 //Expr* expr_leftmost_n (Expr* e, int* n);
 
