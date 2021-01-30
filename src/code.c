@@ -72,45 +72,6 @@ void code_to_ce (Type* tp) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void to_c_ (char* out, Env* env, Type* tp) {
-    int isrec = 0;
-    switch (tp->sub) {
-        case TYPE_ANY:
-        case TYPE_UNIT:
-            assert(0);
-        case TYPE_NATIVE:
-            //strcat(out, "typeof(");
-            strcat(out, tp->Native.val.s);
-            //strcat(out, ")");
-            break;
-        case TYPE_USER: {
-            Stmt* s = env_id_to_stmt(env, tp->User.val.s);
-            isrec = (s!=NULL && s->User.isrec);
-            if (isrec) strcat(out, "struct ");
-            strcat(out, tp->User.val.s);
-            if (isrec) strcat(out, "*");
-            break;
-        }
-        case TYPE_TUPLE:
-            to_ce_(out, tp);
-            break;
-        case TYPE_FUNC:
-            assert(0 && "TODO");
-    }
-    if (tp->isptr && !isrec) {
-        strcat(out, "*");
-    }
-}
-
-char* to_c (Env* env, Type* tp) {
-    static char out[256];
-    out[0] = '\0';
-    to_c_(out, env, tp);
-    return out;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
 int env_user_ishasrec (Env* env, Stmt* user) {
     assert(user->sub == STMT_USER);
     if (user->User.isrec) {
@@ -125,6 +86,44 @@ int env_user_ishasrec (Env* env, Stmt* user) {
     return 0;
 }
 
+void to_c_ (char* out, Env* env, Type* tp) {
+    switch (tp->sub) {
+        case TYPE_ANY:
+        case TYPE_UNIT:
+            assert(0);
+        case TYPE_NATIVE:
+            //strcat(out, "typeof(");
+            strcat(out, tp->Native.val.s);
+            //strcat(out, ")");
+            break;
+        case TYPE_USER: {
+            Stmt* user = env_id_to_stmt(env, tp->User.val.s);
+            int ishasrec = env_user_ishasrec(env, user);
+            if (ishasrec) strcat(out, "struct ");
+            strcat(out, tp->User.val.s);
+            if (ishasrec) strcat(out, "*");
+            break;
+        }
+        case TYPE_TUPLE:
+            to_ce_(out, tp);
+            break;
+        case TYPE_FUNC:
+            assert(0 && "TODO");
+    }
+    if (tp->isptr) {
+        strcat(out, "*");
+    }
+}
+
+char* to_c (Env* env, Type* tp) {
+    static char out[256];
+    out[0] = '\0';
+    to_c_(out, env, tp);
+    return out;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 void code_free_user (Env* env, Stmt* user) {
     assert(user->sub == STMT_USER);
     assert(env_user_ishasrec(env,user));
@@ -132,18 +131,18 @@ void code_free_user (Env* env, Stmt* user) {
     // Nat_free
 
     const char* sup = user->User.tk.val.s;
-    int isrec = user->User.isrec;
+    int ishasrec = env_user_ishasrec(env, user);
 
     fprintf (ALL.out,
         "void %s_free (struct %s%s* p) {\n",
-        sup, sup, (isrec ? "*" : "")
+        sup, sup, (ishasrec ? "*" : "")
     );
 
-    if (isrec) {
+    if (ishasrec) {
         out("if (*p == NULL) { return; }\n");
     }
 
-    fprintf(ALL.out, "switch ((*p)%ssub) {\n", (isrec ? "->" : "."));
+    fprintf(ALL.out, "switch ((*p)%ssub) {\n", (ishasrec ? "->" : "."));
     for (int i=0; i<user->User.size; i++) {
         Sub sub = user->User.vec[i];
         if (env_type_ishasrec(env, sub.type, 0)) {
@@ -152,7 +151,7 @@ void code_free_user (Env* env, Stmt* user) {
                 "   %s_free(&(*p)%s_%s);\n"
                 "   break;\n",
                 sub.tk.val.s,
-                to_ce(sub.type), (isrec ? "->" : "."), sub.tk.val.s
+                to_ce(sub.type), (ishasrec ? "->" : "."), sub.tk.val.s
             );
         }
     }
@@ -162,7 +161,7 @@ void code_free_user (Env* env, Stmt* user) {
         "}\n"
     );
 
-    if (isrec) {
+    if (ishasrec) {
         out("    free(*p);\n");
     }
 
@@ -197,14 +196,14 @@ void code_null_user (Env* env, Stmt* user) {
     assert(env_user_ishasrec(env,user));
 
     const char* sup = user->User.tk.val.s;
-    int isrec = user->User.isrec;
+    int ishasrec = env_user_ishasrec(env, user);
 
     fprintf (ALL.out,
         "void %s_null (struct %s%s* p) {\n",
-        sup, sup, (isrec ? "*" : "")
+        sup, sup, (ishasrec ? "*" : "")
     );
 
-    if (user->User.isrec) {
+    if (ishasrec) {
         out("*p = NULL;\n");
     } else {
         for (int i=0; i<user->User.size; i++) {
@@ -212,7 +211,7 @@ void code_null_user (Env* env, Stmt* user) {
             if (env_type_ishasrec(env,sub.type,0)) {
                 fprintf (ALL.out,
                     "    %s_null(&(*p)%s_%s);\n",
-                    to_ce(sub.type), (isrec ? "->" : "."), sub.tk.val.s
+                    to_ce(sub.type), (ishasrec ? "->" : "."), sub.tk.val.s
                 );
             }
         }
@@ -256,10 +255,9 @@ void code_clone_tuple (Env* env, Type* tp) {
         Type* sub = tp->Tuple.vec[i];
         if (env_type_ishasrec(env,sub,0)) {
             fprintf (ALL.out,
-                "%s clone_%s(%sp->_%d)\n",
+                "%s clone_%s(&p->_%d)\n",
                 (i != 0 ? "," : ""),
                 to_ce(sub),
-                (env_type_isrec(env,sub,0) ? "" : "&"),
                 i+1
             );
         } else {
@@ -334,8 +332,8 @@ int ftp_tuples (Env* env, Type* tp_) {
             char* op2 = ""; {
                 //int ishasrec = env_type_ishasrec(env, sub, 1);
                 int ishasrec = env_type_ishasrec(env, sub, 0);
-                int isrec    = env_type_isrec(env, sub, 0);
-                if (ishasrec && !isrec) {
+                //int isrec    = env_type_isrec(env, sub, 0);
+                if (ishasrec /*&& !isrec*/) {
                     op2 = "&";
                 } else if (!ishasrec && sub->isptr) {
                     op2 = "*";
@@ -401,6 +399,7 @@ int code_expr_pre (Env* env, Expr* e) {
         case EXPR_CONS: {
             Stmt* user = env_sub_id_to_user_stmt(env, e->tk.val.s);
             assert(user != NULL);
+            int ishasrec = env_user_ishasrec(env, user);
 
             char* sup = user->User.tk.val.s;
             char* sub = e->tk.val.s;
@@ -408,11 +407,11 @@ int code_expr_pre (Env* env, Expr* e) {
             fprintf (ALL.out,
                 "%s%s _tmp_%d = ",
                 sup,
-                (user->User.isrec ? "*" : ""),
+                (ishasrec ? "*" : ""),
                 e->N
             );
 
-            if (user->User.isrec) {
+            if (ishasrec) {
                 // Nat* _1 = (Nat*) malloc(sizeof(Nat));
                 fprintf (ALL.out,
                     "(%s*) malloc(sizeof(%s));\n"
@@ -498,15 +497,15 @@ int code_expr_pre (Env* env, Expr* e) {
     return VISIT_CONTINUE;
 }
 
-void code_expr (Env* env, Expr* e, int deref_isrec) {
+void code_expr (Env* env, Expr* e, int deref_ishasrec) {
     Type* TP = env_expr_to_type(env, e);
     assert(TP != NULL);
     if (TP->sub==TYPE_UNIT && e->sub!=EXPR_CALL) {
         return;     // no code to generate
     }
 
-    int isrec = env_type_isrec(env,TP,0);
-    int deref = (deref_isrec && isrec);
+    int ishasrec = env_type_ishasrec(env,TP,0);
+    int deref = (deref_ishasrec && ishasrec);
     if (deref) {
         out("(*(");
     }
@@ -531,21 +530,25 @@ void code_expr (Env* env, Expr* e, int deref_isrec) {
             break;
 
         case EXPR_UPREF: {
-            int isrec = env_type_isrec(env, env_expr_to_type(env,e->Upref), 0);
-            if (!isrec) out("(&(");
+            //int isrec = env_type_isrec(env, env_expr_to_type(env,e->Upref), 0);
+            //if (!isrec)
+            out("(&(");
             code_expr(env, e->Upref, 0);
-            if (!isrec) out("))");
+            //if (!isrec)
+            out("))");
             break;
         }
 
         case EXPR_DNREF: {
-            Type tp = *env_expr_to_type(env,e->Dnref);
-            assert(tp.isptr);
-            tp.isptr = 0;
-            int isrec = env_type_isrec(env, &tp, 0);
-            if (!isrec) out("(*(");
+            //Type tp = *env_expr_to_type(env,e->Dnref);
+            //assert(tp.isptr);
+            //tp.isptr = 0;
+            //int isrec = env_type_isrec(env, &tp, 0);
+            //if (!isrec)
+            out("(*(");
             code_expr(env, e->Dnref, 0);
-            if (!isrec) out("))");
+            //if (!isrec)
+            out("))");
             break;
         }
 
@@ -654,9 +657,6 @@ void code_expr (Env* env, Expr* e, int deref_isrec) {
 void code_user (Stmt* s) {
     const char* sup = s->User.tk.val.s;
     const char* SUP = strupper(s->User.tk.val.s);
-    int isrec = s->User.isrec;
-
-    // stdout must receive & from ishasrec, otherwise it would receive ownership
     int ishasrec = env_user_ishasrec(s->env, s);
 
     // struct Bool;
@@ -673,27 +673,22 @@ void code_user (Stmt* s) {
             sup, sup, sup
         );
 
-        if (isrec) {
+        if (ishasrec) {
             fprintf (ALL.out,
                 "auto void %s_free (struct %s** p);\n"
-                "auto void %s_null (struct %s%s* p);\n",
+                "auto void %s_null (struct %s** p);\n",
                 sup, sup,
-                sup, sup, (isrec ? "*" : "")
+                sup, sup
             );
-        }
-
-        if (ishasrec) {
             fprintf(ALL.out,
-                "auto %s%s clone_%s (%s%s v);\n",
-                sup, (isrec ? "*" : ""),
-                sup,
-                sup, (ishasrec ? "*" : "")
+                "auto %s* clone_%s (%s** v);\n",
+                sup, sup, sup
             );
         }
 
         fprintf(ALL.out,
             "auto void stdout_%s_ (%s%s v);\n", // auto: https://stackoverflow.com/a/7319417
-            sup, sup, (ishasrec ? "*" : "")
+            sup, sup, (ishasrec ? "**" : "")
         );
     }
     out("\n");
@@ -749,37 +744,33 @@ void code_user (Stmt* s) {
     }
     out("\n");
 
-    // FREE
-    if (env_user_ishasrec(s->env,s)) {
+    // FREE, CLONE
+    if (ishasrec) {
         code_free_user(s->env, s);
         code_null_user(s->env, s);
-    }
 
-    // CLONE
-    if (ishasrec) {
         fprintf(ALL.out,
-            "%s%s clone_%s (%s%s v) {\n",
-            sup, (isrec ? "*" : ""),
-            sup,
-            sup, (ishasrec ? "*" : "")
+            "%s* clone_%s (%s** v) {\n",
+            sup, sup, sup
         );
         if (!ishasrec) {
+assert(0); // TODO: remove & unindent all
             out("return v;\n");
         } else {
-            if (isrec) {
+            //if (isrec) {
                 out (
-                    "if (v == NULL) {\n"
+                    "if ((*v) == NULL) {\n"
                     "   return NULL;\n"
                     "}\n"
                 );
-            }
-            out("switch (v->sub) {\n");
+            //}
+            out("switch ((*v)->sub) {\n");
             for (int i=0; i<s->User.size; i++) {
                 Sub* sub = &s->User.vec[i];
                 char* sub_id = sub->tk.val.s;
                 char* sub_tp = to_ce(sub->type);
                 int sub_ishasrec = env_type_ishasrec(s->env, sub->type, 0);
-                int sub_isrec = env_type_isrec(s->env, sub->type, 0);
+                //int sub_isrec = env_type_isrec(s->env, sub->type, 0);
                 fprintf(ALL.out, "case %s:\n", sub_id);
                 if (ishasrec) {
                     char clone[256];
@@ -787,12 +778,12 @@ void code_user (Stmt* s) {
                         assert(!sub->type->isptr);  // TODO: refuse \() or \((),()), etc
                         strcpy(clone, "");
                     } else if (sub_ishasrec) {
-                        sprintf(clone, "._%s=clone_%s(%sv->_%s)", sub_id, sub_tp, (sub_isrec ? "" : "&"), sub_id);
+                        sprintf(clone, "._%s=clone_%s(&(*v)->_%s)", sub_id, sub_tp, sub_id);
                     } else {
-                        sprintf(clone, "._%s=v->_%s", sub_id, sub_id);
+                        sprintf(clone, "._%s=(*v)->_%s", sub_id, sub_id);
                     }
 
-                    if (isrec) {
+                    //if (isrec) {
                         fprintf (ALL.out,
                             "{\n"
                             "   %s* ret = malloc(sizeof(%s));\n"
@@ -803,13 +794,17 @@ void code_user (Stmt* s) {
                             sup, sup,
                             sup, sub_id, clone
                         );
-                    } else {
+                    //} else
+#if 0
+                    {
                         fprintf (ALL.out,
                             "return (%s) { %s, {%s} };\n",
                             sup, sub_id, clone
                         );
                     }
+#endif
                 } else {
+assert(0); // TODO: remove & unindent all
                     out("return v;\n");
                 }
             }
@@ -825,18 +820,18 @@ void code_user (Stmt* s) {
         // _stdout_Bool (Bool v)
         fprintf(ALL.out,
             "void stdout_%s_ (%s%s v) {\n",
-            sup, sup, (ishasrec ? "*" : "")
+            sup, sup, (ishasrec ? "**" : "")
         );
-        if (isrec) {
+        if (ishasrec) {
             out (
-                "if (v == NULL) {\n"
+                "if ((*v) == NULL) {\n"
                 "    printf(\"$\");\n"
                 "    return;\n"
                 "}\n"
             );
         }
 
-        char* v = (ishasrec ? "v->" : "v.");
+        char* v = (ishasrec ? "(*v)->" : "v.");
 
         fprintf(ALL.out, "    switch (%ssub) {\n", v);
         for (int i=0; i<s->User.size; i++) {
@@ -849,14 +844,13 @@ void code_user (Stmt* s) {
             char* op2 = ""; {
                 //int ishasrec = env_type_ishasrec(s->env, sub->type, 1);
                 int ishasrec = env_type_ishasrec(s->env, sub->type, 0);
-                int isrec    = env_type_isrec(s->env, sub->type, 0);
-                if (ishasrec && !isrec) {
+                //int isrec    = env_type_isrec(s->env, sub->type, 0);
+                if (ishasrec /*&& !isrec*/) {
                     op2 = "&";
                 } else if (!ishasrec && sub->type->isptr) {
                     op2 = "*";
                 }
             }
-
 
             switch (sub->type->sub) {
                 case TYPE_UNIT:
@@ -898,7 +892,7 @@ void code_user (Stmt* s) {
             "    stdout_%s_(v);\n"
             "    puts(\"\");\n"
             "}\n",
-            sup, sup, (ishasrec ? "*" : ""),
+            sup, sup, (ishasrec ? "**" : ""),
             sup
         );
     }
