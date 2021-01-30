@@ -949,9 +949,9 @@ int check_ptrs_expr (Env* env, Expr* e) {
         Stmt* var = env_expr_leftmost_decl(env, vars[i]);
         assert(var!=NULL && var->sub==STMT_VAR);
         int tmp = (uprefs[i] ? var->env->depth : var->Var.ptr_deepest->env->depth);
-        if (depth!=-1 && depth!=tmp) {
+        if (depth!=-1 && depth>tmp) {
 //printf(">>> %d vs %d [%d]\n", depth, tmp, uprefs[i]);
-            err_message(&e->tk, "invalid tuple : pointers with different scopes");
+            err_message(&e->tk, "invalid tuple : pointers must be ordered from outer to deep scopes");
             return EXEC_ERROR;
         }
         depth = tmp;
