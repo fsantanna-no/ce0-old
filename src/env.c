@@ -390,7 +390,7 @@ void env_held_vars (Env* env, Expr* e, int* N, Expr** vars, int* uprefs) {
             assert(var != NULL);
             assert(var->sub == EXPR_VAR);
             vars[*N] = var;
-            uprefs[*N] = 1;
+            uprefs[*N] = !env_expr_to_type(env,var)->isptr; // \x (upref) vs \x\.y! (!upref)
             (*N)++;
             break;
         }
@@ -950,6 +950,7 @@ int check_ptrs_expr (Env* env, Expr* e) {
         assert(var!=NULL && var->sub==STMT_VAR);
         int tmp = (uprefs[i] ? var->env->depth : var->Var.ptr_deepest->env->depth);
         if (depth!=-1 && depth!=tmp) {
+//printf(">>> %d vs %d [%d]\n", depth, tmp, uprefs[i]);
             err_message(&e->tk, "invalid tuple : pointers with different scopes");
             return EXEC_ERROR;
         }

@@ -1041,6 +1041,7 @@ void t_code (void) {
 void t_all (void) {
 goto __XXX__;
 __XXX__:
+
     // ERROR
     assert(all(
         "(ln 1, col 1): expected statement : have \"/\"",
@@ -1579,6 +1580,25 @@ __XXX__:
         "    call f (\\j,\\tp)          -- ERROR: passing pointers with different scopes\n"
         "}\n"
         "output std tp.Tp1!\\           -- use of dangling reference\n"
+    ));
+    assert(all(
+        "10\n",
+        "type pre Expr\n"
+        "type rec List_Expr {\n"
+        "    Item_Expr: (Expr, List_Expr)\n"
+        "}\n"
+        "type rec Expr {\n"
+        "    Expr_Tuple: List_Expr\n"
+        "}\n"
+        "type rec List_Env {\n"
+        "    Item_Env: ((Int,Int), List_Env)\n"
+        "}\n"
+        "func env_expr_to_type: (\\List_Env,\\Expr) -> Int {\n"
+        "    var e: \\Expr = arg.2\n"
+        "    { var cur: \\List_Expr = \\e\\.Expr_Tuple!\n"
+        "    { var tp: Int = env_expr_to_type (arg.1, \\cur\\.Item_Expr!.1) }}\n"
+        "}\n"
+        "output std 10\n"
     ));
     assert(all(
         "$\n",
