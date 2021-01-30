@@ -123,9 +123,9 @@ int env_user_ishasrec (Env* env, Stmt* user) {
     return 0;
 }
 
-void code_free_user (Env* env, Stmt* user) {
+void code_free_user (Stmt* user) {
     assert(user->sub == STMT_USER);
-    assert(env_user_ishasrec(env,user));
+    assert(env_user_ishasrec(user->env,user));
 
     // Nat_free
 
@@ -140,7 +140,7 @@ void code_free_user (Env* env, Stmt* user) {
     out("switch ((*p)->sub) {\n");
     for (int i=0; i<user->User.size; i++) {
         Sub sub = user->User.vec[i];
-        if (env_type_ishasrec(env, sub.type, 0)) {
+        if (env_type_ishasrec(user->env, sub.type, 0)) {
             fprintf (ALL.out,
                 "case %s:\n"
                 "   %s_free(&(*p)->_%s);\n"
@@ -708,8 +708,8 @@ void code_user (Stmt* s) {
 
     // FREE, CLONE
     if (ishasrec) {
-        code_free_user(s->env, s);
-        //code_null_user(s->env, s);
+        code_free_user(s);
+        //code_clone_user(s->env, s);
 
         fprintf(ALL.out,
             "%s* clone_%s (%s** v) {\n",
