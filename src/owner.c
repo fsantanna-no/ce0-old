@@ -211,8 +211,17 @@ int check_txs (Stmt* S) {
                 int ishasptr = env_type_ishasptr(s->env, tp);
                 int ismove = (e->sub==EXPR_CALL && e->Call.func->sub==EXPR_VAR && !strcmp(e->Call.func->tk.val.s,"move"));
                 if (ismove) {
-                    assert(MOVES_N < 1024);
-                    MOVES[MOVES_N++] = e->N;
+                    int contains = 0;
+                    for (int i=0; i<MOVES_N; i++) {
+                        if (MOVES[i] == e->N) {
+                            contains = 1;
+                            break;
+                        }
+                    }
+                    if (!contains) {
+                        assert(MOVES_N < 1024);
+                        MOVES[MOVES_N++] = e->N;
+                    }
                     e = e->Call.arg;
                 } else {
                     char err[1024];
