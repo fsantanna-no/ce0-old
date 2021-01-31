@@ -140,7 +140,7 @@ int check_txs (Stmt* S) {
 
     Tk* txed_tk = NULL;
 
-    typedef struct { Stmt* stop; int bws_n; } Stack;
+    typedef struct { int depth_stop; int bws_n; } Stack;
     Stack stack[256];
     int stack_n = 0;
 
@@ -176,14 +176,17 @@ int check_txs (Stmt* S) {
 
         // push/pop stack
         if (s->sub == STMT_BLOCK) {         // enter block: push state
-            stack[stack_n].stop  = s->seqs[0];
+            stack[stack_n].depth_stop = s->env->depth;
+//printf("+++ %d\n", s->env->depth);
             stack[stack_n].bws_n = bws_n;
             assert(stack_n < 256);
             stack_n++;
-        }
-        while (stack_n>0 && s==stack[stack_n-1].stop) {   // leave block: pop state
-            stack_n--;
-            bws_n = stack[stack_n].bws_n;
+        } else {
+            while (stack_n>0 && s->env->depth<=stack[stack_n-1].depth_stop) {   // leave block: pop state
+//printf("--- %d\n", s->env->depth);
+                stack_n--;
+                bws_n = stack[stack_n].bws_n;
+            }
         }
 
         // Add y/z in bws:
