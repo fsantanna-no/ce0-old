@@ -281,9 +281,18 @@ int exec_stmt (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe) {
 
 // 1=more, 0=exhausted  //  fret fs: 0=error, 1=success
 
+//static int N = 0;
+
 int exec1 (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe, int* fret) {
     est->cur = 0;
     *fret = exec_stmt(est, s, fs, fe);
+
+//N++;
+//if (N > 10000) {
+    //dump_stmt(s);
+    //printf(">>> [%d] %d\n", s->tk.lin, N);
+    //assert(0);
+//}
 
     switch (*fret) {
         case 0:         return 0;
@@ -305,6 +314,8 @@ int exec1 (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe, int* fret) {
 }
 
 int exec (Stmt* s, F_Pre pre, F_Stmt fs, F_Expr fe) {      // 0=error, 1=success
+//puts(">>>>>>>>>>>");
+//N = 0;
     Exec_State est;
     exec_init(&est);
     while (1) {
@@ -314,14 +325,85 @@ int exec (Stmt* s, F_Pre pre, F_Stmt fs, F_Expr fe) {      // 0=error, 1=success
         int ret2;
         int ret1 = exec1(&est, s, fs, fe, &ret2);
         if (ret2 == 0) {            // user returned error
+//puts("<<<<<<<<<<<");
             return 0;               // so it's an error
         }
         if (ret1 == 0) {            // no more cases
+//puts("<<<<<<<<<<<");
             return 1;   // so it's not an error
         }
     }
     assert(0);
 }
+
+#if 0
+int exec2 (Stmt* s, F_Void push, F_Void pop, F_Stmt fs, F_Expr fe) {
+    if (fs != NULL) {
+        switch (fs(s)) {
+            case EXEC_ERROR:            // error stop all
+                return 0;
+            case EXEC_CONTINUE:         // continue to children
+                break;
+            case EXEC_BREAK:            // continue skip children
+                return EXEC_CONTINUE;
+            case EXEC_HALT:             // no error stop all
+                return EXEC_HALT;
+        }
+    }
+    switch (s->sub) {
+        case STMT_FUNC:
+        case STMT_USER:
+            return EXEC_CONTINUE;
+
+        case STMT_BLOCK:
+            return exec2(s->Block, push, pop, fs, fe);
+
+        case STMT_SEQ: {
+            int ret = exec2(s->Seq.s1, push, pop, fs, fe);
+            if (ret != EXEC_CONTINUE) {
+                return ret;
+            }
+            return exec2(s->Seq.s2, push, pop, fs, fe);
+        }
+        case STMT_CALL: {
+            if (fe != NULL) {
+                int ret = fe(s->env, s->Call);
+                if (ret != EXEC_CONTINUE) {
+                    return ret;
+                }
+            }
+            return EXEC_CONTINUE;
+        }
+        case STMT_IF: {
+            if (fe != NULL) {
+                int ret = fe(s->env, s->Call);
+                if (ret != EXEC_CONTINUE) {
+                    return ret;
+                }
+            }
+            push();
+            int ret = exec2(s->If.true, push, pop, fs, fe);
+            pop();
+            switch (ret) {
+                case EXEC_ERROR:
+                    return EXEC_ERROR;
+                case EXEC_HALT:
+                    return EXEC_HALT;
+                case EXEC_CONTINUE:
+                case EXEC_BREAK:
+                    push();
+                    ret = exec2(s->If.false, push, pop, fs, fe);
+                    pop();
+                    return ret;
+            }
+        }
+
+        default:
+            printf("ERROR: %d\n", s->sub);
+            assert(0);
+    }
+}
+#endif
 
 #if 0
 int exec_also_funcs (Stmt* s, F_Pre pre, F_Stmt fs) {

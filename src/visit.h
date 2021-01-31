@@ -27,10 +27,12 @@ typedef int  (*F_Stmt) (Stmt* s);
 typedef int  (*F_Type) (struct Env* env, Type* tp);
 typedef int  (*F_Expr) (struct Env* env, Expr* e);
 typedef void (*F_Pre)  (void);
+//typedef void (*F_Void) (void);
 
 int visit_type (struct Env* env, Type* tp, F_Type ft);
 int visit_expr (int ord, struct Env* env, Expr* e,  F_Expr fe);
 int visit_stmt (int ord, Stmt* s, F_Stmt fs, F_Expr fe, F_Type ft);
 
 int exec (Stmt* s, F_Pre pre, F_Stmt fs, F_Expr fe);   // 0=error, 1=success
+//int exec2 (Stmt* s, F_Void push, F_Void pop, F_Stmt fs, F_Expr fe);   // 0=error, 1=success
 //int exec_also_funcs (Stmt* s, F_Pre pre, F_Stmt fs);   // 0=error, 1=success
