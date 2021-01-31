@@ -943,31 +943,6 @@ int check_ptrs_stmt (Stmt* s) {
             break;
         }
 
-#if 0
-        case STMT_RETURN: {
-            Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(s->env, s->Return);
-            if (!env_type_ishasptr(s->env,tp)) {
-                return EXEC_CONTINUE;
-            }
-
-            Expr* src      = expr_leftmost(s->Return);
-            Stmt* src_decl = env_expr_leftmost_decl(s->env, s->Return);
-            assert(src_decl->Var.ptr_deepest != NULL);
-
-            //set_dst_ptr_deepest(s, s->env, s->Return);
-
-        //printf("ret=%d vs src=%d\n", s->env->depth, src_decl->Var.ptr_deepest->env->depth);
-            if (s->env->depth <= src_decl->Var.ptr_deepest->env->depth) {
-                char err[TK_BUF+256];
-                sprintf(err, "invalid return : cannot return local pointer \"%s\" (ln %d)",
-                        src->tk.val.s, src_decl->tk.lin);
-                err_message(&src->tk, err);
-                return EXEC_ERROR;
-            }
-            break;
-        }
-#endif
-
         default:
             break;
     }
