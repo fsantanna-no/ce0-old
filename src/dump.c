@@ -28,7 +28,12 @@ void dump_type (Type* tp) {
             printf("%s", tp->User.val.s);
             break;
         case TYPE_TUPLE:
-            printf("(...)");
+            putchar('(');
+            for (int i=0; i<tp->Tuple.size; i++) {
+                if (i > 0) putchar(',');
+                dump_type(tp->Tuple.vec[i]);
+            }
+            putchar(')');
             break;
         case TYPE_FUNC:
             printf("a -> b");

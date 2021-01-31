@@ -270,7 +270,7 @@ void code_user (Stmt* s) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int code_expr_pre (Env* env, Expr* e) {
-    Type* TP = env_expr_to_type(env, e);
+    Type* TP __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e);
     assert(TP != NULL);
 
     switch (e->sub) {
@@ -327,7 +327,7 @@ int code_expr_pre (Env* env, Expr* e) {
             out(") { ");
             int comma = 0;
             for (int i=0; i<e->Tuple.size; i++) {
-                Type* tp = env_expr_to_type(env, e->Tuple.vec[i]);
+                Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e->Tuple.vec[i]);
                 if (tp->sub != TYPE_UNIT) {
                     if (comma) {
                         out(",");
@@ -405,7 +405,8 @@ int code_expr_pre (Env* env, Expr* e) {
                 code_expr(env, e->Disc.val, 0);
                 out(" == NULL && \"discriminator failed\");\n");
             } else {
-                if (env_type_ishasrec(env,env_expr_to_type(env,e->Disc.val))) {
+                Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env,e->Disc.val);
+                if (env_type_ishasrec(env,tp)) {
                     out("assert(");
                     code_expr(env, e->Disc.val, 0);
                     out(" != NULL && \"discriminator failed\");\n");
@@ -438,7 +439,7 @@ int code_expr_pre (Env* env, Expr* e) {
 }
 
 void code_expr (Env* env, Expr* e, int deref_ishasrec) {
-    Type* TP = env_expr_to_type(env, e);
+    Type* TP __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e);
     assert(TP != NULL);
     if (TP->sub==TYPE_UNIT && e->sub!=EXPR_CALL) {
         return;     // no code to generate
@@ -498,9 +499,10 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
 
                 if (!strcmp(e->Call.func->tk.val.s,"output_std")) {
                     out("stdout_");
-                    code_to_ce(env_expr_to_type(env, e->Call.arg));
+                    Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e->Call.arg);
+                    code_to_ce(tp);
                 } else if (!strcmp(e->Call.func->tk.val.s,"clone")) {
-                    Type* tp = env_expr_to_type(env, e->Call.arg);
+                    Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e->Call.arg);
                     Type tp_ = type_noptr(tp);
                     if (env_type_ishasrec(env,&tp_)) {
                         out("clone_");
@@ -625,7 +627,7 @@ void code_stmt (Stmt* s) {
             visit_expr(1, s->env, s->Set.src, code_expr_pre);
             visit_expr(1, s->env, s->Set.dst, code_expr_pre);
 
-            Type* dst = env_expr_to_type(s->env, s->Set.dst);
+            Type* dst __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(s->env, s->Set.dst);
             assert(dst != NULL);
             if (dst->sub == TYPE_UNIT) {
                 break;
@@ -656,13 +658,15 @@ void code_stmt (Stmt* s) {
             break;
         }
 
-        case STMT_RETURN:
-            if (env_expr_to_type(s->env,s->Return)->sub == TYPE_UNIT) {
+        case STMT_RETURN: {
+            Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(s->env,s->Return);
+            if (tp->sub == TYPE_UNIT) {
                 out("return;\n");
             } else {
                 out("return _ret_;\n");
             }
             break;
+        }
 
         case STMT_IF: {
             visit_expr(1, s->env, s->If.tst, code_expr_pre);

@@ -88,112 +88,146 @@ Sub* env_find_sub (Env* env, const char* sub) {
     return NULL;
 }
 
-Type* env_expr_to_type (Env* env, Expr* e) {
+///////////////////////////////////////////////////////////////////////////////
+
+void env_expr_to_type_free (Type** tp) {
+    switch ((*tp)->sub) {
+        case TYPE_ANY:
+        case TYPE_UNIT:
+        case TYPE_NATIVE:
+        case TYPE_USER:
+            break;
+        case TYPE_TUPLE:
+            for (int i=0; i<(*tp)->Tuple.size; i++) {
+                env_expr_to_type_free(&(*tp)->Tuple.vec[i]);
+            }
+            free((*tp)->Tuple.vec);
+            break;
+        case TYPE_FUNC:
+            env_expr_to_type_free(&(*tp)->Func.inp);
+            env_expr_to_type_free(&(*tp)->Func.out);
+            break;
+    }
+    free(*tp);
+}
+
+Type* deep (Type* tp);
+
+void deep_ (Type* ret, Type* tp) {
+    *ret = *tp;
+    switch (tp->sub) {
+        case TYPE_ANY:
+        case TYPE_UNIT:
+        case TYPE_NATIVE:
+        case TYPE_USER:
+            break;
+        case TYPE_TUPLE: {
+            Type** vec = malloc(tp->Tuple.size*sizeof(Type));
+            assert(vec != NULL);
+            for (int i=0; i<tp->Tuple.size; i++) {
+                vec[i] = deep(tp->Tuple.vec[i]);
+            }
+            ret->Tuple.vec = vec;
+            break;
+        }
+        case TYPE_FUNC: {
+            ret->Func.inp = deep(tp->Func.inp);
+            ret->Func.out = deep(tp->Func.out);
+            break;
+        }
+    }
+}
+
+Type* deep (Type* tp) {
+    Type* ret = malloc(sizeof(Type));
+    assert(ret != NULL);
+    deep_(ret, tp);
+    return ret;
+}
+
+void env_expr_to_type_ (Type* ret, Env* env, Expr* e) {
     switch (e->sub) {
-        case EXPR_UNK: {
-            static Type tp = { TYPE_ANY, 0 };
-            return &tp;
-        }
-
-        case EXPR_UNIT: {
-            static Type tp = { TYPE_UNIT, 0 };
-            return &tp;
-        }
-
-        case EXPR_NATIVE: {
-            Type* tp = malloc(sizeof(Type));
-            assert(tp != NULL);
-            *tp = (Type) { TYPE_NATIVE, 0, .Native=e->tk };
-            return tp;
-        }
-
+        case EXPR_UNK:
+            *ret = (Type) { TYPE_ANY, 0 };
+            break;
+        case EXPR_UNIT:
+            *ret = (Type) { TYPE_UNIT, 0 };
+            break;
+        case EXPR_NATIVE:
+            *ret = (Type) { TYPE_NATIVE, 0, .Native=e->tk };
+            break;
         case EXPR_VAR: {
             Stmt* s = env_id_to_stmt(env, e->tk.val.s);
             assert(s != NULL);
-            return (s->sub == STMT_VAR) ? s->Var.type : s->Func.type;
+            deep_(ret, (s->sub == STMT_VAR) ? s->Var.type : s->Func.type);
+            break;
         }
-
         case EXPR_NULL: {
             Stmt* user = env_id_to_stmt(env, e->tk.val.s);
             assert(user != NULL);
-            Type* tp = malloc(sizeof(Type));
-            assert(tp != NULL);
-            *tp = (Type){ TYPE_USER, 0, .User=user->User.tk };
-            return tp;
+            *ret = (Type) { TYPE_USER, 0, .User=user->User.tk };
+            break;
         }
-
-        case EXPR_INT: {
-            static Type tp = { TYPE_USER, 0, .User={TX_USER,{.s="Int"},0,0} };
-            return &tp;
-        }
-
-        case EXPR_UPREF: {
-            Type* tp = env_expr_to_type(env, e->Upref);
-            assert(tp != NULL);
-            assert(!tp->isptr);
-            Type* ret = malloc(sizeof(Expr));
-            assert(ret != NULL);
-            *ret = *tp;
+        case EXPR_INT:
+            *ret = (Type) { TYPE_USER, 0, .User={TX_USER,{.s="Int"},0,0} };
+            break;
+        case EXPR_PRED:
+            *ret = Type_Bool;
+            break;
+        case EXPR_UPREF:
+            env_expr_to_type_(ret, env, e->Upref);
+            assert(!ret->isptr);
             ret->isptr = 1;
-            return ret;
-        }
-
-        case EXPR_DNREF: {
-            Type* tp = env_expr_to_type(env, e->Upref);
-            assert(tp != NULL);
-            assert(tp->isptr);
-            Type* ret = malloc(sizeof(Expr));
-            assert(ret != NULL);
-            *ret = *tp;
+            break;
+        case EXPR_DNREF:
+            env_expr_to_type_(ret, env, e->Upref);
+            assert(ret->isptr);
             ret->isptr = 0;
-            return ret;
-        }
-
+            break;
         case EXPR_TUPLE: {
             Type** vec = malloc(e->Tuple.size*sizeof(Type));
             assert(vec != NULL);
             for (int i=0; i<e->Tuple.size; i++) {
                 vec[i] = env_expr_to_type(env, e->Tuple.vec[i]);
             }
-            Type* tp = malloc(sizeof(Type));
-            assert(tp != NULL);
-            *tp = (Type) { TYPE_TUPLE, 0, {.Tuple={e->Tuple.size,vec}} };
-            return tp;
+            *ret = (Type) { TYPE_TUPLE, 0, {.Tuple={e->Tuple.size,vec}} };
+            break;
+        }
+        case EXPR_CONS: {
+            Stmt* user = env_sub_id_to_user_stmt(env, e->tk.val.s);
+            assert(user != NULL);
+            *ret = (Type) { TYPE_USER, 0, .User=user->User.tk };
+            break;
         }
 
         case EXPR_CALL: {
             // special cases: clone(), move(), any _f()
-            Type* tp = env_expr_to_type(env, e->Call.func);
+            Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e->Call.func);
             if (tp->sub == TYPE_FUNC) {
                 assert(e->Call.func->sub == EXPR_VAR);
                 if (!strcmp(e->Call.func->tk.val.s,"clone") ||
                     !strcmp(e->Call.func->tk.val.s,"move")) {   // returns type of arg
-                    Type* ret = malloc(sizeof(Type));
-                    assert(ret != NULL);
-                    *ret = *env_expr_to_type(env, e->Call.arg);
+                    env_expr_to_type_(ret, env, e->Call.arg);
                     ret->isptr = 0;
-                    return ret;
                 } else {
-                    return tp->Func.out;
+                    deep_(ret, tp->Func.out);
                 }
             } else {
                 assert(e->Call.func->sub == EXPR_NATIVE);       // returns typeof _f(x)
-                Type* tp = malloc(sizeof(Type));
-                assert(tp != NULL);
-                *tp = (Type) { TYPE_NATIVE, 0, .Native={TX_NATIVE,{.s={"TODO"}},0,0} };
+                *ret = (Type) { TYPE_NATIVE, 0, .Native={TX_NATIVE,{.s={"TODO"}},0,0} };
                 switch (e->Call.arg->sub) {
                     case EXPR_UNIT:
-                        sprintf(tp->Native.val.s, "%s()", e->Call.func->tk.val.s);
+                        sprintf(ret->Native.val.s, "%s()", e->Call.func->tk.val.s);
                         break;
                     case EXPR_VAR:
                     case EXPR_NATIVE:
-                        sprintf(tp->Native.val.s, "%s(%s)", e->Call.func->tk.val.s, e->Call.arg->tk.val.s);
+                        sprintf(ret->Native.val.s, "%s(%s)", e->Call.func->tk.val.s, e->Call.arg->tk.val.s);
                         break;
                     case EXPR_NULL:
-                        sprintf(tp->Native.val.s, "%s(NULL)", e->Call.func->tk.val.s);
+                        sprintf(ret->Native.val.s, "%s(NULL)", e->Call.func->tk.val.s);
                         break;
                     case EXPR_INT:
-                        sprintf(tp->Native.val.s, "%s(0)", e->Call.func->tk.val.s);
+                        sprintf(ret->Native.val.s, "%s(0)", e->Call.func->tk.val.s);
                         break;
                     case EXPR_CALL:
                         // _f _g 1
@@ -202,60 +236,56 @@ Type* env_expr_to_type (Env* env, Expr* e) {
                         //assert(0);
                         break;
                 }
-                return tp;   // TODO: should be typeof(f(arg))
             }
+            break;
         }
 
         case EXPR_INDEX: {  // x.1
-            Type* tp = env_expr_to_type(env,e->Index.val);
-            assert(tp != NULL);
+            Type* tp = env_expr_to_type(env, e->Index.val);
             if (tp->sub == TYPE_NATIVE) {
-                return tp;
+                deep_(ret, tp);
+                env_expr_to_type_free(&tp);
+            } else {
+                assert(tp->sub == TYPE_TUPLE);
+                deep_(ret, tp->Tuple.vec[e->tk.val.n-1]);
+                env_expr_to_type_free(&tp);
             }
-            assert(tp->sub == TYPE_TUPLE);
-            return tp->Tuple.vec[e->tk.val.n-1];
+            break;
         }
-
-        case EXPR_CONS: {
-            Stmt* user = env_sub_id_to_user_stmt(env, e->tk.val.s);
-            assert(user != NULL);
-            Type* tp = malloc(sizeof(Type));
-            assert(tp != NULL);
-            *tp = (Type){ TYPE_USER, 0, .User=user->User.tk };
-            return tp;
-        }
-
-        case EXPR_PRED:
-            return &Type_Bool;
 
         case EXPR_DISC: {   // x.True
-            Type* val = env_expr_to_type(env, e->Disc.val);
+            Type* val __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e->Disc.val);
             assert(val->sub == TYPE_USER);
             if (e->tk.enu == TX_NULL) {
                 assert(!strcmp(e->tk.val.s, val->User.val.s));
-                return &Type_Unit;
+                *ret = Type_Unit;
+                break;
             }
-            Type* tp = env_sub_id_to_user_type(env, e->tk.val.s);
-            //assert(!tp->isptr && "bug found : `&´ inside subtype");
+
+            deep_(ret, env_sub_id_to_user_type(env, e->tk.val.s));
             if (!val->isptr) {
-                return tp;
-            } else if (!env_type_ishasrec(env,tp)) {
+                break;
+            } else if (!env_type_ishasrec(env,ret)) {
                 // only keep & if sub hasalloc:
                 //  &x -> x.True
-                return tp;
+                break;
             } else {
                 //  &x -> &x.Cons
-                Type* ret = malloc(sizeof(Type));
-                assert(ret != NULL);
-                *ret = *tp;
                 ret->isptr = 1;
-                return ret;
+                break;
             }
-            assert(0 && "bug found");
         }
     }
-    assert(0 && "bug found");
 }
+
+Type* env_expr_to_type (Env* env, Expr* e) {
+    Type* ret = malloc(sizeof(Type));
+    assert(ret != NULL);
+    env_expr_to_type_(ret, env, e);
+    return ret;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 
 //  type Bool { ... }
 //  var x: Bool
@@ -362,7 +392,7 @@ Stmt* env_expr_leftmost_decl (Env* env, Expr* e) {
 ///////////////////////////////////////////////////////////////////////////////
 
 void env_held_vars (Env* env, Expr* e, int* N, Expr** vars, int* uprefs) {
-    Type* TP = env_expr_to_type(env, e);
+    Type* TP __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e);
     assert((*N) < 255);
 
     switch (e->sub) {
@@ -390,7 +420,8 @@ void env_held_vars (Env* env, Expr* e, int* N, Expr** vars, int* uprefs) {
             assert(var != NULL);
             assert(var->sub == EXPR_VAR);
             vars[*N] = var;
-            uprefs[*N] = !env_expr_to_type(env,var)->isptr; // \x (upref) vs \x\.y! (!upref)
+            Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env,var);
+            uprefs[*N] = !tp->isptr; // \x (upref) vs \x\.y! (!upref)
             (*N)++;
             break;
         }
@@ -712,7 +743,7 @@ int check_types_expr (Env* env, Expr* e) {
             break;
 
         case EXPR_DNREF: {
-            Type* tp = env_expr_to_type(env, e->Dnref);
+            Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e->Dnref);
             if (!tp->isptr) {
                 return err_message(&e->tk, "invalid `\\´ : expected pointer type");
             }
@@ -720,7 +751,7 @@ int check_types_expr (Env* env, Expr* e) {
         }
 
         case EXPR_INDEX: {
-            Type* tp = env_expr_to_type(env, e->Index.val);
+            Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e->Index.val);
             if (tp->sub!=TYPE_TUPLE || tp->isptr) {
                 return err_message(&e->tk, "invalid `.´ : expected tuple type");
             }
@@ -731,7 +762,7 @@ int check_types_expr (Env* env, Expr* e) {
         }
 
         case EXPR_DISC: {
-            Type* tp = env_expr_to_type(env, e->Disc.val);
+            Type* __ENV_EXPR_TO_TYPE_FREE__ tp = env_expr_to_type(env, e->Disc.val);
             if (tp->sub!=TYPE_USER || tp->isptr) {
                 return err_message(&e->tk, "invalid `.´ : expected user type");
             }
@@ -740,7 +771,7 @@ int check_types_expr (Env* env, Expr* e) {
         }
 
         case EXPR_PRED: {
-            Type* tp = env_expr_to_type(env, e->Pred.val);
+            Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e->Pred.val);
             if (tp->sub!=TYPE_USER || tp->isptr) {
                 return err_message(&e->tk, "invalid `.´ : expected user type");
             }
@@ -749,8 +780,8 @@ int check_types_expr (Env* env, Expr* e) {
         }
 
         case EXPR_CALL: {
-            Type* func = env_expr_to_type(env, e->Call.func);
-            Type* arg  = env_expr_to_type(env, e->Call.arg);
+            Type* func __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e->Call.func);
+            Type* arg  __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e->Call.arg);
 
             if (e->Call.func->sub == EXPR_NATIVE) {
                 TODO("TODO [check_types]: _f(...)\n");
@@ -772,7 +803,8 @@ int check_types_expr (Env* env, Expr* e) {
         case EXPR_CONS: {
             Sub* sub = env_find_sub(env, e->tk.val.s);
             assert(sub != NULL);
-            if (!type_is_sup_sub(sub->type, env_expr_to_type(env,e->Cons), 0)) {
+            Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env,e->Cons);
+            if (!type_is_sup_sub(sub->type,tp,0)) {
                 char err[TK_BUF+256];
                 sprintf(err, "invalid constructor \"%s\" : type mismatch", e->tk.val.s);
                 return err_message(&e->tk, err);
@@ -796,16 +828,20 @@ int check_types_stmt (Stmt* s) {
         case STMT_RETURN:   // (STMT_SET of _ret_)
             return 1;
 
-        case STMT_VAR:
-            if (!type_is_sup_sub(s->Var.type, env_expr_to_type(s->env,s->Var.init), 0)) {
+        case STMT_VAR: {
+            Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(s->env,s->Var.init);
+            if (!type_is_sup_sub(s->Var.type,tp,0)) {
                 char err[TK_BUF+256];
                 sprintf(err, "invalid assignment to \"%s\" : type mismatch", s->Var.tk.val.s);
                 return err_message(&s->Var.tk, err);
             }
             return 1;
+        }
 
-        case STMT_SET:
-            if (!type_is_sup_sub(env_expr_to_type(s->env,s->Set.dst), env_expr_to_type(s->env,s->Set.src), 1)) {
+        case STMT_SET: {
+            Type* tp_dst __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(s->env,s->Set.dst);
+            Type* tp_src __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(s->env,s->Set.src);
+            if (!type_is_sup_sub(tp_dst,tp_src,1)) {
                 char err[TK_BUF+256];
                 if (s->Set.dst->sub == EXPR_VAR) {
                     if (!strcmp(s->Set.dst->tk.val.s,"_ret_")) {
@@ -820,12 +856,15 @@ int check_types_stmt (Stmt* s) {
                 }
             }
             return 1;
+        }
 
-        case STMT_IF:
-            if (!type_is_sup_sub(&Type_Bool, env_expr_to_type(s->env,s->If.tst), 0)) {
+        case STMT_IF: {
+            Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(s->env,s->If.tst);
+            if (!type_is_sup_sub(&Type_Bool, tp, 0)) {
                 return err_message(&s->tk, "invalid condition : type mismatch");
             }
             return 1;
+        }
     }
     assert(0);
 }
@@ -841,7 +880,7 @@ void set_dst_ptr_deepest (Stmt* dst, Env* env, Expr* src) {
     int n=0; Expr* vars[256]; int uprefs[256];
     env_held_vars(env, src, &n, vars, uprefs);
     for (int i=0; i<n; i++) {
-        Type* stp = env_expr_to_type(env, vars[i]);
+        Type* stp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, vars[i]);
             // set cur = \cur\... (cur is a pointer, so not upref)
         Stmt* ssrc = env_id_to_stmt(env, vars[i]->tk.val.s);
         assert(ssrc!=NULL && ssrc->sub==STMT_VAR);
@@ -877,7 +916,7 @@ int check_ptrs_stmt (Stmt* s) {
         }
 
         case STMT_SET: {
-            Type* tp = env_expr_to_type(s->env, s->Set.dst);
+            Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(s->env, s->Set.dst);
             if (!env_type_ishasptr(s->env,tp)) {
                 break;
             }
@@ -906,7 +945,7 @@ int check_ptrs_stmt (Stmt* s) {
 
 #if 0
         case STMT_RETURN: {
-            Type* tp = env_expr_to_type(s->env, s->Return);
+            Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(s->env, s->Return);
             if (!env_type_ishasptr(s->env,tp)) {
                 return EXEC_CONTINUE;
             }

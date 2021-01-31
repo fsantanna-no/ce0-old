@@ -11,7 +11,7 @@ static int MOVES_N = 0;
 
 void env_txed_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
     assert((*vars_n) < 255);
-    Type* TP = env_expr_to_type(env, e);
+    Type* TP __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e);
     if (!env_type_ishasrec(env,TP)) {
         return;
     }
@@ -209,7 +209,7 @@ int check_txs (Stmt* S) {
             env_txed_vars(s->env, E, &n, vars);
             for (int i=0; i<n; i++) {
                 Expr* e = vars[i];
-                Type* tp = env_expr_to_type(s->env, e);
+                Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(s->env, e);
                 int ishasptr = env_type_ishasptr(s->env, tp);
                 int ismove = (e->sub==EXPR_CALL && e->Call.func->sub==EXPR_VAR && !strcmp(e->Call.func->tk.val.s,"move"));
                 if (ismove) {
