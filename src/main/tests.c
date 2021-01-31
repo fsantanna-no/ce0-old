@@ -616,6 +616,42 @@ void t_parser_stmt (void) {
     }
 }
 
+void t_visit (void) {
+    void pre (void) {
+        puts("-=-=-");
+    }
+    int fe (Env* env, Expr* e) {
+        if (e->sub == EXPR_INT) {
+            printf("expr = %d\n", e->tk.val.n);
+        }
+        return EXEC_CONTINUE;
+    }
+    int fs (Stmt* s) {
+        if (s->sub == STMT_CALL) {
+            printf("stmt = %s\n", s->Call->Call.func->tk.val.s);
+        }
+        return EXEC_CONTINUE;
+    }
+    {
+        all_init(NULL, stropen("r", 0,
+            "call zzz 000\n"
+            "call aaa 111\n"
+            "call bbb 222\n"
+            "if False {\n"
+            "   call xxx 1\n"
+            "} else {\n"
+            "   call yyy 2\n"
+            "}\n"
+            "call ccc 333\n"
+        ));
+        Stmt* s;
+        assert(parser(&s));
+        int set_seqs (Stmt* s);
+        assert(visit_stmt(0,s,set_seqs,NULL,NULL));
+        exec(s, pre, fs, fe);
+    }
+}
+
 void t_env (void) {
     // ENV_HELD_VARS
     {
@@ -2941,6 +2977,7 @@ int main (void) {
     t_lexer();
     t_parser();
     t_env();
+    //t_visit();
     t_code();
     t_all();
     puts("OK");

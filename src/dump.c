@@ -142,9 +142,11 @@ void dump_stmt (Stmt* s) {
             puts("");
             break;
         case STMT_LOOP:
+            dump_spc();
             printf("loop:\n");
             _SPC_ += 4;
             dump_stmt(s->Loop);
+            _SPC_ -= 4;
             break;
         case STMT_FUNC:
             dump_spc();
