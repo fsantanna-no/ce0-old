@@ -253,7 +253,7 @@ int exec_stmt (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe) {
         // PATH
 
         if (s->sub != STMT_IF) {
-            s = s->seqs[1];
+            s = s->seq;
         } else {   // STMT_IF
             // ainda nao explorei esse galho
             if (est->cur == est->size) {

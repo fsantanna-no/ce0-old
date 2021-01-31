@@ -161,7 +161,7 @@ int check_txs (Stmt* S) {
     auto int fs (Stmt* s);
 //printf(">>> %s\n", S->Var.tk.val.s);
 //return 1;
-    return exec(S->seqs[1], pre, fs, NULL);
+    return exec(S->seq, pre, fs, NULL);
 
     // y = \x ...                // check all accesses to it
 

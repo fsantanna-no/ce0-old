@@ -385,7 +385,7 @@ Stmt* enseq (Stmt* s1, Stmt* s2) {
     } else {
         Stmt* ret = malloc(sizeof(Stmt));
         assert(ret != NULL);
-        *ret = (Stmt) { ALL.nn++, STMT_SEQ,   NULL, {NULL,NULL}, ALL.tk0, .Seq={s1,s2} };
+        *ret = (Stmt) { ALL.nn++, STMT_SEQ,   NULL, NULL, ALL.tk0, .Seq={s1,s2} };
         return ret;
     }
 }
@@ -431,7 +431,7 @@ int parser_stmt (Stmt** ret) {
 
         Stmt* block = malloc(sizeof(Stmt));
         assert(block != NULL);
-        *block = (Stmt) { ALL.nn++, STMT_BLOCK, NULL, {NULL,NULL}, tk, .Block=blk };
+        *block = (Stmt) { ALL.nn++, STMT_BLOCK, NULL, NULL, tk, .Block=blk };
         *ret = block;
         return 1;
     }
@@ -460,7 +460,7 @@ int parser_stmt (Stmt** ret) {
             return 0;
         }
 
-        *s = (Stmt) { ALL.nn++, STMT_VAR, NULL, {NULL,NULL}, tk, .Var={id,tp,e,NULL} };
+        *s = (Stmt) { ALL.nn++, STMT_VAR, NULL, NULL, tk, .Var={id,tp,e,NULL} };
 
     // STMT_USER
     } else if (accept(TK_TYPE)) {       // type
@@ -479,7 +479,7 @@ int parser_stmt (Stmt** ret) {
         Tk id = ALL.tk0;                // Bool
 
         if (ispre) {
-            *s = (Stmt) { ALL.nn++, STMT_USER, NULL, {NULL,NULL}, tk, .User={1,id,0,NULL} };
+            *s = (Stmt) { ALL.nn++, STMT_USER, NULL, NULL, tk, .User={1,id,0,NULL} };
             return 1;
         }
 
@@ -511,7 +511,7 @@ int parser_stmt (Stmt** ret) {
             return 0;
         }
 
-        *s = (Stmt) { ALL.nn++, STMT_USER, NULL, {NULL,NULL}, tk, .User={isrec,id,n,vec} };
+        *s = (Stmt) { ALL.nn++, STMT_USER, NULL, NULL, tk, .User={isrec,id,n,vec} };
 
     // STMT_SET
     } else if (accept(TK_SET)) {
@@ -531,7 +531,7 @@ int parser_stmt (Stmt** ret) {
             return 0;
         }
 
-        *s = (Stmt) { ALL.nn++, STMT_SET, NULL, {NULL,NULL}, tk, .Set={dst,src} };
+        *s = (Stmt) { ALL.nn++, STMT_SET, NULL, NULL, tk, .Set={dst,src} };
 
     // STMT_CALL
     } else if (check(TK_CALL) || check(TK_INPUT) || check(TK_OUTPUT)) {
@@ -541,7 +541,7 @@ int parser_stmt (Stmt** ret) {
             return 0;
         }
         assert(e->sub == EXPR_CALL);
-        *s = (Stmt) { ALL.nn++, STMT_CALL, NULL, {NULL,NULL}, tk, .Call=e };
+        *s = (Stmt) { ALL.nn++, STMT_CALL, NULL, NULL, tk, .Call=e };
 
     // STMT_IF
     } else if (accept(TK_IF)) {         // if
@@ -565,18 +565,18 @@ int parser_stmt (Stmt** ret) {
         } else {
             Stmt* none = malloc(sizeof(Stmt));
             assert(none != NULL);
-            *none = (Stmt) { ALL.nn++, STMT_NONE, NULL, {NULL,NULL} };
+            *none = (Stmt) { ALL.nn++, STMT_NONE, NULL, NULL };
 
             f = malloc(sizeof(Stmt));
             assert(f != NULL);
-            *f = (Stmt) { ALL.nn++, STMT_BLOCK, NULL, {NULL,NULL}, ALL.tk0, .Block=none };
+            *f = (Stmt) { ALL.nn++, STMT_BLOCK, NULL, NULL, ALL.tk0, .Block=none };
         }
 
-        *s = (Stmt) { ALL.nn++, STMT_IF, NULL, {NULL,NULL}, tk, .If={e,t,f} };
+        *s = (Stmt) { ALL.nn++, STMT_IF, NULL, NULL, tk, .If={e,t,f} };
 
     // STMT_BREAK
     } else if (accept(TK_BREAK)) {      // break
-        *s = (Stmt) { ALL.nn++, STMT_BREAK, NULL, {NULL,NULL}, ALL.tk0 };
+        *s = (Stmt) { ALL.nn++, STMT_BREAK, NULL, NULL, ALL.tk0 };
 
     // STMT_LOOP
     } else if (accept(TK_LOOP)) {       // loop
@@ -585,7 +585,7 @@ int parser_stmt (Stmt** ret) {
         if (!parser_block(&body)) {
             return 0;
         }
-        *s = (Stmt) { ALL.nn++, STMT_LOOP, NULL, {NULL,NULL}, tk, .Loop=body };
+        *s = (Stmt) { ALL.nn++, STMT_LOOP, NULL, NULL, tk, .Loop=body };
 
     // STMT_FUNC
     } else if (accept(TK_FUNC)) {       // func
@@ -609,7 +609,7 @@ int parser_stmt (Stmt** ret) {
         }
 
         if (ispre) {
-            *s = (Stmt) { ALL.nn++, STMT_FUNC, NULL, {NULL,NULL}, tk, .Func={id,tp,NULL} };
+            *s = (Stmt) { ALL.nn++, STMT_FUNC, NULL, NULL, tk, .Func={id,tp,NULL} };
             return 1;
         }
 
@@ -625,7 +625,7 @@ int parser_stmt (Stmt** ret) {
         assert(arg!=NULL && ret!=NULL && _arg_!=NULL);
 
         *_arg_ = (Expr) { ALL.nn++, EXPR_NATIVE, {TX_NATIVE,{.s="_arg_"},id.lin,id.col} };
-        *arg = (Stmt) { ALL.nn++, STMT_VAR,   NULL, {NULL,NULL}, tk,
+        *arg = (Stmt) { ALL.nn++, STMT_VAR,   NULL, NULL, tk,
             .Var = {
                 { TX_VAR, {.s="arg"}, id.lin, id.col },
                 tp->Func.inp,
@@ -635,7 +635,7 @@ int parser_stmt (Stmt** ret) {
         };
 
         *unk = (Expr) { ALL.nn++, EXPR_UNK, tk };
-        *ret = (Stmt) { ALL.nn++, STMT_VAR,   NULL, {NULL,NULL}, tk,
+        *ret = (Stmt) { ALL.nn++, STMT_VAR,   NULL, NULL, tk,
             .Var = {
                 { TX_VAR, {.s="_ret_"}, id.lin, id.col },
                 tp->Func.out,
@@ -649,13 +649,13 @@ int parser_stmt (Stmt** ret) {
 
         Stmt* blk1 = malloc(sizeof(Stmt));
         assert(blk1 != NULL);
-        *blk1 = (Stmt) { ALL.nn++, STMT_BLOCK, NULL, {NULL,NULL}, tk, .Block=seq2 };
+        *blk1 = (Stmt) { ALL.nn++, STMT_BLOCK, NULL, NULL, tk, .Block=seq2 };
 
         // blk1
         //  arg, ret
         //  blk2
 
-        *s = (Stmt) { ALL.nn++, STMT_FUNC, NULL, {NULL,NULL}, tk, .Func={id,tp,blk1} };
+        *s = (Stmt) { ALL.nn++, STMT_FUNC, NULL, NULL, tk, .Func={id,tp,blk1} };
 
     // STMT_RETURN
     } else if (accept(TK_RETURN)) {
@@ -673,8 +673,8 @@ int parser_stmt (Stmt** ret) {
         assert(var!=NULL && set!=NULL && xxx!=NULL);
 
         *var = (Expr) { ALL.nn++, EXPR_VAR, {TX_VAR,{.s="_ret_"},tk.lin,tk.col}, .Var={0,0} };
-        *set = (Stmt) { ALL.nn++, STMT_SET, NULL, {NULL,NULL}, tk, .Set={var,e} };
-        *xxx = (Stmt) { ALL.nn++, STMT_RETURN, NULL, {NULL,NULL}, tk, .Return=e };
+        *set = (Stmt) { ALL.nn++, STMT_SET, NULL, NULL, tk, .Set={var,e} };
+        *xxx = (Stmt) { ALL.nn++, STMT_RETURN, NULL, NULL, tk, .Return=e };
 
         free(s);
         *ret = enseq(set,xxx);
@@ -690,7 +690,7 @@ int parser_stmt (Stmt** ret) {
         if (!accept_err(TX_NATIVE)) {
             return 0;
         }
-        *s = (Stmt) { ALL.nn++, STMT_NATIVE, NULL, {NULL,NULL}, tk, .Native={ispre,ALL.tk0} };
+        *s = (Stmt) { ALL.nn++, STMT_NATIVE, NULL, NULL, tk, .Native={ispre,ALL.tk0} };
 
     } else {
         return err_expected("statement");
@@ -702,7 +702,7 @@ int parser_stmt (Stmt** ret) {
 int parser_stmts (TK opt, Stmt** ret) {
     Stmt* none = malloc(sizeof(Stmt));
     assert(none != NULL);
-    *none = (Stmt) { ALL.nn++, STMT_NONE, NULL, {NULL,NULL} };
+    *none = (Stmt) { ALL.nn++, STMT_NONE, NULL, NULL };
     *ret = none;
 
     while (1) {
@@ -735,7 +735,7 @@ int parser (Stmt** ret) {
     // Int, std, clone, move
     {
         static Stmt Int = (Stmt) {   // Int
-            0, STMT_USER, NULL, {NULL,NULL},
+            0, STMT_USER, NULL, NULL,
             .User = { 0, {TX_USER,{.s="Int"},0,__COUNTER__}, 0, NULL }
         };
         *ret = enseq(*ret, &Int);
@@ -743,7 +743,7 @@ int parser (Stmt** ret) {
     {
         static Type tp_stdo  = { TYPE_FUNC, .Func={&tp_alias,&Type_Unit} };
         static Stmt stdo = (Stmt) {   // std ()
-            0, STMT_FUNC, NULL, {NULL,NULL},
+            0, STMT_FUNC, NULL, NULL,
             .Func = { {TX_VAR,{.s="output_std"},0,__COUNTER__}, &tp_stdo, NULL }
         };
         *ret = enseq(*ret, &stdo);
@@ -751,7 +751,7 @@ int parser (Stmt** ret) {
     {
         static Type tp_clone = { TYPE_FUNC, .Func={&tp_alias,&tp_any} };
         static Stmt clone = (Stmt) {   // clone ()
-            0, STMT_FUNC, NULL, {NULL,NULL},
+            0, STMT_FUNC, NULL, NULL,
             .Func = { {TX_VAR,{.s="clone"},0,__COUNTER__}, &tp_clone, NULL }
         };
         *ret = enseq(*ret, &clone);
@@ -759,7 +759,7 @@ int parser (Stmt** ret) {
     {
         static Type tp_move = { TYPE_FUNC, .Func={&tp_any,&tp_any} };
         static Stmt move = (Stmt) {   // move ()
-            0, STMT_FUNC, NULL, {NULL,NULL},
+            0, STMT_FUNC, NULL, NULL,
             .Func = { {TX_VAR,{.s="move"},0,__COUNTER__}, &tp_move, NULL }
         };
         *ret = enseq(*ret, &move);

@@ -471,19 +471,17 @@ void env_held_vars (Env* env, Expr* e, int* N, Expr** vars, int* uprefs) {
 int set_seqs (Stmt* s) {
     switch (s->sub) {
         case STMT_BLOCK:
-            s->seqs[1] = s->Block;
+            s->seq = s->Block;
             break;
 
         case STMT_LOOP:
-            s->seqs[1] = s->Loop;
+            s->seq = s->Loop;
             break;
 
         case STMT_SEQ:
-            s->seqs[1] = s->Seq.s1;
-            s->Seq.s1->seqs[0] = s->Seq.s2;
+            s->seq = s->Seq.s1;
 
             void aux (Stmt* cur, Stmt* nxt) {
-                cur->seqs[0] = nxt;
                 switch (cur->sub) {
                     case STMT_BLOCK:
                         aux(cur->Block, nxt);
@@ -500,13 +498,13 @@ int set_seqs (Stmt* s) {
                         break;
                     case STMT_FUNC:
                         if (cur->Func.body == NULL) {
-                            cur->seqs[1] = nxt;
+                            cur->seq = nxt;
                         } else {
                             aux(cur->Func.body, nxt);
                         }
                         break;
                     default:
-                        cur->seqs[1] = nxt;
+                        cur->seq = nxt;
                         break;
                 }
             }
@@ -515,12 +513,12 @@ int set_seqs (Stmt* s) {
             break;
 
         case STMT_IF:
-            s->seqs[1] = NULL;  // undetermined: left to user code
+            s->seq = NULL;  // undetermined: left to user code
             break;
 
         case STMT_FUNC:
             if (s->Func.body != NULL) {
-                s->seqs[1] = s->Func.body;
+                s->seq = s->Func.body;
             }
             break;
 
