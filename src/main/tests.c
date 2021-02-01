@@ -1920,7 +1920,6 @@ __XXX__:
         "var c: Nat = Succ Succ $Nat\n"
         "output std (\\c.Succ!)\n"
     ));
-#if TODO-RETURN-MOVE
     assert(all(
         "Succ ($)\n",
         "type Bool {\n"
@@ -1937,10 +1936,9 @@ __XXX__:
         "   }\n"
         "   return move x\n"
         "}\n"
-        "output std f ()\n"
+        "var x: Nat = f ()\n"
+        "output std (\\x)\n"
     ));
-assert(0);
-#endif
     assert(all(
         "Succ ($)\n",
         "type rec Nat {\n"

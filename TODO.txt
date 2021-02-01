@@ -1,6 +1,4 @@
-#if TODO-RETURN-MOVE
 - ulimit -Sv 500000
-- free em env_expr_to_type
 - se nao tem ponteiro, entao nao é growable
 - lifetimes pela ordem dos parametros:
     - // TODO-TUPLE-HOLD
