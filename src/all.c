@@ -17,6 +17,7 @@ int all_init (FILE* out, FILE* inp) {
         1, 1,                       // lin, col
         {}, { TK_ERR, {}, 1, 1 },   // tk0, tk1
         NULL,                       // env
+        NULL,                       // first
         __COUNTER__                 // n
     };
     if (inp != NULL) {

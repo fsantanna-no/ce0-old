@@ -190,6 +190,7 @@ void exec_init (Exec_State* est) {
 // 0=error, 1=success, EXEC_HALT=aborted
 
 int exec_stmt (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe) {
+    //printf(">>> [%d] %d\n", s->tk.lin, s->sub);
     while (s != NULL) {
         if (fs != NULL) {
             switch (fs(s)) {

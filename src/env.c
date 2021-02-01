@@ -4,6 +4,8 @@
 
 #include "all.h"
 
+//#define OLD_SEQS
+
 Type Type_Unit = { TYPE_UNIT, 0 };
 Type Type_Bool = { TYPE_USER, 0, .User={TX_USER,{.s="Bool"},0,0} };
 
@@ -468,6 +470,8 @@ void env_held_vars (Env* env, Expr* e, int* N, Expr** vars, int* uprefs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+#ifdef OLD_SEQS
+
 int set_seqs (Stmt* s) {
     switch (s->sub) {
         case STMT_BLOCK:
@@ -527,6 +531,80 @@ int set_seqs (Stmt* s) {
     }
     return VISIT_CONTINUE;
 }
+
+#else
+
+void set_seqs (Stmt* s, Stmt** first, Stmt** last, Stmt* loop) {
+    Stmt *_first, *_last;
+    if (first == NULL) first = &_first;
+    if (last  == NULL) last  = &_last;
+
+    switch (s->sub) {
+        case STMT_NONE:
+        case STMT_VAR:
+        case STMT_USER:
+        case STMT_SET:
+        case STMT_CALL:     // TODO: recurse into STMT_FUNC?
+        case STMT_NATIVE:
+////
+        case STMT_BREAK:
+        case STMT_RETURN:
+            *first = s;
+            *last  = s;
+            break;
+
+       case STMT_SEQ: {
+            Stmt *last1, *first2;
+            set_seqs(s->Seq.s1, first, &last1, loop);
+            set_seqs(s->Seq.s2, &first2, last, loop);
+            if (last1 != NULL) {
+                last1->seq = first2;
+            }
+            break;
+        }
+
+        case STMT_IF: {     // don't link true/false here
+            set_seqs(s->If.true,  NULL, NULL, loop);
+            set_seqs(s->If.false, NULL, NULL, loop);
+            *first = s;
+            *last  = s;
+            break;
+        }
+
+        case STMT_LOOP:
+            *first = s;
+            set_seqs(s->Loop, &s->seq, last, s);
+            break;
+#if 0
+        case STMT_BREAK:
+            *first = s;
+            s->seq = loop;
+            *last  = NULL;
+            break;
+#endif
+
+        case STMT_FUNC:
+            *first = s;
+            *last  = s;
+            if (s->Func.body != NULL) {
+                set_seqs(s->Func.body, &s->seq, last, NULL);
+            }
+            break;
+#if 0
+        case STMT_RETURN:
+            *first = s;
+            *last  = NULL;
+            break;
+#endif
+
+        case STMT_BLOCK:
+            *first = s;
+            set_seqs(s->Block, &s->seq, last, loop);
+            break;
+    }
+}
+
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -974,7 +1052,11 @@ int check_ptrs_expr (Env* env, Expr* e) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int env (Stmt* s) {
+#ifdef OLD_SEQS
     assert(visit_stmt(0,s,set_seqs,NULL,NULL));
+#else
+    set_seqs(s, &ALL.first, NULL, NULL);
+#endif
     assert(set_envs(s));
     if (!visit_stmt(0,s,NULL,check_decls_expr,check_decls_type)) {
         return 0;
@@ -982,7 +1064,7 @@ int env (Stmt* s) {
     if (!visit_stmt(1,s,check_types_stmt,check_types_expr,NULL)) {
         return 0;
     }
-    if (!exec(s,NULL,check_ptrs_stmt,check_ptrs_expr)) {
+    if (!exec(ALL.first,NULL,check_ptrs_stmt,check_ptrs_expr)) {
         return 0;
     }
     return 1;
