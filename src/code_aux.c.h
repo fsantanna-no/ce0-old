@@ -172,9 +172,13 @@ void code_stdout_user (Stmt* s) {
 
         char* op2 = ""; {
             int ishasrec = env_type_ishasrec(s->env, sub->type);
+            int isptr = sub->type->isptr;
+            sub->type->isptr = 0;
+            int ishasrec2 = env_type_ishasrec(s->env, sub->type);
+            sub->type->isptr = isptr;
             if (ishasrec) {
                 op2 = "&";
-            } else if (!ishasrec && sub->type->isptr) {
+            } else if (!ishasrec && isptr && !ishasrec2) {
                 op2 = "*";
             }
         }

@@ -602,8 +602,15 @@ int check_types_expr (Env* env, Expr* e) {
         case EXPR_TUPLE:
         case EXPR_NULL:
         case EXPR_INT:
-        case EXPR_UPREF:
             break;
+
+        case EXPR_UPREF: {
+            Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e->Dnref);
+            if (tp->isptr) {
+                return err_message(&e->tk, "invalid `\\´ : unexpected pointer type");
+            }
+            break;
+        }
 
         case EXPR_DNREF: {
             Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e->Dnref);
@@ -836,6 +843,25 @@ int check_ptrs_expr (Env* env, Expr* e) {
     return EXEC_CONTINUE;
 }
 
+int check_ptrs (Stmt* S) {
+    if (!exec(stmt_xmost(S,0),NULL,check_ptrs_stmt,check_ptrs_expr)) {
+        return 0;
+    }
+
+    int fs (Stmt* s) {
+        if (s->sub==STMT_FUNC && s->Func.body!=NULL &&
+            !exec(stmt_xmost(s->Func.body,0),NULL,check_ptrs_stmt,check_ptrs_expr)
+        ) {
+            return VISIT_ERROR;
+        }
+        return VISIT_CONTINUE;
+    }
+    if (!visit_stmt(0,S,fs,NULL,NULL)) {
+        return 0;
+    }
+    return 1;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 int env (Stmt* s) {
@@ -845,7 +871,7 @@ int env (Stmt* s) {
     if (!visit_stmt(1,s,check_types_stmt,check_types_expr,NULL)) {
         return 0;
     }
-    if (!exec(stmt_xmost(s,0),NULL,check_ptrs_stmt,check_ptrs_expr)) {
+    if (!check_ptrs(s)) {
         return 0;
     }
     return 1;

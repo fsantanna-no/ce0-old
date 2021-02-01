@@ -279,13 +279,18 @@ int check_txs (Stmt* S) {
                         assert(decl!=NULL && decl==S);
 
                         if (istxd) { // Rule 4 (growable)
+                            Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e);
+                            int ishasptr = env_type_ishasptr(env, tp);
                             // if already moved, it doesn't matter, any access is invalid
-                            assert(txed_tk != NULL);
-                            char err[TK_BUF+256];
-                            sprintf(err, "invalid access to \"%s\" : ownership was transferred (ln %d)",
-                                    e->tk.val.s, txed_tk->lin);
-                            err_message(&e->tk, err);
-                            return VISIT_ERROR;
+                            if (ishasptr) {
+                                assert(txed_tk != NULL);
+                                char err[TK_BUF+256];
+                                sprintf(err, "invalid access to \"%s\" : ownership was transferred (ln %d)",
+                                        e->tk.val.s, txed_tk->lin);
+                                err_message(&e->tk, err);
+                                return VISIT_ERROR;
+                            }
+                            return VISIT_CONTINUE;
 
                         // Rule 6
                         } else if (bws_n >= 2) {

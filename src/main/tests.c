@@ -1971,8 +1971,20 @@ __XXX__:
         "output std b\n"
     ));
     assert(all(
-        "(ln 6, col 14): invalid access to \"c\" : ownership was transferred (ln 5)",
+        "(ln 7, col 14): invalid access to \"c\" : ownership was transferred (ln 6)",
         //"$\n",
+        "type rec Nat {\n"
+        "   Succ: (Nat,\\Nat)\n"
+        "}\n"
+        "var nil: \\Nat = _NULL\n"
+        "var c: Nat = Succ ($Nat, nil)\n"
+        "var a: (Nat,Nat) = ($Nat, move c)\n" // precisa transferir o c
+        //"var d: Nat = c\n"               // erro
+        "output std (\\c)\n"
+    ));
+    assert(all(
+        //"(ln 6, col 14): invalid access to \"c\" : ownership was transferred (ln 5)",
+        "$\n",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -1982,12 +1994,13 @@ __XXX__:
         "output std (\\c)\n"
     ));
     assert(all(
-        "(ln 7, col 16): invalid access to \"a\" : ownership was transferred (ln 6)",
+        "(ln 8, col 16): invalid access to \"a\" : ownership was transferred (ln 7)",
         //"$\n",
         "type rec Nat {\n"
-        "   Succ: Nat\n"
+        "   Succ: (Nat,\\Nat)\n"
         "}\n"
-        "var c: Nat = Succ $Nat\n"
+        "var nil: \\Nat = _NULL\n"
+        "var c: Nat = Succ ($Nat,nil)\n"
         "var a: (Nat,Nat) = ($Nat,move c)\n"
         "var b: (Nat,Nat) = move a\n"        // tx a
         "var d: \\Nat = \\a.2\n"          // no: a is txed
@@ -2008,8 +2021,8 @@ __XXX__:
         "output std d\n"                 // ok: $Nat
     ));
     assert(all(
-        //"$\n",
-        "(ln 7, col 16): invalid access to \"a\" : ownership was transferred (ln 6)",
+        "$\n",
+        //"(ln 7, col 16): invalid access to \"a\" : ownership was transferred (ln 6)",
         //"(ln 6, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type rec Nat {\n"
         "   Succ: Nat\n"
@@ -2022,13 +2035,14 @@ __XXX__:
     ));
     assert(all(
         //"Succ ($)\n",
-        "(ln 8, col 16): invalid access to \"a\" : ownership was transferred (ln 7)",
-        //"(ln 7, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
+        //"(ln 8, col 16): invalid access to \"a\" : ownership was transferred (ln 7)",
+        "(ln 8, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type rec Nat {\n"
-        "   Succ: Nat\n"
+        "   Succ: (Nat,\\Nat)\n"
         "}\n"
-        "var c: Nat = Succ $Nat\n"
-        "var e: Nat = Succ $Nat\n"
+        "var x: \\Nat = _NULL\n"
+        "var c: Nat = Succ ($Nat,x)\n"
+        "var e: Nat = Succ ($Nat,x)\n"
         "var a: (Nat,Nat) = move (move e,move c)\n"
         "var b: Nat = move a.2\n"
         "var d: \\Nat = \\a.1\n"
@@ -2061,20 +2075,21 @@ __XXX__:
     ));
     assert(all(
         //"Succ ($)\n",
-        "(ln 7, col 16): invalid access to \"c\" : ownership was transferred (ln 6)",
-        //"(ln 6, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
+        //"(ln 7, col 16): invalid access to \"c\" : ownership was transferred (ln 6)",
+        "(ln 7, col 26): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type rec Nat {\n"
-        "   Succ: Nat\n"
+        "   Succ: (Nat,\\Nat)\n"
         "}\n"
-        "var d: Nat = Succ $Nat\n"
-        "var c: Nat = Succ move d\n"
-        "var b: Nat = move c.Succ!\n"
+        "var nil: \\Nat = _NULL\n"
+        "var d: Nat = Succ ($Nat,nil)\n"
+        "var c: Nat = Succ (move d,nil)\n"
+        "var b: Nat = Succ move c.Succ!\n"
         "var e: \\Nat = \\c\n"
         "output std e\n"
     ));
     assert(all(
-        //"XNat1 ($)\n",
-        "(ln 11, col 17): invalid access to \"i\" : ownership was transferred (ln 10)",
+        "XNat1 ($)\n",
+        //"(ln 11, col 17): invalid access to \"i\" : ownership was transferred (ln 10)",
         //"(ln 10, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type rec Nat {\n"
         "   Succ: Nat\n"
@@ -2391,8 +2406,8 @@ __XXX__:
 
     // OWNERSHIP / BORROWING
     assert(all(
-        "(ln 6, col 19): invalid access to \"i\" : ownership was transferred (ln 5)",
-        //"$\n",
+        //"(ln 6, col 19): invalid access to \"i\" : ownership was transferred (ln 5)",
+        "$\n",
         "type rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
@@ -2433,8 +2448,8 @@ __XXX__:
         "output std y_\n"
     ));
     assert(all(
-        "(ln 8, col 19): invalid access to \"x\" : ownership was transferred (ln 6)",
-        //"$\n",
+        //"(ln 8, col 19): invalid access to \"x\" : ownership was transferred (ln 6)",
+        "$\n",
         "type rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
@@ -2459,8 +2474,8 @@ __XXX__:
         "}\n"
     ));
     assert(all(
-        //"Item ($)\n",
-        "(ln 6, col 20): invalid access to \"a\" : ownership was transferred (ln 5)",
+        "Item ($)\n",
+        //"(ln 6, col 20): invalid access to \"a\" : ownership was transferred (ln 5)",
         //"(ln 5, col 28): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type rec List {\n"
         "    Item: List\n"
@@ -2633,8 +2648,37 @@ __XXX__:
         "output std (\\l2)\n"
     ));
     assert(all(
-        "(ln 10, col 18): invalid access to \"l1\" : ownership was transferred (ln 9)",
-        //"$\n",
+        //"(ln 10, col 18): invalid access to \"l1\" : ownership was transferred (ln 9)",
+        "$\n",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "type Xx {\n"
+        "    Xx1: List\n"
+        "}\n"
+        "var l1: List = $List\n"
+        "var l2: List = $List\n"
+        "set l2 = move l1\n"
+        "var x: Xx = Xx1 move l1\n"
+        "output std (\\x.Xx1!)\n"
+    ));
+    assert(all(
+        "(ln 11, col 13): invalid `\\´ : unexpected pointer type",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "type Xx {\n"
+        "    Xx1: \\List\n"
+        "}\n"
+        "var l1: List = $List\n"
+        "var l2: List = $List\n"
+        "set l2 = move l1\n"
+        "var x: Xx = Xx1 \\l1\n"
+        "output std (\\x.Xx1!)\n"
+    ));
+    assert(all(
+        //"(ln 10, col 18): invalid access to \"l1\" : ownership was transferred (ln 9)",
+        "$\n",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
@@ -2648,8 +2692,8 @@ __XXX__:
         "output std x.Xx1!\n"
     ));
     assert(all(
-        "(ln 7, col 14): invalid access to \"l1\" : ownership was transferred (ln 6)",
-        //"$\n",
+        //"(ln 7, col 14): invalid access to \"l1\" : ownership was transferred (ln 6)",
+        "$\n",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"

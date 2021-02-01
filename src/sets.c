@@ -49,7 +49,7 @@ void set_seqs (Stmt* s, Stmt* nxt, Stmt* func, Stmt* loop) {
         case STMT_FUNC:
             if (s->Func.body != NULL) {
                 set_seqs(s->Func.body, nxt, nxt, NULL); // nxt (not NULL): even w/o return
-                s->seq = stmt_xmost(s->Func.body, 0);
+                //s->seq = stmt_xmost(s->Func.body, 0); // do not link FUNC with outer stmts
             }
             break;
         case STMT_RETURN:
