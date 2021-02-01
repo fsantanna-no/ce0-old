@@ -3,6 +3,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "visit.h"
+#include "exec.h"
 #include "sets.h"
 #include "env.h"
 #include "owner.h"
