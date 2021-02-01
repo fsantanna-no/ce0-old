@@ -190,8 +190,9 @@ void exec_init (Exec_State* est) {
 // 0=error, 1=success, EXEC_HALT=aborted
 
 int exec_stmt (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe) {
-    //printf(">>> [%d] %d\n", s->tk.lin, s->sub);
     while (s != NULL) {
+//printf(">>> [%d] %d\n", s->tk.lin, s->sub);
+//dump_stmt(s);
         if (fs != NULL) {
             switch (fs(s)) {
                 case EXEC_ERROR:            // error stop all
@@ -253,28 +254,39 @@ int exec_stmt (Exec_State* est, Stmt* s, F_Stmt fs, F_Expr fe) {
 
         // PATH
 
-        if (s->sub != STMT_IF) {
-            s = s->seq;
-        } else {   // STMT_IF
-            // ainda nao explorei esse galho
-            if (est->cur == est->size) {
-                est->cur++;
-                est->vec[est->size++] = IF_LEFT;  // escolho esquerda
-                s = s->If.true;
+        switch (s->sub) {
+#if 0
+            case STMT_BREAK:
+            case STMT_RETURN:
+                s = s->seq;     // set to outer stmt in sequence (same as default below)
+                break;
+#endif
 
-            // ainda tenho trabalho a esquerda
-            } else if (est->vec[est->cur] == IF_LEFT) {
-                est->cur++;
-                s = s->If.true;
+            case STMT_IF:
+                // ainda nao explorei esse galho
+                if (est->cur == est->size) {
+                    est->cur++;
+                    est->vec[est->size++] = IF_LEFT;  // escolho esquerda
+                    s = s->If.true;
 
-            // ainda tenho trabalho a direita
-            } else if (est->vec[est->cur] == IF_RIGHT) {
-                est->cur++;
-                s = s->If.false;
+                // ainda tenho trabalho a esquerda
+                } else if (est->vec[est->cur] == IF_LEFT) {
+                    est->cur++;
+                    s = s->If.true;
 
-            } else {
-                assert(0);
-            }
+                // ainda tenho trabalho a direita
+                } else if (est->vec[est->cur] == IF_RIGHT) {
+                    est->cur++;
+                    s = s->If.false;
+
+                } else {
+                    assert(0);
+                }
+                break;
+
+            default:
+                s = s->seq;
+                break;
         }
     }
     return EXEC_CONTINUE;   // last statement?

@@ -20,7 +20,6 @@ typedef struct {
     char  err[256];
     int   lin,col;
     Tk    tk0,tk1;
-    Stmt* first;
     Env*  env;
     int   nn;
 } All;

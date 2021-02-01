@@ -468,10 +468,16 @@ void env_held_vars (Env* env, Expr* e, int* N, Expr** vars, int* uprefs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void set_seqs (Stmt* s, Stmt** first, Stmt** last, Stmt* loop) {
-    Stmt *_first, *_last;
-    if (first == NULL) first = &_first;
-    if (last  == NULL) last  = &_last;
+Stmt* stmt_xmost (Stmt* s, int right) {
+    if (s->sub == STMT_SEQ) {
+        return stmt_xmost((right ? s->Seq.s2 : s->Seq.s1), right);
+    } else {
+        return s;
+    }
+}
+
+void set_seqs (Stmt* s, Stmt* nxt, Stmt* func, Stmt* loop) {
+    s->seq = nxt;
 
     switch (s->sub) {
         case STMT_NONE:
@@ -480,60 +486,42 @@ void set_seqs (Stmt* s, Stmt** first, Stmt** last, Stmt* loop) {
         case STMT_SET:
         case STMT_CALL:     // TODO: recurse into STMT_FUNC?
         case STMT_NATIVE:
-////
-        case STMT_BREAK:
-        case STMT_RETURN:
-            *first = s;
-            *last  = s;
             break;
 
        case STMT_SEQ: {
-            Stmt *last1, *first2;
-            set_seqs(s->Seq.s1, first, &last1, loop);
-            set_seqs(s->Seq.s2, &first2, last, loop);
-            if (last1 != NULL) {
-                last1->seq = first2;
-            }
+            Stmt* xxx = stmt_xmost(s->Seq.s2, 0);
+            set_seqs(s->Seq.s1, xxx, func, loop);
+            set_seqs(s->Seq.s2, nxt, func, loop);
             break;
         }
 
         case STMT_IF: {     // don't link true/false here
-            set_seqs(s->If.true,  NULL, NULL, loop);
-            set_seqs(s->If.false, NULL, NULL, loop);
-            *first = s;
-            *last  = s;
+            set_seqs(s->If.true,  nxt, func, loop);
+            set_seqs(s->If.false, nxt, func, loop);
             break;
         }
 
         case STMT_LOOP:
-            *first = s;
-            set_seqs(s->Loop, &s->seq, last, s);
+            set_seqs(s->Loop, NULL, func, nxt);     // NULL: only break goes to nxt
+            s->seq = stmt_xmost(s->Loop, 0);
             break;
-#if 0
         case STMT_BREAK:
-            *first = s;
             s->seq = loop;
-            *last  = NULL;
             break;
-#endif
 
         case STMT_FUNC:
-            *first = s;
-            *last  = s;
             if (s->Func.body != NULL) {
-                set_seqs(s->Func.body, &s->seq, last, NULL);
+                set_seqs(s->Func.body, nxt, nxt, NULL); // nxt (not NULL): even w/o return
+                s->seq = stmt_xmost(s->Func.body, 0);
             }
             break;
-#if 0
         case STMT_RETURN:
-            *first = s;
-            *last  = NULL;
+            s->seq = func;
             break;
-#endif
 
         case STMT_BLOCK:
-            *first = s;
-            set_seqs(s->Block, &s->seq, last, loop);
+            set_seqs(s->Block, nxt, func, loop);
+            s->seq = stmt_xmost(s->Block,0);
             break;
     }
 }
@@ -984,7 +972,7 @@ int check_ptrs_expr (Env* env, Expr* e) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int env (Stmt* s) {
-    set_seqs(s, &ALL.first, NULL, NULL);
+    set_seqs(s, NULL, NULL, NULL);
     assert(set_envs(s));
     if (!visit_stmt(0,s,NULL,check_decls_expr,check_decls_type)) {
         return 0;
@@ -992,7 +980,7 @@ int env (Stmt* s) {
     if (!visit_stmt(1,s,check_types_stmt,check_types_expr,NULL)) {
         return 0;
     }
-    if (!exec(ALL.first,NULL,check_ptrs_stmt,check_ptrs_expr)) {
+    if (!exec(stmt_xmost(s,0),NULL,check_ptrs_stmt,check_ptrs_expr)) {
         return 0;
     }
     return 1;

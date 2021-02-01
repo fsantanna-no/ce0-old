@@ -646,10 +646,13 @@ void t_visit (void) {
         ));
         Stmt* s;
         assert(parser(&s));
-        int set_seqs (Stmt* s);
-        assert(visit_stmt(0,s,set_seqs,NULL,NULL));
-        exec(s, pre, fs, fe);
+        Stmt* stmt_xmost (Stmt* s, int right);
+        void set_seqs (Stmt* s, Stmt* nxt, Stmt* func, Stmt* loop);
+        set_seqs(s, NULL, NULL, NULL);
+        dump_stmt(s);
+        exec(stmt_xmost(s,0), pre, fs, fe);
     }
+assert(0);
 }
 
 void t_env (void) {
@@ -1899,6 +1902,27 @@ __XXX__:
         "var c: Nat = Succ Succ $Nat\n"
         "output std (\\c.Succ!)\n"
     ));
+#if TODO-RETURN-MOVE
+    assert(all(
+        "Succ ($)\n",
+        "type Bool {\n"
+        "    False: ()\n"
+        "    True:  ()\n"
+        "}\n"
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "func f: () -> Nat {\n"
+        "   var x: Nat = Succ $Nat\n"
+        "   if False {\n"
+        "       return move x\n"
+        "   }\n"
+        "   return move x\n"
+        "}\n"
+        "output std f ()\n"
+    ));
+assert(0);
+#endif
     assert(all(
         "Succ ($)\n",
         "type rec Nat {\n"
