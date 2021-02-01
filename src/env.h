@@ -1,9 +1,3 @@
-typedef struct Env {
-    Stmt* stmt;         // STMT_USER, STMT_VAR
-    struct Env* prev;
-    int depth;
-} Env;
-
 int type_is_sup_sub (Type* sup, Type* sub, int isset);
 
 #define __ENV_EXPR_TO_TYPE_FREE__ __attribute__ ((__cleanup__(env_expr_to_type_free)))

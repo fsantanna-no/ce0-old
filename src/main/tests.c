@@ -33,6 +33,7 @@ int all (const char* xp, char* src) {
 #ifdef DEBUG
     dump_stmt(s);
 #endif
+    assert(sets(s));
     if (!env(s)) {
 #ifdef DEBUG
         puts(ALL.err);
@@ -661,6 +662,7 @@ void t_env (void) {
         Stmt* s;
         assert(all_init(NULL, stropen("r", 0, "var x: Int = 10")));
         assert(parser(&s));
+        assert(sets(s));
         assert(env(s));
         int n=0; Expr* vars[256]; int uprefs[256];
         env_held_vars(s->Seq.s2->env, s->Seq.s2->Var.init, &n, vars, uprefs);
@@ -673,6 +675,7 @@ void t_env (void) {
             "var y: \\Int = \\x"
         )));
         assert(parser(&s));
+        assert(sets(s));
         assert(env(s));
         int n=0; Expr* vars[256]; int uprefs[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
@@ -688,6 +691,7 @@ void t_env (void) {
             "var t: (\\Int,Int,\\Int) = (\\x,y,\\z)"
         )));
         assert(parser(&s));
+        assert(sets(s));
         assert(env(s));
         int n=0; Expr* vars[256]; int uprefs[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
@@ -702,6 +706,7 @@ void t_env (void) {
             "var t: (\\Int,(Int,\\Int)) = (\\x,(x,y))"
         )));
         assert(parser(&s));
+        assert(sets(s));
         assert(env(s));
         int n=0; Expr* vars[256]; int uprefs[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
@@ -717,6 +722,7 @@ void t_env (void) {
             "var p: (Int,\\Int) = t.2"
         )));
         assert(parser(&s));
+        assert(sets(s));
         assert(env(s));
         int n=0; Expr* vars[256]; int uprefs[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
@@ -732,6 +738,7 @@ void t_env (void) {
             "var p: \\Int = t.2.2"
         )));
         assert(parser(&s));
+        assert(sets(s));
         assert(env(s));
         int n=0; Expr* vars[256]; int uprefs[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
@@ -746,6 +753,7 @@ void t_env (void) {
             "var p: \\Int = f(\\x)"
         )));
         assert(parser(&s));
+        assert(sets(s));
         assert(env(s));
         int n=0; Expr* vars[256]; int uprefs[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
@@ -762,6 +770,7 @@ void t_env (void) {
             "var p: (\\Int,Int) = (f(\\x),g(\\y))"
         )));
         assert(parser(&s));
+        assert(sets(s));
         assert(env(s));
         int n=0; Expr* vars[256]; int uprefs[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
@@ -779,6 +788,7 @@ void t_env (void) {
             "var p: Xx = Xx1 (f(\\x),g(\\y))"
         )));
         assert(parser(&s));
+        assert(sets(s));
         assert(env(s));
         int n=0; Expr* vars[256]; int uprefs[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
@@ -796,6 +806,7 @@ void t_env (void) {
             "var p: \\Int = m.Xx1!.2"
         )));
         assert(parser(&s));
+        assert(sets(s));
         assert(env(s));
         int n=0; Expr* vars[256]; int uprefs[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
@@ -808,6 +819,7 @@ void t_env (void) {
         Stmt* s;
         assert(all_init(NULL, stropen("r", 0, "var x: Int = 10")));
         assert(parser(&s));
+        assert(sets(s));
         assert(env(s));
         int n=0; Expr* vars[256];
         env_txed_vars(s->Seq.s2->env, s->Seq.s2->Var.init, &n, vars);
@@ -820,6 +832,7 @@ void t_env (void) {
             "var y: Int = x\n"
         )));
         assert(parser(&s));
+        assert(sets(s));
         assert(env(s));
         int n=0; Expr* vars[256];
         env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
@@ -833,6 +846,7 @@ void t_env (void) {
             "var y: Nat = x\n"
         )));
         assert(parser(&s));
+        assert(sets(s));
         assert(env(s));
         int n=0; Expr* vars[256];
         env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
@@ -848,6 +862,7 @@ void t_env (void) {
             "var z: Nat = y\\\n"
         )));
         assert(parser(&s));
+        assert(sets(s));
         assert(env(s));
         int n=0; Expr* vars[256];
         env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
@@ -863,6 +878,7 @@ void t_env (void) {
             "var z: (Nat,\\Nat,Nat) = (x,y,y\\)\n"
         )));
         assert(parser(&s));
+        assert(sets(s));
         assert(env(s));
         int n=0; Expr* vars[256];
         env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
@@ -880,6 +896,7 @@ void t_env (void) {
             "var z: (Nat,\\Nat,Xx) = (x,y,Xx1 y\\)\n"
         )));
         assert(parser(&s));
+        assert(sets(s));
         assert(env(s));
         int n=0; Expr* vars[256];
         //dump_stmt(s->Seq.s2->Seq.s2);
@@ -994,6 +1011,7 @@ void t_code (void) {
         assert(s->sub == STMT_SEQ);
         assert(s->Seq.s1->sub == STMT_VAR);
         assert(s->Seq.s2->sub == STMT_CALL);
+        assert(sets(s));
         assert(env(s));
         code(s);
         fclose(ALL.out);
