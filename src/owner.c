@@ -265,7 +265,7 @@ int check_txs (Stmt* S) {
         int fe (Env* env, Expr* e) {
             switch (e->sub) {
                 case EXPR_CALL:
-                    assert(e->Call.func->sub == EXPR_VAR);
+                    //assert(e->Call.func->sub == EXPR_VAR);
                     if (!strcmp(e->Call.func->tk.val.s,"move")) break;
                     if (!set_txs(e->Call.arg,0)) return EXEC_ERROR;
                     break;

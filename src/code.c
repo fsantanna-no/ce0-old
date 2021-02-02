@@ -629,9 +629,6 @@ void code_stmt (Stmt* s) {
 
             Type* dst __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(s->env, s->Set.dst);
             assert(dst != NULL);
-            if (dst->sub == TYPE_UNIT) {
-                break;
-            }
 
             // if "dst" is ishasrec, need to free it
             if (env_type_ishasrec(s->env,dst)) {
@@ -651,8 +648,10 @@ void code_stmt (Stmt* s) {
                 out(") == NULL);\n");
             }
 
-            code_expr(s->env, s->Set.dst, 0);
-            out(" = ");
+            if (dst->sub != TYPE_UNIT) {
+                code_expr(s->env, s->Set.dst, 0);
+                out(" = ");
+            }
             code_expr(s->env, s->Set.src, 0);
             out(";\n");
             break;

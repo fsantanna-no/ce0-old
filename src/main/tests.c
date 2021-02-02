@@ -1221,6 +1221,13 @@ __XXX__:
         "func output_f: Int -> () { output std arg }\n"
         "output f 10\n"
     ));
+    assert(all(
+        "10\n",
+        "func f: () -> () { output std 10 }\n"
+        "func g: () -> () { return f () }\n"
+        "call g ()\n"
+    ));
+
     // TYPE
     assert(all(
         "False\n",
