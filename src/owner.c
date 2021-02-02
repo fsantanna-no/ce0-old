@@ -244,14 +244,14 @@ int check_txs (Stmt* S) {
                     sprintf(err, "invalid dnref : cannot transfer value");
                     return err_message(&e->Dnref->tk, err);
                 } else {
-                    e = expr_leftmost(e);
-                    assert(e->sub == EXPR_VAR);
-                    if (!strcmp(e->tk.val.s,S->Var.tk.val.s)) {
-                        e->Var.tx_done = 1;
+                    Expr* e_ = expr_leftmost(e);
+                    assert(e_->sub == EXPR_VAR);
+                    if (!strcmp(e_->tk.val.s,S->Var.tk.val.s)) {
+                        e_->Var.tx_done = 1;
                         if (iscycle) {
                             char err[1024];
                             sprintf(err, "invalid assignment : cannot transfer ownsership to itself");
-                            return err_message(&e->tk, err);
+                            return err_message(&e_->tk, err);
                         }
                     }
                 }
@@ -322,7 +322,9 @@ int check_txs (Stmt* S) {
                 goto __ACCS__;
 
             case STMT_SET: {
-                int iscycle = 0; { // Rule 5: cycles can only occur in STMT_SET
+                int iscycle = 0;
+                if (s->Set.dst->sub != EXPR_VAR) { // not cycle if root transfer (x = x.Item!)
+                    // Rule 5: cycles can only occur in STMT_SET
                     Expr* dst = expr_leftmost(s->Set.dst);
                     assert(dst->sub == EXPR_VAR);
                     for (int i=0; i<bws_n; i++) {

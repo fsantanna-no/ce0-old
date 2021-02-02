@@ -2871,6 +2871,15 @@ __XXX__:
         "set l.Item! = move l\n"
     ));
     assert(all(
+        "Item (Item ($))\n",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "var l: List = Item $List\n"
+        "set l = Item move l\n"
+        "output std (\\l)\n"
+    ));
+    assert(all(
         "(ln 6, col 15): invalid assignment : cannot transfer ownsership to itself",
         "type rec List {\n"
         "    Item: List\n"
