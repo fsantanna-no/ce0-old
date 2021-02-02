@@ -189,6 +189,61 @@ int check_txs (Stmt* S) {
             }
         }
 
+        auto void add_bws (Expr* e);
+        auto int set_txs (Expr* E, int iscycle);
+        auto int fe (Env* env, Expr* e);
+
+        switch (s->sub) {
+            case STMT_VAR:
+                add_bws(s->Var.init);
+                if (!set_txs(s->Var.init,0)) return EXEC_ERROR;
+                goto __ACCS__;
+
+            case STMT_SET: {
+                int iscycle = 0;
+                if (s->Set.dst->sub != EXPR_VAR) { // not cycle if root transfer (x = x.Item!)
+                    // Rule 5: cycles can only occur in STMT_SET
+                    Expr* dst = expr_leftmost(s->Set.dst);
+                    assert(dst->sub == EXPR_VAR);
+//dump_stmt(s);
+                    for (int i=0; i<bws_n; i++) {
+                        if (!strcmp(dst->tk.val.s,bws[i]->Var.tk.val.s)) {
+//printf(">>> %s\n", bws[i]->Var.tk.val.s);
+                            iscycle = 1;
+                            break;
+                        }
+                    }
+                }
+                if (!iscycle) {     // TODO: only in `growable´ mode
+                    add_bws(s->Set.src);
+                }
+                if (!set_txs(s->Set.src,iscycle)) return EXEC_ERROR;
+
+                goto __ACCS__;
+            }
+
+            case STMT_IF: {
+                int ret = visit_expr(0, s->env, s->If.tst, fe);
+                if (ret != EXEC_CONTINUE) {
+                    return ret;
+                }
+                break;
+            }
+
+            case STMT_CALL:
+__ACCS__:
+            {
+                int ret = visit_stmt(0, s, NULL, fe, NULL);
+                if (ret != EXEC_CONTINUE) {
+                    return ret;
+                }
+                break;
+            }
+            default:
+                break;
+        }
+        return EXEC_CONTINUE;
+
         // Add y/z in bws:
         //  var y = ... \x ...
         //  set z = ... y ...
@@ -314,55 +369,6 @@ int check_txs (Stmt* S) {
             }
             return VISIT_CONTINUE;
         }
-
-        switch (s->sub) {
-            case STMT_VAR:
-                add_bws(s->Var.init);
-                if (!set_txs(s->Var.init,0)) return EXEC_ERROR;
-                goto __ACCS__;
-
-            case STMT_SET: {
-                int iscycle = 0;
-                if (s->Set.dst->sub != EXPR_VAR) { // not cycle if root transfer (x = x.Item!)
-                    // Rule 5: cycles can only occur in STMT_SET
-                    Expr* dst = expr_leftmost(s->Set.dst);
-                    assert(dst->sub == EXPR_VAR);
-                    for (int i=0; i<bws_n; i++) {
-                        if (!strcmp(dst->tk.val.s,bws[i]->Var.tk.val.s)) {
-                            iscycle = 1;
-                            break;
-                        }
-                    }
-                }
-                if (!iscycle) {     // TODO: only in `growable´ mode
-                    add_bws(s->Set.src);
-                }
-                if (!set_txs(s->Set.src,iscycle)) return EXEC_ERROR;
-
-                goto __ACCS__;
-            }
-
-            case STMT_IF: {
-                int ret = visit_expr(0, s->env, s->If.tst, fe);
-                if (ret != EXEC_CONTINUE) {
-                    return ret;
-                }
-                break;
-            }
-
-            case STMT_CALL:
-__ACCS__:
-            {
-                int ret = visit_stmt(0, s, NULL, fe, NULL);
-                if (ret != EXEC_CONTINUE) {
-                    return ret;
-                }
-                break;
-            }
-            default:
-                break;
-        }
-        return EXEC_CONTINUE;
     }
 }
 
