@@ -2527,7 +2527,7 @@ __XXX__:
         "}\n"
         "var x: List = Item $List\n"
         "var ptr: \\List = \\x\n"
-        "set ptr\\ = Item $List\n"
+        "set ptr\\ = Item $List\n"      // growable error
         "output std ()\n"
     ));
     assert(all(

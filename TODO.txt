@@ -1,7 +1,12 @@
-- fazer um visit no set_seq por funcao
-    - vai diminuir a exponencial
+- growable
+    - runtime verification
+        - exemplo com ponteiro na arvore, ex., lista + tail
+        - ver situacoes em que check nao é necessário
+
 - ulimit -Sv 500000
-- se nao tem ponteiro, entao nao é growable
+- DOC
+    - se nao tem ponteiro, entao nao é growable
+    - doc das tuplas + ptrs
 - lifetimes pela ordem dos parametros:
     - // TODO-TUPLE-HOLD
     - call out to_c (arg.1, \tp)
@@ -9,13 +14,7 @@
         - posso guardar em \Stmt algo de \Env
             - sei que sao growable e sei que \Env >= \Stmt
 
-- append de tests.ce
 - \ -> share
-- growable
-    - runtime verification
-        - exemplo com ponteiro na arvore, ex., lista + tail
-        - ver situacoes em que check nao é necessário
-
 - qd nao for isrec, chamar clone automaticamente
     - caso do percorrimento do env
 
