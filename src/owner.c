@@ -240,14 +240,22 @@ int check_exec_vars (Stmt* S) {
         }
 
         auto void add_bws (Expr* e);
-        auto int set_tx_done (Expr* E, int iscycle);
+        auto int set_txed (Expr* E, int iscycle);
         auto int fe (Env* env, Expr* e);
+
+        int accs (Stmt* s) {
+            int ret = visit_stmt(0, s, NULL, fe, NULL);
+            if (ret != EXEC_CONTINUE) {
+                return ret;
+            }
+            return EXEC_CONTINUE;
+        }
 
         switch (s->sub) {
             case STMT_VAR:
                 add_bws(s->Var.init);
-                if (!set_tx_done(s->Var.init,0)) return EXEC_ERROR;
-                goto __ACCS__;
+                if (!set_txed(s->Var.init,0)) return EXEC_ERROR;
+                return accs(s);
 
             case STMT_SET: {
                 int iscycle = 0;
@@ -265,9 +273,8 @@ int check_exec_vars (Stmt* S) {
                 if (!iscycle) {     // TODO: only in `growable´ mode
                     add_bws(s->Set.src);
                 }
-                if (!set_tx_done(s->Set.src,iscycle)) return EXEC_ERROR;
-
-                goto __ACCS__;
+                if (!set_txed(s->Set.src,iscycle)) return EXEC_ERROR;
+                return accs(s);
             }
 
             case STMT_IF: {
@@ -275,22 +282,16 @@ int check_exec_vars (Stmt* S) {
                 if (ret != EXEC_CONTINUE) {
                     return ret;
                 }
-                break;
+                return EXEC_CONTINUE;
             }
 
             case STMT_CALL:
-__ACCS__:
-            {
-                int ret = visit_stmt(0, s, NULL, fe, NULL);
-                if (ret != EXEC_CONTINUE) {
-                    return ret;
-                }
-                break;
-            }
+                return accs(s);
+
             default:
-                break;
+                return EXEC_CONTINUE;
         }
-        return EXEC_CONTINUE;
+        assert(0);
 
         // Add y/z in bws:
         //  var y = ... \x ...
@@ -310,7 +311,7 @@ __ACCS__:
 
         // Set Var.tx_done
         //  var y = S.x
-        int set_tx_done (Expr* E, int iscycle) {
+        int set_txed (Expr* E, int iscycle) {
             int vars_n=0; Expr* vars[256];
             {
                 void f_get_txs (Expr* e_, Expr* e) {
@@ -351,10 +352,10 @@ __ACCS__:
                 case EXPR_CALL:
                     //assert(e->Call.func->sub == EXPR_VAR);
                     if (!strcmp(e->Call.func->tk.val.s,"move")) break;
-                    if (!set_tx_done(e->Call.arg,0)) return EXEC_ERROR;
+                    if (!set_txed(e->Call.arg,0)) return EXEC_ERROR;
                     break;
                 case EXPR_CONS:
-                    if (!set_tx_done(e->Cons,0)) return EXEC_ERROR;
+                    if (!set_txed(e->Cons,0)) return EXEC_ERROR;
                     break;
                 case EXPR_VAR:
                     if (!strcmp(S->Var.tk.val.s,e->tk.val.s)) {
