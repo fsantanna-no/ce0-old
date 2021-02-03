@@ -202,7 +202,7 @@ int parser_expr_ (Expr** ret)
 
 // EXPR_VAR
     } else if (accept(TX_VAR)) {
-        *e = (Expr) { ALL.nn++, EXPR_VAR, ALL.tk0, .Var={0,0} };
+        *e = (Expr) { ALL.nn++, EXPR_VAR, ALL.tk0, .Var={0} };
 
 // EXPR_UPREF
     } else if (accept('\\')) {
@@ -672,7 +672,7 @@ int parser_stmt (Stmt** ret) {
         Stmt* xxx = malloc(sizeof(Stmt));
         assert(var!=NULL && set!=NULL && xxx!=NULL);
 
-        *var = (Expr) { ALL.nn++, EXPR_VAR, {TX_VAR,{.s="_ret_"},tk.lin,tk.col}, .Var={0,0} };
+        *var = (Expr) { ALL.nn++, EXPR_VAR, {TX_VAR,{.s="_ret_"},tk.lin,tk.col}, .Var={0} };
         *set = (Stmt) { ALL.nn++, STMT_SET, NULL, NULL, tk, .Set={var,e} };
         *xxx = (Stmt) { ALL.nn++, STMT_RETURN, NULL, NULL, tk, .Return=e };
 

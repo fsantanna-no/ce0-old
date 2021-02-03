@@ -71,7 +71,7 @@ typedef struct Expr {
         struct Expr* Cons;   // EXPR_CONS
         struct {        // EXPR_VAR
             int tx_setnull;   // set to null on tx to avoid double free
-            int tx_done;  // evaluate var ownership accesses
+            //int tx_done;  // evaluate var ownership accesses
         } Var;
         struct {        // EXPR_TUPLE
             int size;                   // 2

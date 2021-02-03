@@ -68,7 +68,7 @@ void env_txed_vars (Env* env, Expr* e, F_txed_vars f) {
 //  - missing `move` before transfer    (set x = move y)
 //  - partial transfer in `growable`    (set x = move y.Item!.2)
 //  - dnref transfer                    (set x = move y\)
-int check_set_txs_all (Env* env, Expr* E, int iscycle) {
+int check_txs_exprs (Env* env, Expr* E, int iscycle) {
 
     int vars_n=0; Expr* vars[256];
     {
@@ -168,7 +168,7 @@ int check_set_txs_all (Env* env, Expr* E, int iscycle) {
 //          - transfer (istx)  // error if state=borrowed/moved // set state=moved
 //          - borrow   (!istx) // error if state=moved          // set state=borrowed
 
-int check_txs (Stmt* S) {
+int check_exec_vars (Stmt* S) {
 
     // visit all var declarations
 
@@ -182,7 +182,8 @@ int check_txs (Stmt* S) {
 
     // STMT_VAR (S.x): recursive user type
 
-    int istxd = 0;              // Tracks if S.x has been transferred:
+    int txed = 0;              // Tracks if S.x has been transferred:
+    Tk* txed_tk = NULL;
 
     Stmt* bws[256] = { S };     // Tracks borrows of S.x (who I am borrowed to)
     int bws_n = 1;              //  - if S.x has active borrows (bws_n > 1), then it cannot be transferred
@@ -195,17 +196,15 @@ int check_txs (Stmt* S) {
         return 0;
     }
 
-    Tk* txed_tk = NULL;
-
     typedef struct { int depth_stop; int bws_n; } Stack;
     Stack stack[256];
     int stack_n = 0;
 
     void pre (void) {
-        istxd = 0;
+        txed = 0;
+        txed_tk = NULL;
         bws_n = 1;
         bws[0] = S;
-        txed_tk = NULL;
         stack_n = 0;
     }
 
@@ -333,7 +332,7 @@ __ACCS__:
                 Expr* e_ = expr_leftmost(e);
                 assert(e_->sub == EXPR_VAR);
                 if (!strcmp(e_->tk.val.s,S->Var.tk.val.s)) {
-                    e_->Var.tx_done = 1;
+                    txed = 1;
                     if (iscycle) {
                         char err[1024];
                         sprintf(err, "invalid assignment : cannot transfer ownsership to itself");
@@ -363,7 +362,7 @@ __ACCS__:
                         Stmt* decl = env_id_to_stmt(env, e->tk.val.s);
                         assert(decl!=NULL && decl==S);
 
-                        if (istxd) { // Rule 4 (growable)
+                        if (txed == 2) { // Rule 4 (growable)
                             Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e);
                             int ishasptr = env_type_ishasptr(env, tp);
                             // if already moved, it doesn't matter, any access is invalid
@@ -379,7 +378,7 @@ __ACCS__:
 
                         // Rule 6
                         } else if (bws_n >= 2) {
-                            if (e->Var.tx_done) {
+                            if (txed == 1) {
                                 int lin = (txed_tk == NULL) ? e->tk.lin : txed_tk->lin;
                                 char err[TK_BUF+256];
                                 sprintf(err, "invalid transfer of \"%s\" : active pointer in scope (ln %d)",
@@ -390,8 +389,8 @@ __ACCS__:
                             }
                         }
                         txed_tk = &e->tk;
-                        if (e->Var.tx_done) {
-                            istxd = 1;
+                        if (txed == 1) {
+                            txed = 2;
                         }
                     }
                 default:
@@ -415,12 +414,12 @@ int iscycle = 0;
         int fs (Stmt* s) {
             switch (s->sub) {
                 case STMT_VAR:
-                    if (!check_set_txs_all(s->env, s->Var.init,0)) {
+                    if (!check_txs_exprs(s->env, s->Var.init,0)) {
                         return VISIT_ERROR;
                     }
                     break;
                 case STMT_SET:
-                    if (!check_set_txs_all(s->env, s->Set.src,iscycle)) {
+                    if (!check_txs_exprs(s->env, s->Set.src,iscycle)) {
                         return VISIT_ERROR;
                     }
                     break;
@@ -433,13 +432,13 @@ int iscycle = 0;
             switch (e->sub) {
                 case EXPR_CALL:
                     if (strcmp(e->Call.func->tk.val.s,"move")) {
-                        if (!check_set_txs_all(env, e->Call.arg,0)) {
+                        if (!check_txs_exprs(env, e->Call.arg,0)) {
                             return VISIT_ERROR;
                         }
                     }
                     break;
                 case EXPR_CONS:
-                    if (!check_set_txs_all(env, e->Cons,0)) {
+                    if (!check_txs_exprs(env, e->Cons,0)) {
                         return VISIT_ERROR;
                     }
                     break;
@@ -476,7 +475,7 @@ int iscycle = 0;
     }
 
     // CHECK_TXS
-    if (!visit_stmt(0,s,check_txs,NULL,NULL)) {
+    if (!visit_stmt(0,s,check_exec_vars,NULL,NULL)) {
         return 0;
     }
     return 1;
