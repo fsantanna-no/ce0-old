@@ -77,6 +77,9 @@ int check_set_txs_all (Env* env, Expr* E, int iscycle) {
                 case EXPR_VAR:
                     e->Var.tx_setnull = 1;
                     break;
+                case EXPR_DNREF:
+                    //e->Dnref.tx_setnull = 1; // will fail in "invalid dnref" below
+                    break;
                 case EXPR_DISC:
                     e->Disc.tx_setnull = 1;
                     break;
