@@ -815,15 +815,26 @@ void t_env (void) {
     }
 
     // ENV_TXED_VARS
+    typedef void (*F_txed_vars) (Expr* e_, Expr* e);
+    void env_txed_vars (Env* env, Expr* e, F_txed_vars f);
     {
         Stmt* s;
         assert(all_init(NULL, stropen("r", 0, "var x: Int = 10")));
         assert(parser(&s));
         assert(sets(s));
         assert(env(s));
-        int n=0; Expr* vars[256];
-        env_txed_vars(s->Seq.s2->env, s->Seq.s2->Var.init, &n, vars);
-        assert(n == 0);
+        int vars_n=0;
+        void f (Expr* e_, Expr* e) {
+            assert(vars_n < 255);
+            if (e->sub==EXPR_VAR || e->sub==EXPR_DNREF || e->sub==EXPR_DISC || e->sub==EXPR_INDEX) {
+                Expr* var = expr_leftmost(e);
+                assert(var != NULL);
+                assert(var->sub == EXPR_VAR);
+                vars_n++;
+            }
+        }
+        env_txed_vars(s->Seq.s2->env, s->Seq.s2->Var.init, f);
+        assert(vars_n == 0);
     }
     {
         Stmt* s;
@@ -834,9 +845,18 @@ void t_env (void) {
         assert(parser(&s));
         assert(sets(s));
         assert(env(s));
-        int n=0; Expr* vars[256];
-        env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
-        assert(n == 0);
+        int vars_n=0;
+        void f (Expr* e_, Expr* e) {
+            assert(vars_n < 255);
+            if (e->sub==EXPR_VAR || e->sub==EXPR_DNREF || e->sub==EXPR_DISC || e->sub==EXPR_INDEX) {
+                Expr* var = expr_leftmost(e);
+                assert(var != NULL);
+                assert(var->sub == EXPR_VAR);
+                vars_n++;
+            }
+        }
+        env_txed_vars(s->Seq.s2->Seq.s1->env, s->Seq.s2->Seq.s1->Var.init, f);
+        assert(vars_n == 0);
     }
     {
         Stmt* s;
@@ -848,9 +868,18 @@ void t_env (void) {
         assert(parser(&s));
         assert(sets(s));
         assert(env(s));
-        int n=0; Expr* vars[256];
-        env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
-        assert(n == 1);
+        int vars_n=0; Expr* vars[256];
+        void f (Expr* e_, Expr* e) {
+            assert(vars_n < 255);
+            if (e->sub==EXPR_VAR || e->sub==EXPR_DNREF || e->sub==EXPR_DISC || e->sub==EXPR_INDEX) {
+                Expr* var = expr_leftmost(e);
+                assert(var != NULL);
+                assert(var->sub == EXPR_VAR);
+                vars[vars_n++] = e_;
+            }
+        }
+        env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, f);
+        assert(vars_n == 1);
         assert(!strcmp(vars[0]->tk.val.s, "x"));
     }
     {
@@ -864,9 +893,18 @@ void t_env (void) {
         assert(parser(&s));
         assert(sets(s));
         assert(env(s));
-        int n=0; Expr* vars[256];
-        env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
-        assert(n == 1);
+        int vars_n=0; Expr* vars[256];
+        void f (Expr* e_, Expr* e) {
+            assert(vars_n < 255);
+            if (e->sub==EXPR_VAR || e->sub==EXPR_DNREF || e->sub==EXPR_DISC || e->sub==EXPR_INDEX) {
+                Expr* var = expr_leftmost(e);
+                assert(var != NULL);
+                assert(var->sub == EXPR_VAR);
+                vars[vars_n++] = e_;
+            }
+        }
+        env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, f);
+        assert(vars_n == 1);
         assert(vars[0]->sub==EXPR_DNREF);
     }
     {
@@ -880,9 +918,18 @@ void t_env (void) {
         assert(parser(&s));
         assert(sets(s));
         assert(env(s));
-        int n=0; Expr* vars[256];
-        env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
-        assert(n == 2);
+        int vars_n=0; Expr* vars[256];
+        void f (Expr* e_, Expr* e) {
+            assert(vars_n < 255);
+            if (e->sub==EXPR_VAR || e->sub==EXPR_DNREF || e->sub==EXPR_DISC || e->sub==EXPR_INDEX) {
+                Expr* var = expr_leftmost(e);
+                assert(var != NULL);
+                assert(var->sub == EXPR_VAR);
+                vars[vars_n++] = e_;
+            }
+        }
+        env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, f);
+        assert(vars_n == 2);
         assert(!strcmp(vars[0]->tk.val.s, "x"));
         assert(vars[1]->sub==EXPR_DNREF);
     }
@@ -898,10 +945,19 @@ void t_env (void) {
         assert(parser(&s));
         assert(sets(s));
         assert(env(s));
-        int n=0; Expr* vars[256];
+        int vars_n=0; Expr* vars[256];
         //dump_stmt(s->Seq.s2->Seq.s2);
-        env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars);
-        assert(n == 2);
+        void f (Expr* e_, Expr* e) {
+            assert(vars_n < 255);
+            if (e->sub==EXPR_VAR || e->sub==EXPR_DNREF || e->sub==EXPR_DISC || e->sub==EXPR_INDEX) {
+                Expr* var = expr_leftmost(e);
+                assert(var != NULL);
+                assert(var->sub == EXPR_VAR);
+                vars[vars_n++] = e_;
+            }
+        }
+        env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, f);
+        assert(vars_n == 2);
         assert(!strcmp(vars[0]->tk.val.s, "x"));
         assert(vars[1]->sub==EXPR_DNREF);
     }
