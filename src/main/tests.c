@@ -2531,13 +2531,13 @@ __XXX__:
         "output std ()\n"
     ));
     assert(all(
-        "(ln 6, col 34): invalid transfer of \"x\" : active pointer in scope (ln 6)",
+        "(ln 6, col 29): invalid transfer of \"x\" : active pointer in scope (ln 6)",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
         "func f: List -> () {}\n"
         "var x: List = Item $List\n"
-        "var l: (List,\\List) = move (move x, \\x)\n"
+        "var l: (List,\\List) = (move x, \\x)\n"
         "call f move l.1\n"
     ));
     assert(all(

@@ -512,11 +512,6 @@ int iscycle = 0;
         }
     }
 
-    // CHECK_TXS
-    if (!visit_stmt(0,s,check_txs,NULL,NULL)) {
-        return 0;
-    }
-
     // CHECK_MOVES
     {
         int fe (Env* env, Expr* e) {
@@ -537,6 +532,11 @@ int iscycle = 0;
         if (!visit_stmt(0,s,NULL,fe,NULL)) {
             return 0;
         }
+    }
+
+    // CHECK_TXS
+    if (!visit_stmt(0,s,check_txs,NULL,NULL)) {
+        return 0;
     }
     return 1;
 }
