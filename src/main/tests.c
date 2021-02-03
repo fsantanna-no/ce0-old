@@ -1732,52 +1732,6 @@ __XXX__:
         "    return Item $List\n"
         "}\n"
     ));
-    assert(all(
-        "LT_Type ($,@)\n",
-        "type rec List {\n"
-        "    Item: (Int, List)\n"
-        "}\n"
-        "\n"
-        "type List_Tail {\n"
-        "    LT_Type: (List, \\List)\n"
-        "}\n"
-        "\n"
-        "func new_list_tail: () -> List_Tail {\n"
-        "    var l: List = $List\n"
-        "    var null: \\List = _NULL\n"
-        "    var ret: List_Tail = LT_Type (move l, null)\n"
-        "    set ret.LT_Type!.2 = \\ret.LT_Type!.1\n"
-        "    return move ret\n"
-        "}\n"
-        "var l: List_Tail = call new_list_tail ()\n"
-        "output std (\\l)\n"
-    ));
-    assert(all(
-        "LT_Type (Item (10,Item (20,$)),@)\n",
-        "type rec List {\n"
-        "    Item: (Int, List)\n"
-        "}\n"
-        "\n"
-        "type List_Tail {\n"
-        "    LT_Type: (List, \\List)\n"
-        "}\n"
-        "\n"
-        "func new_list_tail: () -> List_Tail {\n"
-        "    var l: List = $List\n"
-        "    var null: \\List = _NULL\n"
-        "    var ret: List_Tail = LT_Type (move l, null)\n"
-        "    set ret.LT_Type!.2 = \\ret.LT_Type!.1\n"
-        "    return move ret\n"
-        "}\n"
-        "func append_list_tail: (\\List_Tail,Int) -> () {\n"
-        "   set arg.1\\.LT_Type!.2\\ = Item (arg.2, $List)\n"
-        "   set arg.1\\.LT_Type!.2 = \\arg.1\\.LT_Type!.2\\.Item!.2\n"
-        "}\n"
-        "var l: List_Tail = call new_list_tail ()\n"
-        "call append_list_tail(\\l, 10)\n"
-        "call append_list_tail(\\l, 20)\n"
-        "output std (\\l)\n"
-    ));
 
     assert(all(
         "10\n",
@@ -2560,23 +2514,6 @@ __XXX__:
         "output std (\\l)\n"
     ));
     assert(all(
-        //"(ln 8, col 13): invalid transfer of \"l\" : active pointer in scope (ln 7)",
-        "()\n",
-        //"(ln 9, col 15): invalid ownership transfer : mode `growable´ only allows root transfers",
-        "type rec List {\n"
-        "    Item: List\n"
-        "}\n"
-        //"native _{ typedef void* PTR; }\n"
-        //"func asptr: _PTR -> _PTR { return arg }\n"
-        "func f: List -> () {}\n"
-        "var x: List = Item $List\n"
-        "var ptr: \\List = _NULL\n"
-        "var l: (List,\\List) = (move x, ptr)\n"
-        "set l.2 = \\l.1.Item!\n"
-        "call f move l.1\n"
-        "output std ()\n"
-    ));
-    assert(all(
         "",     // ERROR
         "type rec List {\n"
         "    Item: List\n"
@@ -2595,19 +2532,6 @@ __XXX__:
         "var x: List = Item $List\n"
         "var l: (List,\\List) = (move x, \\x)\n"
         "call f move l.1\n"
-    ));
-    assert(all(
-        //"(ln 7, col 13): invalid transfer of \"l\" : active pointer in scope (ln 6)",
-        "()\n",
-        "type rec List {\n"
-        "    Item: List\n"
-        "}\n"
-        "func g: (List,\\List) -> () {}\n"
-        "var ptr: \\List = _(NULL)\n"
-        "var l: (List,\\List) = (Item $List, ptr)\n"
-        "set l.2 = \\l.1.Item!\n"
-        "call g move l\n"
-        "output std ()\n"
     ));
     assert(all(
         "Succ ($)\n",
@@ -2907,6 +2831,7 @@ __XXX__:
     ));
 
     // CYCLE
+#if TODO-CYCLE
     assert(all(
         "Item (Item ($))\n",            // ok: not cycle
         "type rec List {\n"
@@ -2954,6 +2879,83 @@ __XXX__:
         "var m: \\List = \\l.Item!\n"
         "set m\\ = f move l\n"
     ));
+    assert(all(
+        "LT_Type ($,@)\n",
+        "type rec List {\n"
+        "    Item: (Int, List)\n"
+        "}\n"
+        "\n"
+        "type List_Tail {\n"
+        "    LT_Type: (List, \\List)\n"
+        "}\n"
+        "\n"
+        "func new_list_tail: () -> List_Tail {\n"
+        "    var l: List = $List\n"
+        "    var null: \\List = _NULL\n"
+        "    var ret: List_Tail = LT_Type (move l, null)\n"
+        "    set ret.LT_Type!.2 = \\ret.LT_Type!.1\n"
+        "    return move ret\n"
+        "}\n"
+        "var l: List_Tail = call new_list_tail ()\n"
+        "output std (\\l)\n"
+    ));
+    assert(all(
+        "LT_Type (Item (10,Item (20,$)),@)\n",
+        "type rec List {\n"
+        "    Item: (Int, List)\n"
+        "}\n"
+        "\n"
+        "type List_Tail {\n"
+        "    LT_Type: (List, \\List)\n"
+        "}\n"
+        "\n"
+        "func new_list_tail: () -> List_Tail {\n"
+        "    var l: List = $List\n"
+        "    var null: \\List = _NULL\n"
+        "    var ret: List_Tail = LT_Type (move l, null)\n"
+        "    set ret.LT_Type!.2 = \\ret.LT_Type!.1\n"
+        "    return move ret\n"
+        "}\n"
+        "func append_list_tail: (\\List_Tail,Int) -> () {\n"
+        "   set arg.1\\.LT_Type!.2\\ = Item (arg.2, $List)\n"
+        "   set arg.1\\.LT_Type!.2 = \\arg.1\\.LT_Type!.2\\.Item!.2\n"
+        "}\n"
+        "var l: List_Tail = call new_list_tail ()\n"
+        "call append_list_tail(\\l, 10)\n"
+        "call append_list_tail(\\l, 20)\n"
+        "output std (\\l)\n"
+    ));
+    assert(all(
+        //"(ln 8, col 13): invalid transfer of \"l\" : active pointer in scope (ln 7)",
+        "()\n",
+        //"(ln 9, col 15): invalid ownership transfer : mode `growable´ only allows root transfers",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        //"native _{ typedef void* PTR; }\n"
+        //"func asptr: _PTR -> _PTR { return arg }\n"
+        "func f: List -> () {}\n"
+        "var x: List = Item $List\n"
+        "var ptr: \\List = _NULL\n"
+        "var l: (List,\\List) = (move x, ptr)\n"
+        "set l.2 = \\l.1.Item!\n"
+        "call f move l.1\n"
+        "output std ()\n"
+    ));
+    assert(all(
+        //"(ln 7, col 13): invalid transfer of \"l\" : active pointer in scope (ln 6)",
+        "()\n",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "func g: (List,\\List) -> () {}\n"
+        "var ptr: \\List = _(NULL)\n"
+        "var l: (List,\\List) = (Item $List, ptr)\n"
+        "set l.2 = \\l.1.Item!\n"
+        "call g move l\n"
+        "output std ()\n"
+    ));
+#endif
     assert(all(
         "1\n2\n",
         "{\n"

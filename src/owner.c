@@ -238,7 +238,7 @@ int check_exec_vars (Stmt* S) {
         }
 
         auto void add_bws (Expr* e);
-        auto int set_txed (Expr* E, int iscycle);
+        auto void set_txed (Expr* E);
         auto int fe (Env* env, Expr* e);
 
         int accs (Stmt* s) {
@@ -249,111 +249,15 @@ int check_exec_vars (Stmt* S) {
             return EXEC_CONTINUE;
         }
 
-        switch (s->sub) {
-            case STMT_VAR:
-                add_bws(s->Var.init);
-                if (!set_txed(s->Var.init,0)) return EXEC_ERROR;
-                return accs(s);
-
-            case STMT_SET: {
-                int iscycle = 0;
-                if (s->Set.dst->sub != EXPR_VAR) { // not cycle if root transfer (x = x.Item!)
-                    // Rule 5: cycles can only occur in STMT_SET
-                    Expr* dst = expr_leftmost(s->Set.dst);
-                    assert(dst->sub == EXPR_VAR);
-                    for (int i=0; i<bws_n; i++) {
-                        if (!strcmp(dst->tk.val.s,bws[i]->Var.tk.val.s)) {
-                            iscycle = 1;
-                            break;
-                        }
-                    }
-                }
-                if (!iscycle) {     // TODO: only in `growable´ mode
-                    add_bws(s->Set.src);
-                }
-                if (!set_txed(s->Set.src,iscycle)) return EXEC_ERROR;
-                return accs(s);
-            }
-
-            case STMT_IF: {
-                int ret = visit_expr(0, s->env, s->If.tst, fe);
-                if (ret != EXEC_CONTINUE) {
-                    return ret;
-                }
-                return EXEC_CONTINUE;
-            }
-
-            case STMT_CALL:
-                return accs(s);
-
-            default:
-                return EXEC_CONTINUE;
-        }
-        assert(0);
-
-        // Add y/z in bws:
-        //  var y = ... \x ...
-        //  set z = ... y ...
-        void add_bws (Expr* e) {
-            int n=0; Expr* vars[256]; int uprefs[256];
-            env_held_vars(s->env, e, &n, vars, uprefs);
-            for (int i=0; i<n; i++) {
-                Stmt* dcl = env_id_to_stmt(s->env, vars[i]->tk.val.s);
-                assert(dcl != NULL);
-                if (bws_has(dcl)) { // indirect alias
-                    bws[bws_n++] = s;
-                    break;
-                }
-            }
-        }
-
-        // Set Var.tx_done
-        //  var y = S.x
-        int set_txed (Expr* E, int iscycle) {
-            int vars_n=0; Expr* vars[256];
-            {
-                void f_get_txs (Expr* e_, Expr* e) {
-                    assert(vars_n < 255);
-                    if (e->sub==EXPR_VAR || e->sub==EXPR_DNREF || e->sub==EXPR_DISC || e->sub==EXPR_INDEX) {
-                        Expr* var = expr_leftmost(e);
-                        assert(var != NULL);
-                        assert(var->sub == EXPR_VAR);
-                        vars[vars_n++] = e_;
-                    }
-                }
-                env_txed_vars(s->env, E, f_get_txs);
-            }
-            for (int i=0; i<vars_n; i++) {
-                Expr* e = vars[i];
-                if (e->sub==EXPR_CALL && e->Call.func->sub==EXPR_VAR && !strcmp(e->Call.func->tk.val.s,"move")) {
-                    e = e->Call.arg;
-                }
-                Expr* e_ = expr_leftmost(e);
-                assert(e_->sub == EXPR_VAR);
-                if (!strcmp(e_->tk.val.s,S->Var.tk.val.s)) {
-                    txed = 1;
-                    if (iscycle) {
-                        char err[1024];
-                        sprintf(err, "invalid assignment : cannot transfer ownsership to itself");
-                        return err_message(&e_->tk, err);
-                    }
-                }
-            }
-            return 1;
-        }
-
-        // STMT_VAR, STMT_SET, STMT_RETURN transfer their source expressions.
-        // EXPR_CALL, EXPR_CONS transfeir their argument (in any STMT_*).
-
         int fe (Env* env, Expr* e) {
             switch (e->sub) {
                 case EXPR_CALL:
                     //assert(e->Call.func->sub == EXPR_VAR);
                     if (!strcmp(e->Call.func->tk.val.s,"move")) break;
-                    if (!set_txed(e->Call.arg,0)) return EXEC_ERROR;
+                    set_txed(e->Call.arg);
                     break;
                 case EXPR_CONS:
-                    if (!set_txed(e->Cons,0)) return EXEC_ERROR;
+                    set_txed(e->Cons);
                     break;
                 case EXPR_VAR:
                     if (strcmp(S->Var.tk.val.s,e->tk.val.s)) {
@@ -397,6 +301,105 @@ int check_exec_vars (Stmt* S) {
                     break;
             }
             return VISIT_CONTINUE;
+        }
+
+        // FS
+
+        switch (s->sub) {
+            case STMT_VAR:
+                add_bws(s->Var.init);
+                set_txed(s->Var.init);
+                return accs(s);
+
+            case STMT_SET: {
+#if 0
+                int iscycle = 0;
+                if (s->Set.dst->sub != EXPR_VAR) { // not cycle if root transfer (x = x.Item!)
+                    // Rule 5: cycles can only occur in STMT_SET
+                    Expr* dst = expr_leftmost(s->Set.dst);
+                    assert(dst->sub == EXPR_VAR);
+                    for (int i=0; i<bws_n; i++) {
+                        if (!strcmp(dst->tk.val.s,bws[i]->Var.tk.val.s)) {
+                            iscycle = 1;
+                            break;
+                        }
+                    }
+                }
+                if (!iscycle)
+#endif
+                {     // TODO: only in `growable´ mode
+                    add_bws(s->Set.src);
+                }
+                set_txed(s->Set.src);
+                return accs(s);
+            }
+
+            case STMT_IF: {     // body is handle in next step of "exec"
+                int ret = visit_expr(0, s->env, s->If.tst, fe);
+                if (ret != EXEC_CONTINUE) {
+                    return ret;
+                }
+                return EXEC_CONTINUE;
+            }
+
+            case STMT_CALL:
+                return accs(s);
+
+            default:
+                return EXEC_CONTINUE;
+        }
+        assert(0);
+
+        // Add y/z in bws:
+        //  var y = ... \x ...
+        //  set z = ... y ...
+        void add_bws (Expr* e) {
+            int n=0; Expr* vars[256]; int uprefs[256];
+            env_held_vars(s->env, e, &n, vars, uprefs);
+            for (int i=0; i<n; i++) {
+                Stmt* dcl = env_id_to_stmt(s->env, vars[i]->tk.val.s);
+                assert(dcl != NULL);
+                if (bws_has(dcl)) { // indirect alias
+                    bws[bws_n++] = s;
+                    break;
+                }
+            }
+        }
+
+        // Set Var.tx_done
+        //  var y = S.x
+        void set_txed (Expr* E) {
+            int vars_n=0; Expr* vars[256];
+            {
+                void f_get_txs (Expr* e_, Expr* e) {
+                    assert(vars_n < 255);
+                    if (e->sub==EXPR_VAR || e->sub==EXPR_DNREF || e->sub==EXPR_DISC || e->sub==EXPR_INDEX) {
+                        Expr* var = expr_leftmost(e);
+                        assert(var != NULL);
+                        assert(var->sub == EXPR_VAR);
+                        vars[vars_n++] = e_;
+                    }
+                }
+                env_txed_vars(s->env, E, f_get_txs);
+            }
+            for (int i=0; i<vars_n; i++) {
+                Expr* e = vars[i];
+                if (e->sub==EXPR_CALL && e->Call.func->sub==EXPR_VAR && !strcmp(e->Call.func->tk.val.s,"move")) {
+                    e = e->Call.arg;
+                }
+                Expr* e_ = expr_leftmost(e);
+                assert(e_->sub == EXPR_VAR);
+                if (!strcmp(e_->tk.val.s,S->Var.tk.val.s)) {
+                    txed = 1;
+#if 0
+                    if (iscycle) {
+                        char err[1024];
+                        sprintf(err, "invalid assignment : cannot transfer ownsership to itself");
+                        return err_message(&e_->tk, err);
+                    }
+#endif
+                }
+            }
         }
     }
 }
