@@ -78,6 +78,64 @@ void env_txed_vars (Env* env, Expr* e, int* vars_n, Expr** vars) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// Set Var.tx_done
+//  var y = x
+int check_set_txs_all (Env* env, Expr* E, int iscycle) {
+    int n=0; Expr* vars[256];
+    env_txed_vars(env, E, &n, vars);
+    for (int i=0; i<n; i++) {
+        Expr* e = vars[i];
+        Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e);
+        int ishasptr = env_type_ishasptr(env, tp);
+        int ismove = (e->sub==EXPR_CALL && e->Call.func->sub==EXPR_VAR && !strcmp(e->Call.func->tk.val.s,"move"));
+        if (ismove) {
+            int contains = 0;
+            for (int i=0; i<MOVES_N; i++) {
+                if (MOVES[i] == e->N) {
+                    contains = 1;
+                    break;
+                }
+            }
+            if (!contains) {
+                assert(MOVES_N < 1024);
+                MOVES[MOVES_N++] = e->N;
+            }
+            e = e->Call.arg;
+        } else {
+            char err[1024];
+            sprintf(err, "invalid ownership transfer : expected `move´ before expression");
+            return err_message(&e->tk, err);
+        }
+
+        if (ishasptr && (e->sub==EXPR_DISC || e->sub==EXPR_INDEX)) {  // TODO: only in `growable´ mode
+            char err[1024];
+            sprintf(err, "invalid ownership transfer : mode `growable´ only allows root transfers");
+            return err_message(&e->tk, err);
+        } else if (e->sub == EXPR_DNREF) {
+            assert(e->Dnref->sub == EXPR_VAR);
+            char err[1024];
+            sprintf(err, "invalid dnref : cannot transfer value");
+            return err_message(&e->Dnref->tk, err);
+        } else {
+            Expr* e_ = expr_leftmost(e);
+            assert(e_->sub == EXPR_VAR);
+#if 0
+            if (!strcmp(e_->tk.val.s,S->Var.tk.val.s)) {
+                e_->Var.tx_done = 1;
+                if (iscycle) {
+                    char err[1024];
+                    sprintf(err, "invalid assignment : cannot transfer ownsership to itself");
+                    return err_message(&e_->tk, err);
+                }
+            }
+#endif
+        }
+    }
+    return 1;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 // How to detect ownership violations?
 //  - Rule 4: transfer ownership and then access again:
 //      var x: Nat = ...            -- owner
@@ -190,16 +248,64 @@ int check_txs (Stmt* S) {
         }
 
         auto void add_bws (Expr* e);
-        auto int set_txs (Expr* E, int iscycle);
+        auto int check_set_txs_seq (Expr* E, int iscycle);
         auto int fe (Env* env, Expr* e);
+
+#if 0
+        int expr_is_prefix (Expr* e1, Expr* e2) {
+            if (e2->sub == EXPR_CALL) {
+                assert(e2->Call.func->sub==EXPR_VAR && !strcmp(e2->Call.func->tk.val.s,"move"));
+                e2 = e2->Call.arg;
+            }
+            if (e1->sub == EXPR_VAR) {
+                Expr* e2_ = expr_leftmost(e2);
+dump_expr(e2); puts(" <<<");
+                assert(e2_->sub == EXPR_VAR);
+                return !strcmp(e1->tk.val.s,e2->tk.val.s);
+            }
+            if (e1->sub != e2->sub) {
+                return 0;
+            }
+            switch (e1->sub) {
+                case EXPR_VAR:
+                    assert(0);      // handled above
+                case EXPR_DNREF:
+                    return expr_is_prefix(e1->Dnref, e2->Dnref);
+                case EXPR_INDEX:
+                    return (e1->tk.val.n==e2->tk.val.n &&
+                            expr_is_prefix(e1->Index.val,e2->Index.val));
+                case EXPR_DISC:
+                    return (!strcmp(e1->tk.val.s,e2->tk.val.s) &&
+                            expr_is_prefix(e1->Disc.val,e2->Disc.val));
+                default:
+                    assert(0);      // impossible in an attribution
+            }
+            assert(0);
+        }
+#endif
 
         switch (s->sub) {
             case STMT_VAR:
                 add_bws(s->Var.init);
-                if (!set_txs(s->Var.init,0)) return EXEC_ERROR;
+                if (!check_set_txs_seq(s->Var.init,0)) return EXEC_ERROR;
                 goto __ACCS__;
 
             case STMT_SET: {
+#if 0
+                int iscycle = 1;
+puts("-=-=-=-");
+                {
+                    int n=0; Expr* vars[256];
+                    env_txed_vars(s->env, s->Set.src, &n, vars);
+                    for (int i=0; i<n; i++) {
+dump_expr(s->Set.dst); printf(" vs "); dump_expr(vars[i]); puts(" <<<");
+                        if (expr_is_prefix(s->Set.dst, vars[i])) {
+                            iscycle = 0;
+                            break;
+                        }
+                    }
+                }
+#else
                 int iscycle = 0;
                 if (s->Set.dst->sub != EXPR_VAR) { // not cycle if root transfer (x = x.Item!)
                     // Rule 5: cycles can only occur in STMT_SET
@@ -214,10 +320,11 @@ int check_txs (Stmt* S) {
                         }
                     }
                 }
+#endif
                 if (!iscycle) {     // TODO: only in `growable´ mode
                     add_bws(s->Set.src);
                 }
-                if (!set_txs(s->Set.src,iscycle)) return EXEC_ERROR;
+                if (!check_set_txs_seq(s->Set.src,iscycle)) return EXEC_ERROR;
 
                 goto __ACCS__;
             }
@@ -262,7 +369,7 @@ __ACCS__:
 
         // Set Var.tx_done
         //  var y = x
-        int set_txs (Expr* E, int iscycle) {
+        int check_set_txs_seq (Expr* E, int iscycle) {
             int n=0; Expr* vars[256];
             env_txed_vars(s->env, E, &n, vars);
             for (int i=0; i<n; i++) {
@@ -271,33 +378,15 @@ __ACCS__:
                 int ishasptr = env_type_ishasptr(s->env, tp);
                 int ismove = (e->sub==EXPR_CALL && e->Call.func->sub==EXPR_VAR && !strcmp(e->Call.func->tk.val.s,"move"));
                 if (ismove) {
-                    int contains = 0;
-                    for (int i=0; i<MOVES_N; i++) {
-                        if (MOVES[i] == e->N) {
-                            contains = 1;
-                            break;
-                        }
-                    }
-                    if (!contains) {
-                        assert(MOVES_N < 1024);
-                        MOVES[MOVES_N++] = e->N;
-                    }
                     e = e->Call.arg;
                 } else {
-                    char err[1024];
-                    sprintf(err, "invalid ownership transfer : expected `move´ before expression");
-                    return err_message(&e->tk, err);
+assert(0);
                 }
 
                 if (ishasptr && (e->sub==EXPR_DISC || e->sub==EXPR_INDEX)) {  // TODO: only in `growable´ mode
-                    char err[1024];
-                    sprintf(err, "invalid ownership transfer : mode `growable´ only allows root transfers");
-                    return err_message(&e->tk, err);
+assert(0);
                 } else if (e->sub == EXPR_DNREF) {
-                    assert(e->Dnref->sub == EXPR_VAR);
-                    char err[1024];
-                    sprintf(err, "invalid dnref : cannot transfer value");
-                    return err_message(&e->Dnref->tk, err);
+assert(0);
                 } else {
                     Expr* e_ = expr_leftmost(e);
                     assert(e_->sub == EXPR_VAR);
@@ -322,10 +411,10 @@ __ACCS__:
                 case EXPR_CALL:
                     //assert(e->Call.func->sub == EXPR_VAR);
                     if (!strcmp(e->Call.func->tk.val.s,"move")) break;
-                    if (!set_txs(e->Call.arg,0)) return EXEC_ERROR;
+                    if (!check_set_txs_seq(e->Call.arg,0)) return EXEC_ERROR;
                     break;
                 case EXPR_CONS:
-                    if (!set_txs(e->Cons,0)) return EXEC_ERROR;
+                    if (!check_set_txs_seq(e->Cons,0)) return EXEC_ERROR;
                     break;
                 case EXPR_VAR:
                     if (!strcmp(S->Var.tk.val.s,e->tk.val.s)) {
@@ -376,28 +465,78 @@ __ACCS__:
 
 int owner (Stmt* s) {
     MOVES_N = 0;
+
+// TODO
+int iscycle = 0;
+
+    // SET_TXS
+    {
+        int fs (Stmt* s) {
+            switch (s->sub) {
+                case STMT_VAR:
+                    if (!check_set_txs_all(s->env, s->Var.init,0)) {
+                        return VISIT_ERROR;
+                    }
+                    break;
+                case STMT_SET:
+                    if (!check_set_txs_all(s->env, s->Set.src,iscycle)) {
+                        return VISIT_ERROR;
+                    }
+                    break;
+                default:
+                    break;
+            }
+            return VISIT_CONTINUE;
+        }
+        int fe (Env* env, Expr* e) {
+            switch (e->sub) {
+                case EXPR_CALL:
+                    if (strcmp(e->Call.func->tk.val.s,"move")) {
+                        if (!check_set_txs_all(env, e->Call.arg,0)) {
+                            return VISIT_ERROR;
+                        }
+                    }
+                    break;
+                case EXPR_CONS:
+                    if (!check_set_txs_all(env, e->Cons,0)) {
+                        return VISIT_ERROR;
+                    }
+                    break;
+                default:
+                    break;
+            }
+            return VISIT_CONTINUE;
+        }
+        if (!visit_stmt(0,s,fs,fe,NULL)) {
+            return 0;
+        }
+    }
+
+    // CHECK_TXS
     if (!visit_stmt(0,s,check_txs,NULL,NULL)) {
         return 0;
     }
 
-    int check_moves (Env* env, Expr* e) {
-        if (e->sub == EXPR_CALL && e->Call.func->sub == EXPR_VAR) {
-            if (!strcmp(e->Call.func->tk.val.s,"move")) {
-                for (int i=0; i<MOVES_N; i++) {
-                    if (MOVES[i] == e->N) {
-                        return VISIT_CONTINUE;
+    // CHECK_MOVES
+    {
+        int fe (Env* env, Expr* e) {
+            if (e->sub == EXPR_CALL && e->Call.func->sub == EXPR_VAR) {
+                if (!strcmp(e->Call.func->tk.val.s,"move")) {
+                    for (int i=0; i<MOVES_N; i++) {
+                        if (MOVES[i] == e->N) {
+                            return VISIT_CONTINUE;
+                        }
                     }
+                    char err[1024];
+                    sprintf(err, "unexpected `move´ call : no ownership transfer");
+                    return err_message(&e->tk, err);
                 }
-                char err[1024];
-                sprintf(err, "unexpected `move´ call : no ownership transfer");
-                return err_message(&e->tk, err);
             }
+            return VISIT_CONTINUE;
         }
-        return VISIT_CONTINUE;
-    }
-
-    if (!visit_stmt(0,s,NULL,check_moves,NULL)) {
-        return 0;
+        if (!visit_stmt(0,s,NULL,fe,NULL)) {
+            return 0;
+        }
     }
     return 1;
 }
