@@ -227,13 +227,11 @@ int check_exec_vars (Stmt* S) {
         // push/pop stack
         if (s->sub == STMT_BLOCK) {         // enter block: push state
             stack[stack_n].depth_stop = s->env->depth;
-//printf("+++ %d\n", s->env->depth);
             stack[stack_n].bws_n = bws_n;
             assert(stack_n < 256);
             stack_n++;
         } else {
             while (stack_n>0 && s->env->depth<=stack[stack_n-1].depth_stop) {   // leave block: pop state
-//printf("--- %d\n", s->env->depth);
                 stack_n--;
                 bws_n = stack[stack_n].bws_n;
             }
@@ -358,41 +356,42 @@ int check_exec_vars (Stmt* S) {
                     if (!set_txed(e->Cons,0)) return EXEC_ERROR;
                     break;
                 case EXPR_VAR:
-                    if (!strcmp(S->Var.tk.val.s,e->tk.val.s)) {
-                        // ensure that EXPR_VAR is really same as STMT_VAR
-                        Stmt* decl = env_id_to_stmt(env, e->tk.val.s);
-                        assert(decl!=NULL && decl==S);
+                    if (strcmp(S->Var.tk.val.s,e->tk.val.s)) {
+                        break;
+                    }
+                    // ensure that EXPR_VAR is really same as STMT_VAR
+                    Stmt* decl = env_id_to_stmt(env, e->tk.val.s);
+                    assert(decl!=NULL && decl==S);
 
-                        if (txed == 2) { // Rule 4 (growable)
-                            Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e);
-                            int ishasptr = env_type_ishasptr(env, tp);
-                            // if already moved, it doesn't matter, any access is invalid
-                            if (ishasptr) {
-                                assert(txed_tk != NULL);
-                                char err[TK_BUF+256];
-                                sprintf(err, "invalid access to \"%s\" : ownership was transferred (ln %d)",
-                                        e->tk.val.s, txed_tk->lin);
-                                err_message(&e->tk, err);
-                                return VISIT_ERROR;
-                            }
-                            return VISIT_CONTINUE;
-
-                        // Rule 6
-                        } else if (bws_n >= 2) {
-                            if (txed == 1) {
-                                int lin = (txed_tk == NULL) ? e->tk.lin : txed_tk->lin;
-                                char err[TK_BUF+256];
-                                sprintf(err, "invalid transfer of \"%s\" : active pointer in scope (ln %d)",
-                                        e->tk.val.s, lin);
-// ignorar os bws em si mesmo no modo growable
-                                err_message(&e->tk, err);
-                                return VISIT_ERROR;
-                            }
+                    if (txed == 2) { // Rule 4 (growable)
+                        Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e);
+                        int ishasptr = env_type_ishasptr(env, tp);
+                        // if already moved, it doesn't matter, any access is invalid
+                        if (ishasptr) {
+                            assert(txed_tk != NULL);
+                            char err[TK_BUF+256];
+                            sprintf(err, "invalid access to \"%s\" : ownership was transferred (ln %d)",
+                                    e->tk.val.s, txed_tk->lin);
+                            err_message(&e->tk, err);
+                            return VISIT_ERROR;
                         }
-                        txed_tk = &e->tk;
+                        return VISIT_CONTINUE;
+
+                    // Rule 6
+                    } else if (bws_n >= 2) {
                         if (txed == 1) {
-                            txed = 2;
+                            int lin = (txed_tk == NULL) ? e->tk.lin : txed_tk->lin;
+                            char err[TK_BUF+256];
+                            sprintf(err, "invalid transfer of \"%s\" : active pointer in scope (ln %d)",
+                                    e->tk.val.s, lin);
+// ignorar os bws em si mesmo no modo growable
+                            err_message(&e->tk, err);
+                            return VISIT_ERROR;
                         }
+                    }
+                    txed_tk = &e->tk;
+                    if (txed == 1) {
+                        txed = 2;
                     }
                 default:
                     break;
