@@ -263,10 +263,15 @@ int check_exec_vars (Stmt* S) {
                     if (strcmp(S->Var.tk.val.s,e->tk.val.s)) {
                         break;
                     }
-                    // ensure that EXPR_VAR is really same as STMT_VAR
                     Stmt* decl = env_id_to_stmt(env, e->tk.val.s);
                     assert(decl!=NULL && decl==S);
 
+                    // access to S.x
+
+                    if (txed == 0) {
+                        txed_tk = &e->tk;
+                        break;
+                    }
                     if (txed == 2) { // Rule 4 (growable)
                         Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e);
                         int ishasptr = env_type_ishasptr(env, tp);
@@ -281,9 +286,10 @@ int check_exec_vars (Stmt* S) {
                         }
                         return VISIT_CONTINUE;
 
-                    // Rule 6
-                    } else if (bws_n >= 2) {
-                        if (txed == 1) {
+                    } else {
+                        assert(txed == 1);
+                        txed = 2;
+                        if (bws_n >= 2) {       // Rule 6
                             int lin = (txed_tk == NULL) ? e->tk.lin : txed_tk->lin;
                             char err[TK_BUF+256];
                             sprintf(err, "invalid transfer of \"%s\" : active pointer in scope (ln %d)",
@@ -292,10 +298,7 @@ int check_exec_vars (Stmt* S) {
                             err_message(&e->tk, err);
                             return VISIT_ERROR;
                         }
-                    }
-                    txed_tk = &e->tk;
-                    if (txed == 1) {
-                        txed = 2;
+                        txed_tk = &e->tk;
                     }
                 default:
                     break;
