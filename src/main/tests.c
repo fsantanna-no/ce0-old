@@ -2831,7 +2831,6 @@ __XXX__:
     ));
 
     // CYCLE
-#if TODO-CYCLE
     assert(all(
         "Item (Item ($))\n",            // ok: not cycle
         "type rec List {\n"
@@ -2879,6 +2878,7 @@ __XXX__:
         "var m: \\List = \\l.Item!\n"
         "set m\\ = f move l\n"
     ));
+#if TODO-CYCLE
     assert(all(
         "LT_Type ($,@)\n",
         "type rec List {\n"

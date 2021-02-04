@@ -62,6 +62,37 @@ void env_txed_vars (Env* env, Expr* e, F_txed_vars f) {
     }
 }
 
+int expr_isprefix (Expr* e1, Expr* e2) {
+    if (e2->sub == EXPR_CALL) {
+        assert(e2->Call.func->sub==EXPR_VAR && !strcmp(e2->Call.func->tk.val.s,"move"));
+        e2 = e2->Call.arg;
+    }
+    if (e1->sub == EXPR_VAR) {
+        Expr* e2_ = expr_leftmost(e2);
+dump_expr(e2); puts(" <<<");
+        assert(e2_->sub == EXPR_VAR);
+        return !strcmp(e1->tk.val.s,e2->tk.val.s);
+    }
+    if (e1->sub != e2->sub) {
+        return 0;
+    }
+    switch (e1->sub) {
+        case EXPR_VAR:
+            assert(0);      // handled above
+        case EXPR_DNREF:
+            return expr_isprefix(e1->Dnref, e2->Dnref);
+        case EXPR_INDEX:
+            return (e1->tk.val.n==e2->tk.val.n &&
+                    expr_isprefix(e1->Index.val,e2->Index.val));
+        case EXPR_DISC:
+            return (!strcmp(e1->tk.val.s,e2->tk.val.s) &&
+                    expr_isprefix(e1->Disc.val,e2->Disc.val));
+        default:
+            assert(0);      // impossible in an attribution
+    }
+    assert(0);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 // Check transfers:
@@ -294,7 +325,6 @@ int check_exec_vars (Stmt* S) {
                             char err[TK_BUF+256];
                             sprintf(err, "invalid transfer of \"%s\" : active pointer in scope (ln %d)",
                                     e->tk.val.s, lin);
-// ignorar os bws em si mesmo no modo growable
                             err_message(&e->tk, err);
                             return VISIT_ERROR;
                         }
@@ -315,23 +345,61 @@ int check_exec_vars (Stmt* S) {
                 return accs(s);
 
             case STMT_SET: {
-#if 0
-                int iscycle = 0;
-                if (s->Set.dst->sub != EXPR_VAR) { // not cycle if root transfer (x = x.Item!)
-                    // Rule 5: cycles can only occur in STMT_SET
+                int iscycle = 0; {  // Rule 5: cycles can only occur in STMT_SET
                     Expr* dst = expr_leftmost(s->Set.dst);
                     assert(dst->sub == EXPR_VAR);
                     for (int i=0; i<bws_n; i++) {
                         if (!strcmp(dst->tk.val.s,bws[i]->Var.tk.val.s)) {
-                            iscycle = 1;
+                            iscycle = 1;    // dst points to myself
                             break;
                         }
                     }
+
+                    // now check if dst is prefix of src (x = x.Item!)
+                    // only in this case it is *not* actually a cycle
+                    if (iscycle) {
+                        int vars_n=0; Expr* vars[256];
+                        {
+                            void f_get_txs (Expr* e_, Expr* e) {
+                                assert(vars_n < 255);
+                                if (e->sub==EXPR_VAR || e->sub==EXPR_DNREF || e->sub==EXPR_DISC || e->sub==EXPR_INDEX) {
+                                    Expr* var = expr_leftmost(e);
+                                    assert(var!=NULL && var->sub==EXPR_VAR);
+                                    vars[vars_n++] = e_;
+                                }
+                            }
+                            env_txed_vars(s->env, s->Set.src, f_get_txs);
+                        }
+                        int all_ok = 1;
+                        for (int i=0; i<vars_n; i++) {
+                            Expr* left = expr_leftmost(vars[i]);
+                            if (left->sub != EXPR_VAR) {
+                                assert(left->sub==EXPR_CALL && !strcmp(left->Call.func->tk.val.s,"move"));
+                                left = left->Call.arg;
+                            }
+                            assert(left->sub == EXPR_VAR);
+                            Stmt* dcl = env_id_to_stmt(s->env, left->tk.val.s);
+                            assert(dcl != NULL);
+                            if (bws_has(dcl)) {
+                                if (!expr_isprefix(s->Set.dst,vars[i])) {
+                                    all_ok = 0;
+                                    break;
+                                }
+                            }
+                        }
+                        if (all_ok) {
+                            iscycle = 0;
+                        }
+                    }
                 }
-                if (!iscycle)
-#endif
-                {     // TODO: only in `growable´ mode
+                if (iscycle) {
+                    char err[1024];
+                    sprintf(err, "invalid assignment : cannot transfer ownsership to itself");
+                    return err_message(&s->Set.src->tk, err);
+                } else { // TODO: only in `growable´ mode
+dump_expr(s->Set.src); puts(" <<<");
                     add_bws(s->Set.src);
+// ignorar os bws em si mesmo no modo growable
                 }
                 set_txed(s->Set.src);
                 return accs(s);
@@ -394,13 +462,6 @@ int check_exec_vars (Stmt* S) {
                 assert(e_->sub == EXPR_VAR);
                 if (!strcmp(e_->tk.val.s,S->Var.tk.val.s)) {
                     txed = 1;
-#if 0
-                    if (iscycle) {
-                        char err[1024];
-                        sprintf(err, "invalid assignment : cannot transfer ownsership to itself");
-                        return err_message(&e_->tk, err);
-                    }
-#endif
                 }
             }
         }
