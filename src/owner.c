@@ -69,7 +69,6 @@ int expr_isprefix (Expr* e1, Expr* e2) {
     }
     if (e1->sub == EXPR_VAR) {
         Expr* e2_ = expr_leftmost(e2);
-dump_expr(e2); puts(" <<<");
         assert(e2_->sub == EXPR_VAR);
         return !strcmp(e1->tk.val.s,e2->tk.val.s);
     }
@@ -372,10 +371,12 @@ int check_exec_vars (Stmt* S) {
                         }
                         int all_ok = 1;
                         for (int i=0; i<vars_n; i++) {
-                            Expr* left = expr_leftmost(vars[i]);
-                            if (left->sub != EXPR_VAR) {
-                                assert(left->sub==EXPR_CALL && !strcmp(left->Call.func->tk.val.s,"move"));
-                                left = left->Call.arg;
+                            Expr* left;
+                            if (vars[i]->sub != EXPR_VAR) {
+                                assert(vars[i]->sub==EXPR_CALL && !strcmp(vars[i]->Call.func->tk.val.s,"move"));
+                                left = expr_leftmost(vars[i]->Call.arg);
+                            } else {
+                                left = expr_leftmost(vars[i]);
                             }
                             assert(left->sub == EXPR_VAR);
                             Stmt* dcl = env_id_to_stmt(s->env, left->tk.val.s);
@@ -397,7 +398,6 @@ int check_exec_vars (Stmt* S) {
                     sprintf(err, "invalid assignment : cannot transfer ownsership to itself");
                     return err_message(&s->Set.src->tk, err);
                 } else { // TODO: only in `growable´ mode
-dump_expr(s->Set.src); puts(" <<<");
                     add_bws(s->Set.src);
 // ignorar os bws em si mesmo no modo growable
                 }
