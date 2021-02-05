@@ -56,7 +56,11 @@ void to_ce_ (char* out, Type* tp) {
             }
             break;
         case TYPE_FUNC:
-            assert(0 && "TODO");
+            strcat(out, "FUNC__");
+            to_ce_(out, tp->Func.inp);
+            strcat(out, "__");
+            to_ce_(out, tp->Func.out);
+            break;
     }
 }
 
@@ -96,10 +100,7 @@ void to_c_ (char* out, Env* env, Type* tp) {
             if (ishasrec) strcat(out, "*");
             break;
         case TYPE_FUNC:
-            strcat(out, "FUNC__");
-            to_ce_(out, tp->Func.inp);
-            strcat(out, "__");
-            to_ce_(out, tp->Func.out);
+            to_ce_(out, tp);
             strcat(out, "*");
             break;
     }

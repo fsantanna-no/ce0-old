@@ -263,8 +263,10 @@ void code_stdout_tuple (Env* env, Type* tp) {
 
         if (sub->isptr) {
             fprintf(ALL.out, "putchar('@');\n");
+        } else if (sub->sub == TYPE_FUNC) {
+            fprintf(ALL.out, "putchar('@');\n");
         } else if (sub->sub == TYPE_NATIVE) {
-            fprintf(ALL.out, "putchar('?');\n");
+            fprintf(ALL.out, "putchar('_');\n");
         } else if (sub->sub == TYPE_UNIT) {
             fprintf(ALL.out, "stdout_Unit_();\n");
         } else {
