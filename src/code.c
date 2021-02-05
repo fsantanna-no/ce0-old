@@ -58,8 +58,14 @@ void to_ce_ (char* out, Type* tp) {
         case TYPE_FUNC:
             strcat(out, "FUNC__");
             to_ce_(out, tp->Func.inp);
+                if (tp->Func.inp->isptr) {
+                    strcat(out,"_ptr");
+                }
             strcat(out, "__");
             to_ce_(out, tp->Func.out);
+                if (tp->Func.out->isptr) {
+                    strcat(out,"_ptr");
+                }
             break;
     }
 }
@@ -142,8 +148,14 @@ void code_type_func_pre (Env* env, Type* tp) {
     char str[256] = "";
     strcat(str, "FUNC__");
     to_ce_(str, tp->Func.inp);
+        if (tp->Func.inp->isptr) {
+            strcat(str,"_ptr");
+        }
     strcat(str, "__");
     to_ce_(str, tp->Func.out);
+        if (tp->Func.out->isptr) {
+            strcat(str,"_ptr");
+        }
 
     out("#ifndef __"); out(str); out("__\n");
     out("#define __"); out(str); out("__\n");
@@ -734,7 +746,9 @@ void code_stmt (Stmt* s) {
             if (!strcmp(s->Func.tk.val.s,"move"))       break;
             if (!strcmp(s->Func.tk.val.s,"output_std")) break;
 
-            visit_type(s->env, s->Func.type, code_type_pre);
+            // do not generate code_type_func_pre for func declaration (may contain C, etc)
+            visit_type(s->env, s->Func.type->Func.inp, code_type_pre);
+            visit_type(s->env, s->Func.type->Func.out, code_type_pre);
 
             // f: a -> User
 

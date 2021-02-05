@@ -1663,6 +1663,14 @@ __XXX__:
         "output std g (f,10)\n"
     ));
 
+    assert(all(
+        "10\n",
+        "func f: \\Int->Int { return arg\\ }\n"
+        "var g: \\Int->Int = f\n"
+        "var x: Int = 10\n"
+        "output std g (\\x)\n"
+    ));
+
     // arg.1 > arg.2
     assert(all(
         //"(ln 3, col 4): invalid assignment : cannot hold pointer \"arg\" (ln 2) in outer scope",
