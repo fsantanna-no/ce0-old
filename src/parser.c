@@ -608,7 +608,7 @@ int parser_stmt (Stmt** ret) {
             return 0;
         }
         if (tp->sub != TYPE_FUNC) {
-            return err(&ALL.tk0, "invalid function type");
+            return err(&ALL.tk0, "invalid type : expected function type");
         }
 
         if (ispre) {

@@ -1648,7 +1648,7 @@ __XXX__:
     ));
 
     assert(all(
-        "(ln 1, col 35): invalid function type",
+        "(ln 1, col 35): invalid type : expected function type",
         "func visit_stmt: (Stmt, Stmt->Bool) { return True }\n"
         "output std g (f,10)\n"
     ));
