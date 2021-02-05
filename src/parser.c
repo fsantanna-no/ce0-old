@@ -607,6 +607,9 @@ int parser_stmt (Stmt** ret) {
         if (!parser_type(&tp)) {        // () -> ()
             return 0;
         }
+        if (tp->sub != TYPE_FUNC) {
+            return err(&ALL.tk0, "invalid function type");
+        }
 
         if (ispre) {
             *s = (Stmt) { ALL.nn++, STMT_FUNC, NULL, NULL, tk, .Func={id,tp,NULL} };

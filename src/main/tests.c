@@ -1313,7 +1313,7 @@ __XXX__:
         "output std(Set_(_1,_2,_3,_4))\n"
     ));
     assert(all(
-        "Size (?,?,?,?)\n",
+        "Size (_,_,_,_)\n",
         "type Set_ {\n"
         "    Size:     (_int,_int,_int,_int)\n"
         "    Color_BG: _int\n"
@@ -1645,6 +1645,22 @@ __XXX__:
         "func f: Int->Int { return arg }\n"
         "var p: Int->Int = f\n"
         "output std p 10\n"
+    ));
+
+    assert(all(
+        "(ln 1, col 35): invalid function type",
+        "func visit_stmt: (Stmt, Stmt->Bool) { return True }\n"
+        "output std g (f,10)\n"
+    ));
+    assert(all(
+        "10\n",
+        "func f: Int->Int { return arg }\n"
+        "func g: (Int->Int, Int) -> Int {\n"
+        "   var f: Int->Int = arg.1\n"
+        "   var v: Int = call f arg.2\n"
+        "   return v\n"
+        "}\n"
+        "output std g (f,10)\n"
     ));
 
     // arg.1 > arg.2
