@@ -344,86 +344,93 @@ int check_exec_vars (Stmt* S) {
                 return accs(s);
 
             case STMT_SET: {
-puts("-----------------");
-printf(">>> %d\n", s->Set.dst->tk.lin);
-dump_stmt(s);
                 int iscycle = 0; {  // Rule 5: cycles can only occur in STMT_SET
                     Expr* dst = expr_leftmost(s->Set.dst);
                     assert(dst->sub == EXPR_VAR);
                     for (int i=0; i<bws_n; i++) {
-printf("[%d]: %s %s\n", i, dst->tk.val.s, bws[i]->Var.tk.val.s);
                         if (!strcmp(dst->tk.val.s,bws[i]->Var.tk.val.s)) {
                             iscycle = 1;    // dst points to myself
                             break;
                         }
                     }
+                }
 
-                    // now check if dst is prefix of src (x = x.Item!)
-                    // only in this case it is *not* actually a cycle
-                    if (iscycle) {
-puts("CYCLE");
-                        Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(s->env, s->Set.dst);
-                        if (tp->isptr) {
-                            int all_cycle = 1;
-                            int vars_n=0; Expr* vars[256]; int uprefs[256];
-                            env_held_vars(s->env, s->Set.src, &vars_n, vars, uprefs);
-                            for (int i=0; i<vars_n; i++) {
-                                assert(vars[i]->sub == EXPR_VAR);
-                                Expr* left = expr_leftmost(s->Set.dst);
-                                assert(left->sub == EXPR_VAR);
-                                if (strcmp(left->tk.val.s,vars[i]->tk.val.s)) {
-dump_expr(vars[i]); puts(" <<<");
-                                    all_cycle = 0; // at least one strcmp fail
-                                    break;
-                                }
-                            }
-                            if (!all_cycle) {
-                                add_bws(s->Set.src);
-                            }
-                        } else {
-                            int vars_n=0; Expr* vars[256];
-                            {
-                                void f_get_txs (Expr* e_, Expr* e) {
-                                    assert(vars_n < 255);
-                                    if (e->sub==EXPR_VAR || e->sub==EXPR_DNREF || e->sub==EXPR_DISC || e->sub==EXPR_INDEX) {
-                                        Expr* var = expr_leftmost(e);
-                                        assert(var!=NULL && var->sub==EXPR_VAR);
-                                        vars[vars_n++] = e_;
-                                    }
-                                }
-                                env_txed_vars(s->env, s->Set.src, f_get_txs);
-                            }
-                            int all_prefix = 1;
-                            for (int i=0; i<vars_n; i++) {
-                                Expr* left;
-                                if (vars[i]->sub != EXPR_VAR) {
-                                    assert(vars[i]->sub==EXPR_CALL && !strcmp(vars[i]->Call.func->tk.val.s,"move"));
-                                    left = expr_leftmost(vars[i]->Call.arg);
-                                } else {
-                                    left = expr_leftmost(vars[i]);
-                                }
-                                assert(left->sub == EXPR_VAR);
-                                Stmt* dcl = env_id_to_stmt(s->env, left->tk.val.s);
-                                assert(dcl != NULL);
-                                if (bws_has(dcl)) {
-                                    if (!expr_isprefix(s->Set.dst,vars[i])) {
-                                        all_prefix = 0;
-                                        break;
-                                    }
-                                }
-                            }
-                            if (all_prefix) {
-                                iscycle = 0;
-                            }
-                            if (iscycle) {
-                                char err[1024];
-                                sprintf(err, "invalid assignment : cannot transfer ownsership to itself");
-                                return err_message(&s->Set.src->tk, err);
-                            }
-                            add_bws(s->Set.src);
+                // not a cycle:
+                //      x = y
+                if (!iscycle) {
+                    add_bws(s->Set.src);
+                    set_txed(s->Set.src);
+                    return accs(s);
+                }
+
+                // pointer cycle:
+                //      x.Field! = \x
+                Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(s->env, s->Set.dst);
+                if (tp->isptr) {
+                    int all_cycle = 1;
+                    int vars_n=0; Expr* vars[256]; int uprefs[256];
+                    env_held_vars(s->env, s->Set.src, &vars_n, vars, uprefs);
+                    for (int i=0; i<vars_n; i++) {
+                        assert(vars[i]->sub == EXPR_VAR);
+                        Expr* left = expr_leftmost(s->Set.dst);
+                        assert(left->sub == EXPR_VAR);
+                        if (strcmp(left->tk.val.s,vars[i]->tk.val.s)) {
+                            all_cycle = 0; // at least one strcmp fail
+                            break;
+                        }
+                    }
+                    if (!all_cycle) {
+                        add_bws(s->Set.src);
+                    }
+                    set_txed(s->Set.src);
+                    return accs(s);
+                }
+
+                // move cycle:
+                //      x = x.Field!
+
+                // now check if dst is prefix of src (x = x.Item!)
+                // only in this case it is *not* actually a cycle
+
+                int vars_n=0; Expr* vars[256];
+                {
+                    void f_get_txs (Expr* e_, Expr* e) {
+                        assert(vars_n < 255);
+                        if (e->sub==EXPR_VAR || e->sub==EXPR_DNREF || e->sub==EXPR_DISC || e->sub==EXPR_INDEX) {
+                            Expr* var = expr_leftmost(e);
+                            assert(var!=NULL && var->sub==EXPR_VAR);
+                            vars[vars_n++] = e_;
+                        }
+                    }
+                    env_txed_vars(s->env, s->Set.src, f_get_txs);
+                }
+
+                int all_prefix = 1;
+                for (int i=0; i<vars_n; i++) {
+                    Expr* left;
+                    if (vars[i]->sub != EXPR_VAR) {
+                        assert(vars[i]->sub==EXPR_CALL && !strcmp(vars[i]->Call.func->tk.val.s,"move"));
+                        left = expr_leftmost(vars[i]->Call.arg);
+                    } else {
+                        left = expr_leftmost(vars[i]);
+                    }
+                    assert(left->sub == EXPR_VAR);
+                    Stmt* dcl = env_id_to_stmt(s->env, left->tk.val.s);
+                    assert(dcl != NULL);
+                    if (bws_has(dcl)) {
+                        if (!expr_isprefix(s->Set.dst,vars[i])) {
+                            all_prefix = 0;
+                            break;
                         }
                     }
                 }
+                if (!all_prefix) {
+                    char err[1024];
+                    sprintf(err, "invalid assignment : cannot transfer ownsership to itself");
+                    return err_message(&s->Set.src->tk, err);
+                }
+
+                add_bws(s->Set.src);
                 set_txed(s->Set.src);
                 return accs(s);
             }
