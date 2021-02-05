@@ -33,7 +33,8 @@ void out (const char* v) {
 void to_ce_ (char* out, Type* tp) {
     switch (tp->sub) {
         case TYPE_ANY:
-            assert(0);
+            strcat(out, "Any");
+            break;
         case TYPE_UNIT:
             strcat(out, "Unit");
             break;
@@ -77,8 +78,9 @@ void to_c_ (char* out, Env* env, Type* tp) {
     int ishasrec = env_type_ishasrec(env, &tp_);
     switch (tp->sub) {
         case TYPE_ANY:
-        case TYPE_UNIT:
-            assert(0);
+        case TYPE_UNIT: // only in TYPE_FUNC
+            strcat(out, "void");
+            break;
         case TYPE_NATIVE:
             //strcat(out, "typeof(");
             strcat(out, tp->Native.val.s);
@@ -94,7 +96,12 @@ void to_c_ (char* out, Env* env, Type* tp) {
             if (ishasrec) strcat(out, "*");
             break;
         case TYPE_FUNC:
-            assert(0 && "TODO");
+            strcat(out, "FUNC__");
+            to_ce_(out, tp->Func.inp);
+            strcat(out, "__");
+            to_ce_(out, tp->Func.out);
+            strcat(out, "*");
+            break;
     }
     if (tp->isptr) {
         strcat(out, "*");
@@ -128,10 +135,29 @@ int env_user_ishasrec (Env* env, Stmt* user) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int code_tuple (Env* env, Type* tp_) {
-    if (tp_->sub != TYPE_TUPLE) {
-        return VISIT_CONTINUE;
-    }
+void code_type_func_pre (Env* env, Type* tp) {
+    assert(tp->sub == TYPE_FUNC);
+
+    char str[256] = "";
+    strcat(str, "FUNC__");
+    to_ce_(str, tp->Func.inp);
+    strcat(str, "__");
+    to_ce_(str, tp->Func.out);
+
+    out("#ifndef __"); out(str); out("__\n");
+    out("#define __"); out(str); out("__\n");
+    out("typedef ");
+    out(to_c(env,tp->Func.out));
+    out(" ");
+    out(str);
+    out(" (");
+    out(to_c(env,tp->Func.inp));
+    out(" );\n");
+    out("#endif\n");
+}
+
+void code_type_tuple_pre (Env* env, Type* tp_) {
+    assert(tp_->sub == TYPE_TUPLE);
 
     Type tp = type_noptr(tp_);
     int ishasrec = env_type_ishasrec(env, &tp);
@@ -141,11 +167,9 @@ int code_tuple (Env* env, Type* tp_) {
     strcpy(tp_c,  to_c (env,&tp));
     strcpy(tp_ce, to_ce(&tp));
 
-    // IFDEF
     out("#ifndef __"); out(tp_ce); out("__\n");
     out("#define __"); out(tp_ce); out("__\n");
 
-    // STRUCT
     out("typedef struct {\n");
     for (int i=0; i<tp.Tuple.size; i++) {
         Type* sub = tp.Tuple.vec[i];
@@ -166,12 +190,26 @@ int code_tuple (Env* env, Type* tp_) {
     }
     code_stdout_tuple(env, &tp);
 
-    // IFDEF
     out("#endif\n");
+}
+
+int code_type_pre (Env* env, Type* tp) {
+    switch (tp->sub) {
+        case TYPE_TUPLE:
+            code_type_tuple_pre(env, tp);
+            break;
+        case TYPE_FUNC:
+            code_type_func_pre(env, tp);
+            break;
+        default:
+            break;
+    }
     return VISIT_CONTINUE;
 }
 
-void code_user (Stmt* s) {
+///////////////////////////////////////////////////////////////////////////////
+
+void code_user_pre (Stmt* s) {
     const char* sup = s->User.tk.val.s;
     const char* SUP = strupper(s->User.tk.val.s);
     int ishasrec = env_user_ishasrec(s->env, s);
@@ -213,7 +251,7 @@ void code_user (Stmt* s) {
 
     // first generate tuples
     for (int i=0; i<s->User.size; i++) {
-        visit_type(s->env, s->User.vec[i].type, code_tuple);
+        visit_type(s->env, s->User.vec[i].type, code_type_pre);
     }
 
     // ENUM + STRUCT + UNION
@@ -296,7 +334,7 @@ int code_expr_pre (Env* env, Expr* e) {
         }
 
         case EXPR_TUPLE: {
-            visit_type(env, TP, code_tuple);
+            visit_type(env, TP, code_type_pre);
             int ishasrec = env_type_ishasrec(env, TP);
 
             static char tpc[256];
@@ -590,12 +628,12 @@ void code_stmt (Stmt* s) {
             if (!strcmp(s->User.tk.val.s,"Int")) {
                 break;
             }
-            code_user(s);
+            code_user_pre(s);
             break;
         }
 
         case STMT_VAR: {
-            visit_type(s->env, s->Var.type, code_tuple);
+            visit_type(s->env, s->Var.type, code_type_pre);
             visit_expr(1, s->env, s->Var.init, code_expr_pre);
 
             if (s->Var.type->sub == TYPE_UNIT) {
@@ -695,7 +733,7 @@ void code_stmt (Stmt* s) {
             if (!strcmp(s->Func.tk.val.s,"move"))       break;
             if (!strcmp(s->Func.tk.val.s,"output_std")) break;
 
-            visit_type(s->env, s->Func.type, code_tuple);
+            visit_type(s->env, s->Func.type, code_type_pre);
 
             // f: a -> User
 

@@ -1035,7 +1035,7 @@ void t_code (void) {
         char out[8192] = "";
         all_init (
             stropen("w", sizeof(out), out),
-            stropen("r", 0, "var a : () = () ; call _stdo a")
+            NULL
         );
         Stmt s = { STMT_NONE };
         code(&s);
@@ -1639,6 +1639,12 @@ __XXX__:
         "var x: Int = 1\n"
         "call f (\\x)\n"
         "output std x\n"
+    ));
+    assert(all(
+        "10\n",
+        "func f: Int->Int { return arg }\n"
+        "var p: Int->Int = f\n"
+        "output std p 10\n"
     ));
 
     // arg.1 > arg.2
