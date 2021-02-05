@@ -2878,7 +2878,6 @@ __XXX__:
         "var m: \\List = \\l.Item!\n"
         "set m\\ = f move l\n"
     ));
-#if TODO-CYCLE
     assert(all(
         "LT_Type ($,@)\n",
         "type rec List {\n"
@@ -2955,7 +2954,6 @@ __XXX__:
         "call g move l\n"
         "output std ()\n"
     ));
-#endif
     assert(all(
         "1\n2\n",
         "{\n"
