@@ -70,7 +70,7 @@ int expr_isprefix (Expr* e1, Expr* e2) {
     if (e1->sub == EXPR_VAR) {
         Expr* e2_ = expr_leftmost(e2);
         assert(e2_->sub == EXPR_VAR);
-        return !strcmp(e1->tk.val.s,e2->tk.val.s);
+        return !strcmp(e1->tk.val.s,e2_->tk.val.s);
     }
     if (e1->sub != e2->sub) {
         return 0;
@@ -387,10 +387,20 @@ int check_exec_vars (Stmt* S) {
                 }
 
                 // move cycle:
-                //      x = x.Field!
+                //      x = x.Field!    (ok)
+                //      x.1 = x.2       (ok)
+                // (1)  x = y\.Field!   (ok)
+                // (3)  x.Field! = x    (no)
+                // (2)  x.Aa! = y\.Bb   (no)
+                // rules:
+                //  - dst is only a VAR?    -> ok (1)
+                //  - leftmosts different?  -> no (2)
+                //  - src prefix of dst?    -> no (3)
+                //  - otherwise             -> ok
 
-                // now check if dst is prefix of src (x = x.Item!)
-                // only in this case it is *not* actually a cycle
+                if (s->Set.dst->sub == EXPR_VAR) {
+                    goto _OK_;              // (1)
+                }
 
                 int vars_n=0; Expr* vars[256];
                 {
@@ -405,31 +415,34 @@ int check_exec_vars (Stmt* S) {
                     env_txed_vars(s->env, s->Set.src, f_get_txs);
                 }
 
-                int all_prefix = 1;
                 for (int i=0; i<vars_n; i++) {
-                    Expr* left;
                     if (vars[i]->sub != EXPR_VAR) {
                         assert(vars[i]->sub==EXPR_CALL && !strcmp(vars[i]->Call.func->tk.val.s,"move"));
-                        left = expr_leftmost(vars[i]->Call.arg);
-                    } else {
-                        left = expr_leftmost(vars[i]);
+                        vars[i] = vars[i]->Call.arg;
                     }
-                    assert(left->sub == EXPR_VAR);
-                    Stmt* dcl = env_id_to_stmt(s->env, left->tk.val.s);
+                    Expr* dst_left = expr_leftmost(s->Set.dst);
+                    Expr* src_left = expr_leftmost(vars[i]);
+                    assert(dst_left!=NULL && src_left!=NULL && dst_left->sub==EXPR_VAR && src_left->sub==EXPR_VAR);
+                    Stmt* dcl = env_id_to_stmt(s->env, src_left->tk.val.s);
                     assert(dcl != NULL);
                     if (bws_has(dcl)) {
-                        if (!expr_isprefix(s->Set.dst,vars[i])) {
-                            all_prefix = 0;
-                            break;
+                        if (strcmp(dst_left->tk.val.s,src_left->tk.val.s)) {
+                            goto _NO_;      // (2) at least one different
+                        }
+                        if (expr_isprefix(vars[i],s->Set.dst)) {
+                            goto _NO_;      // (3) at least one src prefix of dst
                         }
                     }
                 }
-                if (!all_prefix) {
+                goto _OK_;
+
+_NO_:
+                {
                     char err[1024];
                     sprintf(err, "invalid assignment : cannot transfer ownsership to itself");
                     return err_message(&s->Set.src->tk, err);
                 }
-
+_OK_:
                 add_bws(s->Set.src);
                 set_txed(s->Set.src);
                 return accs(s);

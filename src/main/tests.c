@@ -2970,6 +2970,45 @@ __XXX__:
         "var m: \\List = \\l.Item!.2\n"
         "{ set m\\.Item!.2 = Item ((10,10),move m\\) ; output std 10 }\n"
     ));
+    assert(all(
+        "(ln 6, col 22): invalid assignment : cannot transfer ownsership to itself",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "var ls: (List,List) = (Item ($List), $List)\n"
+        "var ptr: \\(List,List) = \\ls\n"
+        "set ls.1 = move ptr\\.2\n"
+    ));
+    assert(all(
+        "(Item ($),$)\n",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "var ls: (List,List) = (Item ($List), $List)\n"
+        "var ls2: (List,List) = (Item ($List), $List)\n"
+        "var ptr: \\(List,List) = \\ls2\n"
+        "set ls = (move ls.1, move ptr\\.2)\n"
+        "output std (\\ls)\n"
+    ));
+    assert(all(
+        "(ln 6, col 5): invalid transfer of \"ls\" : active pointer in scope (ln 5)",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "var ls: (List,List) = (Item ($List), $List)\n"
+        "var ptr: \\(List,List) = \\ls\n"
+        "set ls = (move ls.1, move ptr\\.2)\n"  // could accept if recognize that \ls above is consumed by ptr here
+        "output std (\\ls)\n"
+    ));
+    assert(all(
+        "($,$)\n",
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "var ls: (List,List) = (Item ($List), $List)\n"
+        "set ls.1 = move ls.2\n"
+        "output std (\\ls)\n"
+    ));
 
     // LOOP
     assert(all(
