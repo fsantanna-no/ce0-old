@@ -114,7 +114,8 @@ automatically deallocated when the enclosing scope terminates:
 -- scope terminates, memory pointed by `x` is deallocated
 ```
 
-A variable can be pointed or *borrowed* with the prefix backslash `\`.
+A variable can be shared, or pointed, or borrowed with the prefix backslash
+`\`.
 In this case, both the owner and the pointer refer to the same allocated value:
 
 ```
@@ -134,9 +135,24 @@ var y: \List = \x    ^
    \_/
 ```
 
-We distinguish a strong reference from a pointer in the sense that the former
-owns the actual value and does not require [pointer operations](TODO) to
+We distinguish an owned reference from a pointer in the sense that the latter
+does not own the actual value and requires [pointer operations](TODO) to
 manipulate it.
+
+A recursive type that contains pointers to itself is classified as *growable*
+(as opposed to the default *movable*):
+
+```
+type List_With_Tail {
+    List_WT: (List, \List)  -- list + pointer to tail
+}
+```
+
+Values of growable types can only grow and are not allowed to move its
+subparts:
+
+`TODO`
+
 
 ## Ownership and Borrowing
 

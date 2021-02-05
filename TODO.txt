@@ -1,3 +1,8 @@
+- append de tests.ce
+    - problema: nao consigo criar uma funcao, pois a mesma precisa guardar 2x
+      ponteiros que sao inicialmente nao relacionados dentro do "arg" que passa
+      a relaciona-los
+        - se os tipos forem independentes, poderia ser detectado
 - growable
     - runtime verification
         - exemplo com ponteiro na arvore, ex., lista + tail
