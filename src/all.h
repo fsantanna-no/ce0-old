@@ -6,6 +6,8 @@
 #include "exec.h"
 #include "sets.h"
 #include "env.h"
+#include "types.h"
+#include "ptrs.h"
 #include "txs.h"
 #include "owner.h"
 #include "code.h"

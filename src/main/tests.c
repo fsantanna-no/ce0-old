@@ -40,13 +40,7 @@ int all (const char* xp, char* src) {
 #endif
         return !strcmp(ALL.err, xp);
     }
-    if (!txs(s)) {
-#ifdef DEBUG
-        puts(ALL.err);
-#endif
-        return !strcmp(ALL.err, xp);
-    }
-    if (!owner(s)) {
+    if (!types(s) || !ptrs(s) || !txs(s) || !owner(s)) {
 #ifdef DEBUG
         puts(ALL.err);
 #endif
