@@ -98,7 +98,7 @@ int expr_isprefix (Expr* e1, Expr* e2) {
 //  - missing `move` before transfer    (set x = move y)
 //  - partial transfer in `growable`    (set x = move y.Item!.2)
 //  - dnref transfer                    (set x = move y\)
-int check_txs_exprs (Env* env, Expr* E, int iscycle) {
+int check_txs_exprs (Env* env, Expr* E) {
 
     int vars_n=0; Expr* vars[256];
     {
@@ -516,20 +516,17 @@ _OK_:
 int owner (Stmt* s) {
     MOVES_N = 0;
 
-// TODO
-int iscycle = 0;
-
     // SET_TXS_ALL
     {
         int fs (Stmt* s) {
             switch (s->sub) {
                 case STMT_VAR:
-                    if (!check_txs_exprs(s->env, s->Var.init,0)) {
+                    if (!check_txs_exprs(s->env, s->Var.init)) {
                         return VISIT_ERROR;
                     }
                     break;
                 case STMT_SET:
-                    if (!check_txs_exprs(s->env, s->Set.src,iscycle)) {
+                    if (!check_txs_exprs(s->env, s->Set.src)) {
                         return VISIT_ERROR;
                     }
                     break;
@@ -542,13 +539,13 @@ int iscycle = 0;
             switch (e->sub) {
                 case EXPR_CALL:
                     if (strcmp(e->Call.func->tk.val.s,"move")) {
-                        if (!check_txs_exprs(env, e->Call.arg,0)) {
+                        if (!check_txs_exprs(env, e->Call.arg)) {
                             return VISIT_ERROR;
                         }
                     }
                     break;
                 case EXPR_CONS:
-                    if (!check_txs_exprs(env, e->Cons,0)) {
+                    if (!check_txs_exprs(env, e->Cons)) {
                         return VISIT_ERROR;
                     }
                     break;

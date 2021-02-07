@@ -683,20 +683,26 @@ void code_stmt (Stmt* s) {
 
             // if "dst" is ishasrec, need to free it
             if (env_type_ishasrec(s->env,dst)) {
+                // Current value must be NULL in growable:
+                //      x.Field! = ...  -- if x ishasptr
+                //      x\ = Item ...   -- not sure if ishasptr (maybe points to subtree w/o pointers)
+                // if "dst" is dnref, current value must be NULL (b/c of growable?)
+                Expr* left = expr_leftmost(s->Set.dst);
+                Type* tp_left __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(s->env, left);
+                if (s->Set.dst->sub != EXPR_VAR &&
+                    (env_type_ishasptr(s->env,tp_left) || s->Set.dst->sub==EXPR_DNREF))
+                {
+                    out("assert((");
+                    code_expr(s->env, s->Set.dst, 0);
+                    out(") == NULL);\n");
+                }
+
                 // ignore cleanup for _ret_
                 if (s->Set.dst->sub!=EXPR_VAR || strcmp(s->Set.dst->tk.val.s,"_ret_")) {
                     fprintf(ALL.out, "%s_free(&", to_ce(dst));
                     code_expr(s->env, s->Set.dst, 0);
                     out(");\n");
                 }
-            }
-
-            // if "dst" is dnref, current value must be NULL
-            //      x\ = Item ...
-            if (env_type_ishasrec(s->env,dst) && s->Set.dst->sub==EXPR_DNREF) {
-                out("assert((");
-                code_expr(s->env, s->Set.dst, 0);
-                out(") == NULL);\n");
             }
 
             if (dst->sub != TYPE_UNIT) {
