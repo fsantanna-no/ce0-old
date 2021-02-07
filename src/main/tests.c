@@ -34,13 +34,8 @@ int all (const char* xp, char* src) {
     dump_stmt(s);
 #endif
     assert(sets(s));
-    if (!env(s)) {
-#ifdef DEBUG
-        puts(ALL.err);
-#endif
-        return !strcmp(ALL.err, xp);
-    }
-    if (!types(s) || !ptrs(s) || !txs(s) || !owner(s)) {
+
+    if (!dcls(s) || !types(s) || !ptrs(s) || !txs(s) || !owner(s)) {
 #ifdef DEBUG
         puts(ALL.err);
 #endif
@@ -663,7 +658,6 @@ void t_env (void) {
         assert(all_init(NULL, stropen("r", 0, "var x: Int = 10")));
         assert(parser(&s));
         assert(sets(s));
-        assert(env(s));
         int n=0; Expr* vars[256]; int uprefs[256];
         env_held_vars(s->Seq.s2->env, s->Seq.s2->Var.init, &n, vars, uprefs);
         assert(n == 0);
@@ -676,7 +670,6 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(sets(s));
-        assert(env(s));
         int n=0; Expr* vars[256]; int uprefs[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
         assert(n == 1);
@@ -692,7 +685,6 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(sets(s));
-        assert(env(s));
         int n=0; Expr* vars[256]; int uprefs[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
         assert(n == 2);
@@ -707,7 +699,6 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(sets(s));
-        assert(env(s));
         int n=0; Expr* vars[256]; int uprefs[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
         assert(n == 2);
@@ -723,7 +714,6 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(sets(s));
-        assert(env(s));
         int n=0; Expr* vars[256]; int uprefs[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
         assert(n == 1);
@@ -739,7 +729,6 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(sets(s));
-        assert(env(s));
         int n=0; Expr* vars[256]; int uprefs[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
         assert(n == 1);
@@ -754,7 +743,6 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(sets(s));
-        assert(env(s));
         int n=0; Expr* vars[256]; int uprefs[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
         assert(n == 1);
@@ -771,7 +759,6 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(sets(s));
-        assert(env(s));
         int n=0; Expr* vars[256]; int uprefs[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
         assert(n == 1);
@@ -789,7 +776,6 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(sets(s));
-        assert(env(s));
         int n=0; Expr* vars[256]; int uprefs[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
         assert(n == 1);
@@ -807,7 +793,6 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(sets(s));
-        assert(env(s));
         int n=0; Expr* vars[256]; int uprefs[256];
         env_held_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, &n, vars, uprefs);
         assert(n == 1);
@@ -820,7 +805,6 @@ void t_env (void) {
         assert(all_init(NULL, stropen("r", 0, "var x: Int = 10")));
         assert(parser(&s));
         assert(sets(s));
-        assert(env(s));
         int vars_n=0;
         void f (Expr* e_, Expr* e) {
             assert(vars_n < 255);
@@ -842,7 +826,6 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(sets(s));
-        assert(env(s));
         int vars_n=0;
         void f (Expr* e_, Expr* e) {
             assert(vars_n < 255);
@@ -865,7 +848,6 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(sets(s));
-        assert(env(s));
         int vars_n=0; Expr* vars[256];
         void f (Expr* e_, Expr* e) {
             assert(vars_n < 255);
@@ -890,7 +872,6 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(sets(s));
-        assert(env(s));
         int vars_n=0; Expr* vars[256];
         void f (Expr* e_, Expr* e) {
             assert(vars_n < 255);
@@ -915,7 +896,6 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(sets(s));
-        assert(env(s));
         int vars_n=0; Expr* vars[256];
         void f (Expr* e_, Expr* e) {
             assert(vars_n < 255);
@@ -942,7 +922,6 @@ void t_env (void) {
         )));
         assert(parser(&s));
         assert(sets(s));
-        assert(env(s));
         int vars_n=0; Expr* vars[256];
         //dump_stmt(s->Seq.s2->Seq.s2);
         void f (Expr* e_, Expr* e) {
@@ -1066,7 +1045,6 @@ void t_code (void) {
         assert(s->Seq.s1->sub == STMT_VAR);
         assert(s->Seq.s2->sub == STMT_CALL);
         assert(sets(s));
-        assert(env(s));
         code(s);
         fclose(ALL.out);
         char* ret =

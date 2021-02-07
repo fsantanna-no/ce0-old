@@ -18,6 +18,42 @@ Sub* env_find_sub (Env* env, const char* sub) {
     return NULL;
 }
 
+int type_is_sup_sub (Type* sup, Type* sub, int isset) {
+    if (sup->sub==TYPE_ANY || sub->sub==TYPE_ANY) {
+        return 1;
+    }
+    if (sup->sub==TYPE_NATIVE || sub->sub==TYPE_NATIVE) {
+        return 1;
+    }
+    if (sup->sub != sub->sub) {
+        return 0;   // different TYPE_xxx
+    }
+    if (sup->isptr != sub->isptr) {
+        return 0;
+    }
+    switch (sup->sub) {
+        case TYPE_USER:
+            //printf("%s vs %s\n", sup->User.val.s, sub->User.val.s);
+            return (sub->User.enu==TK_ERR || !strcmp(sup->User.val.s,sub->User.val.s));
+                // TODO: clone
+
+        case TYPE_TUPLE:
+            if (sup->Tuple.size != sub->Tuple.size) {
+                return 0;
+            }
+            for (int i=0; i<sup->Tuple.size; i++) {
+                if (!type_is_sup_sub(sup->Tuple.vec[i], sub->Tuple.vec[i], 0)) {
+                    return 0;
+                }
+            }
+            break;
+
+        default:
+            break;
+    }
+    return 1;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 int types_expr (Env* env, Expr* e) {
