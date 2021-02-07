@@ -6,11 +6,7 @@
 #include "exec.h"
 #include "sets.h"
 #include "env.h"
-#include "dcls.h"
-#include "types.h"
-#include "ptrs.h"
-#include "txs.h"
-#include "owner.h"
+#include "check.h"
 #include "code.h"
 #include "dump.h"
 

@@ -375,7 +375,7 @@ _OK_:
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int owner (Stmt* s) {
+int check_owner (Stmt* s) {
     // CHECK_TXS
     if (!visit_stmt(0,s,check_exec_vars,NULL,NULL)) {
         return 0;

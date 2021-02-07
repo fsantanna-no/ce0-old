@@ -32,7 +32,7 @@ void set_dst_ptr_deepest (Stmt* dst, Env* env, Expr* src) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int ptrs_stmt (Stmt* s) {
+static int fs (Stmt* s) {
     switch (s->sub) {
         case STMT_VAR: {
             if (env_type_ishasptr(s->env,s->Var.type) && strcmp(s->Var.tk.val.s,"arg")) {
@@ -84,7 +84,7 @@ int ptrs_stmt (Stmt* s) {
     return EXEC_CONTINUE;
 }
 
-int ptrs_expr (Env* env, Expr* e) {
+static int fe (Env* env, Expr* e) {
     if (e->sub != EXPR_TUPLE) {
         return EXEC_CONTINUE;
     }
@@ -110,20 +110,20 @@ int ptrs_expr (Env* env, Expr* e) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int ptrs (Stmt* S) {
-    if (!exec(stmt_xmost(S,0),NULL,ptrs_stmt,ptrs_expr)) {
+int check_ptrs (Stmt* S) {
+    if (!exec(stmt_xmost(S,0),NULL,fs,fe)) {
         return 0;
     }
 
-    int fs (Stmt* s) {
+    int fs2 (Stmt* s) {
         if (s->sub==STMT_FUNC && s->Func.body!=NULL &&
-            !exec(stmt_xmost(s->Func.body,0),NULL,ptrs_stmt,ptrs_expr)
+            !exec(stmt_xmost(s->Func.body,0),NULL,fs,fe)
         ) {
             return VISIT_ERROR;
         }
         return VISIT_CONTINUE;
     }
-    if (!visit_stmt(0,S,fs,NULL,NULL)) {
+    if (!visit_stmt(0,S,fs2,NULL,NULL)) {
         return 0;
     }
     return 1;

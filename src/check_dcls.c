@@ -35,14 +35,14 @@ int ftk (Env* env, Tk* tk, char* var_type) {
     }
 }
 
-int decls_type (Env* env, Type* tp) {
+int ft (Env* env, Type* tp) {
     if (tp->sub == TYPE_USER) {
         return ftk(env, &tp->User, "type");
     }
     return VISIT_CONTINUE;
 }
 
-int decls_expr (Env* env, Expr* e) {
+int fe (Env* env, Expr* e) {
     switch (e->sub) {
         case EXPR_NULL:
             return ftk(env, &e->tk, "type");
@@ -56,7 +56,7 @@ int decls_expr (Env* env, Expr* e) {
             if (!ftk(env, &e->Call.func->tk, "function")) {
                 return 0;
             }
-            if (!visit_expr(1,env,e->Call.arg,decls_expr)) {
+            if (!visit_expr(1,env,e->Call.arg,fe)) {
                 return 0;
             }
             return VISIT_BREAK;
@@ -95,8 +95,8 @@ int decls_expr (Env* env, Expr* e) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int dcls (Stmt* s) {
-    if (!visit_stmt(0,s,NULL,decls_expr,decls_type)) {
+int check_dcls (Stmt* s) {
+    if (!visit_stmt(0,s,NULL,fe,ft)) {
         return 0;
     }
     return 1;

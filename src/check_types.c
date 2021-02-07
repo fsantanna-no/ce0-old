@@ -56,7 +56,7 @@ int type_is_sup_sub (Type* sup, Type* sub, int isset) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int types_expr (Env* env, Expr* e) {
+static int fe (Env* env, Expr* e) {
     switch (e->sub) {
         case EXPR_UNIT:
         case EXPR_UNK:
@@ -149,7 +149,7 @@ int types_expr (Env* env, Expr* e) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int types_stmt (Stmt* s) {
+static int fs (Stmt* s) {
     switch (s->sub) {
         case STMT_NONE:
         case STMT_USER:
@@ -207,8 +207,8 @@ int types_stmt (Stmt* s) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int types (Stmt* s) {
-    if (!visit_stmt(1,s,types_stmt,types_expr,NULL)) {
+int check_types (Stmt* s) {
+    if (!visit_stmt(1,s,fs,fe,NULL)) {
         return 0;
     }
     return 1;

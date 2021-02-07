@@ -35,7 +35,7 @@ int all (const char* xp, char* src) {
 #endif
     assert(sets(s));
 
-    if (!dcls(s) || !types(s) || !ptrs(s) || !txs(s) || !owner(s)) {
+    if (!check_dcls(s) || !check_types(s) || !check_ptrs(s) || !check_txs(s) || !check_owner(s)) {
 #ifdef DEBUG
         puts(ALL.err);
 #endif

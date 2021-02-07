@@ -144,7 +144,7 @@ int check_txs_exprs (Env* env, Expr* E) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int txs (Stmt* s) {
+int check_txs (Stmt* s) {
     MOVES_N = 0;
 
     // SET_TXS_ALL
