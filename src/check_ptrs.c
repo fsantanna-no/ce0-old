@@ -32,7 +32,7 @@ void set_dst_ptr_deepest (Stmt* dst, Env* env, Expr* src) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static int fs (Stmt* s) {
+static int FS (Stmt* s) {
     switch (s->sub) {
         case STMT_VAR: {
             if (env_type_ishasptr(s->env,s->Var.type) && strcmp(s->Var.tk.val.s,"arg")) {
@@ -63,8 +63,8 @@ static int fs (Stmt* s) {
             Tk* src_var = &dst->Var.ptr_deepest->Var.tk;
 
             // my blk depth vs assign depth
+            char err[TK_BUF+256];
             if (dst->env->depth < dst->Var.ptr_deepest->env->depth) {
-                char err[TK_BUF+256];
                 if (s->Set.dst->sub==EXPR_VAR && !strcmp(s->Set.dst->tk.val.s,"_ret_")) {
                     sprintf(err, "invalid return : cannot return local pointer \"%s\" (ln %d)",
                             src_var->val.s, src_var->lin);
@@ -72,6 +72,10 @@ static int fs (Stmt* s) {
                     sprintf(err, "invalid assignment : cannot hold pointer \"%s\" (ln %d) in outer scope",
                             src_var->val.s, src_var->lin);
                 }
+                err_message(&s->tk, err);
+                return EXEC_ERROR;
+            } else if (!strcmp(dst->Var.tk.val.s,"arg")) {
+                sprintf(err, "invalid assignment : cannot hold pointer in \"arg\" : unkown scope");
                 err_message(&s->tk, err);
                 return EXEC_ERROR;
             }
@@ -84,46 +88,22 @@ static int fs (Stmt* s) {
     return EXEC_CONTINUE;
 }
 
-static int fe (Env* env, Expr* e) {
-    if (e->sub != EXPR_TUPLE) {
-        return EXEC_CONTINUE;
-    }
-
-    // EXPR_TUPLE
-
-    int n=0; Expr* vars[256]; int uprefs[256];
-    env_held_vars(env, e, &n, vars, uprefs);
-    int depth = -1;
-    for (int i=0; i<n; i++) {
-        Stmt* var = env_expr_leftmost_decl(env, vars[i]);
-        assert(var!=NULL && var->sub==STMT_VAR);
-        int tmp = (uprefs[i] ? var->env->depth : var->Var.ptr_deepest->env->depth);
-        if (depth!=-1 && depth>tmp) {
-//printf(">>> %d vs %d [%d]\n", depth, tmp, uprefs[i]);
-            err_message(&e->tk, "invalid tuple : pointers must be ordered from outer to deep scopes");
-            return EXEC_ERROR;
-        }
-        depth = tmp;
-    }
-    return EXEC_CONTINUE;
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 
 int check_ptrs (Stmt* S) {
-    if (!exec(stmt_xmost(S,0),NULL,fs,fe)) {
+    if (!exec(stmt_xmost(S,0),NULL,FS,NULL)) {
         return 0;
     }
 
-    int fs2 (Stmt* s) {
+    int fs (Stmt* s) {
         if (s->sub==STMT_FUNC && s->Func.body!=NULL &&
-            !exec(stmt_xmost(s->Func.body,0),NULL,fs,fe)
+            !exec(stmt_xmost(s->Func.body,0),NULL,FS,NULL)
         ) {
             return VISIT_ERROR;
         }
         return VISIT_CONTINUE;
     }
-    if (!visit_stmt(0,S,fs2,NULL,NULL)) {
+    if (!visit_stmt(0,S,fs,NULL,NULL)) {
         return 0;
     }
     return 1;

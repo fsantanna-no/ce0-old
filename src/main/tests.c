@@ -1131,54 +1131,6 @@ void t_all (void) {
 goto __XXX__;
 __XXX__:
 
-#if 0
-    assert(all(
-        //"(ln 10, col 11): invalid tuple : pointers with different scopes",
-        "10\n",
-        "func f: \\Int -> \\Int {\n"
-        "   return arg\n"
-        "}\n"
-        "output std 0\n"
-    ));
-
-    assert(all(
-        //"(ln 10, col 11): invalid tuple : pointers with different scopes",
-        "10\n",
-        "type Tp { Tp1: \\Int }\n"
-        "func f : (\\Tp,\\Int) -> () {\n"
-        "   set arg.1\\.Tp1! = arg.2\n"
-        "   return \n"
-        "}\n"
-        "var j: Int = 0\n"
-        "   var tp: Tp = Tp1 \\j\n"
-        "{\n"
-        "var i: Int = 10\n"
-        "   call f (\\tp,\\i)\n"
-        "   output std tp.Tp1!\\\n"
-        "}\n"
-        "   output std tp.Tp1!\\\n"
-    ));
-assert(0);
-#endif
-
-#if 0
-    assert(all(
-        "TODO",
-        "type rec List {\n"
-        "   Item: (\\List,List)\n"
-        "}\n"
-        "func f: () -> List {\n"
-        "   var x: \\List = _NULL\n"
-        "   var l: List = Item (x,$List)\n"
-        "   var l: List = Item (x,$List)\n"
-        "   return move l\n"
-        "}\n"
-        "var x: List = call f ()\n"
-        "output std (\\x)\n"
-    ));
-assert(0);
-#endif
-
     // ERROR
     assert(all(
         "(ln 1, col 1): expected statement : have \"/\"",
@@ -1697,8 +1649,9 @@ assert(0);
 
     // arg.1 > arg.2
     assert(all(
+        "(ln 3, col 4): invalid assignment : cannot hold pointer in \"arg\" : unkown scope",
         //"(ln 3, col 4): invalid assignment : cannot hold pointer \"arg\" (ln 2) in outer scope",
-        "1\n",
+        //"1\n",
         "type Tp { Tp1: \\Int }\n"
         "func f : (\\Tp,\\Int) -> () {\n"
         "   set arg.1\\.Tp1! = arg.2\n"
@@ -1707,8 +1660,9 @@ assert(0);
         "output std 1\n"
     ));
     assert(all(
+        "(ln 3, col 4): invalid assignment : cannot hold pointer in \"arg\" : unkown scope",
         //"(ln 10, col 11): invalid tuple : pointers with different scopes",
-        "10\n",
+        //"10\n",
         "type Tp { Tp1: \\Int }\n"
         "func f : (\\Int,\\Tp) -> () {\n"
         "   set arg.2\\.Tp1! = arg.1\n"
@@ -1723,7 +1677,8 @@ assert(0);
         "}\n"
     ));
     assert(all(
-        "(ln 12, col 12): invalid tuple : pointers must be ordered from outer to deep scopes",
+        "(ln 5, col 5): invalid assignment : cannot hold pointer in \"arg\" : unkown scope",
+        //"(ln 12, col 12): invalid tuple : pointers must be ordered from outer to deep scopes",
         //"(ln 12, col 12): invalid tuple : pointers with different scopes",
         "type Tp {\n"
         "    Tp1: \\Int\n"
@@ -1775,6 +1730,40 @@ assert(0);
         "(ln 1, col 1): invalid return : no enclosing function",
         "return \n"
     ));
+    assert(all(
+        "10\n",
+        "func f: \\Int -> \\Int {\n"
+        "   return arg\n"
+        "}\n"
+        "var x: Int = 10\n"
+        "output std (f (\\x))\\\n"
+    ));
+
+    assert(all(
+        "(ln 3, col 4): invalid assignment : cannot hold pointer in \"arg\" : unkown scope",
+        "type Tp { Tp1: \\Int }\n"
+        "func f : (\\Tp,\\Int) -> () {\n"
+        "   set arg.1\\.Tp1! = arg.2\n"
+        "   return \n"
+        "}\n"
+        "var j: Int = 0\n"
+        "   var tp: Tp = Tp1 \\j\n"
+        "{\n"
+        "var i: Int = 10\n"
+        "   call f (\\tp,\\i)\n"
+        "}\n"
+        "output std tp.Tp1!\\\n"
+    ));
+    assert(all(
+        "(ln 4, col 4): invalid assignment : cannot hold pointer \"x\" (ln 3) in outer scope",
+        "type Tp { Tp1: \\Int }\n"
+        "func f : (\\Tp,\\Int) -> () {\n"
+        "   var x: Int = 10\n"
+        "   set arg.1\\.Tp1! = \\x\n"
+        "   return \n"
+        "}\n"
+    ));
+
 
     // list / tail
     assert(all(
@@ -1831,7 +1820,8 @@ assert(0);
     ));
 
     assert(all(
-        "True\n",
+        //"True\n",
+        "(ln 6, col 4): invalid assignment : cannot hold pointer in \"arg\" : unkown scope",
         "type Bool {\n"
         "    False: ()\n"
         "    True:  ()\n"
@@ -2978,7 +2968,8 @@ assert(0);
         "output std (\\l)\n"
     ));
     assert(all(
-        "LT_Type (Item (10,Item (20,$)),@)\n",
+        "(ln 18, col 4): invalid assignment : cannot hold pointer in \"arg\" : unkown scope",
+        //"LT_Type (Item (10,Item (20,$)),@)\n",
         "type rec List {\n"
         "    Item: (Int, List)\n"
         "}\n"
