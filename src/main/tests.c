@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-// check visually 3 errors
+// check visually 5 errors
 
 #define DEBUG
 //#define VALGRIND
@@ -35,6 +35,12 @@ int all (const char* xp, char* src) {
 #endif
     assert(sets(s));
     if (!env(s)) {
+#ifdef DEBUG
+        puts(ALL.err);
+#endif
+        return !strcmp(ALL.err, xp);
+    }
+    if (!txs(s)) {
 #ifdef DEBUG
         puts(ALL.err);
 #endif
@@ -815,8 +821,6 @@ void t_env (void) {
     }
 
     // ENV_TXED_VARS
-    typedef void (*F_txed_vars) (Expr* e_, Expr* e);
-    void env_txed_vars (Env* env, Expr* e, F_txed_vars f);
     {
         Stmt* s;
         assert(all_init(NULL, stropen("r", 0, "var x: Int = 10")));
@@ -833,7 +837,7 @@ void t_env (void) {
                 vars_n++;
             }
         }
-        env_txed_vars(s->Seq.s2->env, s->Seq.s2->Var.init, f);
+        txs_txed_vars(s->Seq.s2->env, s->Seq.s2->Var.init, f);
         assert(vars_n == 0);
     }
     {
@@ -855,7 +859,7 @@ void t_env (void) {
                 vars_n++;
             }
         }
-        env_txed_vars(s->Seq.s2->Seq.s1->env, s->Seq.s2->Seq.s1->Var.init, f);
+        txs_txed_vars(s->Seq.s2->Seq.s1->env, s->Seq.s2->Seq.s1->Var.init, f);
         assert(vars_n == 0);
     }
     {
@@ -878,7 +882,7 @@ void t_env (void) {
                 vars[vars_n++] = e_;
             }
         }
-        env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, f);
+        txs_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, f);
         assert(vars_n == 1);
         assert(!strcmp(vars[0]->tk.val.s, "x"));
     }
@@ -903,7 +907,7 @@ void t_env (void) {
                 vars[vars_n++] = e_;
             }
         }
-        env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, f);
+        txs_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, f);
         assert(vars_n == 1);
         assert(vars[0]->sub==EXPR_DNREF);
     }
@@ -928,7 +932,7 @@ void t_env (void) {
                 vars[vars_n++] = e_;
             }
         }
-        env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, f);
+        txs_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, f);
         assert(vars_n == 2);
         assert(!strcmp(vars[0]->tk.val.s, "x"));
         assert(vars[1]->sub==EXPR_DNREF);
@@ -956,7 +960,7 @@ void t_env (void) {
                 vars[vars_n++] = e_;
             }
         }
-        env_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, f);
+        txs_txed_vars(s->Seq.s2->Seq.s2->env, s->Seq.s2->Seq.s2->Var.init, f);
         assert(vars_n == 2);
         assert(!strcmp(vars[0]->tk.val.s, "x"));
         assert(vars[1]->sub==EXPR_DNREF);
@@ -1154,6 +1158,54 @@ void t_code (void) {
 void t_all (void) {
 goto __XXX__;
 __XXX__:
+
+#if 0
+    assert(all(
+        //"(ln 10, col 11): invalid tuple : pointers with different scopes",
+        "10\n",
+        "func f: \\Int -> \\Int {\n"
+        "   return arg\n"
+        "}\n"
+        "output std 0\n"
+    ));
+
+    assert(all(
+        //"(ln 10, col 11): invalid tuple : pointers with different scopes",
+        "10\n",
+        "type Tp { Tp1: \\Int }\n"
+        "func f : (\\Tp,\\Int) -> () {\n"
+        "   set arg.1\\.Tp1! = arg.2\n"
+        "   return \n"
+        "}\n"
+        "var j: Int = 0\n"
+        "   var tp: Tp = Tp1 \\j\n"
+        "{\n"
+        "var i: Int = 10\n"
+        "   call f (\\tp,\\i)\n"
+        "   output std tp.Tp1!\\\n"
+        "}\n"
+        "   output std tp.Tp1!\\\n"
+    ));
+assert(0);
+#endif
+
+#if 0
+    assert(all(
+        "TODO",
+        "type rec List {\n"
+        "   Item: (\\List,List)\n"
+        "}\n"
+        "func f: () -> List {\n"
+        "   var x: \\List = _NULL\n"
+        "   var l: List = Item (x,$List)\n"
+        "   var l: List = Item (x,$List)\n"
+        "   return move l\n"
+        "}\n"
+        "var x: List = call f ()\n"
+        "output std (\\x)\n"
+    ));
+assert(0);
+#endif
 
     // ERROR
     assert(all(
@@ -2068,6 +2120,20 @@ __XXX__:
         "output std d\n"                 // ok: $Nat
     ));
     assert(all(
+        "",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "type Xx {\n"
+        "   Xx1: (Nat,\\Nat)\n"
+        "}\n"
+        "var p: \\Nat = _NULL\n"
+        "var x: Xx = Xx1 (Succ Succ $Nat,p)\n"
+        "set x.Xx1!.2 = \\x.Xx1!.1.Succ!\n"
+        "set x.Xx1!.1 = $Nat\n"
+        "output std x.Xx1!.2\n"
+    ));
+    assert(all(
         "$\n",
         //"(ln 7, col 16): invalid access to \"a\" : ownership was transferred (ln 6)",
         //"(ln 6, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
@@ -2540,6 +2606,17 @@ __XXX__:
         "var l: List = Item $List\n"
         "var t: \\List = \\l.Item!\n"
         "set t\\ = Item $List\n"
+        "set t = \\t\\.Item!\n"
+        "output std (\\l)\n"
+    ));
+    assert(all(
+        "",     // ERROR
+        "type rec List {\n"
+        "    Item: List\n"
+        "}\n"
+        "var l: List = Item $List\n"
+        "var t: \\List = \\l\n"
+        "set t\\ = Item $List\n"        // cannot overwrite subpart
         "set t = \\t\\.Item!\n"
         "output std (\\l)\n"
     ));
