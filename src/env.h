@@ -12,3 +12,6 @@ Type* env_sub_id_to_user_type (Env* env, const char* sub);
 Stmt* env_tk_to_type_to_user_stmt (Env* env, Tk* tk);
 Stmt* env_expr_leftmost_decl (Env* env, Expr* e);
 void  env_held_vars     (Env* env, Expr* e, int* vars_n, Expr** vars, int* uprefs);
+
+typedef void (*F_txed_vars) (Expr* e_, Expr* e);
+void txs_txed_vars (Env* env, Expr* e, F_txed_vars f);

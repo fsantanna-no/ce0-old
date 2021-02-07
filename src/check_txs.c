@@ -9,59 +9,6 @@ static int MOVES_N = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void txs_txed_vars (Env* env, Expr* e, F_txed_vars f) {
-    Type* TP __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e);
-    if (!env_type_ishasrec(env,TP)) {
-        return;
-    }
-
-    Expr* e_ = e;
-    if (e->sub==EXPR_CALL && e->Call.func->sub==EXPR_VAR && !strcmp(e->Call.func->tk.val.s,"move")) {
-        e = e->Call.arg;
-    }
-
-    f(e_, e);
-
-    switch (e->sub) {
-        case EXPR_VAR:
-        case EXPR_NULL:
-        case EXPR_DNREF:
-        case EXPR_DISC:
-        case EXPR_INDEX:
-            break;
-        case EXPR_UNIT:
-        case EXPR_UNK:
-        case EXPR_NATIVE:
-        case EXPR_INT:
-        case EXPR_PRED:
-        case EXPR_UPREF:
-            assert(0);      // cannot be ishasrec
-            break;
-
-        case EXPR_TUPLE:
-            for (int i=0; i<e->Tuple.size; i++) {
-                txs_txed_vars(env, e->Tuple.vec[i], f);
-            }
-            break;
-
-        case EXPR_CALL: // tx for args is checked elsewhere (here, only if return type is also ishasrec)
-            // func may transfer its argument back
-            // set x.2 = f(x) where f: T1->T2 { return arg.2 }
-            txs_txed_vars(env, e->Call.arg, f);
-            break;
-
-        case EXPR_CONS: {
-            txs_txed_vars(env, e->Cons, f);
-            break;
-        }
-
-        default:
-            break;
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
 // Check transfers:
 //  - missing `move` before transfer    (set x = move y)
 //  - partial transfer in `growable`    (set x = move y.Item!.2)

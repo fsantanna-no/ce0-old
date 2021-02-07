@@ -23,8 +23,6 @@ int check_ptrs (Stmt* s);
     // "invalid assignment : cannot hold pointer \"%s\" (ln %d) in outer scope"
     // "invalid tuple : pointers must be ordered from outer to deep scopes"
 
-typedef void (*F_txed_vars) (Expr* e_, Expr* e);
-void txs_txed_vars (Env* env, Expr* e, F_txed_vars f);
 int check_txs (Stmt* s);
     // "invalid ownership transfer : expected `move´ before expression"
     // "invalid ownership transfer : mode `growable´ only allows root transfers"
