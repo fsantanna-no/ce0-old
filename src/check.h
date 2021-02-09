@@ -22,6 +22,7 @@ int check_ptrs (Stmt* s);
     // "invalid return : cannot return local pointer \"%s\" (ln %d)"
     // "invalid assignment : cannot hold pointer \"%s\" (ln %d) in outer scope"
     // "invalid assignment : cannot hold pointer in \"arg\" : unkown scope"
+    // "invalid assignment : cannot hold pointer \"%s\" in recursive value"
 
 int check_txs (Stmt* s);
     // "invalid ownership transfer : expected `move´ before expression"

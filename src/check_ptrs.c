@@ -32,10 +32,36 @@ void set_dst_ptr_deepest (Stmt* dst, Env* env, Expr* src) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+#if 0
+static int FE (Env env, Expr* e) {
+    if (e->sub != EXPR_CONS) {
+        return EXEC_CONTINUE;
+    }
+    ;
+}
+#endif
+
 static int FS (Stmt* s) {
     switch (s->sub) {
         case STMT_VAR: {
-            if (env_type_ishasptr(s->env,s->Var.type) && strcmp(s->Var.tk.val.s,"arg")) {
+            int ishasptr = env_type_ishasptr(s->env, s->Var.type);
+            int ishasrec = env_type_ishasrec(s->env, s->Var.type);
+
+            // cannot hold pointer in recursive data
+            // cycle is impossible in var declaration (only possible in set)
+            if (ishasrec) {
+                int n=0; Expr* vars[256]; int uprefs[256];
+                env_held_vars(s->env, s->Var.init, &n, vars, uprefs);
+                if (n > 0) {
+                    char err[TK_BUF+256];
+                    sprintf(err, "invalid assignment : cannot hold pointer \"%s\" in recursive value",
+                            vars[0]->tk.val.s);
+                    err_message(&vars[0]->tk, err);
+                    return EXEC_ERROR;
+                }
+            }
+
+            if (ishasptr && strcmp(s->Var.tk.val.s,"arg")) {
                 s->Var.ptr_deepest = NULL;
             } else {
                 s->Var.ptr_deepest = s;
