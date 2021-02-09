@@ -4,6 +4,75 @@
 
 #include "all.h"
 
+///////////////////////////////////////////////////////////////////////////////
+
+#if 0
+static int FE (Env env, Expr* e) {
+    if (e->sub != EXPR_CONS) {
+        return EXEC_CONTINUE;
+    }
+    ;
+}
+#endif
+
+// Cannot hold pointer in recursive data:
+//      set x.1 = \y    <-- if x is rec, it might be moved outside scope of y
+// Only cycles are allowed:
+//      set x.1 = \x.2
+// Cycles only possible in `set`, but not in `var`.
+
+static int FS1 (Stmt* s) {
+    switch (s->sub) {
+        case STMT_VAR: {
+            int ishasrec = env_type_ishasrec(s->env, s->Var.type);
+            if (ishasrec) {
+                int n=0; Expr* vars[256]; int uprefs[256];
+                env_held_vars(s->env, s->Var.init, &n, vars, uprefs);
+                if (n > 0) {
+                    char err[TK_BUF+256];
+                    sprintf(err, "invalid assignment : cannot hold pointer \"%s\" in recursive value",
+                            vars[0]->tk.val.s);
+                    err_message(&vars[0]->tk, err);
+                    return VISIT_ERROR;
+                }
+            }
+            break;
+        }
+
+        case STMT_SET: {
+            Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(s->env, s->Set.dst);
+            if (!env_type_ishasptr(s->env,tp)) {
+                break;
+            }
+
+            Stmt* dst = env_expr_leftmost_decl(s->env, s->Set.dst);
+            assert(dst->sub == STMT_VAR);
+
+            // cannot hold pointer in recursive data
+            // cycle is impossible in var declaration (only possible in set)
+            int ishasrec = env_type_ishasrec(s->env, dst->Var.type);
+            if (ishasrec) {
+                int n=0; Expr* vars[256]; int uprefs[256];
+                env_held_vars(s->env, s->Set.src, &n, vars, uprefs);
+                if (n > 0) {
+                    char err[TK_BUF+256];
+                    sprintf(err, "invalid assignment : cannot hold pointer \"%s\" in recursive value",
+                            vars[0]->tk.val.s);
+                    err_message(&vars[0]->tk, err);
+                    return VISIT_ERROR;
+                }
+            }
+            break;
+        }
+
+        default:
+            break;
+    }
+    return VISIT_CONTINUE;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 // Rule 7:
 // set DST = \SRC
 // return \SRC
@@ -30,18 +99,7 @@ void set_dst_ptr_deepest (Stmt* dst, Env* env, Expr* src) {
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-
-#if 0
-static int FE (Env env, Expr* e) {
-    if (e->sub != EXPR_CONS) {
-        return EXEC_CONTINUE;
-    }
-    ;
-}
-#endif
-
-static int FS (Stmt* s) {
+static int FS2 (Stmt* s) {
     switch (s->sub) {
         case STMT_VAR: {
             int ishasptr = env_type_ishasptr(s->env, s->Var.type);
@@ -85,6 +143,21 @@ static int FS (Stmt* s) {
             Stmt* dst = env_expr_leftmost_decl(s->env, s->Set.dst);
             assert(dst->sub == STMT_VAR);
 
+            // cannot hold pointer in recursive data
+            // cycle is impossible in var declaration (only possible in set)
+            int ishasrec = env_type_ishasrec(s->env, dst->Var.type);
+            if (ishasrec) {
+                int n=0; Expr* vars[256]; int uprefs[256];
+                env_held_vars(s->env, s->Set.src, &n, vars, uprefs);
+                if (n > 0) {
+                    char err[TK_BUF+256];
+                    sprintf(err, "invalid assignment : cannot hold pointer \"%s\" in recursive value",
+                            vars[0]->tk.val.s);
+                    err_message(&vars[0]->tk, err);
+                    return EXEC_ERROR;
+                }
+            }
+
             set_dst_ptr_deepest(dst, s->env, s->Set.src);
             Tk* src_var = &dst->Var.ptr_deepest->Var.tk;
 
@@ -117,20 +190,27 @@ static int FS (Stmt* s) {
 ///////////////////////////////////////////////////////////////////////////////
 
 int check_ptrs (Stmt* S) {
-    if (!exec(stmt_xmost(S,0),NULL,FS,NULL)) {
+    if (!visit_stmt(0,S,FS1,NULL,NULL)) {
         return 0;
     }
 
-    int fs (Stmt* s) {
-        if (s->sub==STMT_FUNC && s->Func.body!=NULL &&
-            !exec(stmt_xmost(s->Func.body,0),NULL,FS,NULL)
-        ) {
-            return VISIT_ERROR;
+    // ptr_deepest requires EXEC
+    {
+        if (!exec(stmt_xmost(S,0),NULL,FS2,NULL)) {
+            return 0;
         }
-        return VISIT_CONTINUE;
-    }
-    if (!visit_stmt(0,S,fs,NULL,NULL)) {
-        return 0;
+
+        int fs (Stmt* s) {
+            if (s->sub==STMT_FUNC && s->Func.body!=NULL &&
+                !exec(stmt_xmost(s->Func.body,0),NULL,FS2,NULL)
+            ) {
+                return VISIT_ERROR;
+            }
+            return VISIT_CONTINUE;
+        }
+        if (!visit_stmt(0,S,fs,NULL,NULL)) {
+            return 0;
+        }
     }
     return 1;
 }

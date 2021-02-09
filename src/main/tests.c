@@ -1131,17 +1131,6 @@ void t_all (void) {
 goto __XXX__;
 __XXX__:
 
-    assert(all(
-        "(ln 5, col 22): invalid assignment : cannot hold pointer \"x\" in recursive value",
-        "type rec List {\n"
-        "   Item: (\\Int,List)\n"
-        "}\n"
-        "var x: Int = 10\n"
-        "var l: List = Item (\\x,$List)\n"
-        "output std (\\l)\n"
-    ));
-//assert(0);
-
     // ERROR
     assert(all(
         "(ln 1, col 1): expected statement : have \"/\"",
@@ -1773,6 +1762,30 @@ __XXX__:
         "   set arg.1\\.Tp1! = \\x\n"
         "   return \n"
         "}\n"
+    ));
+
+    assert(all(
+        "(ln 5, col 22): invalid assignment : cannot hold pointer \"x\" in recursive value",
+        "type rec List {\n"
+        "   Item: (\\Int,List)\n"
+        "}\n"
+        "var x: Int = 10\n"
+        "var l: List = Item (\\x,$List)\n"
+        "output std (\\l)\n"
+    ));
+    assert(all(
+        "(ln 10, col 27): invalid assignment : cannot hold pointer \"x\" in recursive value",
+        "type Maybe_Int {\n"
+        "   None_Int: ()\n"
+        "   Some_Int: \\Int\n"
+        "}\n"
+        "type rec Nat {\n"
+        "   Succ: (Nat,Maybe_Int)\n"
+        "}\n"
+        "var x: Int = 10\n"
+        "var l: Nat = Succ ($Nat,None_Int)\n"
+        "set l.Succ!.2 = Some_Int \\x\n"
+        "output std (\\l)\n"
     ));
 
 
