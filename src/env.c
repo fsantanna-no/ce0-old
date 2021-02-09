@@ -4,6 +4,40 @@
 
 #include "all.h"
 
+///////////////////////////////////////////////////////////////////////////////
+
+int expr_isprefix (Expr* e1, Expr* e2) {
+    if (e2->sub == EXPR_CALL) {
+        assert(e2->Call.func->sub==EXPR_VAR && !strcmp(e2->Call.func->tk.val.s,"move"));
+        e2 = e2->Call.arg;
+    }
+    if (e1->sub == EXPR_VAR) {
+        Expr* e2_ = expr_leftmost(e2);
+        assert(e2_->sub == EXPR_VAR);
+        return !strcmp(e1->tk.val.s,e2_->tk.val.s);
+    }
+    if (e1->sub != e2->sub) {
+        return 0;
+    }
+    switch (e1->sub) {
+        case EXPR_VAR:
+            assert(0);      // handled above
+        case EXPR_DNREF:
+            return expr_isprefix(e1->Dnref, e2->Dnref);
+        case EXPR_INDEX:
+            return (e1->tk.val.n==e2->tk.val.n &&
+                    expr_isprefix(e1->Index.val,e2->Index.val));
+        case EXPR_DISC:
+            return (!strcmp(e1->tk.val.s,e2->tk.val.s) &&
+                    expr_isprefix(e1->Disc.val,e2->Disc.val));
+        default:
+            assert(0);      // impossible in an attribution
+    }
+    assert(0);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 Stmt* env_id_to_stmt (Env* env, const char* id) {
     while (env != NULL) {
         const char* cur = NULL;
@@ -452,6 +486,19 @@ void env_held_vars (Env* env, Expr* e, int* N, Expr** vars, int* uprefs) {
         default:
             break;
     }
+}
+
+Expr* env_held_vars_nonself (Env* env, const char* dst, Expr* src) {
+    static Expr* ret;
+    int vars_n=0; Expr* vars[256]; int uprefs[256];
+    env_held_vars(env, src, &vars_n, vars, uprefs);
+    for (int i=0; i<vars_n; i++) {
+        if (strcmp(dst,vars[i]->tk.val.s)) {
+            ret = vars[i];
+            return ret;
+        }
+     }
+    return NULL;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

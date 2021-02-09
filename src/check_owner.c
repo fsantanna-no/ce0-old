@@ -6,38 +6,6 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int expr_isprefix (Expr* e1, Expr* e2) {
-    if (e2->sub == EXPR_CALL) {
-        assert(e2->Call.func->sub==EXPR_VAR && !strcmp(e2->Call.func->tk.val.s,"move"));
-        e2 = e2->Call.arg;
-    }
-    if (e1->sub == EXPR_VAR) {
-        Expr* e2_ = expr_leftmost(e2);
-        assert(e2_->sub == EXPR_VAR);
-        return !strcmp(e1->tk.val.s,e2_->tk.val.s);
-    }
-    if (e1->sub != e2->sub) {
-        return 0;
-    }
-    switch (e1->sub) {
-        case EXPR_VAR:
-            assert(0);      // handled above
-        case EXPR_DNREF:
-            return expr_isprefix(e1->Dnref, e2->Dnref);
-        case EXPR_INDEX:
-            return (e1->tk.val.n==e2->tk.val.n &&
-                    expr_isprefix(e1->Index.val,e2->Index.val));
-        case EXPR_DISC:
-            return (!strcmp(e1->tk.val.s,e2->tk.val.s) &&
-                    expr_isprefix(e1->Disc.val,e2->Disc.val));
-        default:
-            assert(0);      // impossible in an attribution
-    }
-    assert(0);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
 // How to detect ownership violations?
 //  - Rule 4: transfer ownership and then access again:
 //      var x: Nat = ...            -- owner
@@ -73,6 +41,9 @@ int check_exec_vars (Stmt* S) {
     }
 
     // STMT_VAR (S.x): recursive user type
+
+//puts("-=-=-=-=-=-=");
+//dump_stmt(S);
 
     int txed = 0;              // Tracks if S.x has been transferred:
     Tk* txed_tk = NULL;
@@ -229,19 +200,10 @@ int check_exec_vars (Stmt* S) {
                 //      x.Field! = \x
                 Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(s->env, s->Set.dst);
                 if (tp->isptr) {
-                    int all_cycle = 1;
-                    int vars_n=0; Expr* vars[256]; int uprefs[256];
-                    env_held_vars(s->env, s->Set.src, &vars_n, vars, uprefs);
-                    for (int i=0; i<vars_n; i++) {
-                        assert(vars[i]->sub == EXPR_VAR);
-                        Expr* left = expr_leftmost(s->Set.dst);
-                        assert(left->sub == EXPR_VAR);
-                        if (strcmp(left->tk.val.s,vars[i]->tk.val.s)) {
-                            all_cycle = 0; // at least one strcmp fail
-                            break;
-                        }
-                    }
-                    if (!all_cycle) {
+                    Expr* left = expr_leftmost(s->Set.dst);
+                    assert(left!=NULL && left->sub==EXPR_VAR);
+                    Expr* non = env_held_vars_nonself(s->env, left->tk.val.s, s->Set.src);
+                    if (non != NULL) {
                         add_bws(s->Set.src);
                     }
                     set_txed(s->Set.src);
@@ -305,7 +267,14 @@ _NO_:
                     return err_message(&s->Set.src->tk, err);
                 }
 _OK_:
-                add_bws(s->Set.src);
+                {
+                    Expr* left = expr_leftmost(s->Set.dst);
+                    assert(left!=NULL && left->sub==EXPR_VAR);
+                    Expr* non = env_held_vars_nonself(s->env, left->tk.val.s, s->Set.src);
+                    if (non != NULL) {
+                        add_bws(s->Set.src);
+                    }
+                }
                 set_txed(s->Set.src);
                 return accs(s);
             }
