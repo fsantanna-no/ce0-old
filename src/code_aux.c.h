@@ -120,18 +120,22 @@ void code_clone_tuple (Env* env, Type* tp) {
         tp_, tp_,
         tp_
     );
+    int isfirst = 1;
     for (int i=0; i<tp->Tuple.size; i++) {
         Type* sub = tp->Tuple.vec[i];
-        if (env_type_ishasrec(env,sub)) {
+        if (sub->sub == TYPE_UNIT) {
+            // nothing to clone
+        } else if (env_type_ishasrec(env,sub)) {
             fprintf (ALL.out,
                 "%s clone_%s(&(*v)->_%d)",
-                (i != 0 ? "," : ""),
+                (isfirst ? "" : ","),
                 to_ce(sub),
                 i+1
             );
         } else {
-            fprintf(ALL.out, "%s (*v)->_%d\n", (i != 0 ? "," : ""), i+1);
+            fprintf(ALL.out, "%s (*v)->_%d", (isfirst ? "" : ","), i+1);
         }
+        isfirst = isfirst && (sub->sub == TYPE_UNIT);
     }
     out (
         " };\n"
