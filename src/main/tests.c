@@ -4,7 +4,7 @@
 
 // check visually 5 errors
 
-//#define DEBUG
+#define DEBUG
 //#define VALGRIND
 
 #include "../all.h"
@@ -1131,6 +1131,17 @@ void t_all (void) {
 goto __XXX__;
 __XXX__:
 
+    assert(all(
+        "(ln 5, col 22): invalid assignment : cannot hold pointer \"x\" in recursive value",
+        "type rec List {\n"
+        "   Item: (\\Int,List)\n"
+        "}\n"
+        "var x: Int = 10\n"
+        "var l: List = Item (\\x,$List)\n"
+        "output std (\\l)\n"
+    ));
+//assert(0);
+
     // ERROR
     assert(all(
         "(ln 1, col 1): expected statement : have \"/\"",
@@ -2011,7 +2022,7 @@ __XXX__:
         "output std b\n"
     ));
     assert(all(
-        "(Succ ($),@)\n",
+        "(ln 7, col 29): invalid assignment : cannot hold pointer \"b\" in recursive value",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -2020,6 +2031,28 @@ __XXX__:
         "var b: \\Nat = \\c\n"
         "var a: (Nat,\\Nat) = (move d,b)\n" // precisa desalocar o d
         "var a_: \\(Nat,\\Nat) = \\a\n"
+        "output std a_\n"
+    ));
+    assert(all(
+        "(Succ ($),())\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "var d: Nat = Succ $Nat\n"
+        "var c: Nat = $Nat\n"
+        "var a: (Nat,()) = (move d,())\n" // precisa desalocar o d
+        "var a_: \\(Nat,()) = \\a\n"
+        "output std a_\n"
+    ));
+    assert(all(
+        "((),Succ ($))\n",
+        "type rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "var d: Nat = Succ $Nat\n"
+        "var c: Nat = $Nat\n"
+        "var a: ((),Nat) = ((),move d)\n" // precisa desalocar o d
+        "var a_: \\((),Nat) = \\a\n"
         "output std a_\n"
     ));
     assert(all(
@@ -2032,13 +2065,17 @@ __XXX__:
         "output std b\n"
     ));
     assert(all(
-        "(ln 7, col 14): invalid access to \"c\" : ownership was transferred (ln 6)",
+        "(ln 11, col 14): invalid access to \"c\" : ownership was transferred (ln 10)",
         //"$\n",
-        "type rec Nat {\n"
-        "   Succ: (Nat,\\Nat)\n"
+        "type pre Nat\n"
+        "type Maybe_Nat {\n"
+        "   None_Nat: ()\n"
+        "   Some_Nat: \\Nat\n"
         "}\n"
-        "var nil: \\Nat = _NULL\n"
-        "var c: Nat = Succ ($Nat, nil)\n"
+        "type rec Nat {\n"
+        "   Succ: (Nat,Maybe_Nat)\n"
+        "}\n"
+        "var c: Nat = Succ ($Nat, None_Nat)\n"
         "var a: (Nat,Nat) = ($Nat, move c)\n" // precisa transferir o c
         //"var d: Nat = c\n"               // erro
         "output std (\\c)\n"
@@ -2055,13 +2092,17 @@ __XXX__:
         "output std (\\c)\n"
     ));
     assert(all(
-        "(ln 8, col 16): invalid access to \"a\" : ownership was transferred (ln 7)",
+        "(ln 12, col 16): invalid access to \"a\" : ownership was transferred (ln 11)",
         //"$\n",
-        "type rec Nat {\n"
-        "   Succ: (Nat,\\Nat)\n"
+        "type pre Nat\n"
+        "type Maybe_Nat {\n"
+        "   None_Nat: ()\n"
+        "   Some_Nat: \\Nat\n"
         "}\n"
-        "var nil: \\Nat = _NULL\n"
-        "var c: Nat = Succ ($Nat,nil)\n"
+        "type rec Nat {\n"
+        "   Succ: (Nat,Maybe_Nat)\n"
+        "}\n"
+        "var c: Nat = Succ ($Nat,None_Nat)\n"
         "var a: (Nat,Nat) = ($Nat,move c)\n"
         "var b: (Nat,Nat) = move a\n"        // tx a
         "var d: \\Nat = \\a.2\n"          // no: a is txed
@@ -2070,12 +2111,16 @@ __XXX__:
     assert(all(
         //"$\n",
         //"(ln 7, col 16): invalid access to \"a\" : ownership was transferred (ln 6)",
-        "(ln 7, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
-        "type rec Nat {\n"
-        "   Succ: (Nat,\\Nat)\n"
+        "(ln 11, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
+        "type pre Nat\n"
+        "type Maybe_Nat {\n"
+        "   None_Nat: ()\n"
+        "   Some_Nat: \\Nat\n"
         "}\n"
-        "var x: \\Nat = _NULL\n"
-        "var c: Nat = Succ ($Nat,x)\n"
+        "type rec Nat {\n"
+        "   Succ: (Nat,Maybe_Nat)\n"
+        "}\n"
+        "var c: Nat = Succ ($Nat,None_Nat)\n"
         "var a: (Nat,Nat) = ($Nat,move c)\n"
         "var b: Nat = move a.2\n"            // zera a.2 (a se mantem sem tx)
         "var d: \\Nat = \\a.2\n"
@@ -2086,12 +2131,15 @@ __XXX__:
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "type Xx {\n"
-        "   Xx1: (Nat,\\Nat)\n"
+        "type Maybe_Nat {\n"
+        "   None_Nat: ()\n"
+        "   Some_Nat: \\Nat\n"
         "}\n"
-        "var p: \\Nat = _NULL\n"
-        "var x: Xx = Xx1 (Succ Succ $Nat,p)\n"
-        "set x.Xx1!.2 = \\x.Xx1!.1.Succ!\n"
+        "type Xx {\n"
+        "   Xx1: (Nat,Maybe_Nat)\n"
+        "}\n"
+        "var x: Xx = Xx1 (Succ Succ $Nat,None_Nat)\n"
+        "set x.Xx1!.2 = Some_Nat \\x.Xx1!.1.Succ!\n"
         "set x.Xx1!.1 = $Nat\n"
         "output std x.Xx1!.2\n"
     ));
@@ -2111,13 +2159,17 @@ __XXX__:
     assert(all(
         //"Succ ($)\n",
         //"(ln 8, col 16): invalid access to \"a\" : ownership was transferred (ln 7)",
-        "(ln 8, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
-        "type rec Nat {\n"
-        "   Succ: (Nat,\\Nat)\n"
+        "(ln 12, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
+        "type pre Nat\n"
+        "type Maybe_Nat {\n"
+        "   None_Nat: ()\n"
+        "   Some_Nat: \\Nat\n"
         "}\n"
-        "var x: \\Nat = _NULL\n"
-        "var c: Nat = Succ ($Nat,x)\n"
-        "var e: Nat = Succ ($Nat,x)\n"
+        "type rec Nat {\n"
+        "   Succ: (Nat,Maybe_Nat)\n"
+        "}\n"
+        "var c: Nat = Succ ($Nat,None_Nat)\n"
+        "var e: Nat = Succ ($Nat,None_Nat)\n"
         "var a: (Nat,Nat) = move (move e,move c)\n"
         "var b: Nat = move a.2\n"
         "var d: \\Nat = \\a.1\n"
@@ -2151,13 +2203,17 @@ __XXX__:
     assert(all(
         //"Succ ($)\n",
         //"(ln 7, col 16): invalid access to \"c\" : ownership was transferred (ln 6)",
-        "(ln 7, col 27): invalid ownership transfer : mode `growable´ only allows root transfers",
-        "type rec Nat {\n"
-        "   Succ: (Nat,\\Nat)\n"
+        "(ln 11, col 27): invalid ownership transfer : mode `growable´ only allows root transfers",
+        "type pre Nat\n"
+        "type Maybe_Nat {\n"
+        "   None_Nat: ()\n"
+        "   Some_Nat: \\Nat\n"
         "}\n"
-        "var nil: \\Nat = _NULL\n"
-        "var d: Nat = Succ ($Nat,nil)\n"
-        "var c: Nat = Succ (move d,nil)\n"
+        "type rec Nat {\n"
+        "   Succ: (Nat,Maybe_Nat)\n"
+        "}\n"
+        "var d: Nat = Succ ($Nat,None_Nat)\n"
+        "var c: Nat = Succ (move d,None_Nat)\n"
         "var b: Nat = move c.Succ!.1\n"
         "var e: \\Nat = \\c\n"
         "output std e\n"
@@ -2612,7 +2668,8 @@ __XXX__:
         "output std ()\n"
     ));
     assert(all(
-        "(ln 6, col 29): invalid transfer of \"x\" : active pointer in scope (ln 6)",
+        //"(ln 6, col 29): invalid transfer of \"x\" : active pointer in scope (ln 6)",
+        "(ln 6, col 33): invalid assignment : cannot hold pointer \"x\" in recursive value",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
