@@ -75,15 +75,20 @@ int check_txs_exprs (Env* env, Expr* E) {
             return err_message(&e->tk, err);
         }
 
-        if (ishasptr && (e->sub==EXPR_DISC || e->sub==EXPR_INDEX)) {  // TODO: only in `growable´ mode
-            char err[1024];
-            sprintf(err, "invalid ownership transfer : mode `growable´ only allows root transfers");
-            return err_message(&e->tk, err);
-        } else if (e->sub == EXPR_DNREF) {
+        if (e->sub == EXPR_DNREF) {
             assert(e->Dnref->sub == EXPR_VAR);
             char err[1024];
             sprintf(err, "invalid dnref : cannot transfer value");
             return err_message(&e->Dnref->tk, err);
+        } else if (ishasptr && (e->sub==EXPR_DISC || e->sub==EXPR_INDEX)) {
+            // TODO: only testing "move x.y!". what about?
+            //  - move x.y!.z!
+            //  - move x.2
+            if (e->sub!=EXPR_DISC || e->Disc.val->sub!=EXPR_VAR) {
+                char err[1024];
+                sprintf(err, "invalid ownership transfer : mode `growable´ only allows root transfers");
+                return err_message(&e->tk, err);
+            }
         }
     }
     return 1;

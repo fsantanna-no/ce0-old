@@ -4,7 +4,7 @@
 
 // check visually 5 errors
 
-#define DEBUG
+//#define DEBUG
 //#define VALGRIND
 
 #include "../all.h"
@@ -2151,15 +2151,34 @@ __XXX__:
     assert(all(
         //"Succ ($)\n",
         //"(ln 7, col 16): invalid access to \"c\" : ownership was transferred (ln 6)",
-        "(ln 7, col 26): invalid ownership transfer : mode `growable´ only allows root transfers",
+        "(ln 7, col 27): invalid ownership transfer : mode `growable´ only allows root transfers",
         "type rec Nat {\n"
         "   Succ: (Nat,\\Nat)\n"
         "}\n"
         "var nil: \\Nat = _NULL\n"
         "var d: Nat = Succ ($Nat,nil)\n"
         "var c: Nat = Succ (move d,nil)\n"
-        "var b: Nat = Succ move c.Succ!\n"
+        "var b: Nat = move c.Succ!.1\n"
         "var e: \\Nat = \\c\n"
+        "output std e\n"
+    ));
+    assert(all(
+        "Succ (Succ ($,None_Nat),None_Nat)\n",
+        //"(ln 7, col 16): invalid access to \"c\" : ownership was transferred (ln 6)",
+        //"(ln 7, col 26): invalid ownership transfer : mode `growable´ only allows root transfers",
+        //"(ln 7, col 24): invalid transfer of \"c\" : active pointer in scope (ln 7)",
+        "type pre Nat\n"
+        "type Maybe_Nat {\n"
+        "   None_Nat: ()\n"
+        "   Some_Nat: \\Nat\n"
+        "}\n"
+        "type rec Nat {\n"
+        "   Succ: (Nat,Maybe_Nat)\n"
+        "}\n"
+        "var d: Nat = Succ ($Nat,None_Nat)\n"
+        "var c: Nat = Succ (move d,None_Nat)\n"
+        "var b: Nat = Succ move c.Succ!\n"
+        "var e: \\Nat = \\b\n"
         "output std e\n"
     ));
     assert(all(

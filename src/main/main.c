@@ -50,7 +50,7 @@ int main (int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    if (!parser(&s) || !sets(s) || !env(s) || !owner(s)) {
+    if (!parser(&s) || !sets(s) || !check_dcls(s) || !check_types(s) || !check_ptrs(s) || !check_txs(s) || !check_owner(s)) {
         fprintf(stderr, "%s\n", ALL.err);
         fputs("int main (void) {}", fout);
         exit(EXIT_FAILURE);

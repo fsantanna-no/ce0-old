@@ -426,9 +426,14 @@ void env_held_vars (Env* env, Expr* e, int* N, Expr** vars, int* uprefs) {
                 Expr* var = expr_leftmost(e);
                 assert(var != NULL);
                 assert(var->sub == EXPR_VAR);
-                vars[*N] = var;
-                uprefs[*N] = 0;
-                (*N)++;
+                Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env,var);
+                if (env_type_ishasrec(env, tp)) {
+                    // doesn't hold anything b/c pointers point to itself
+                } else {
+                    vars[*N] = var;
+                    uprefs[*N] = 0;
+                    (*N)++;
+                }
             }
             break;
 
