@@ -30,7 +30,7 @@ static int FS1 (Stmt* s) {
                 env_held_vars(s->env, s->Var.init, &n, vars, uprefs);
                 if (n > 0) {
                     char err[TK_BUF+256];
-                    sprintf(err, "invalid assignment : cannot hold pointer \"%s\" in recursive value",
+                    sprintf(err, "invalid assignment : cannot hold pointer to \"%s\" in recursive value",
                             vars[0]->tk.val.s);
                     err_message(&vars[0]->tk, err);
                     return VISIT_ERROR;
@@ -41,23 +41,41 @@ static int FS1 (Stmt* s) {
 
         case STMT_SET: {
             Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(s->env, s->Set.dst);
+puts("-=-=-=-=-");
+dump_stmt(s);
+dump_type(tp); puts(" <<<");
             if (!env_type_ishasptr(s->env,tp)) {
+puts("BREAK");
                 break;
             }
 
             Stmt* dst = env_expr_leftmost_decl(s->env, s->Set.dst);
             assert(dst!=NULL && dst->sub==STMT_VAR);
 
+// achar prefixo em comum a partir de leftmost
+// pegar ishasrec a partir dai
+
             int ishasrec = env_type_ishasrec(s->env, dst->Var.type);
+// tenho que ver se alguem no caminho, que faz x\, tem ishasrec
+printf("ISREC = %d\n", ishasrec);
             if (ishasrec) {
                 Expr* non = env_held_vars_nonself(s->env, dst->Var.tk.val.s, s->Set.src);
+printf("NON = %p\n", non);
                 if (non != NULL) {
                     char err[TK_BUF+256];
-                    sprintf(err, "invalid assignment : cannot hold pointer \"%s\" in recursive value",
+                    sprintf(err, "invalid assignment : cannot hold pointer to \"%s\" in recursive value",
                             non->tk.val.s);
                     err_message(&non->tk, err);
                     return VISIT_ERROR;
                 }
+            } else if (s->Set.dst->sub != EXPR_VAR) { //if (!strcmp(dst->Var.tk.val.s,"arg")) {
+                int n=0; Expr* vars[256]; int uprefs[256];
+                env_held_vars(s->env, s->Set.src, &n, vars, uprefs);
+                char err[TK_BUF+256];
+                sprintf(err, "invalid assignment : cannot hold pointer to \"%s\"",
+                        vars[0]->tk.val.s);
+                err_message(&vars[0]->tk, err);
+                return VISIT_ERROR;
             }
             break;
         }
@@ -132,16 +150,12 @@ static int FS2 (Stmt* s) {
             char err[TK_BUF+256];
             if (dst->env->depth < dst->Var.ptr_deepest->env->depth) {
                 if (s->Set.dst->sub==EXPR_VAR && !strcmp(s->Set.dst->tk.val.s,"_ret_")) {
-                    sprintf(err, "invalid return : cannot return local pointer \"%s\" (ln %d)",
+                    sprintf(err, "invalid return : cannot return local pointer to \"%s\" (ln %d)",
                             src_var->val.s, src_var->lin);
                 } else {
-                    sprintf(err, "invalid assignment : cannot hold pointer \"%s\" (ln %d) in outer scope",
+                    sprintf(err, "invalid assignment : cannot hold pointer to \"%s\" (ln %d) in outer scope",
                             src_var->val.s, src_var->lin);
                 }
-                err_message(&s->tk, err);
-                return EXEC_ERROR;
-            } else if (!strcmp(dst->Var.tk.val.s,"arg")) {
-                sprintf(err, "invalid assignment : cannot hold pointer in \"arg\" : unkown scope");
                 err_message(&s->tk, err);
                 return EXEC_ERROR;
             }

@@ -1,3 +1,53 @@
+- nao posso guardar ptrs que nao sejam ciclos em dyn values pq eles movem de
+  escopo
+    - na verdade, só posso guardar ptrs em chamadas de fcs
+        - pq nao?
+    - ou variaveis locais
+
+- ponteiros sao uteis para:
+    - passar argumentos por referencia
+        - para valor ser alterado (\Int)
+        - para nao fazer move
+    - acesso tmp a caminho longo
+    - guardar links dentro de structs (tipicamente ptr para isrec)
+- rejeitar:
+    - guardar ptrs em tipos compostos se nao for link interno
+
+- "invalid ownership transfer : mode `growable´ only allows root transfers"
+    - TODO: growable -> append-only
+    - tem que ver que em alguns casos é impossível deixar dangling pointer e aceitar:
+        - move ret.Some_Stmt!
+
+- "invalid assignment : cannot hold pointer in \"arg\" : unkown scope"
+    - should actually set expected scopes of arg.1, arg.2 and check if calls
+      respect it
+- dar erro na transf. de ponteiros do arg. ver onde compliador em ce0 vai falhar
+    - recusar arg.x = arg.y para ponteiros
+        - depois, caso seja necessario, vou ter que expor nos attrs da funcao
+          qual guarda qual. essa ordem vai precisar ser mantida na chamada
+- os ponteiros que escapam escopo devem ser recusados:
+    - buscar "ordered from outer..." para ver usos sendo evitados/aceitos
+    - marcar os holds transitivamente: borrows, copies e moves
+        - se funcao retorna ishasptr e recebe ptr, entao assume que call guarda argumentos ptr
+    - permitir ciclos
+    - permitir funcoes guardarem arg, problema vai pra call fora
+
+- documentar
+    - append-only vs movable
+    - tuplas com ponteiros em ordem de escopo
+    - ciclos: prefixos, ptr vs rec, transfer to root
+    - force move prefix (vs clone)
+    - ptrs ptr_deepest
+    - function pointers
+- ver se preciso mesmo guardar ponteiros que nao sejam da propria arvore
+- isso eliminaria tuplas ordenadas por escopo?
+
+- growable é necessário?
+    - listas append pointer
+    - back links na arvore
+
+- growable nao pode ser atribuido no meio
+
 - append de tests.ce
     - problema: nao consigo criar uma funcao, pois a mesma precisa guardar 2x
       ponteiros que sao inicialmente nao relacionados dentro do "arg" que passa

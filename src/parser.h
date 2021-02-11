@@ -155,7 +155,8 @@ typedef struct Stmt {
 
 Type type_noptr (Type* tp);
 
-Expr* expr_leftmost   (Expr* e);
+Expr* expr_leftmost (Expr* e);
+Expr* expr_common (Expr* e1, Expr* e2);
 //Expr* expr_leftmost_n (Expr* e, int* n);
 
 int parser_type   (Type** ret);

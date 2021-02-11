@@ -1129,7 +1129,6 @@ void t_code (void) {
 
 void t_all (void) {
 goto __XXX__;
-__XXX__:
 
     // ERROR
     assert(all(
@@ -1649,8 +1648,9 @@ __XXX__:
 
     // arg.1 > arg.2
     assert(all(
-        "(ln 3, col 4): invalid assignment : cannot hold pointer in \"arg\" : unkown scope",
-        //"(ln 3, col 4): invalid assignment : cannot hold pointer \"arg\" (ln 2) in outer scope",
+        "(ln 3, col 22): invalid assignment : cannot hold pointer to \"arg\"",
+        //"(ln 3, col 4): invalid assignment : cannot hold pointer to in \"arg\" : unkown scope",
+        //"(ln 3, col 4): invalid assignment : cannot hold pointer to \"arg\" (ln 2) in outer scope",
         //"1\n",
         "type Tp { Tp1: \\Int }\n"
         "func f : (\\Tp,\\Int) -> () {\n"
@@ -1660,7 +1660,8 @@ __XXX__:
         "output std 1\n"
     ));
     assert(all(
-        "(ln 3, col 4): invalid assignment : cannot hold pointer in \"arg\" : unkown scope",
+        "(ln 3, col 22): invalid assignment : cannot hold pointer to \"arg\"",
+        //"(ln 3, col 4): invalid assignment : cannot hold pointer to in \"arg\" : unkown scope",
         //"(ln 10, col 11): invalid tuple : pointers with different scopes",
         //"10\n",
         "type Tp { Tp1: \\Int }\n"
@@ -1677,7 +1678,7 @@ __XXX__:
         "}\n"
     ));
     assert(all(
-        "(ln 5, col 5): invalid assignment : cannot hold pointer in \"arg\" : unkown scope",
+        "(ln 5, col 23): invalid assignment : cannot hold pointer to \"arg\"",
         //"(ln 12, col 12): invalid tuple : pointers must be ordered from outer to deep scopes",
         //"(ln 12, col 12): invalid tuple : pointers with different scopes",
         "type Tp {\n"
@@ -1740,7 +1741,7 @@ __XXX__:
     ));
 
     assert(all(
-        "(ln 3, col 4): invalid assignment : cannot hold pointer in \"arg\" : unkown scope",
+        "(ln 3, col 22): invalid assignment : cannot hold pointer to \"arg\"",
         "type Tp { Tp1: \\Int }\n"
         "func f : (\\Tp,\\Int) -> () {\n"
         "   set arg.1\\.Tp1! = arg.2\n"
@@ -1755,7 +1756,8 @@ __XXX__:
         "output std tp.Tp1!\\\n"
     ));
     assert(all(
-        "(ln 4, col 4): invalid assignment : cannot hold pointer \"x\" (ln 3) in outer scope",
+        //"(ln 4, col 4): invalid assignment : cannot hold pointer to \"x\" (ln 3) in outer scope",
+        "(ln 4, col 23): invalid assignment : cannot hold pointer to \"x\"",
         "type Tp { Tp1: \\Int }\n"
         "func f : (\\Tp,\\Int) -> () {\n"
         "   var x: Int = 10\n"
@@ -1765,7 +1767,7 @@ __XXX__:
     ));
 
     assert(all(
-        "(ln 5, col 22): invalid assignment : cannot hold pointer \"x\" in recursive value",
+        "(ln 5, col 22): invalid assignment : cannot hold pointer to \"x\" in recursive value",
         "type rec List {\n"
         "   Item: (\\Int,List)\n"
         "}\n"
@@ -1774,7 +1776,7 @@ __XXX__:
         "output std (\\l)\n"
     ));
     assert(all(
-        "(ln 10, col 27): invalid assignment : cannot hold pointer \"x\" in recursive value",
+        "(ln 10, col 27): invalid assignment : cannot hold pointer to \"x\" in recursive value",
         "type Maybe_Int {\n"
         "   None_Int: ()\n"
         "   Some_Int: \\Int\n"
@@ -1822,7 +1824,7 @@ __XXX__:
         "}\n"
     ));
     assert(all(
-        "(ln 7, col 4): invalid assignment : cannot hold pointer \"y\" (ln 4) in outer scope",
+        "(ln 7, col 4): invalid assignment : cannot hold pointer to \"y\" (ln 4) in outer scope",
         "var x: Int = 10\n"
         "var px: \\Int = \\x\n"
         "{\n"
@@ -1844,8 +1846,8 @@ __XXX__:
     ));
 
     assert(all(
-        //"True\n",
-        "(ln 6, col 4): invalid assignment : cannot hold pointer in \"arg\" : unkown scope",
+        "True\n",
+        //"(ln 6, col 4): invalid assignment : cannot hold pointer to in \"arg\" : unkown scope",
         "type Bool {\n"
         "    False: ()\n"
         "    True:  ()\n"
@@ -2035,7 +2037,7 @@ __XXX__:
         "output std b\n"
     ));
     assert(all(
-        "(ln 7, col 29): invalid assignment : cannot hold pointer \"b\" in recursive value",
+        "(ln 7, col 29): invalid assignment : cannot hold pointer to \"b\" in recursive value",
         "type rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -2625,7 +2627,7 @@ __XXX__:
         "output std y_\n"
     ));
     assert(all(
-        "(ln 8, col 5): invalid return : cannot return local pointer \"l\" (ln 5)",
+        "(ln 8, col 5): invalid return : cannot return local pointer to \"l\" (ln 5)",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
@@ -2682,7 +2684,7 @@ __XXX__:
     ));
     assert(all(
         //"(ln 6, col 29): invalid transfer of \"x\" : active pointer in scope (ln 6)",
-        "(ln 6, col 33): invalid assignment : cannot hold pointer \"x\" in recursive value",
+        "(ln 6, col 33): invalid assignment : cannot hold pointer to \"x\" in recursive value",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
@@ -2847,7 +2849,7 @@ __XXX__:
         "output std (\\l1)\n"
     ));
     assert(all(
-        "(ln 8, col 5): invalid assignment : cannot hold pointer \"l2\" (ln 7) in outer scope",
+        "(ln 8, col 5): invalid assignment : cannot hold pointer to \"l2\" (ln 7) in outer scope",
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
@@ -2870,7 +2872,7 @@ __XXX__:
         "output std (x\\)\n"
     ));
     assert(all(
-        "(ln 4, col 5): invalid assignment : cannot hold pointer \"z\" (ln 3) in outer scope",
+        "(ln 4, col 5): invalid assignment : cannot hold pointer to \"z\" (ln 3) in outer scope",
         "var x: \\Int = ?\n"
         "{\n"
         "    var z: Int = 10\n"
@@ -2879,7 +2881,8 @@ __XXX__:
         "output std (x\\)\n"
     ));
     assert(all(
-        "(ln 4, col 5): invalid assignment : cannot hold pointer \"y\" (ln 3) in outer scope",
+        //"(ln 4, col 5): invalid assignment : cannot hold pointer to \"y\" (ln 3) in outer scope",
+        "(ln 4, col 16): invalid assignment : cannot hold pointer to \"y\"",
         "var x: (Int,\\Int) = (10,?)\n"
         "{\n"
         "    var y: Int = 10\n"
@@ -2888,7 +2891,8 @@ __XXX__:
         "output std x.2\\\n"
     ));
     assert(all(
-        "10\n",
+        "(ln 4, col 16): invalid assignment : cannot hold pointer to \"y\"",
+        //"10\n",
         "var y: Int = 10\n"
         "var x: (Int,\\Int) = (10,\\y)\n"
         "{\n"
@@ -2897,7 +2901,7 @@ __XXX__:
         "output std x.2\\\n"
     ));
     assert(all(
-        "(ln 4, col 5): invalid assignment : cannot hold pointer \"y\" (ln 3) in outer scope",
+        "(ln 4, col 5): invalid assignment : cannot hold pointer to \"y\" (ln 3) in outer scope",
         "var x: (Int,\\Int) = (10,?)\n"
         "{\n"
         "    var y: Int = 10\n"
@@ -2906,7 +2910,7 @@ __XXX__:
         "output std x.2\\\n"
     ));
     assert(all(
-        "(ln 4, col 5): invalid assignment : cannot hold pointer \"y\" (ln 3) in outer scope",
+        "(ln 4, col 5): invalid assignment : cannot hold pointer to \"y\" (ln 3) in outer scope",
         "var x: (Int,\\Int) = (10,?)\n"
         "{\n"
         "    var y: (Int,\\Int) = (10,?)\n"
@@ -2915,7 +2919,7 @@ __XXX__:
         "output std x.2\\\n"
     ));
     assert(all(
-        "(ln 4, col 5): invalid assignment : cannot hold pointer \"y\" (ln 3) in outer scope",
+        "(ln 4, col 5): invalid assignment : cannot hold pointer to \"y\" (ln 3) in outer scope",
         "var x: (Int,\\Int) = (10,?)\n"
         "{\n"
         "    var y: (Int,Int) = (10,10)\n"
@@ -2924,7 +2928,7 @@ __XXX__:
         "output std x.2\\\n"
     ));
     assert(all(
-        "(ln 7, col 5): invalid assignment : cannot hold pointer \"y\" (ln 6) in outer scope",
+        "(ln 7, col 5): invalid assignment : cannot hold pointer to \"y\" (ln 6) in outer scope",
         "type Xx {\n"
         "    Xx1: (Int,\\Int)\n"
         "}\n"
@@ -2935,7 +2939,7 @@ __XXX__:
         "}\n"
     ));
     assert(all(
-        "(ln 7, col 5): invalid assignment : cannot hold pointer \"y\" (ln 6) in outer scope",
+        "(ln 7, col 5): invalid assignment : cannot hold pointer to \"y\" (ln 6) in outer scope",
         "type Xx {\n"
         "    Xx1: (Int,\\Int)\n"
         "}\n"
@@ -2946,7 +2950,7 @@ __XXX__:
         "}\n"
     ));
     assert(all(
-        "(ln 7, col 5): invalid assignment : cannot hold pointer \"y\" (ln 6) in outer scope",
+        "(ln 7, col 5): invalid assignment : cannot hold pointer to \"y\" (ln 6) in outer scope",
         "type Xx {\n"
         "    Xx1: (Int,\\Int)\n"
         "}\n"
@@ -2957,7 +2961,7 @@ __XXX__:
         "}\n"
     ));
     assert(all(
-        "(ln 5, col 5): invalid assignment : cannot hold pointer \"z\" (ln 4) in outer scope",
+        "(ln 5, col 5): invalid assignment : cannot hold pointer to \"z\" (ln 4) in outer scope",
         "var x: \\Int = ?\n"
         "func f: \\Int -> \\Int { return arg }\n"
         "{\n"
@@ -3059,27 +3063,32 @@ __XXX__:
         "var l: List_Tail = call new_list_tail ()\n"
         "output std (\\l)\n"
     ));
+__XXX__:
     assert(all(
-        "(ln 18, col 4): invalid assignment : cannot hold pointer in \"arg\" : unkown scope",
-        //"LT_Type (Item (10,Item (20,$)),@)\n",
+        //"(ln 18, col 4): invalid assignment : cannot hold pointer to in \"arg\" : unkown scope",
+        "LT_Type (Item (10,Item (20,$)),Some_List ($))\n",
+        "type pre List\n"
+        "type Maybe_List {\n"
+        "   None_List: ()\n"
+        "   Some_List: \\List\n"
+        "}\n"
         "type rec List {\n"
         "    Item: (Int, List)\n"
         "}\n"
         "\n"
         "type List_Tail {\n"
-        "    LT_Type: (List, \\List)\n"
+        "    LT_Type: (List, Maybe_List)\n"
         "}\n"
         "\n"
         "func new_list_tail: () -> List_Tail {\n"
         "    var l: List = $List\n"
-        "    var null: \\List = _NULL\n"
-        "    var ret: List_Tail = LT_Type (move l, null)\n"
-        "    set ret.LT_Type!.2 = \\ret.LT_Type!.1\n"
+        "    var ret: List_Tail = LT_Type (move l, None_List)\n"
+        "    set ret.LT_Type!.2 = Some_List \\ret.LT_Type!.1\n"
         "    return move ret\n"
         "}\n"
         "func append_list_tail: (\\List_Tail,Int) -> () {\n"
-        "   set arg.1\\.LT_Type!.2\\ = Item (arg.2, $List)\n"
-        "   set arg.1\\.LT_Type!.2 = \\arg.1\\.LT_Type!.2\\.Item!.2\n"
+        "   set arg.1\\.LT_Type!.2.Some_List!\\ = Item (arg.2, $List)\n"
+        "   set arg.1\\.LT_Type!.2.Some_List! = \\arg.1\\.LT_Type!.2.Some_List!\\.Item!.2\n"
         "}\n"
         "var l: List_Tail = call new_list_tail ()\n"
         "call append_list_tail(\\l, 10)\n"
@@ -3090,29 +3099,35 @@ __XXX__:
         //"(ln 8, col 13): invalid transfer of \"l\" : active pointer in scope (ln 7)",
         "()\n",
         //"(ln 9, col 15): invalid ownership transfer : mode `growable´ only allows root transfers",
+        "type pre List\n"
+        "type Maybe_List {\n"
+        "   None_List: ()\n"
+        "   Some_List: \\List\n"
+        "}\n"
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
-        //"native _{ typedef void* PTR; }\n"
-        //"func asptr: _PTR -> _PTR { return arg }\n"
         "func f: List -> () {}\n"
         "var x: List = Item $List\n"
-        "var ptr: \\List = _NULL\n"
-        "var l: (List,\\List) = (move x, ptr)\n"
-        "set l.2 = \\l.1.Item!\n"
+        "var l: (List,Maybe_List) = (move x, None_List)\n"
+        "set l.2 = Some_List \\l.1.Item!\n"
         "call f move l.1\n"
         "output std ()\n"
     ));
     assert(all(
         //"(ln 7, col 13): invalid transfer of \"l\" : active pointer in scope (ln 6)",
         "()\n",
+        "type pre List\n"
+        "type Maybe_List {\n"
+        "   None_List: ()\n"
+        "   Some_List: \\List\n"
+        "}\n"
         "type rec List {\n"
         "    Item: List\n"
         "}\n"
-        "func g: (List,\\List) -> () {}\n"
-        "var ptr: \\List = _(NULL)\n"
-        "var l: (List,\\List) = (Item $List, ptr)\n"
-        "set l.2 = \\l.1.Item!\n"
+        "func g: (List,Maybe_List) -> () {}\n"
+        "var l: (List,Maybe_List) = (Item $List, None_List)\n"
+        "set l.2 = Some_List \\l.1.Item!\n"
         "call g move l\n"
         "output std ()\n"
     ));
@@ -3207,7 +3222,7 @@ __XXX__:
         "TODO",
         //"(ln 6, col 24): invalid tuple : pointers with different scopes",
         //"(ln 6, col 24): invalid tuple : pointers with different scopes",
-        //"(ln 3, col 4): invalid assignment : cannot hold pointer \"arg\" (ln 2) in outer scope",
+        //"(ln 3, col 4): invalid assignment : cannot hold pointer to \"arg\" (ln 2) in outer scope",
         "type Tp { Tp1: \\Int }\n"
         "var i: Int = 10\n"
         "var tp: Tp = Tp1 \\i\n"

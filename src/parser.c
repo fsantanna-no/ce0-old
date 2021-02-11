@@ -64,6 +64,9 @@ Expr* expr_leftmost (Expr* e) {
     }
 }
 
+Expr* expr_common (Expr* e1, Expr* e2) {
+}
+
 #if 0
 Expr* expr_leftmost_n (Expr* e, int* n) {
     Expr* ret;
