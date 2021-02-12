@@ -337,6 +337,7 @@ void t_parser_expr (void) {
         assert(e->Tuple.size == 3);
         assert(e->Tuple.vec[1]->sub == EXPR_VAR && !strcmp(e->Tuple.vec[1]->tk.val.s,"x"));
         assert(e->Tuple.vec[2]->sub == EXPR_UNIT);
+        assert(e->Tuple.vec[2]->Up.isexpr && e->Tuple.vec[2]->Up.ptr==e);
         fclose(ALL.inp);
     }
     // EXPR_CALL
@@ -479,6 +480,7 @@ void t_parser_stmt (void) {
         assert(s->Var.tk.enu == TX_VAR);
         assert(s->Var.type->sub == TYPE_UNIT);
         assert(s->Var.init->sub == EXPR_UNIT);
+        assert(!s->Var.init->Up.isexpr && s->Var.init->Up.ptr==s);
         fclose(ALL.inp);
     }
     {
@@ -945,7 +947,7 @@ void t_code (void) {
     {
         char out[256] = "";
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr e = { ALL.nn++, EXPR_UNIT, {TK_UNIT,{},0,0} };
+        Expr e = { ALL.nn++, EXPR_UNIT, {}, {TK_UNIT,{},0,0} };
         code_expr(NULL, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,""));
@@ -957,7 +959,7 @@ void t_code (void) {
         Type tp = { TYPE_UNIT, 0 };
         Stmt var = { ALL.nn++, STMT_VAR, .Var={{TX_VAR,{.s="xxx"},0,0},&tp,NULL} };
         Env env = { &var, NULL };
-        Expr e = { ALL.nn++, EXPR_VAR, {TX_VAR,{.s="xxx"},0,0},.Var={0} };
+        Expr e = { ALL.nn++, EXPR_VAR, {}, {TX_VAR,{.s="xxx"},0,0},.Var={0} };
         code_expr(&env, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,""));
@@ -968,7 +970,7 @@ void t_code (void) {
         Type tp = { TYPE_NATIVE, 0 };
         Stmt var = { ALL.nn++, STMT_VAR, .Var={{TX_VAR,{.s="xxx"},0,0},&tp,NULL} };
         Env env = { &var, NULL };
-        Expr e = { ALL.nn++, EXPR_VAR, {TX_VAR,{.s="xxx"},0,0},.Var={0} };
+        Expr e = { ALL.nn++, EXPR_VAR, {}, {TX_VAR,{.s="xxx"},0,0},.Var={0} };
         code_expr(&env, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,"xxx"));
@@ -977,7 +979,7 @@ void t_code (void) {
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr e = { ALL.nn++, EXPR_NATIVE, {TX_NATIVE,{},0,0} };
+        Expr e = { ALL.nn++, EXPR_NATIVE, {}, {TX_NATIVE,{},0,0} };
             strcpy(e.tk.val.s, "printf");
         code_expr(NULL, &e, 0);
         fclose(ALL.out);
@@ -987,9 +989,9 @@ void t_code (void) {
     {
         char out[256];
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr unit = { ALL.nn++, EXPR_UNIT, {TK_UNIT,{},0,0} };
+        Expr unit = { ALL.nn++, EXPR_UNIT, {}, {TK_UNIT,{},0,0} };
         Expr* es[2] = {&unit, &unit};
-        Expr e = { ALL.nn++, EXPR_TUPLE, .Tuple={2,es} };
+        Expr e = { ALL.nn++, EXPR_TUPLE, {}, .Tuple={2,es} };
         code_expr(NULL, &e, 0);
         fclose(ALL.out);
         //assert(!strcmp(out,"((TUPLE__Unit__Unit) {  })"));
@@ -1002,8 +1004,8 @@ void t_code (void) {
         Stmt var = { ALL.nn++, STMT_VAR, .Var={{TX_VAR,{.s="x"},0,0},&tp,NULL} };
         Env env = { &var, NULL };
         all_init(stropen("w",sizeof(out),out), NULL);
-        Expr val = { ALL.nn++, EXPR_VAR, {TX_VAR,{.s="x"},0,0}, .Var={0} };
-        Expr e = { ALL.nn++, EXPR_INDEX, {TX_NUM,{2},0,0}, .Index={&val,0} };
+        Expr val = { ALL.nn++, EXPR_VAR, {}, {TX_VAR,{.s="x"},0,0}, .Var={0} };
+        Expr e = { ALL.nn++, EXPR_INDEX, {}, {TX_NUM,{2},0,0}, .Index={&val,0} };
         code_expr(&env, &e, 0);
         fclose(ALL.out);
         assert(!strcmp(out,"x._2"));
@@ -1129,6 +1131,7 @@ void t_code (void) {
 
 void t_all (void) {
 goto __XXX__;
+__XXX__:
 
     // ERROR
     assert(all(
@@ -3063,7 +3066,6 @@ goto __XXX__;
         "var l: List_Tail = call new_list_tail ()\n"
         "output std (\\l)\n"
     ));
-__XXX__:
     assert(all(
         //"(ln 18, col 4): invalid assignment : cannot hold pointer to in \"arg\" : unkown scope",
         "LT_Type (Item (10,Item (20,$)),Some_List ($))\n",

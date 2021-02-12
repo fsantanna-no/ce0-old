@@ -49,6 +49,13 @@ Type type_noptr (Type* tp) {
     return ret;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
+void expr_setUp (Expr* e, int isexpr, void* ptr) {
+    e->Up.isexpr = isexpr;
+    e->Up.ptr = ptr;
+}
+
 Expr* expr_leftmost (Expr* e) {
     switch (e->sub) {
         case EXPR_UPREF:
@@ -65,6 +72,7 @@ Expr* expr_leftmost (Expr* e) {
 }
 
 Expr* expr_common (Expr* e1, Expr* e2) {
+    return NULL;
 }
 
 #if 0
@@ -185,27 +193,27 @@ int parser_expr_ (Expr** ret)
 
 // EXPR_UNIT
     if (accept(TK_UNIT)) {
-        *e = (Expr) { ALL.nn++, EXPR_UNIT, ALL.tk0 };
+        *e = (Expr) { ALL.nn++, EXPR_UNIT, {}, ALL.tk0 };
 
 // EXPR_UNK
     } else if (accept('?')) {
-        *e = (Expr) { ALL.nn++, EXPR_UNK, ALL.tk0 };
+        *e = (Expr) { ALL.nn++, EXPR_UNK, {}, ALL.tk0 };
 
 // EXPR_NULL
     } else if (accept(TX_NULL)) {   // $Nat
-        *e = (Expr) { ALL.nn++, EXPR_NULL, ALL.tk0 };
+        *e = (Expr) { ALL.nn++, EXPR_NULL, {}, ALL.tk0 };
 
 // EXPR_INT
     } else if (accept(TX_NUM)) {    // 10
-        *e = (Expr) { ALL.nn++, EXPR_INT, ALL.tk0 };
+        *e = (Expr) { ALL.nn++, EXPR_INT, {}, ALL.tk0 };
 
 // EXPR_NATIVE
     } else if (accept(TX_NATIVE)) {
-        *e = (Expr) { ALL.nn++, EXPR_NATIVE, ALL.tk0 };
+        *e = (Expr) { ALL.nn++, EXPR_NATIVE, {}, ALL.tk0 };
 
 // EXPR_VAR
     } else if (accept(TX_VAR)) {
-        *e = (Expr) { ALL.nn++, EXPR_VAR, ALL.tk0, .Var={0} };
+        *e = (Expr) { ALL.nn++, EXPR_VAR, {}, ALL.tk0, .Var={0} };
 
 // EXPR_UPREF
     } else if (accept('\\')) {
@@ -215,7 +223,8 @@ int parser_expr_ (Expr** ret)
             return 0;
         }
         if (val->sub==EXPR_VAR || val->sub==EXPR_INDEX || val->sub==EXPR_DISC) {
-            *e = (Expr) { ALL.nn++, EXPR_UPREF, tk, .Upref=val };
+            *e = (Expr) { ALL.nn++, EXPR_UPREF, {}, tk, .Upref=val };
+            expr_setUp(val, 1, e);
         } else {
             return err(&tk, "unexpected operand to `\\´");
         }
@@ -243,12 +252,14 @@ int parser_expr_ (Expr** ret)
         Expr** vec = malloc(n*sizeof(Expr*));
         assert(vec != NULL);
         vec[n-1] = *ret;
+        expr_setUp(*ret, 1, e);
 
         do {
             Expr* e2;
             if (!parser_expr(&e2,0)) {
                 return 0;
             }
+            expr_setUp(e2, 1, e);
             n++;
             vec = realloc(vec, n*sizeof(Expr*));
             vec[n-1] = e2;
@@ -258,7 +269,7 @@ int parser_expr_ (Expr** ret)
             return 0;
         }
 
-        *e = (Expr) { ALL.nn++, EXPR_TUPLE, tk0, .Tuple={n,vec} };
+        *e = (Expr) { ALL.nn++, EXPR_TUPLE, {}, tk0, .Tuple={n,vec} };
         *ret = e;
 
 // EXPR_CONS
@@ -269,10 +280,11 @@ int parser_expr_ (Expr** ret)
         if (!parser_expr(&arg,0)) {   // ()
             arg = malloc(sizeof(Expr));
             assert(arg != NULL);
-            *arg = (Expr) { ALL.nn++, EXPR_UNIT, {TK_UNIT,{},0,ALL.nn++} };
+            *arg = (Expr) { ALL.nn++, EXPR_UNIT, {}, {TK_UNIT,{},0,ALL.nn++} };
         }
 
-        *e = (Expr) { ALL.nn++, EXPR_CONS, sub, .Cons=arg };
+        *e = (Expr) { ALL.nn++, EXPR_CONS, {}, sub, .Cons=arg };
+        expr_setUp(arg, 1, e);
 
     } else {
         return err_expected("expression");
@@ -316,19 +328,21 @@ int parser_expr (Expr** ret, int canpre) {
         if (accept('.')) {
 // EXPR_INDEX
             if (accept(TX_NUM)) {
-                *new = (Expr) { ALL.nn++, EXPR_INDEX, ALL.tk0, .Index={cur,0} };
+                *new = (Expr) { ALL.nn++, EXPR_INDEX, {}, ALL.tk0, .Index={cur,0} };
+                expr_setUp(cur, 1, new);
 
 // EXPR_DISC / EXPR_PRED
             } else if (accept(TX_USER) || accept(TX_NULL)) {
                 Tk tk = ALL.tk0;
 
                 if (accept('?')) {
-                    *new = (Expr) { ALL.nn++, EXPR_PRED, tk, .Pred={cur} };
+                    *new = (Expr) { ALL.nn++, EXPR_PRED, {}, tk, .Pred={cur} };
                 } else if (accept('!')) {
-                    *new = (Expr) { ALL.nn++, EXPR_DISC, tk, .Disc={cur,0} };
+                    *new = (Expr) { ALL.nn++, EXPR_DISC, {}, tk, .Disc={cur,0} };
                 } else {
                     return err_expected("`?´ or `!´");
                 }
+                expr_setUp(cur, 1, new);
 
             } else {
                 return err_expected("index or subtype");
@@ -340,19 +354,24 @@ int parser_expr (Expr** ret, int canpre) {
                 cur->sub==EXPR_UPREF  || cur->sub==EXPR_DNREF ||
                 cur->sub==EXPR_INDEX  || cur->sub==EXPR_CALL  ||
                 cur->sub==EXPR_DISC) {
-                *new = (Expr) { ALL.nn++, EXPR_DNREF, ALL.tk0, .Dnref=cur };
+                *new = (Expr) { ALL.nn++, EXPR_DNREF, {}, ALL.tk0, .Dnref=cur };
+                expr_setUp(cur, 1, new);
             } else {
                 return err(&ALL.tk0, "unexpected operand to `\\´");
             }
 
 // EXPR_CALL
         } else if (isvarnat && parser_expr(&arg,0)) {
-            *new = (Expr) { ALL.nn++, EXPR_CALL, arg->tk, .Call={cur,arg} };
+            *new = (Expr) { ALL.nn++, EXPR_CALL, {}, arg->tk, .Call={cur,arg} };
+            expr_setUp(cur, 1, new);
+            expr_setUp(arg, 1, new);
         } else if (isvarnat && ispre) {
             arg = malloc(sizeof(Expr));
             assert(arg != NULL);
-            *arg = (Expr) { ALL.nn++, EXPR_UNIT, {TK_UNIT,{},0,ALL.nn++} };
-            *new = (Expr) { ALL.nn++, EXPR_CALL, arg->tk, .Call={cur,arg} };
+            *arg = (Expr) { ALL.nn++, EXPR_UNIT, {}, {TK_UNIT,{},0,ALL.nn++} };
+            *new = (Expr) { ALL.nn++, EXPR_CALL, {}, arg->tk, .Call={cur,arg} };
+            expr_setUp(cur, 1, new);
+            expr_setUp(arg, 1, new);
             break;
 
         } else {
@@ -462,6 +481,7 @@ int parser_stmt (Stmt** ret) {
         if (!parser_expr(&e,1)) {
             return 0;
         }
+        expr_setUp(e, 0, s);
 
         *s = (Stmt) { ALL.nn++, STMT_VAR, NULL, NULL, tk, .Var={id,tp,e,NULL} };
 
@@ -524,6 +544,7 @@ int parser_stmt (Stmt** ret) {
         if (!parser_expr(&dst,0)) {
             return 0;
         }
+        expr_setUp(dst, 0, s);
 
         if (!accept_err('=')) {
             return 0;
@@ -533,6 +554,7 @@ int parser_stmt (Stmt** ret) {
         if (!parser_expr(&src,1)) {
             return 0;
         }
+        expr_setUp(src, 0, s);
 
         *s = (Stmt) { ALL.nn++, STMT_SET, NULL, NULL, tk, .Set={dst,src} };
 
@@ -544,6 +566,7 @@ int parser_stmt (Stmt** ret) {
             return 0;
         }
         assert(e->sub == EXPR_CALL);
+        expr_setUp(e, 0, s);
         *s = (Stmt) { ALL.nn++, STMT_CALL, NULL, NULL, tk, .Call=e };
 
     // STMT_IF
@@ -554,6 +577,7 @@ int parser_stmt (Stmt** ret) {
         if (!parser_expr(&e,0)) {         // x
             return 0;
         }
+        expr_setUp(e, 0, s);
 
         Stmt *t,*f;
 
@@ -630,7 +654,7 @@ int parser_stmt (Stmt** ret) {
         Stmt* ret   = malloc(sizeof(Stmt));
         assert(arg!=NULL && ret!=NULL && _arg_!=NULL);
 
-        *_arg_ = (Expr) { ALL.nn++, EXPR_NATIVE, {TX_NATIVE,{.s="_arg_"},id.lin,id.col} };
+        *_arg_ = (Expr) { ALL.nn++, EXPR_NATIVE, {}, {TX_NATIVE,{.s="_arg_"},id.lin,id.col} };
         *arg = (Stmt) { ALL.nn++, STMT_VAR,   NULL, NULL, tk,
             .Var = {
                 { TX_VAR, {.s="arg"}, id.lin, id.col },
@@ -640,8 +664,8 @@ int parser_stmt (Stmt** ret) {
             }
         };
 
-        *unk = (Expr) { ALL.nn++, EXPR_UNK, tk };
-        *ret = (Stmt) { ALL.nn++, STMT_VAR,   NULL, NULL, tk,
+        *unk = (Expr) { ALL.nn++, EXPR_UNK, {}, tk };
+        *ret = (Stmt) { ALL.nn++, STMT_VAR, NULL, NULL, tk,
             .Var = {
                 { TX_VAR, {.s="_ret_"}, id.lin, id.col },
                 tp->Func.out,
@@ -670,15 +694,16 @@ int parser_stmt (Stmt** ret) {
         if (!parser_expr(&e,0)) {
             e = malloc(sizeof(Expr));
             assert(e != NULL);
-            *e = (Expr) { ALL.nn++, EXPR_UNIT, {TK_UNIT,{},0,ALL.nn++} };
+            *e = (Expr) { ALL.nn++, EXPR_UNIT, {}, {TK_UNIT,{},0,ALL.nn++} };
         }
+        expr_setUp(e, 0, s);
 
         Expr* var = malloc(sizeof(Expr));
         Stmt* set = malloc(sizeof(Stmt));
         Stmt* xxx = malloc(sizeof(Stmt));
         assert(var!=NULL && set!=NULL && xxx!=NULL);
 
-        *var = (Expr) { ALL.nn++, EXPR_VAR, {TX_VAR,{.s="_ret_"},tk.lin,tk.col}, .Var={0} };
+        *var = (Expr) { ALL.nn++, EXPR_VAR, {}, {TX_VAR,{.s="_ret_"},tk.lin,tk.col}, .Var={0} };
         *set = (Stmt) { ALL.nn++, STMT_SET, NULL, NULL, tk, .Set={var,e} };
         *xxx = (Stmt) { ALL.nn++, STMT_RETURN, NULL, NULL, tk, .Return=e };
 

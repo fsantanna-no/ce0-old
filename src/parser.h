@@ -64,6 +64,10 @@ extern int _N_;
 typedef struct Expr {
     int N;
     EXPR sub;
+    struct {
+        int isexpr;    // 1=Expr, 0=Stmt
+        void* ptr;     // Expr*, Stmt*
+    } Up;
     Tk tk; // EXPR_UNIT // EXPR_UNK // EXPR_NATIVE // EXPR_NULL // EXPR_INT
     union {
         struct Expr* Upref;  // EXPR_UPREF
@@ -155,6 +159,7 @@ typedef struct Stmt {
 
 Type type_noptr (Type* tp);
 
+void expr_setUp (Expr* e, int isexpr, void* ptr);
 Expr* expr_leftmost (Expr* e);
 Expr* expr_common (Expr* e1, Expr* e2);
 //Expr* expr_leftmost_n (Expr* e, int* n);
