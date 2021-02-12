@@ -4,7 +4,7 @@
 
 // check visually 5 errors
 
-#define DEBUG
+//#define DEBUG
 //#define VALGRIND
 
 #include "../all.h"

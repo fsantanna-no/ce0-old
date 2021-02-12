@@ -41,26 +41,27 @@ static int FS1 (Stmt* s) {
 
         case STMT_SET: {
             Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(s->env, s->Set.dst);
-puts("-=-=-=-=-");
-dump_stmt(s);
-dump_type(tp); puts(" <<<");
             if (!env_type_ishasptr(s->env,tp)) {
-puts("BREAK");
                 break;
             }
 
             Stmt* dst = env_expr_leftmost_decl(s->env, s->Set.dst);
             assert(dst!=NULL && dst->sub==STMT_VAR);
 
-// achar prefixo em comum a partir de leftmost
-// pegar ishasrec a partir dai
+            int find_ishasrec (Expr* e) {
+                Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(s->env, e);
+                if (env_type_ishasrec(s->env,tp)) {
+                    return 1;
+                } else if (e->Up.isexpr) {
+                    return find_ishasrec(e->Up.ptr);
+                } else {
+                    return 0;
+                }
+            }
 
-            int ishasrec = env_type_ishasrec(s->env, dst->Var.type);
-// tenho que ver se alguem no caminho, que faz x\, tem ishasrec
-printf("ISREC = %d\n", ishasrec);
+            int ishasrec = find_ishasrec(expr_leftmost(s->Set.dst));
             if (ishasrec) {
                 Expr* non = env_held_vars_nonself(s->env, dst->Var.tk.val.s, s->Set.src);
-printf("NON = %p\n", non);
                 if (non != NULL) {
                     char err[TK_BUF+256];
                     sprintf(err, "invalid assignment : cannot hold pointer to \"%s\" in recursive value",
