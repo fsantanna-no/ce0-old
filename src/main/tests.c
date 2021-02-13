@@ -1813,8 +1813,20 @@ __XXX__:
     ));
 
     assert(all(
-        "(ln 5, col 22): invalid assignment : cannot hold pointer to \"x\" in recursive value",
+        "(ln 1, col 1): invalid type declaration : expected `@ptr´",
         "type @rec List {\n"
+        "   Item: (\\Int,List)\n"
+        "}\n"
+    ));
+    assert(all(
+        "(ln 1, col 1): invalid type declaration : unexpected `@ptr´",
+        "type @rec @ptr List {\n"
+        "   Item: (Int,List)\n"
+        "}\n"
+    ));
+    assert(all(
+        "(ln 5, col 22): invalid assignment : cannot hold pointer to \"x\" in recursive value",
+        "type @rec @ptr List {\n"
         "   Item: (\\Int,List)\n"
         "}\n"
         "var x: Int = 10\n"
@@ -1827,7 +1839,7 @@ __XXX__:
         "   None_Int: ()\n"
         "   Some_Int: \\Int\n"
         "}\n"
-        "type @rec Nat {\n"
+        "type @rec @ptr Nat {\n"
         "   Succ: (Nat,Maybe_Int)\n"
         "}\n"
         "var x: Int = 10\n"
@@ -2017,7 +2029,7 @@ __XXX__:
         "var n: Int = move 1\n"
     ));
     assert(all(
-        "(ln 4, col 1): invalid declaration : expected `@rec´",
+        "(ln 4, col 1): invalid type declaration : expected `@rec´",
         "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
@@ -2137,12 +2149,12 @@ __XXX__:
     assert(all(
         "(ln 11, col 14): invalid access to \"c\" : ownership was transferred (ln 10)",
         //"$\n",
-        "type pre @rec Nat\n"
+        "type pre @rec @ptr Nat\n"
         "type Maybe_Nat {\n"
         "   None_Nat: ()\n"
         "   Some_Nat: \\Nat\n"
         "}\n"
-        "type @rec Nat {\n"
+        "type @rec @ptr Nat {\n"
         "   Succ: (Nat,Maybe_Nat)\n"
         "}\n"
         "var c: Nat = Succ ($Nat, None_Nat)\n"
@@ -2164,12 +2176,12 @@ __XXX__:
     assert(all(
         "(ln 12, col 16): invalid access to \"a\" : ownership was transferred (ln 11)",
         //"$\n",
-        "type pre @rec Nat\n"
+        "type pre @rec @ptr Nat\n"
         "type Maybe_Nat {\n"
         "   None_Nat: ()\n"
         "   Some_Nat: \\Nat\n"
         "}\n"
-        "type @rec Nat {\n"
+        "type @rec @ptr Nat {\n"
         "   Succ: (Nat,Maybe_Nat)\n"
         "}\n"
         "var c: Nat = Succ ($Nat,None_Nat)\n"
@@ -2182,12 +2194,12 @@ __XXX__:
         //"$\n",
         //"(ln 7, col 16): invalid access to \"a\" : ownership was transferred (ln 6)",
         "(ln 11, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
-        "type pre @rec Nat\n"
+        "type pre @rec @ptr Nat\n"
         "type Maybe_Nat {\n"
         "   None_Nat: ()\n"
         "   Some_Nat: \\Nat\n"
         "}\n"
-        "type @rec Nat {\n"
+        "type @rec @ptr Nat {\n"
         "   Succ: (Nat,Maybe_Nat)\n"
         "}\n"
         "var c: Nat = Succ ($Nat,None_Nat)\n"
@@ -2215,7 +2227,7 @@ __XXX__:
         "   None_Nat: ()\n"
         "   Some_Nat: \\Nat\n"
         "}\n"
-        "type @rec Xx {\n"
+        "type @rec @ptr Xx {\n"
         "   Xx1: (Nat,Maybe_Nat)\n"
         "}\n"
         "var x: Xx = Xx1 (Succ Succ $Nat,None_Nat)\n"
@@ -2240,12 +2252,12 @@ __XXX__:
         //"Succ ($)\n",
         //"(ln 8, col 16): invalid access to \"a\" : ownership was transferred (ln 7)",
         "(ln 12, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
-        "type pre @rec Nat\n"
+        "type pre @rec @ptr Nat\n"
         "type Maybe_Nat {\n"
         "   None_Nat: ()\n"
         "   Some_Nat: \\Nat\n"
         "}\n"
-        "type @rec Nat {\n"
+        "type @rec @ptr Nat {\n"
         "   Succ: (Nat,Maybe_Nat)\n"
         "}\n"
         "var c: Nat = Succ ($Nat,None_Nat)\n"
@@ -2284,12 +2296,12 @@ __XXX__:
         //"Succ ($)\n",
         //"(ln 7, col 16): invalid access to \"c\" : ownership was transferred (ln 6)",
         "(ln 11, col 27): invalid ownership transfer : mode `growable´ only allows root transfers",
-        "type pre @rec Nat\n"
+        "type pre @rec @ptr Nat\n"
         "type Maybe_Nat {\n"
         "   None_Nat: ()\n"
         "   Some_Nat: \\Nat\n"
         "}\n"
-        "type @rec Nat {\n"
+        "type @rec @ptr Nat {\n"
         "   Succ: (Nat,Maybe_Nat)\n"
         "}\n"
         "var d: Nat = Succ ($Nat,None_Nat)\n"
@@ -2303,12 +2315,12 @@ __XXX__:
         //"(ln 7, col 16): invalid access to \"c\" : ownership was transferred (ln 6)",
         //"(ln 7, col 26): invalid ownership transfer : mode `growable´ only allows root transfers",
         //"(ln 7, col 24): invalid transfer of \"c\" : active pointer in scope (ln 7)",
-        "type pre @rec Nat\n"
+        "type pre @rec @ptr Nat\n"
         "type Maybe_Nat {\n"
         "   None_Nat: ()\n"
         "   Some_Nat: \\Nat\n"
         "}\n"
-        "type @rec Nat {\n"
+        "type @rec @ptr Nat {\n"
         "   Succ: (Nat,Maybe_Nat)\n"
         "}\n"
         "var d: Nat = Succ ($Nat,None_Nat)\n"
@@ -3115,7 +3127,7 @@ __XXX__:
         "    Item: (Int, List)\n"
         "}\n"
         "\n"
-        "type @rec List_Tail {\n"
+        "type @rec @ptr List_Tail {\n"
         "    LT_Type: (List, Maybe_List)\n"
         "}\n"
         "\n"
@@ -3140,7 +3152,7 @@ __XXX__:
         "    Item: (Int, List)\n"
         "}\n"
         "\n"
-        "type @rec List_Tail {\n"
+        "type @rec @ptr List_Tail {\n"
         "    LT_Type: (List, Maybe_List)\n"
         "}\n"
         "\n"

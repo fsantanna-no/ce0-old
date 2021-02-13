@@ -98,22 +98,23 @@ int fe (Env* env, Expr* e) {
 int ishasrec (Stmt* user) {
     assert(user->sub == STMT_USER);
 
-    auto int aux1 (Env* env1, Stmt* user1);
-    auto int aux2 (Env* env2, Type* tp);
+    auto int aux1 (Stmt* user1);
+    auto int aux2 (Type* tp);
 
-    return aux1(user->env, user);
+    return aux1(user);
 
-    int aux1 (Env* env1, Stmt* user1) {
+    int aux1 (Stmt* user1) {
+        assert(user1->sub == STMT_USER);
         for (int i=0; i<user1->User.size; i++) {
             Sub sub = user1->User.vec[i];
-            if (aux2(env1, sub.type)) {
+            if (aux2(sub.type)) {
                 return 1;
             }
         }
         return 0;
     }
 
-    int aux2 (Env* env2, Type* tp2) {
+    int aux2 (Type* tp2) {
         if (tp2->isptr) {
             return 0;
         }
@@ -125,18 +126,18 @@ int ishasrec (Stmt* user) {
                 return 0;
             case TYPE_TUPLE:
                 for (int i=0; i<tp2->Tuple.size; i++) {
-                    if (aux2(env2, tp2->Tuple.vec[i])) {
+                    if (aux2(tp2->Tuple.vec[i])) {
                         return 1;
                     }
                 }
                 return 0;
             case TYPE_USER: {
-                Stmt* user2 = env_id_to_stmt(env2, tp2->User.val.s);
+                Stmt* user2 = env_id_to_stmt(user->env, tp2->User.val.s);
                 assert(user2!=NULL && user2->sub==STMT_USER);
                 if (user2->User.isrec) {
                     return 1;
                 }
-                if (aux1(env2,user2)) {
+                if (aux1(user2)) {
                     return 1;
                 }
                 return 0;
@@ -144,6 +145,63 @@ int ishasrec (Stmt* user) {
         }
         assert(0);
     }
+}
+
+int ishasptr (Stmt* user) {
+    assert(user->sub == STMT_USER);
+
+    char* users[256];
+    int users_n = 0;
+    auto int aux1 (Stmt* user1);
+    auto int aux2 (Type* tp2);
+
+    return aux1(user);
+
+    int aux1 (Stmt* user1) {
+        assert(user1->sub == STMT_USER);
+        if (user1->User.isrec) {
+            for (int i=0; i<users_n; i++) {
+                if (!strcmp(user1->tk.val.s,users[i])) {
+                    return 0;
+                }
+            }
+            assert(users_n < 256);
+            users[users_n++] = user1->tk.val.s;
+        }
+        for (int i=0; i<user1->User.size; i++) {
+            if (aux2(user1->User.vec[i].type)) {
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    int aux2 (Type* tp2) {
+        if (tp2->isptr) {
+            return 1;
+        }
+        switch (tp2->sub) {
+            case TYPE_ANY:
+            case TYPE_UNIT:
+            case TYPE_NATIVE:
+            case TYPE_FUNC:
+                return 0;
+            case TYPE_TUPLE:
+                for (int i=0; i<tp2->Tuple.size; i++) {
+                    if (aux2(tp2->Tuple.vec[i])) {
+                        return 1;
+                    }
+                }
+                return 0;
+            case TYPE_USER: {
+                Stmt* user2 = env_id_to_stmt(user->env, tp2->User.val.s);
+                assert(user2!=NULL && user2->sub==STMT_USER);
+                return aux1(user2);
+            }
+        }
+        assert(0);
+    }
+    return 0;
 }
 
 int fs (Stmt* s) {
@@ -158,7 +216,7 @@ int fs (Stmt* s) {
     Stmt* pre = env_id_to_stmt(s->env->prev, s->User.tk.val.s);
     if (pre != NULL) {
         assert(pre->sub==STMT_USER && pre->User.size==0);
-        if (pre->User.isrec != s->User.isrec) {
+        if (pre->User.isrec!=s->User.isrec || pre->User.isptr!=s->User.isptr) {
             char err[TK_BUF+256];
             sprintf(err, "invalid type declaration : unmatching predeclaration (ln %d)", pre->tk.lin);
             return err_message(&s->tk, err);
@@ -171,10 +229,20 @@ int fs (Stmt* s) {
         if (s->User.isrec) {
             sprintf(err, "invalid type declaration : unexpected `@rec´");
         } else {
-            sprintf(err, "invalid declaration : expected `@rec´");
+            sprintf(err, "invalid type declaration : expected `@rec´");
         }
         return err_message(&s->tk, err);
     }
+    if (s->User.isrec && s->User.isptr!=ishasptr(s)) {
+        char err[TK_BUF+256];
+        if (s->User.isptr) {
+            sprintf(err, "invalid type declaration : unexpected `@ptr´");
+        } else {
+            sprintf(err, "invalid type declaration : expected `@ptr´");
+        }
+        return err_message(&s->tk, err);
+    }
+
     return VISIT_CONTINUE;
 }
 
