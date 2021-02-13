@@ -116,7 +116,9 @@ int check_exec_vars (Stmt* S) {
             switch (e->sub) {
                 case EXPR_CALL:
                     //assert(e->Call.func->sub == EXPR_VAR);
-                    if (!strcmp(e->Call.func->tk.val.s,"move")) break;
+                    if (e->Call.func->sub) {
+                        if (!strcmp(e->Call.func->tk.val.s,"move")) break;
+                    }
                     set_txed(e->Call.arg);
                     break;
                 case EXPR_CONS:
@@ -139,7 +141,7 @@ int check_exec_vars (Stmt* S) {
                         Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e);
                         int ishasptr = env_type_ishasptr(env, tp);
                         // if already moved, it doesn't matter, any access is invalid
-                        if (ishasptr) {
+                        if (ishasptr) { // movable can be accessed, but not growable
                             assert(txed_tk != NULL);
                             char err[TK_BUF+256];
                             sprintf(err, "invalid access to \"%s\" : ownership was transferred (ln %d)",
@@ -314,6 +316,9 @@ _OK_:
         // Set Var.tx_done
         //  var y = S.x
         void set_txed (Expr* E) {
+            if (txed != 0) {
+                return;
+            }
             int vars_n=0; Expr* vars[256];
             {
                 void f_get_txs (Expr* e_, Expr* e) {
