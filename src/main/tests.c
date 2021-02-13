@@ -1132,6 +1132,7 @@ void t_code (void) {
 
 void t_all (void) {
 goto __XXX__;
+__XXX__:
 
     assert(all(
         "TODO",
@@ -1157,7 +1158,6 @@ goto __XXX__;
         "}\n"
     ));
 assert(0);
-__XXX__:
 
     // ERROR
     assert(all(
@@ -1409,9 +1409,16 @@ __XXX__:
         "output std y\n"
     ));
     assert(all(
-        "()\n",
+        "(ln 2, col 1): invalid type declaration : unexpected `@rec´",
         "type Bool { False:() ; True:() }\n"
         "type @rec Aa {\n"
+        "    Aa1: ()\n"
+        "}\n"
+    ));
+    assert(all(
+        "()\n",
+        "type Bool { False:() ; True:() }\n"
+        "type Aa {\n"
         "    Aa1: ()\n"
         "}\n"
         "type Xx {\n"
@@ -1726,8 +1733,18 @@ __XXX__:
         "output std tp.Tp1!\\           -- use of dangling reference\n"
     ));
     assert(all(
-        "10\n",
+        "(ln 5, col 1): invalid type declaration : unmatching predeclaration (ln 1)",
         "type pre Expr\n"
+        "type @rec List_Expr {\n"
+        "    Item_Expr: (Expr, List_Expr)\n"
+        "}\n"
+        "type @rec Expr {\n"
+        "    Expr_Tuple: List_Expr\n"
+        "}\n"
+    ));
+    assert(all(
+        "10\n",
+        "type pre @rec Expr\n"
         "type @rec List_Expr {\n"
         "    Item_Expr: (Expr, List_Expr)\n"
         "}\n"
@@ -1984,7 +2001,7 @@ __XXX__:
     ));
     assert(all(
         "Aa1 (Bb1 (Aa1 ($)))\n",
-        "type pre Bb\n"
+        "type pre @rec Bb\n"
         "type @rec Aa {\n"
         "   Aa1: Bb\n"
         "}\n"
@@ -2000,11 +2017,20 @@ __XXX__:
         "var n: Int = move 1\n"
     ));
     assert(all(
-        "XNat1 (Succ ($))\n",
+        "(ln 4, col 1): invalid declaration : expected `@rec´",
         "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "type XNat {\n"
+        "   XNat1: Nat\n"
+        "}\n"
+    ));
+    assert(all(
+        "XNat1 (Succ ($))\n",
+        "type @rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "type @rec XNat {\n"
         "   XNat1: Nat\n"
         "}\n"
         "var n: Nat = Succ $Nat\n"
@@ -2111,7 +2137,7 @@ __XXX__:
     assert(all(
         "(ln 11, col 14): invalid access to \"c\" : ownership was transferred (ln 10)",
         //"$\n",
-        "type pre Nat\n"
+        "type pre @rec Nat\n"
         "type Maybe_Nat {\n"
         "   None_Nat: ()\n"
         "   Some_Nat: \\Nat\n"
@@ -2138,7 +2164,7 @@ __XXX__:
     assert(all(
         "(ln 12, col 16): invalid access to \"a\" : ownership was transferred (ln 11)",
         //"$\n",
-        "type pre Nat\n"
+        "type pre @rec Nat\n"
         "type Maybe_Nat {\n"
         "   None_Nat: ()\n"
         "   Some_Nat: \\Nat\n"
@@ -2156,7 +2182,7 @@ __XXX__:
         //"$\n",
         //"(ln 7, col 16): invalid access to \"a\" : ownership was transferred (ln 6)",
         "(ln 11, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
-        "type pre Nat\n"
+        "type pre @rec Nat\n"
         "type Maybe_Nat {\n"
         "   None_Nat: ()\n"
         "   Some_Nat: \\Nat\n"
@@ -2171,6 +2197,16 @@ __XXX__:
         "output std d\n"                 // ok: $Nat
     ));
     assert(all(
+        "(ln 4, col 1): invalid type declaration : unexpected `@rec´",
+        "type @rec Nat {\n"
+        "   Succ: Nat\n"
+        "}\n"
+        "type @rec Maybe_Nat {\n"
+        "   None_Nat: ()\n"
+        "   Some_Nat: \\Nat\n"
+        "}\n"
+    ));
+    assert(all(
         "",
         "type @rec Nat {\n"
         "   Succ: Nat\n"
@@ -2179,7 +2215,7 @@ __XXX__:
         "   None_Nat: ()\n"
         "   Some_Nat: \\Nat\n"
         "}\n"
-        "type Xx {\n"
+        "type @rec Xx {\n"
         "   Xx1: (Nat,Maybe_Nat)\n"
         "}\n"
         "var x: Xx = Xx1 (Succ Succ $Nat,None_Nat)\n"
@@ -2204,7 +2240,7 @@ __XXX__:
         //"Succ ($)\n",
         //"(ln 8, col 16): invalid access to \"a\" : ownership was transferred (ln 7)",
         "(ln 12, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
-        "type pre Nat\n"
+        "type pre @rec Nat\n"
         "type Maybe_Nat {\n"
         "   None_Nat: ()\n"
         "   Some_Nat: \\Nat\n"
@@ -2248,7 +2284,7 @@ __XXX__:
         //"Succ ($)\n",
         //"(ln 7, col 16): invalid access to \"c\" : ownership was transferred (ln 6)",
         "(ln 11, col 27): invalid ownership transfer : mode `growable´ only allows root transfers",
-        "type pre Nat\n"
+        "type pre @rec Nat\n"
         "type Maybe_Nat {\n"
         "   None_Nat: ()\n"
         "   Some_Nat: \\Nat\n"
@@ -2267,7 +2303,7 @@ __XXX__:
         //"(ln 7, col 16): invalid access to \"c\" : ownership was transferred (ln 6)",
         //"(ln 7, col 26): invalid ownership transfer : mode `growable´ only allows root transfers",
         //"(ln 7, col 24): invalid transfer of \"c\" : active pointer in scope (ln 7)",
-        "type pre Nat\n"
+        "type pre @rec Nat\n"
         "type Maybe_Nat {\n"
         "   None_Nat: ()\n"
         "   Some_Nat: \\Nat\n"
@@ -2288,7 +2324,7 @@ __XXX__:
         "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "type XNat {\n"
+        "type @rec XNat {\n"
         "   XNat1: Nat\n"
         "}\n"
         "var d: Nat = Succ $Nat\n"
@@ -2304,10 +2340,10 @@ __XXX__:
         "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
-        "type XNat {\n"
+        "type @rec XNat {\n"
         "   XNat1: Nat\n"
         "}\n"
-        "type YNat {\n"
+        "type @rec YNat {\n"
         "   YNat1: XNat\n"
         "}\n"
         "var d: Nat = Succ $Nat\n"
@@ -2592,7 +2628,7 @@ __XXX__:
         "    False: ()\n"
         "    True:  ()\n"
         "}\n"
-        "type @rec Type {\n"
+        "type Type {\n"
         "    Type_Any: Bool\n"
         "}\n"
         "output std 10\n"
@@ -2753,7 +2789,7 @@ __XXX__:
         "type @rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
-        "type XNat {\n"
+        "type @rec XNat {\n"
         "    XNat1: Nat\n"
         "}\n"
         "func add: XNat -> Nat {\n"
@@ -2828,7 +2864,7 @@ __XXX__:
         "type @rec List {\n"
         "    Item: List\n"
         "}\n"
-        "type Xx {\n"
+        "type @rec Xx {\n"
         "    Xx1: List\n"
         "}\n"
         "var l1: List = $List\n"
@@ -3070,7 +3106,7 @@ __XXX__:
     ));
     assert(all(
         "LT_Type ($,Some_List ($))\n",
-        "type pre List\n"
+        "type pre @rec List\n"
         "type Maybe_List {\n"
         "   None_List: ()\n"
         "   Some_List: \\List\n"
@@ -3079,7 +3115,7 @@ __XXX__:
         "    Item: (Int, List)\n"
         "}\n"
         "\n"
-        "type List_Tail {\n"
+        "type @rec List_Tail {\n"
         "    LT_Type: (List, Maybe_List)\n"
         "}\n"
         "\n"
@@ -3095,7 +3131,7 @@ __XXX__:
     assert(all(
         //"(ln 18, col 4): invalid assignment : cannot hold pointer to in \"arg\" : unkown scope",
         "LT_Type (Item (10,Item (20,$)),Some_List ($))\n",
-        "type pre List\n"
+        "type pre @rec List\n"
         "type Maybe_List {\n"
         "   None_List: ()\n"
         "   Some_List: \\List\n"
@@ -3104,7 +3140,7 @@ __XXX__:
         "    Item: (Int, List)\n"
         "}\n"
         "\n"
-        "type List_Tail {\n"
+        "type @rec List_Tail {\n"
         "    LT_Type: (List, Maybe_List)\n"
         "}\n"
         "\n"
@@ -3127,7 +3163,7 @@ __XXX__:
         //"(ln 8, col 13): invalid transfer of \"l\" : active pointer in scope (ln 7)",
         "()\n",
         //"(ln 9, col 15): invalid ownership transfer : mode `growable´ only allows root transfers",
-        "type pre List\n"
+        "type pre @rec List\n"
         "type Maybe_List {\n"
         "   None_List: ()\n"
         "   Some_List: \\List\n"
@@ -3145,7 +3181,7 @@ __XXX__:
     assert(all(
         //"(ln 7, col 13): invalid transfer of \"l\" : active pointer in scope (ln 6)",
         "()\n",
-        "type pre List\n"
+        "type pre @rec List\n"
         "type Maybe_List {\n"
         "   None_List: ()\n"
         "   Some_List: \\List\n"

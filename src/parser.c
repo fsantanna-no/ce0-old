@@ -461,7 +461,8 @@ int parser_stmt (Stmt** ret) {
         int isrec = 0;
         if (accept(TK_PRE)) {           // pre
             ispre = 1;
-        } else if (accept(TK_REC)) {    // rec
+        }
+        if (accept(TK_REC)) {           // rec
             isrec = 1;
         }
         if (!accept_err(TX_USER)) {
@@ -470,7 +471,7 @@ int parser_stmt (Stmt** ret) {
         Tk id = ALL.tk0;                // Bool
 
         if (ispre) {
-            *s = (Stmt) { ALL.nn++, STMT_USER, NULL, NULL, tk, .User={1,id,0,NULL} };
+            *s = (Stmt) { ALL.nn++, STMT_USER, NULL, NULL, tk, .User={isrec,id,0,NULL} };
             return 1;
         }
 
