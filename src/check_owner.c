@@ -36,7 +36,7 @@ int check_exec_vars (Stmt* S) {
         return 1;               // not var declaration
     }
 
-    if (!env_type_ishasrec(S->env, S->Var.type)) {
+    if (!env_type_isrec(S->env, S->Var.type)) {
         return 1;               // not recursive type
     }
 

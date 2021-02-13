@@ -282,7 +282,7 @@ void env_expr_to_type_ (Type* ret, Env* env, Expr* e) {
             deep_(ret, env_sub_id_to_user_type(env, e->tk.val.s));
             if (!val->isptr) {
                 break;
-            } else if (!env_type_ishasrec(env,ret)) {
+            } else if (!env_type_isrec(env,ret)) {
                 // only keep & if sub hasalloc:
                 //  &x -> x.True
                 break;
@@ -317,7 +317,7 @@ Stmt* env_type_to_user_stmt (Env* env, Type* tp) {
     }
 }
 
-int env_type_ishasrec (Env* env, Type* tp) {
+int env_type_isrec (Env* env, Type* tp) {
     if (tp->isptr) {
         return 0;
     }
@@ -329,7 +329,7 @@ int env_type_ishasrec (Env* env, Type* tp) {
             return 0;
         case TYPE_TUPLE:
             for (int i=0; i<tp->Tuple.size; i++) {
-                if (env_type_ishasrec(env, tp->Tuple.vec[i])) {
+                if (env_type_isrec(env, tp->Tuple.vec[i])) {
                     return 1;
                 }
             }
@@ -454,7 +454,7 @@ void env_held_vars (Env* env, Expr* e, int* N, Expr** vars, int* uprefs) {
                 assert(var->sub == EXPR_VAR);
                 Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env,var);
 #if 1
-                if (env_type_ishasrec(env, tp)) {
+                if (env_type_isrec(env, tp)) {
                     // doesn't hold anything b/c pointers point to itself
                 } else
 #endif
@@ -500,7 +500,7 @@ Expr* env_held_vars_nonself (Env* env, const char* dst, Expr* src) {
 
 void txs_txed_vars (Env* env, Expr* e, F_txed_vars f) {
     Type* TP __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e);
-    if (!env_type_ishasrec(env,TP)) {
+    if (!env_type_isrec(env,TP)) {
         return;
     }
 

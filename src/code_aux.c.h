@@ -13,7 +13,7 @@ void code_free_user (Stmt* s) {
     out("switch ((*p)->sub) {\n");
     for (int i=0; i<s->User.size; i++) {
         Sub sub = s->User.vec[i];
-        if (env_type_ishasrec(s->env, sub.type)) {
+        if (env_type_isrec(s->env, sub.type)) {
             fprintf (ALL.out,
                 "case %s:\n"
                 "   %s_free(&(*p)->_%s);\n"
@@ -34,7 +34,7 @@ void code_free_user (Stmt* s) {
 
 void code_free_tuple (Env* env, Type* tp) {
     assert(tp->sub == TYPE_TUPLE);
-    assert(env_type_ishasrec(env,tp));
+    assert(env_type_isrec(env,tp));
 
     char* tp_ = to_ce(tp);
     fprintf (ALL.out,
@@ -44,7 +44,7 @@ void code_free_tuple (Env* env, Type* tp) {
     );
     for (int i=0; i<tp->Tuple.size; i++) {
         Type* sub = tp->Tuple.vec[i];
-        if (env_type_ishasrec(env,sub)) {
+        if (env_type_isrec(env,sub)) {
             fprintf (ALL.out,
                 "    %s_free(&(*p)->_%d);\n",
                 to_ce(sub), i+1
@@ -77,7 +77,7 @@ void code_clone_user (Stmt* s) {
         Sub* sub = &s->User.vec[i];
         char* sub_id = sub->tk.val.s;
         char* sub_tp = to_ce(sub->type);
-        int sub_ishasrec = env_type_ishasrec(s->env, sub->type);
+        int sub_ishasrec = env_type_isrec(s->env, sub->type);
         fprintf(ALL.out, "case %s:\n", sub_id);
 
         char clone[256];
@@ -108,7 +108,7 @@ void code_clone_user (Stmt* s) {
 
 void code_clone_tuple (Env* env, Type* tp) {
     assert(tp->sub == TYPE_TUPLE);
-    assert(env_type_ishasrec(env,tp));
+    assert(env_type_isrec(env,tp));
 
     char* tp_ = to_ce(tp);
     fprintf (ALL.out,
@@ -125,7 +125,7 @@ void code_clone_tuple (Env* env, Type* tp) {
         Type* sub = tp->Tuple.vec[i];
         if (sub->sub == TYPE_UNIT) {
             // nothing to clone
-        } else if (env_type_ishasrec(env,sub)) {
+        } else if (env_type_isrec(env,sub)) {
             fprintf (ALL.out,
                 "%s clone_%s(&(*v)->_%d)",
                 (isfirst ? "" : ","),
@@ -174,10 +174,10 @@ void code_stdout_user (Stmt* s) {
         int par = 0;
 
         char* op2 = ""; {
-            int ishasrec = env_type_ishasrec(s->env, sub->type);
+            int ishasrec = env_type_isrec(s->env, sub->type);
             int isptr = sub->type->isptr;
             sub->type->isptr = 0;
-            int ishasrec2 = env_type_ishasrec(s->env, sub->type);
+            int ishasrec2 = env_type_isrec(s->env, sub->type);
             sub->type->isptr = isptr;
             if (ishasrec) {
                 op2 = "&";
@@ -232,7 +232,7 @@ void code_stdout_user (Stmt* s) {
 }
 
 void code_stdout_tuple (Env* env, Type* tp) {
-    int ishasrec = env_type_ishasrec(env, tp);
+    int ishasrec = env_type_isrec(env, tp);
 
     char tp_c [256];
     char tp_ce[256];
@@ -256,7 +256,7 @@ void code_stdout_tuple (Env* env, Type* tp) {
         Type* sub = tp->Tuple.vec[i];
 
         char* op2 = ""; {
-            int ishasrec = env_type_ishasrec(env, sub);
+            int ishasrec = env_type_isrec(env, sub);
             if (ishasrec) {
                 op2 = "&";
             } else if (!ishasrec && sub->isptr) {

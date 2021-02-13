@@ -24,7 +24,7 @@ static int FE (Env env, Expr* e) {
 static int FS1 (Stmt* s) {
     switch (s->sub) {
         case STMT_VAR: {
-            int ishasrec = env_type_ishasrec(s->env, s->Var.type);
+            int ishasrec = env_type_isrec(s->env, s->Var.type);
             if (ishasrec) {
                 int n=0; Expr* vars[256]; int uprefs[256];
                 env_held_vars(s->env, s->Var.init, &n, vars, uprefs);
@@ -50,7 +50,7 @@ static int FS1 (Stmt* s) {
 
             int find_ishasrec (Expr* e) {
                 Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(s->env, e);
-                if (env_type_ishasrec(s->env,tp)) {
+                if (env_type_isrec(s->env,tp)) {
                     return 1;
                 } else if (e->Up.isexpr) {
                     return find_ishasrec(e->Up.ptr);

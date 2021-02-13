@@ -85,7 +85,7 @@ void code_to_ce (Type* tp) {
 
 void to_c_ (char* out, Env* env, Type* tp) {
     Type tp_ = type_noptr(tp);
-    int ishasrec = env_type_ishasrec(env, &tp_);
+    int ishasrec = env_type_isrec(env, &tp_);
     switch (tp->sub) {
         case TYPE_ANY:
         case TYPE_UNIT: // only in TYPE_FUNC
@@ -159,7 +159,7 @@ void code_type_tuple_pre (Env* env, Type* tp_) {
     assert(tp_->sub == TYPE_TUPLE);
 
     Type tp = type_noptr(tp_);
-    int ishasrec = env_type_ishasrec(env, &tp);
+    int ishasrec = env_type_isrec(env, &tp);
 
     char tp_c [256];
     char tp_ce[256];
@@ -333,7 +333,7 @@ int code_expr_pre (Env* env, Expr* e) {
 
         case EXPR_TUPLE: {
             visit_type(env, TP, code_type_pre);
-            int ishasrec = env_type_ishasrec(env, TP);
+            int ishasrec = env_type_isrec(env, TP);
 
             static char tpc[256];
             tpc[0] = '\0';
@@ -441,7 +441,7 @@ int code_expr_pre (Env* env, Expr* e) {
                 out(" == NULL && \"discriminator failed\");\n");
             } else {
                 Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env,e->Disc.val);
-                if (env_type_ishasrec(env,tp)) {
+                if (env_type_isrec(env,tp)) {
                     out("assert(");
                     code_expr(env, e->Disc.val, 0);
                     out(" != NULL && \"discriminator failed\");\n");
@@ -480,7 +480,7 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
         return;     // no code to generate
     }
 
-    int ishasrec = env_type_ishasrec(env,TP);
+    int ishasrec = env_type_isrec(env,TP);
     int deref = (deref_ishasrec && ishasrec);
     if (deref) {
         out("(*(");
@@ -539,7 +539,7 @@ void code_expr (Env* env, Expr* e, int deref_ishasrec) {
                 } else if (!strcmp(e->Call.func->tk.val.s,"clone")) {
                     Type* tp __ENV_EXPR_TO_TYPE_FREE__ = env_expr_to_type(env, e->Call.arg);
                     Type tp_ = type_noptr(tp);
-                    if (env_type_ishasrec(env,&tp_)) {
+                    if (env_type_isrec(env,&tp_)) {
                         out("clone_");
                         code_to_ce(&tp_);
                     }
@@ -641,7 +641,7 @@ void code_stmt (Stmt* s) {
 
             // ignore cleanup for _ret_
             if (strcmp(s->Var.tk.val.s,"_ret_")) {
-                if (env_type_ishasrec(s->env,s->Var.type)) {
+                if (env_type_isrec(s->env,s->Var.type)) {
                     fprintf (ALL.out,
                         " __attribute__ ((__cleanup__(%s_free)))",
                         to_ce(s->Var.type)
@@ -666,7 +666,7 @@ void code_stmt (Stmt* s) {
             assert(dst != NULL);
 
             // if "dst" is ishasrec, need to free it
-            if (env_type_ishasrec(s->env,dst)) {
+            if (env_type_isrec(s->env,dst)) {
                 // Current value must be NULL in growable:
                 //      x.Field! = ...  -- if x ishasptr
                 //      x\ = Item ...   -- not sure if ishasptr (maybe points to subtree w/o pointers)
