@@ -459,10 +459,14 @@ int parser_stmt (Stmt** ret) {
 
         int ispre = 0;
         int isrec = 0;
+        int isptr = 0;
         if (accept(TK_PRE)) {           // pre
             ispre = 1;
         }
         if (accept(TK_REC)) {           // rec
+            if (accept(TK_PTR)) {       // ptr
+                isptr = 1;
+            }
             isrec = 1;
         }
         if (!accept_err(TX_USER)) {
@@ -471,7 +475,7 @@ int parser_stmt (Stmt** ret) {
         Tk id = ALL.tk0;                // Bool
 
         if (ispre) {
-            *s = (Stmt) { ALL.nn++, STMT_USER, NULL, NULL, tk, .User={isrec,id,0,NULL} };
+            *s = (Stmt) { ALL.nn++, STMT_USER, NULL, NULL, tk, .User={{isrec,isptr},id,0,NULL} };
             return 1;
         }
 
@@ -503,7 +507,7 @@ int parser_stmt (Stmt** ret) {
             return 0;
         }
 
-        *s = (Stmt) { ALL.nn++, STMT_USER, NULL, NULL, tk, .User={isrec,id,n,vec} };
+        *s = (Stmt) { ALL.nn++, STMT_USER, NULL, NULL, tk, .User={{isrec,isptr},id,n,vec} };
 
     // STMT_SET
     } else if (accept(TK_SET)) {
@@ -736,7 +740,7 @@ int parser (Stmt** ret) {
     {
         static Stmt Int = (Stmt) {   // Int
             0, STMT_USER, NULL, NULL,
-            .User = { 0, {TX_USER,{.s="Int"},0,__COUNTER__}, 0, NULL }
+            .User = { {0,0}, {TX_USER,{.s="Int"},0,__COUNTER__}, 0, NULL }
         };
         *ret = enseq(*ret, &Int);
     }

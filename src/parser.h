@@ -125,7 +125,10 @@ typedef struct Stmt {
             struct Stmt* ptr_deepest; // deepest symbol that I point to
         } Var;
         struct {            // STMT_USER
-            int  isrec;                 // rec
+            struct {
+                int  isrec;             // @rec
+                int  isptr;             // @ptr
+            };
             Tk   tk;                    // Bool
             int  size;                  // 2 subs
             Sub* vec;                   // [True,False]
