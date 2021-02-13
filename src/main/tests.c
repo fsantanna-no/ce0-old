@@ -4,7 +4,7 @@
 
 // check visually 5 errors
 
-//#define DEBUG
+#define DEBUG
 //#define VALGRIND
 
 #include "../all.h"
@@ -128,10 +128,11 @@ void t_lexer (void) {
     }
     // KEYWORDS
     {
-        all_init(NULL, stropen("r", 0, "xvar var else varx type"));
+        all_init(NULL, stropen("r", 0, "xvar var else @rec varx type"));
         assert(ALL.tk1.enu == TX_VAR);
         lexer(); assert(ALL.tk1.enu == TK_VAR);
         lexer(); assert(ALL.tk1.enu == TK_ELSE);
+        lexer(); assert(ALL.tk1.enu == TK_REC);
         lexer(); assert(ALL.tk1.enu == TX_VAR);
         lexer(); assert(ALL.tk1.enu == TK_TYPE);
         fclose(ALL.inp);
@@ -844,7 +845,7 @@ void t_env (void) {
     {
         Stmt* s;
         assert(all_init(NULL, stropen("r", 0,
-            "type rec Nat { Succ: Nat }\n"
+            "type @rec Nat { Succ: Nat }\n"
             "var x: Nat = $Nat\n"
             "var y: Nat = x\n"
         )));
@@ -867,7 +868,7 @@ void t_env (void) {
     {
         Stmt* s;
         assert(all_init(NULL, stropen("r", 0,
-            "type rec Nat { Succ: Nat }\n"
+            "type @rec Nat { Succ: Nat }\n"
             "var x: Nat = $Nat\n"
             "var y: \\Nat = \\x\n"
             "var z: Nat = y\\\n"
@@ -891,7 +892,7 @@ void t_env (void) {
     {
         Stmt* s;
         assert(all_init(NULL, stropen("r", 0,
-            "type rec Nat { Succ: Nat }\n"
+            "type @rec Nat { Succ: Nat }\n"
             "var x: Nat = $Nat\n"
             "var y: \\Nat = \\x\n"
             "var z: (Nat,\\Nat,Nat) = (x,y,y\\)\n"
@@ -916,7 +917,7 @@ void t_env (void) {
     {
         Stmt* s;
         assert(all_init(NULL, stropen("r", 0,
-            "type rec Nat { Succ: Nat }\n"
+            "type @rec Nat { Succ: Nat }\n"
             "type Xx { Xx1: Nat }\n"
             "var x: Nat = $Nat\n"
             "var y: \\Nat = \\x\n"
@@ -1131,6 +1132,31 @@ void t_code (void) {
 
 void t_all (void) {
 goto __XXX__;
+
+    assert(all(
+        "TODO",
+        "type pre Type\n"
+        "type @rec List_Type {\n"
+        "    Item_Type: (Type, List_Type)\n"
+        "}\n"
+        "type List_Type_Pointer {\n"
+        "    Void_List_Type: ()\n"
+        "    Ptr_List_Type: \\List_Type\n"
+        "}\n"
+        "type List_Tail_Type {\n"
+        "    LT_Type: (List_Type, List_Type_Pointer)\n"
+        "}\n"
+        "func new_list_tail_type: () -> List_Tail_Type {\n"
+        "    var ret: List_Tail_Type = LT_Type ($List_Type, Void_List_Type)\n"
+        "    set ret.LT_Type!.2 = Ptr_List_Type (\\ret.LT_Type!.1)\n"
+        "    return move ret\n"
+        "}\n"
+        "func append_list_tail_type: (\\List_Tail_Type,Type) -> () {\n"
+        "    set arg.1\\.LT_Type!.2.Ptr_List_Type!\\ = Item_Type (move arg.2, $List_Type)\n"
+        "    set arg.1\\.LT_Type!.2 = Ptr_List_Type (\\arg.1\\.LT_Type!.2.Ptr_List_Type!\\.Item_Type!.2)\n"
+        "}\n"
+    ));
+assert(0);
 __XXX__:
 
     // ERROR
@@ -1385,7 +1411,7 @@ __XXX__:
     assert(all(
         "()\n",
         "type Bool { False:() ; True:() }\n"
-        "type rec Aa {\n"
+        "type @rec Aa {\n"
         "    Aa1: ()\n"
         "}\n"
         "type Xx {\n"
@@ -1702,13 +1728,13 @@ __XXX__:
     assert(all(
         "10\n",
         "type pre Expr\n"
-        "type rec List_Expr {\n"
+        "type @rec List_Expr {\n"
         "    Item_Expr: (Expr, List_Expr)\n"
         "}\n"
-        "type rec Expr {\n"
+        "type @rec Expr {\n"
         "    Expr_Tuple: List_Expr\n"
         "}\n"
-        "type rec List_Env {\n"
+        "type @rec List_Env {\n"
         "    Item_Env: ((Int,Int), List_Env)\n"
         "}\n"
         "func env_expr_to_type: (\\List_Env,\\Expr) -> Int {\n"
@@ -1720,7 +1746,7 @@ __XXX__:
     ));
     assert(all(
         "$\n",
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "var lst: List = Item $List\n"
@@ -1771,7 +1797,7 @@ __XXX__:
 
     assert(all(
         "(ln 5, col 22): invalid assignment : cannot hold pointer to \"x\" in recursive value",
-        "type rec List {\n"
+        "type @rec List {\n"
         "   Item: (\\Int,List)\n"
         "}\n"
         "var x: Int = 10\n"
@@ -1784,7 +1810,7 @@ __XXX__:
         "   None_Int: ()\n"
         "   Some_Int: \\Int\n"
         "}\n"
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: (Nat,Maybe_Int)\n"
         "}\n"
         "var x: Int = 10\n"
@@ -1797,7 +1823,7 @@ __XXX__:
     // list / tail
     assert(all(
         "",
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "func new: () -> List {\n"
@@ -1940,7 +1966,7 @@ __XXX__:
     ));
     assert(all(
         "$\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var n: Nat = $Nat\n"
@@ -1949,7 +1975,7 @@ __XXX__:
     ));
     assert(all(
         "Succ ($)\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var n: Nat = Succ $Nat\n"
@@ -1959,10 +1985,10 @@ __XXX__:
     assert(all(
         "Aa1 (Bb1 (Aa1 ($)))\n",
         "type pre Bb\n"
-        "type rec Aa {\n"
+        "type @rec Aa {\n"
         "   Aa1: Bb\n"
         "}\n"
-        "type rec Bb {\n"
+        "type @rec Bb {\n"
         "   Bb1: Aa\n"
         "}\n"
         "var n: Aa = Aa1 Bb1 Aa1 $Bb\n"
@@ -1975,7 +2001,7 @@ __XXX__:
     ));
     assert(all(
         "XNat1 (Succ ($))\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "type XNat {\n"
@@ -1988,7 +2014,7 @@ __XXX__:
     ));
     assert(all(
         "Succ ($)\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var c: Nat = Succ $Nat\n"
@@ -1996,7 +2022,7 @@ __XXX__:
     ));
     assert(all(
         "Succ (Succ ($))\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var c: Nat = Succ Succ $Nat\n"
@@ -2004,7 +2030,7 @@ __XXX__:
     ));
     assert(all(
         "Succ ($)\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var c: Nat = Succ Succ $Nat\n"
@@ -2016,7 +2042,7 @@ __XXX__:
         "    False: ()\n"
         "    True:  ()\n"
         "}\n"
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "func f: () -> Nat {\n"
@@ -2031,7 +2057,7 @@ __XXX__:
     ));
     assert(all(
         "Succ ($)\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var d: Nat = Succ $Nat\n"
@@ -2041,7 +2067,7 @@ __XXX__:
     ));
     assert(all(
         "(ln 7, col 29): invalid assignment : cannot hold pointer to \"b\" in recursive value",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var d: Nat = Succ $Nat\n"
@@ -2053,7 +2079,7 @@ __XXX__:
     ));
     assert(all(
         "(Succ ($),())\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var d: Nat = Succ $Nat\n"
@@ -2064,7 +2090,7 @@ __XXX__:
     ));
     assert(all(
         "((),Succ ($))\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var d: Nat = Succ $Nat\n"
@@ -2075,7 +2101,7 @@ __XXX__:
     ));
     assert(all(
         "$\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var a: (Nat,Nat) = ($Nat,$Nat)\n"
@@ -2090,7 +2116,7 @@ __XXX__:
         "   None_Nat: ()\n"
         "   Some_Nat: \\Nat\n"
         "}\n"
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: (Nat,Maybe_Nat)\n"
         "}\n"
         "var c: Nat = Succ ($Nat, None_Nat)\n"
@@ -2101,7 +2127,7 @@ __XXX__:
     assert(all(
         //"(ln 6, col 14): invalid access to \"c\" : ownership was transferred (ln 5)",
         "$\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var c: Nat = Succ $Nat\n"
@@ -2117,7 +2143,7 @@ __XXX__:
         "   None_Nat: ()\n"
         "   Some_Nat: \\Nat\n"
         "}\n"
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: (Nat,Maybe_Nat)\n"
         "}\n"
         "var c: Nat = Succ ($Nat,None_Nat)\n"
@@ -2135,7 +2161,7 @@ __XXX__:
         "   None_Nat: ()\n"
         "   Some_Nat: \\Nat\n"
         "}\n"
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: (Nat,Maybe_Nat)\n"
         "}\n"
         "var c: Nat = Succ ($Nat,None_Nat)\n"
@@ -2146,7 +2172,7 @@ __XXX__:
     ));
     assert(all(
         "",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "type Maybe_Nat {\n"
@@ -2165,7 +2191,7 @@ __XXX__:
         "$\n",
         //"(ln 7, col 16): invalid access to \"a\" : ownership was transferred (ln 6)",
         //"(ln 6, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var c: Nat = Succ $Nat\n"
@@ -2183,7 +2209,7 @@ __XXX__:
         "   None_Nat: ()\n"
         "   Some_Nat: \\Nat\n"
         "}\n"
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: (Nat,Maybe_Nat)\n"
         "}\n"
         "var c: Nat = Succ ($Nat,None_Nat)\n"
@@ -2195,7 +2221,7 @@ __XXX__:
     ));
     assert(all(
         "(ln 7, col 19): invalid transfer of \"c\" : active pointer in scope (ln 6)",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var d: Nat = Succ $Nat\n"
@@ -2205,7 +2231,7 @@ __XXX__:
     ));
     assert(all(
         "Succ ($)\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var c: Nat = Succ $Nat\n"
@@ -2227,7 +2253,7 @@ __XXX__:
         "   None_Nat: ()\n"
         "   Some_Nat: \\Nat\n"
         "}\n"
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: (Nat,Maybe_Nat)\n"
         "}\n"
         "var d: Nat = Succ ($Nat,None_Nat)\n"
@@ -2246,7 +2272,7 @@ __XXX__:
         "   None_Nat: ()\n"
         "   Some_Nat: \\Nat\n"
         "}\n"
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: (Nat,Maybe_Nat)\n"
         "}\n"
         "var d: Nat = Succ ($Nat,None_Nat)\n"
@@ -2259,7 +2285,7 @@ __XXX__:
         "XNat1 ($)\n",
         //"(ln 11, col 17): invalid access to \"i\" : ownership was transferred (ln 10)",
         //"(ln 10, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "type XNat {\n"
@@ -2275,7 +2301,7 @@ __XXX__:
     assert(all(
         "XNat1 (Succ (Succ ($)))\n",
         //"(ln 14, col 22): invalid ownership transfer : mode `growable´ only allows root transfers",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "type XNat {\n"
@@ -2295,7 +2321,7 @@ __XXX__:
     assert(all(
         "$\n",
         //"(ln 5, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var a: (Nat,Nat) = ($Nat,$Nat)\n"
@@ -2304,7 +2330,7 @@ __XXX__:
     ));
     assert(all(
         "($,$)\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var a: (Nat,Nat) = ($Nat,$Nat)\n"
@@ -2314,7 +2340,7 @@ __XXX__:
     assert(all(
         "$\n",
         //"(ln 6, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var a: (Nat,Nat) = ($Nat,$Nat)\n"
@@ -2329,7 +2355,7 @@ __XXX__:
         "    False: ()\n"
         "    True:  ()\n"
         "}\n"
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var n: Nat = $Nat\n"
@@ -2337,7 +2363,7 @@ __XXX__:
     ));
     assert(all(
         "()\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var n: Nat = $Nat\n"
@@ -2349,7 +2375,7 @@ __XXX__:
         "    False: ()\n"
         "    True:  ()\n"
         "}\n"
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var n: Nat = $Nat\n"
@@ -2358,7 +2384,7 @@ __XXX__:
     ));
     assert(all(
         "Succ (Succ ($))\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var a: Nat = Succ $Nat\n"
@@ -2368,7 +2394,7 @@ __XXX__:
     ));
     assert(all(
         "Succ (Succ ($))\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var a: Nat = Succ $Nat\n"
@@ -2378,7 +2404,7 @@ __XXX__:
     ));
     assert(all(
         "$\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var x: Nat = $Nat\n"
@@ -2387,7 +2413,7 @@ __XXX__:
     ));
     assert(all(
         "Succ ($)\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var n: Nat = Succ $Nat\n"
@@ -2396,7 +2422,7 @@ __XXX__:
     ));
     assert(all(
         "$\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "func f: () -> Nat {\n"
@@ -2409,7 +2435,7 @@ __XXX__:
     ));
     assert(all(
         "Succ (Succ ($))\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "func f: () -> Nat {\n"
@@ -2423,7 +2449,7 @@ __XXX__:
     ));
     assert(all(
         "Succ (Succ ($))\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "func f: () -> Nat {\n"
@@ -2437,7 +2463,7 @@ __XXX__:
     ));
     assert(all(
         "Succ (Succ ($))\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "func f: () -> Nat {\n"
@@ -2451,7 +2477,7 @@ __XXX__:
     ));
     assert(all(
         "Succ (Succ ($))\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "func f: () -> Nat {\n"
@@ -2469,7 +2495,7 @@ __XXX__:
         "    False: ()\n"
         "    True:  ()\n"
         "}\n"
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
         "func len: Nat -> Nat {\n"
@@ -2482,7 +2508,7 @@ __XXX__:
     ));
     assert(all(
         "$\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
         "var n: Nat = $Nat\n"
@@ -2492,7 +2518,7 @@ __XXX__:
     assert(all(
         "",     // ERROR
         "type Bool { False:() ; True:() }\n"
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var n: Nat = $Nat\n"
@@ -2506,7 +2532,7 @@ __XXX__:
         "    False: ()\n"
         "    True:  ()\n"
         "}\n"
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
         "func len: \\Nat -> Nat {\n"
@@ -2524,7 +2550,7 @@ __XXX__:
     assert(all(
         "Succ (Succ ($))\n",
         //"(ln 5, col 21): invalid ownership transfer : mode `growable´ only allows root transfers",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
         "var x: Nat = Succ Succ Succ $Nat\n"
@@ -2538,7 +2564,7 @@ __XXX__:
         "    False: ()\n"
         "    True:  ()\n"
         "}\n"
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
         "func len: Nat -> Nat {\n"
@@ -2554,7 +2580,7 @@ __XXX__:
     ));
     assert(all(
         "Item (1,Item (2,$))\n",
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: (Int,List)\n"
         "}\n"
         "var x: List = Item (1, Item (2, $List))\n"
@@ -2566,7 +2592,7 @@ __XXX__:
         "    False: ()\n"
         "    True:  ()\n"
         "}\n"
-        "type rec Type {\n"
+        "type @rec Type {\n"
         "    Type_Any: Bool\n"
         "}\n"
         "output std 10\n"
@@ -2576,7 +2602,7 @@ __XXX__:
     assert(all(
         //"(ln 6, col 19): invalid access to \"i\" : ownership was transferred (ln 5)",
         "$\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
         "var i: Nat = Succ $Nat\n"
@@ -2586,7 +2612,7 @@ __XXX__:
     ));
     assert(all(
         "$\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
         "var x: Nat = $Nat   -- owner\n"
@@ -2595,7 +2621,7 @@ __XXX__:
     ));
     assert(all(
         "(ln 6, col 19): invalid transfer of \"x\" : active pointer in scope (ln 5)",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
         "var x: Nat = $Nat   -- owner\n"
@@ -2604,7 +2630,7 @@ __XXX__:
     ));
     assert(all(
         "Succ ($)\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
         "var x: Nat = Succ $Nat    -- owner\n"
@@ -2618,7 +2644,7 @@ __XXX__:
     assert(all(
         //"(ln 8, col 19): invalid access to \"x\" : ownership was transferred (ln 6)",
         "$\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
         "var x: Nat = Succ $Nat     -- owner\n"
@@ -2631,7 +2657,7 @@ __XXX__:
     ));
     assert(all(
         "(ln 8, col 5): invalid return : cannot return local pointer to \"l\" (ln 5)",
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "func f: () -> \\List {\n"
@@ -2645,7 +2671,7 @@ __XXX__:
         "Item ($)\n",
         //"(ln 6, col 20): invalid access to \"a\" : ownership was transferred (ln 5)",
         //"(ln 5, col 28): invalid ownership transfer : mode `growable´ only allows root transfers",
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "var a: List = Item Item $List\n"
@@ -2655,7 +2681,7 @@ __XXX__:
     ));
     assert(all(
         "Item (Item ($))\n",
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "var l: List = Item $List\n"
@@ -2666,7 +2692,7 @@ __XXX__:
     ));
     assert(all(
         "",     // ERROR
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "var l: List = Item $List\n"
@@ -2677,7 +2703,7 @@ __XXX__:
     ));
     assert(all(
         "",     // ERROR
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "var x: List = Item $List\n"
@@ -2688,7 +2714,7 @@ __XXX__:
     assert(all(
         //"(ln 6, col 29): invalid transfer of \"x\" : active pointer in scope (ln 6)",
         "(ln 6, col 33): invalid assignment : cannot hold pointer to \"x\" in recursive value",
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "func f: List -> () {}\n"
@@ -2703,7 +2729,7 @@ __XXX__:
         "    False: ()\n"
         "    True:  ()\n"
         "}\n"
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
         "func add: (Nat,\\Nat) -> Nat {\n"
@@ -2724,7 +2750,7 @@ __XXX__:
         "    False: ()\n"
         "    True:  ()\n"
         "}\n"
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
         "type XNat {\n"
@@ -2754,7 +2780,7 @@ __XXX__:
     ));
     assert(all(
         "Succ ($)\n",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
         "var x: Nat = Succ $Nat\n"
@@ -2788,7 +2814,7 @@ __XXX__:
     ));
     assert(all(
         "Item (Item ($))\n",
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "var l1: List = Item Item $List\n"
@@ -2799,7 +2825,7 @@ __XXX__:
     assert(all(
         //"(ln 10, col 18): invalid access to \"l1\" : ownership was transferred (ln 9)",
         "$\n",
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "type Xx {\n"
@@ -2813,7 +2839,7 @@ __XXX__:
     ));
     assert(all(
         "(ln 11, col 13): invalid `\\´ : unexpected pointer type",
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "type Xx {\n"
@@ -2828,7 +2854,7 @@ __XXX__:
     assert(all(
         //"(ln 10, col 18): invalid access to \"l1\" : ownership was transferred (ln 9)",
         "$\n",
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "type Xx {\n"
@@ -2843,7 +2869,7 @@ __XXX__:
     assert(all(
         //"(ln 7, col 14): invalid access to \"l1\" : ownership was transferred (ln 6)",
         "$\n",
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "var l1: List = $List\n"
@@ -2853,7 +2879,7 @@ __XXX__:
     ));
     assert(all(
         "(ln 8, col 5): invalid assignment : cannot hold pointer to \"l2\" (ln 7) in outer scope",
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "var l1: List = $List\n"
@@ -2987,7 +3013,7 @@ __XXX__:
     ));
     assert(all(
         "(ln 5, col 19): invalid dnref : cannot transfer value",
-        "type rec Nat { Succ: Nat }\n"
+        "type @rec Nat { Succ: Nat }\n"
         "var x: Nat = $Nat\n"
         "var y: \\Nat = \\x\n"
         "var z: \\Nat = y\n"
@@ -2997,7 +3023,7 @@ __XXX__:
     // CYCLE
     assert(all(
         "Item (Item ($))\n",            // ok: not cycle
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "var l: List = Item $List\n"
@@ -3008,7 +3034,7 @@ __XXX__:
     ));
     assert(all(
         "(ln 5, col 20): invalid assignment : cannot transfer ownsership to itself",
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "var l: List = Item $List\n"
@@ -3016,7 +3042,7 @@ __XXX__:
     ));
     assert(all(
         "Item (Item ($))\n",
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "var l: List = Item $List\n"
@@ -3025,7 +3051,7 @@ __XXX__:
     ));
     assert(all(
         "(ln 6, col 15): invalid assignment : cannot transfer ownsership to itself",
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "var l: List = Item $List\n"
@@ -3034,7 +3060,7 @@ __XXX__:
     ));
     assert(all(
         "(ln 7, col 17): invalid assignment : cannot transfer ownsership to itself",
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "func f: List->List { return move arg }\n"
@@ -3049,7 +3075,7 @@ __XXX__:
         "   None_List: ()\n"
         "   Some_List: \\List\n"
         "}\n"
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: (Int, List)\n"
         "}\n"
         "\n"
@@ -3074,7 +3100,7 @@ __XXX__:
         "   None_List: ()\n"
         "   Some_List: \\List\n"
         "}\n"
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: (Int, List)\n"
         "}\n"
         "\n"
@@ -3106,7 +3132,7 @@ __XXX__:
         "   None_List: ()\n"
         "   Some_List: \\List\n"
         "}\n"
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "func f: List -> () {}\n"
@@ -3124,7 +3150,7 @@ __XXX__:
         "   None_List: ()\n"
         "   Some_List: \\List\n"
         "}\n"
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "func g: (List,Maybe_List) -> () {}\n"
@@ -3142,7 +3168,7 @@ __XXX__:
     ));
     assert(all(
         "(ln 6, col 39): invalid dnref : cannot transfer value",
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: ((Int,Int),List)\n"
         "}\n"
         "var l: List = Item ((10,0),$List)\n"
@@ -3151,7 +3177,7 @@ __XXX__:
     ));
     assert(all(
         "(ln 6, col 22): invalid assignment : cannot transfer ownsership to itself",
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "var ls: (List,List) = (Item ($List), $List)\n"
@@ -3160,7 +3186,7 @@ __XXX__:
     ));
     assert(all(
         "(Item ($),$)\n",
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "var ls: (List,List) = (Item ($List), $List)\n"
@@ -3171,7 +3197,7 @@ __XXX__:
     ));
     assert(all(
         "(ln 6, col 5): invalid transfer of \"ls\" : active pointer in scope (ln 5)",
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "var ls: (List,List) = (Item ($List), $List)\n"
@@ -3181,7 +3207,7 @@ __XXX__:
     ));
     assert(all(
         "($,$)\n",
-        "type rec List {\n"
+        "type @rec List {\n"
         "    Item: List\n"
         "}\n"
         "var ls: (List,List) = (Item ($List), $List)\n"
@@ -3256,7 +3282,7 @@ __XXX__:
     ));
     assert(all(
         "(ln 7, col 14): invalid transfer of \"c\" : active pointer in scope (ln 6)",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "var d: Nat = Succ $Nat\n"
@@ -3301,7 +3327,7 @@ __XXX__:
         "    False: ()\n"
         "    True:  ()\n"
         "}\n"
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "    Succ: Nat\n"
         "}\n"
         "var x: Nat  = Succ $Nat\n"
@@ -3317,14 +3343,14 @@ __XXX__:
     // POOL
     assert(all(
         "(ln 4, col 23): missing pool for constructor",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "call _show_Nat(Succ(Succ($Nat)))\n"
     ));
     assert(all(
         "(ln 5, col 13): missing pool for call",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "func f: () -> Nat {}\n"
@@ -3332,7 +3358,7 @@ __XXX__:
     ));
     assert(all(
         "(ln 5, col 6): missing pool for return of \"f\"",
-        "type rec Nat {\n"
+        "type @rec Nat {\n"
         "   Succ: Nat\n"
         "}\n"
         "func f: () -> Nat {}\n"

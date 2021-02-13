@@ -26,11 +26,12 @@ typedef enum {
     TK_NATIVE,
     TK_OUTPUT,
     TK_PRE,
-    TK_REC,
     TK_RETURN,
     TK_SET,
     TK_TYPE,
-    TK_VAR
+    TK_VAR,
+    TK_PTR,
+    TK_REC
 } TK;
 
 #define TK_BUF 1024

@@ -20,12 +20,13 @@ static char* reserved[] = {
     "native",
     "output",
     "pre",
-    "rec",
     "return",
     "set",
     //"Std",
     "type",
-    "var"
+    "var",
+    "@ptr",
+    "@rec"
 };
 
 static int is_reserved (TK_val* val) {
@@ -192,8 +193,9 @@ static TK lx_token (TK_val* val) {
         }
 
         default: {
+            char isann    = (c == '@');
             char isdollar = (c == '$');
-            if (isdollar) {
+            if (isdollar || isann) {
                 c = fgetc(ALL.inp);
             }
 
@@ -218,6 +220,9 @@ static TK lx_token (TK_val* val) {
                 // var
             } else if (isupper(c)) {
                 // user,null
+            } else if (isann) {
+puts("ISANN");
+                // @rec, @ptr
             } else {
                 val->s[0] = c;
                 val->s[1] = '\0';
@@ -226,6 +231,9 @@ static TK lx_token (TK_val* val) {
 
             // TX_VAR, TX_USER
             int i = 0;
+            if (isann) {
+                val->s[i++] = '@';
+            }
             while (isalnum(c) || c=='_') {
                 val->s[i++] = c;
                 assert(i < TK_BUF);
