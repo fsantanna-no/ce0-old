@@ -337,15 +337,7 @@ int env_type_ishasrec (Env* env, Type* tp) {
         case TYPE_USER: {
             Stmt* user = env_id_to_stmt(env, tp->User.val.s);
             assert(user!=NULL && user->sub==STMT_USER);
-            if (user->User.isrec) {
-                return 1;
-            }
-            for (int i=0; i<user->User.size; i++) {
-                if (env_type_ishasrec(env,user->User.vec[i].type)) {
-                    return 1;
-                }
-            }
-            return 0;
+            return user->User.isrec;
         }
     }
     assert(0);

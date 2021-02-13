@@ -918,7 +918,7 @@ void t_env (void) {
         Stmt* s;
         assert(all_init(NULL, stropen("r", 0,
             "type @rec Nat { Succ: Nat }\n"
-            "type Xx { Xx1: Nat }\n"
+            "type @rec Xx { Xx1: Nat }\n"
             "var x: Nat = $Nat\n"
             "var y: \\Nat = \\x\n"
             "var z: (Nat,\\Nat,Xx) = (x,y,Xx1 y\\)\n"
