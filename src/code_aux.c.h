@@ -1,6 +1,6 @@
 void code_free_user (Stmt* s) {
     assert(s->sub == STMT_USER);
-    assert(env_user_ishasrec(s->env,s));
+    assert(s->User.isrec);
 
     const char* sup = s->User.tk.val.s;
 
@@ -59,7 +59,7 @@ void code_free_tuple (Env* env, Type* tp) {
 
 void code_clone_user (Stmt* s) {
     assert(s->sub == STMT_USER);
-    assert(env_user_ishasrec(s->env,s));
+    assert(s->User.isrec);
 
     const char* sup = s->User.tk.val.s;
 
@@ -148,14 +148,13 @@ void code_clone_tuple (Env* env, Type* tp) {
 
 void code_stdout_user (Stmt* s) {
     const char* sup = s->User.tk.val.s;
-    int ishasrec = env_user_ishasrec(s->env, s);
 
     // _stdout_Bool (Bool v)
     fprintf(ALL.out,
         "void stdout_%s_ (%s%s v) {\n",
-        sup, sup, (ishasrec ? "**" : "")
+        sup, sup, (s->User.isrec ? "**" : "")
     );
-    if (ishasrec) {
+    if (s->User.isrec) {
         out (
             "if ((*v) == NULL) {\n"
             "    printf(\"$\");\n"
@@ -164,7 +163,7 @@ void code_stdout_user (Stmt* s) {
         );
     }
 
-    char* v = (ishasrec ? "(*v)->" : "v.");
+    char* v = (s->User.isrec ? "(*v)->" : "v.");
 
     fprintf(ALL.out, "    switch (%ssub) {\n", v);
     for (int i=0; i<s->User.size; i++) {
@@ -227,7 +226,7 @@ void code_stdout_user (Stmt* s) {
         "    stdout_%s_(v);\n"
         "    puts(\"\");\n"
         "}\n",
-        sup, sup, (ishasrec ? "**" : ""),
+        sup, sup, (s->User.isrec ? "**" : ""),
         sup
     );
 }

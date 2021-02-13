@@ -1132,7 +1132,6 @@ void t_code (void) {
 
 void t_all (void) {
 goto __XXX__;
-__XXX__:
 
     assert(all(
         "TODO",
@@ -1158,6 +1157,7 @@ __XXX__:
         "}\n"
     ));
 assert(0);
+__XXX__:
 
     // ERROR
     assert(all(

@@ -124,20 +124,6 @@ char* to_c (Env* env, Type* tp) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int env_user_ishasrec (Env* env, Stmt* user) {
-    assert(user->sub == STMT_USER);
-    if (user->User.isrec) {
-        return 1;
-    }
-    for (int i=0; i<user->User.size; i++) {
-        Sub sub = user->User.vec[i];
-        if (env_type_ishasrec(env, sub.type)) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
 #include "code_aux.c.h"
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -225,7 +211,6 @@ int code_type_pre (Env* env, Type* tp) {
 void code_user_pre (Stmt* s) {
     const char* sup = s->User.tk.val.s;
     const char* SUP = strupper(s->User.tk.val.s);
-    int ishasrec = env_user_ishasrec(s->env, s);
 
     // struct Bool;
     // typedef struct Bool Bool;
@@ -240,7 +225,7 @@ void code_user_pre (Stmt* s) {
             sup, sup, sup
         );
 
-        if (ishasrec) {
+        if (s->User.isrec) {
             fprintf (ALL.out,
                 "auto void %s_free (struct %s** p);\n",
                 sup, sup
@@ -253,7 +238,7 @@ void code_user_pre (Stmt* s) {
 
         fprintf(ALL.out,
             "auto void stdout_%s_ (%s%s v);\n", // auto: https://stackoverflow.com/a/7319417
-            sup, sup, (ishasrec ? "**" : "")
+            sup, sup, (s->User.isrec ? "**" : "")
         );
     }
     out("\n");
@@ -309,7 +294,7 @@ void code_user_pre (Stmt* s) {
     }
     out("\n");
 
-    if (ishasrec) {
+    if (s->User.isrec) {
         code_free_user(s);
         code_clone_user(s);
     }
@@ -394,7 +379,6 @@ int code_expr_pre (Env* env, Expr* e) {
         case EXPR_CONS: {
             Stmt* user = env_sub_id_to_user_stmt(env, e->tk.val.s);
             assert(user != NULL);
-            int ishasrec = env_user_ishasrec(env, user);
 
             char* sup = user->User.tk.val.s;
             char* sub = e->tk.val.s;
@@ -402,11 +386,11 @@ int code_expr_pre (Env* env, Expr* e) {
             fprintf (ALL.out,
                 "%s%s _tmp_%d = ",
                 sup,
-                (ishasrec ? "*" : ""),
+                (user->User.isrec ? "*" : ""),
                 e->N
             );
 
-            if (ishasrec) {
+            if (user->User.isrec) {
                 // Nat* _1 = (Nat*) malloc(sizeof(Nat));
                 fprintf (ALL.out,
                     "(%s*) malloc(sizeof(%s));\n"
