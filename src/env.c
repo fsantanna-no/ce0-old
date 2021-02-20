@@ -317,6 +317,9 @@ Stmt* env_type_to_user_stmt (Env* env, Type* tp) {
     }
 }
 
+// is:  @rec TYPE_USER
+// has: tuple with @rec TYPE_USER
+// is/has are equivalent, has is handled just like is
 int env_type_ishasrec (Env* env, Type* tp) {
     if (tp->isptr) {
         return 0;
@@ -343,6 +346,7 @@ int env_type_ishasrec (Env* env, Type* tp) {
     assert(0);
 }
 
+// have to differentiate between rec/norec
 int env_type_ishasptr (Env* env, Type* tp) {
     char* users[256];
     int users_n = 0;
@@ -456,6 +460,7 @@ void env_held_vars (Env* env, Expr* e, int* N, Expr** vars, int* uprefs) {
 #if 1
                 if (env_type_ishasrec(env, tp)) {
                     // doesn't hold anything b/c pointers point to itself
+                    //assert(env_type_isrecptr(env, tp);
                 } else
 #endif
                 {

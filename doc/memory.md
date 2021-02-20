@@ -114,6 +114,8 @@ automatically deallocated when the enclosing scope terminates:
 -- scope terminates, memory pointed by `x` is deallocated
 ```
 
+## Pointers
+
 A variable can be shared, or pointed, or borrowed with the prefix backslash
 `\`.
 In this case, both the owner and the pointer refer to the same allocated value:
@@ -139,8 +141,8 @@ We distinguish an owned reference from a pointer in the sense that the latter
 does not own the actual value and requires [pointer operations](TODO) to
 manipulate it.
 
-A recursive type that contains pointers to itself is classified as *growable*
-(as opposed to the default *movable*):
+A recursive type that contains pointers to itself is classified as
+*append only* (as opposed to the default *movable*):
 
 ```
 type List_With_Tail {
@@ -148,11 +150,13 @@ type List_With_Tail {
 }
 ```
 
-Values of growable types can only grow and are not allowed to move its
-subparts:
+Append-only values can only grow and cannot move its subparts:
 
-`TODO`
-
+```
+var lt: List_With_Tail = List_WT (Item (1,$List), ?)
+set lt.List_WT!.2 = \lt.List_WT!.1  -- lt.1 is held in a pointer
+set lt.List_WT!.1 = $List           -- cannot free it or the pointer becomes dangling
+```
 
 ## Ownership and Borrowing
 

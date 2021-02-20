@@ -40,11 +40,12 @@ The following keywords are reserved:
     native      -- native statement
     output      -- output invocation
     pre         -- native/type pre declaration
-    rec         -- recursive type declaration
     return      -- function return
     set         -- assignment statement
     type        -- new type declaration
     var         -- variable declaration
+    @ptr        -- recursive pointer type annotation
+    @rec        -- recursive type annotation
 ```
 
 The following symbols are valid:

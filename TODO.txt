@@ -1,3 +1,25 @@
+- env_type_ishasptr
+    - env_held_vars
+        - x.Fx!
+        - x.1
+    - check_owner (access after tx):
+            x env_type_isrecptr
+    - check_txs (root tx)
+        x env_type_isrecptr
+    - code (check if dst==NULL before grow
+        x env_type_isrecptr
+    - check_ptrs
+        - cannot hold pointer
+        - deepest
+- isptr
+    - nao posso pegar ponteiro para meio de isptr sem que fique claro que ele é um isptr
+        - isso faria eu trata-lo como um nao isptr e eu poderia quebrar semantica de growable
+    - isptr vs isrecptr
+
+- tratar arg como tupla especial que pode ser movida parcialmente
+    - adicionar indice em TX
+        - 0: tudo
+        - x: parcial (somente arg suporta)
 - nao posso guardar ptrs que nao sejam ciclos em dyn values pq eles movem de
   escopo
     - na verdade, só posso guardar ptrs em chamadas de fcs

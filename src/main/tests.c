@@ -1132,10 +1132,11 @@ void t_code (void) {
 
 void t_all (void) {
 goto __XXX__;
+__XXX__:
 
     assert(all(
         "TODO",
-        "type pre Type\n"
+        "type pre @rec Type\n"
         "type @rec List_Type {\n"
         "    Item_Type: (Type, List_Type)\n"
         "}\n"
@@ -1143,7 +1144,7 @@ goto __XXX__;
         "    Void_List_Type: ()\n"
         "    Ptr_List_Type: \\List_Type\n"
         "}\n"
-        "type List_Tail_Type {\n"
+        "type @rec @ptr List_Tail_Type {\n"
         "    LT_Type: (List_Type, List_Type_Pointer)\n"
         "}\n"
         "func new_list_tail_type: () -> List_Tail_Type {\n"
@@ -1151,13 +1152,13 @@ goto __XXX__;
         "    set ret.LT_Type!.2 = Ptr_List_Type (\\ret.LT_Type!.1)\n"
         "    return move ret\n"
         "}\n"
+aqui nao é pra ser isrecptr
         "func append_list_tail_type: (\\List_Tail_Type,Type) -> () {\n"
         "    set arg.1\\.LT_Type!.2.Ptr_List_Type!\\ = Item_Type (move arg.2, $List_Type)\n"
         "    set arg.1\\.LT_Type!.2 = Ptr_List_Type (\\arg.1\\.LT_Type!.2.Ptr_List_Type!\\.Item_Type!.2)\n"
         "}\n"
     ));
 assert(0);
-__XXX__:
 
     // ERROR
     assert(all(
